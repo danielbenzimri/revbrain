@@ -1,6 +1,6 @@
 # RevBrain — Mock Mode Specification
 
-> **Status**: PROPOSED (v2 — incorporates external audit feedback)
+> **Status**: FINAL (v3 — incorporates two rounds of external audit feedback, graded A by both auditors)
 >
 > **Author**: Engineering
 >
@@ -64,15 +64,15 @@ The codebase has partial mock infrastructure inherited from Geometrix:
 
 ### Non-Goals
 
-| Item                                           | Why not now                                                  |
-| ---------------------------------------------- | ------------------------------------------------------------ |
-| Database seeder (`pnpm db:seed`)               | No DB connected yet — will add when Supabase is set up       |
-| Mock Stripe/billing responses                  | Billing pages work with their own empty states already       |
-| Mock support tickets                           | Support system works end-to-end, just shows empty list       |
-| Mock file storage                              | File upload requires Supabase Storage — out of scope         |
-| Migration-specific mock data                   | Step 1 concern — we need to define what a migration IS first |
-| E2E test mock mode                             | E2E tests run against real or CI environment                 |
-| Configurable scenarios (`MOCK_SCENARIO=empty`) | Future enhancement if needed                                 |
+| Item                                           | Why not now                                                                                                     |
+| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Database seeder (`pnpm db:seed`)               | No DB connected yet — will add when Supabase is set up                                                          |
+| Mock Stripe/billing responses                  | Billing pages work with their own empty states already                                                          |
+| Mock support tickets                           | Support system works end-to-end, just shows empty list                                                          |
+| Mock file storage                              | File upload requires Supabase Storage — out of scope                                                            |
+| Migration-specific mock data                   | Step 1 concern — we need to define what a migration IS first                                                    |
+| Full E2E test suite in mock mode               | Out of scope. Lightweight smoke checks (boot, login, render) recommended but not required for initial delivery. |
+| Configurable scenarios (`MOCK_SCENARIO=empty`) | Future enhancement if needed                                                                                    |
 
 ---
 
@@ -158,16 +158,26 @@ These are hard rules that must not be violated:
 Before anything else, add a hard runtime check at server startup:
 
 ```typescript
-if (
-  (process.env.AUTH_MODE === 'mock' || process.env.USE_MOCK_DATA === 'true') &&
-  ['production', 'staging'].includes(process.env.APP_ENV || '')
-) {
+const useMock = process.env.USE_MOCK_DATA === 'true';
+const mockAuth = process.env.AUTH_MODE === 'mock';
+const env = process.env.APP_ENV || '';
+
+// Block mock mode in production/staging
+if ((useMock || mockAuth) && ['production', 'staging'].includes(env)) {
   console.error('FATAL: Mock mode cannot be enabled in production or staging.');
+  process.exit(1);
+}
+
+// Block contradictory configurations
+if (useMock !== mockAuth) {
+  console.error(
+    'FATAL: USE_MOCK_DATA=true requires AUTH_MODE=mock, and USE_MOCK_DATA=false requires AUTH_MODE=jwt.'
+  );
   process.exit(1);
 }
 ```
 
-This is non-negotiable.
+This is non-negotiable. Both the environment guard and the consistency guard run at server startup before any middleware is registered.
 
 ### 5.2 Mock Repository Engine
 
@@ -185,14 +195,20 @@ apps/server/src/repositories/mock/
 
 Each mock repository:
 
-- Implements the full `XxxRepository` interface from `@revbrain/contract`
+- Implements the full `XxxRepository` interface from `@revbrain/contract` — TypeScript enforces interface conformance at compile time
 - Stores data in module-level arrays (in-memory, shared across requests within the process)
 - Supports `create()` — generates UUID, sets timestamps, appends to array
 - Supports `update()` — returns `null` for nonexistent records (same as Drizzle)
 - Supports `delete()` — returns `false` for nonexistent records
-- Supports `findMany()` with `limit`, `offset`, `orderBy`
+- Supports `findMany()` with `limit`, `offset`, `orderBy` (single field, asc/desc)
+- Implements only the filtering subset currently used by API routes (see below) — unsupported query shapes fail loudly in development (throw a descriptive error) rather than silently returning incorrect results
+
+**Currently used filters**: `organizationId` (all multi-tenant queries), `status` (projects list), `role` (users list), `isActive` (user/org queries), `email` (user lookup). Additional filters will be added as routes require them.
+
 - Enforces `organizationId` scoping on multi-tenant queries (e.g., `findByOrganization` filters by org)
 - Is pre-populated with seed data on module load
+
+**Instantiation**: Mock repositories are created once at server startup and reused across all requests (singleton pattern). The middleware injects the shared instance — it does not create new repos per request. All data is stored in module-level arrays that persist for the lifetime of the server process. Multiple concurrent requests operate on the same data store. This is intentional and acceptable for local dev.
 
 ### 5.3 Repository Behavior Parity
 
@@ -245,25 +261,33 @@ apps/server/src/mocks/
 - At least one project with a long name (tests text truncation)
 - At least one old project and one recently updated project
 - Organization seat usage: Acme uses 4/25 seats, Beta uses 2/5
+- At least one user with no projects assigned (tests empty state for operator)
+- At least one invited-but-not-activated user (tests pending status)
+- Beta org has zero projects (tests empty dashboard for that org)
 
 ### 5.5 Mock Data Lifecycle
 
 - Seed data is loaded once when the server process starts (module-level initialization)
 - All mutations via `create()`, `update()`, `delete()` persist in memory until the process restarts
 - Restarting the server (or tsx watch triggering a reload) resets all data to initial seed
-- A dev-only endpoint `POST /v1/dev/reset-mock-data` resets all repositories to seed state without restarting
+- A dev-only endpoint `POST /v1/dev/reset-mock-data` resets all repositories to seed state without restarting. This endpoint is conditionally registered — it only exists when `USE_MOCK_DATA=true` and `APP_ENV=local`. It returns `200 { success: true, message: "Mock data reset" }`. It does not require authentication because the environment is already restricted to local dev. It is excluded from OpenAPI documentation.
+- Note: Hot reload (tsx watch) resets mock data only when the mock module itself is invalidated. Changes to unrelated files may preserve in-memory state. Use the reset endpoint for deterministic resets.
 
 ### 5.6 Repository Middleware Update
 
 Update `apps/server/src/repositories/middleware.ts`:
 
 ```typescript
+import { createMockRepositories } from './mock/index.ts';
+
+// Singleton: created once at startup, shared across all requests
+const useMock = getEnv('USE_MOCK_DATA', 'false') === 'true';
+const mockRepos = useMock ? createMockRepositories() : null;
+
 export function repositoryMiddleware() {
   return createMiddleware(async (c, next) => {
-    const useMock = getEnv('USE_MOCK_DATA', 'false') === 'true';
-
-    if (useMock) {
-      c.set('repos', createMockRepositories());
+    if (mockRepos) {
+      c.set('repos', mockRepos);
       c.set('engine', 'mock');
     } else {
       c.set('repos', createDrizzleRepositories());
@@ -274,6 +298,8 @@ export function repositoryMiddleware() {
   });
 }
 ```
+
+`getEnv` is an existing utility in the codebase (`apps/server/src/lib/validated-config.ts`) that reads environment variables with optional defaults.
 
 **Middleware execution order** (must be maintained):
 
@@ -295,7 +321,8 @@ When `AUTH_MODE=mock`:
 2. Parses `{userId}` from the token string
 3. Looks up user in mock repository via `repos.users.findById(userId)`
 4. Sets `c.var.user` with the mock user entity
-5. If no auth header or user not found, defaults to the Acme org_owner user
+5. If no auth header is present, defaults to the Acme org_owner user (local convenience)
+6. If an auth header is present but malformed or references a nonexistent user, returns 401 (catches broken client auth)
 
 The dev role switcher on the client changes the mock token stored in localStorage. The client's `LocalAuthAdapter` already does this.
 
@@ -331,6 +358,14 @@ VITE_API_URL=http://localhost:3001
 VITE_AUTH_MODE=mock
 ```
 
+**Startup logging** — when mock mode is active, the server logs on startup:
+
+```
+[MOCK MODE] Running with in-memory data. No database connected.
+[MOCK MODE] Auth: mock tokens (no JWT verification)
+[MOCK MODE] Reset endpoint: POST /v1/dev/reset-mock-data
+```
+
 **Server `dev` script** defaults to mock mode:
 
 ```json
@@ -358,7 +393,12 @@ VITE_AUTH_MODE=mock
 
 ## 6. RBAC Matrix in Mock Mode
 
-Each role sees different data. This is enforced by existing route-level RBAC middleware + repository scoping:
+Each role sees different data. Access control is enforced at two levels:
+
+- **Organization scoping** — enforced in repository queries (`findByOrganization` filters by `organizationId`). Repositories never return data from other orgs.
+- **Role-specific narrowing** (e.g., operator/reviewer assigned-only visibility) — enforced in service/route authorization logic, not in repositories. Routes pass the appropriate filters based on the authenticated user's role. This is existing behavior that mock mode inherits without changes.
+
+RBAC matrix:
 
 | Capability            | `system_admin` | `org_owner`      | `admin`                      | `operator`    | `reviewer`    |
 | --------------------- | -------------- | ---------------- | ---------------------------- | ------------- | ------------- |
@@ -371,6 +411,8 @@ Each role sees different data. This is enforced by existing route-level RBAC mid
 | Admin panel           | Full access    | No               | No                           | No            | No            |
 | Invite users          | Yes            | Yes              | Yes (operator/reviewer only) | No            | No            |
 | Billing page          | Yes            | Yes              | Yes                          | View only     | View only     |
+
+Note: This matrix mirrors the current RBAC policy as implemented in middleware and route guards. It is not a new policy — mock mode inherits the existing access rules.
 
 ---
 
@@ -388,6 +430,8 @@ Mock repositories handle errors consistently with real repos:
 | Cross-org access                          | Filtered out — Acme user never sees Beta data           |
 
 Services and routes handle `null` returns with appropriate 404 responses — this behavior is unchanged.
+
+**Audit log generation**: Route handlers that create audit log entries call `repos.auditLogs.create()` as part of their normal flow. In mock mode, these persist in the in-memory array alongside seed entries. No special handling is needed — it works automatically because mock repos support `create()`.
 
 ---
 
@@ -430,9 +474,11 @@ A shared test suite runs against both mock and Drizzle implementations to verify
 
 This is the strongest mechanism to prevent mock/real drift.
 
+Contract tests against mock repos run in all environments (no dependencies). Contract tests against Drizzle repos run only when `TEST_DATABASE_URL` is configured (CI and local-with-DB). The mock half serves as a fast-feedback loop; the Drizzle half validates parity in CI.
+
 ### Existing tests
 
-All 523+ existing tests must continue to pass unchanged.
+All existing tests must continue to pass unchanged.
 
 ### Integration smoke test
 
@@ -451,7 +497,7 @@ The spec is complete when:
 5. Clicking a project shows overview with dates and status
 6. Switching to "operator" role shows only assigned projects
 7. Switching to "reviewer" role shows read-only view
-8. Logging in as Acme org_owner shows only Acme's projects, not Beta's
+8. Logging in as Beta org_owner shows empty-state dashboard and zero projects (tenant isolation)
 9. Admin panel (system_admin) shows tenants, users, plans
 10. `[MOCK MODE]` indicator visible in header
 11. `POST /v1/dev/reset-mock-data` restores seed state
@@ -495,7 +541,7 @@ The spec is complete when:
 │                              │                               │
 │  ┌──────────────────────────────────────────────────────┐   │
 │  │  3. Route Handlers (UNCHANGED)                        │   │
-│  │     const projects = await c.var.repos.projects.find()│   │
+│  │     await c.var.repos.projects.findByOrganization(...)│   │
 │  └──────────────────────────────────────────────────────┘   │
 │                              │                               │
 │  ┌─────────────┐    ┌───────┴─────────┐                    │
@@ -531,6 +577,8 @@ The spec is complete when:
 
 **Maintenance cost**: When a new repository method is added to the contract interface, TypeScript will refuse to compile until the mock implementation is added. This is the desired behavior — it's a feature, not overhead.
 
+**Ownership**: The engineer adding or changing a repository method is responsible for updating both the Drizzle and mock implementations. This is enforced by the compiler — the build fails if either is out of sync.
+
 ---
 
 ## 14. Developer UX
@@ -542,8 +590,12 @@ The spec is complete when:
 
 ---
 
-## 15. Open Questions
+## 15. Resolved Decisions
 
-1. Should mock repos support transactions (`withTransaction` helper)? Proposal: no — just execute the callback directly without isolation.
-2. Should Hebrew mock data exist for RTL layout testing? Proposal: not initially — can be added if RTL bugs surface.
-3. Should the role switcher be visible in staging demos? Proposal: no — dev mode only (`import.meta.env.DEV`).
+1. **Transactions**: Mock repos do not support real transaction isolation. `withTransaction(cb)` simply executes `cb(repos)` directly with no rollback. This is acceptable for local dev.
+2. **Schema change flow**: Schema changes must flow through `@revbrain/contract` types first. Both Drizzle and mock implementations derive from the contract. Updating the Drizzle schema without updating the contract types will cause a build failure in mock repos — this is the desired enforcement mechanism.
+
+## 16. Open Questions
+
+1. Should Hebrew mock data exist for RTL layout testing? Proposal: not initially — can be added if RTL bugs surface.
+2. Should the role switcher be visible in staging demos? Proposal: no — dev mode only (`import.meta.env.DEV`).
