@@ -1,6 +1,0 @@
-{
-  "security": ["No Hardcoded Secrets", "SQL Injection Safe", "Auth on Routes"],
-  "typescript": ["No 'any' types", "Strict Null Checks"],
-  "testing": ["Tests Exist", "Tests Pass", "Coverage > 80%"],
-  "ux": ["Accessibility Score 100", "No layout shift"]
-}
