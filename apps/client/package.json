@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:real": "VITE_AUTH_MODE=jwt vite",
     "dev:remote": "vite --mode dev",
     "build": "NODE_OPTIONS='--max-old-space-size=8192' tsc -b && vite build",
     "build:dev": "NODE_OPTIONS='--max-old-space-size=8192' tsc -b && vite build --mode dev",
