@@ -313,7 +313,7 @@ describe('LeadService', () => {
 
       const result = await service.convertLead(
         mockLead.id,
-        { orgType: 'contractor', planId: 'plan-123' },
+        { planId: 'plan-123' },
         'user-123'
       );
 
@@ -326,7 +326,7 @@ describe('LeadService', () => {
       await expect(
         service.convertLead(
           'non-existent',
-          { orgType: 'contractor', planId: 'plan-123' },
+          { planId: 'plan-123' },
           'user-123'
         )
       ).rejects.toThrow('Lead not found');
@@ -337,7 +337,7 @@ describe('LeadService', () => {
       mockFindFirst.mockResolvedValueOnce(closedLead);
 
       await expect(
-        service.convertLead(mockLead.id, { orgType: 'contractor', planId: 'plan-123' }, 'user-123')
+        service.convertLead(mockLead.id, { planId: 'plan-123' }, 'user-123')
       ).rejects.toThrow('Lead has already been closed');
     });
   });

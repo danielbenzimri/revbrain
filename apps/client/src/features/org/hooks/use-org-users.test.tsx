@@ -35,7 +35,7 @@ const mockUsers: OrgUser[] = [
     id: 'user-1',
     email: 'admin@company.com',
     fullName: 'Admin User',
-    role: 'contractor_pm',
+    role: 'admin',
     isOrgAdmin: true,
     isActive: true,
     createdAt: '2026-01-01T00:00:00Z',

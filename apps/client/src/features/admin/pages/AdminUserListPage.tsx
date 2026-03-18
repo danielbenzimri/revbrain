@@ -17,16 +17,16 @@ import { useAdminUsers, useUpdateAdminUser, useDeleteAdminUser, type AdminUser }
 
 const ALL_ROLES = [
   'system_admin',
-  'contractor_ceo',
-  'contractor_pm',
-  'execution_engineer',
-  'quantity_surveyor',
-  'quality_controller',
-  'client_owner',
-  'client_pm',
-  'inspector',
-  'quality_assurance',
-  'accounts_controller',
+  'org_owner',
+  'admin',
+  'operator',
+  'operator',
+  'reviewer',
+  'org_owner',
+  'admin',
+  'reviewer',
+  'reviewer',
+  'reviewer',
 ] as const;
 
 export default function AdminUserListPage() {

@@ -24,7 +24,7 @@ import { cn } from '@/lib/utils';
 // Role display configuration
 const ROLE_CONFIG: Record<
   string,
-  { label: string; labelHe: string; color: string; group: 'contractor' | 'client' | 'admin' }
+  { label: string; labelHe: string; color: string; group: 'management' | 'team' | 'admin' }
 > = {
   system_admin: {
     label: 'System Admin',
@@ -32,65 +32,29 @@ const ROLE_CONFIG: Record<
     color: 'bg-purple-100 text-purple-800',
     group: 'admin',
   },
-  contractor_ceo: {
-    label: 'CEO / Owner',
-    labelHe: 'מנכ"ל / בעלים',
+  org_owner: {
+    label: 'Organization Owner',
+    labelHe: 'בעלי הארגון',
     color: 'bg-blue-100 text-blue-800',
-    group: 'contractor',
+    group: 'management',
   },
-  contractor_pm: {
-    label: 'Project Manager',
-    labelHe: 'מנהל פרויקט',
-    color: 'bg-blue-100 text-blue-700',
-    group: 'contractor',
-  },
-  execution_engineer: {
-    label: 'Execution Engineer',
-    labelHe: 'מהנדס ביצוע',
+  admin: {
+    label: 'Admin',
+    labelHe: 'מנהל',
     color: 'bg-sky-100 text-sky-800',
-    group: 'contractor',
+    group: 'management',
   },
-  quantity_surveyor: {
-    label: 'Quantity Surveyor',
-    labelHe: 'מודד כמויות',
-    color: 'bg-cyan-100 text-cyan-800',
-    group: 'contractor',
-  },
-  quality_controller: {
-    label: 'Quality Controller',
-    labelHe: 'בקר איכות',
+  operator: {
+    label: 'Operator',
+    labelHe: 'מפעיל',
     color: 'bg-teal-100 text-teal-800',
-    group: 'contractor',
+    group: 'team',
   },
-  client_owner: {
-    label: 'Client Owner',
-    labelHe: 'בעלים (מזמין)',
+  reviewer: {
+    label: 'Reviewer',
+    labelHe: 'סוקר',
     color: 'bg-green-100 text-green-800',
-    group: 'client',
-  },
-  client_pm: {
-    label: 'Client PM',
-    labelHe: 'מנהל פרויקט (מזמין)',
-    color: 'bg-green-100 text-green-700',
-    group: 'client',
-  },
-  inspector: {
-    label: 'Inspector',
-    labelHe: 'מפקח',
-    color: 'bg-emerald-100 text-emerald-800',
-    group: 'client',
-  },
-  quality_assurance: {
-    label: 'Quality Assurance',
-    labelHe: 'אבטחת איכות',
-    color: 'bg-lime-100 text-lime-800',
-    group: 'client',
-  },
-  accounts_controller: {
-    label: 'Accounts Controller',
-    labelHe: 'מבקר חשבונות',
-    color: 'bg-amber-100 text-amber-800',
-    group: 'client',
+    group: 'team',
   },
 };
 
@@ -178,8 +142,8 @@ export default function UsersPage() {
   const { data: users, isLoading, error } = useOrgUsers();
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
-    contractor: true,
-    client: true,
+    management: true,
+    team: true,
     admin: true,
   });
 
@@ -195,7 +159,7 @@ export default function UsersPage() {
   const groupedUsers = filteredUsers.reduce(
     (acc, user) => {
       const config = ROLE_CONFIG[user.role];
-      const group = config?.group || 'contractor';
+      const group = config?.group || 'team';
       if (!acc[group]) acc[group] = [];
       acc[group].push(user);
       return acc;
@@ -229,8 +193,8 @@ export default function UsersPage() {
 
   const groupLabels: Record<string, { en: string; he: string }> = {
     admin: { en: 'Administrators', he: 'מנהלי מערכת' },
-    contractor: { en: 'Contractor Team', he: 'צוות הקבלן' },
-    client: { en: 'Client Team', he: 'צוות המזמין' },
+    management: { en: 'Management', he: 'הנהלה' },
+    team: { en: 'Team Members', he: 'חברי צוות' },
   };
 
   return (
@@ -287,19 +251,19 @@ export default function UsersPage() {
         </div>
         <div className="bg-white rounded-lg border border-slate-200 p-4">
           <p className="text-sm text-slate-500">
-            {lang === 'he' ? 'צוות קבלן' : 'Contractor Team'}
+            {lang === 'he' ? 'הנהלה' : 'Management'}
           </p>
-          <p className="text-2xl font-bold text-blue-600">{groupedUsers.contractor?.length || 0}</p>
+          <p className="text-2xl font-bold text-blue-600">{groupedUsers.management?.length || 0}</p>
         </div>
         <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <p className="text-sm text-slate-500">{lang === 'he' ? 'צוות מזמין' : 'Client Team'}</p>
-          <p className="text-2xl font-bold text-green-600">{groupedUsers.client?.length || 0}</p>
+          <p className="text-sm text-slate-500">{lang === 'he' ? 'חברי צוות' : 'Team Members'}</p>
+          <p className="text-2xl font-bold text-green-600">{groupedUsers.team?.length || 0}</p>
         </div>
       </div>
 
       {/* User groups */}
       <div className="space-y-4">
-        {(['admin', 'contractor', 'client'] as const).map((group) => {
+        {(['admin', 'management', 'team'] as const).map((group) => {
           const groupUsers = groupedUsers[group] || [];
           if (groupUsers.length === 0) return null;
 

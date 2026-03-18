@@ -33,16 +33,16 @@ import type { AdminUser } from '../hooks/use-admin-users';
 
 const ALL_ROLES = [
   'system_admin',
-  'contractor_ceo',
-  'contractor_pm',
-  'execution_engineer',
-  'quantity_surveyor',
-  'quality_controller',
-  'client_owner',
-  'client_pm',
-  'inspector',
-  'quality_assurance',
-  'accounts_controller',
+  'org_owner',
+  'admin',
+  'operator',
+  'operator',
+  'reviewer',
+  'org_owner',
+  'admin',
+  'reviewer',
+  'reviewer',
+  'reviewer',
 ] as const;
 
 const editUserSchema = z.object({
@@ -84,7 +84,7 @@ export function UserDetailDrawer({
     resolver: zodResolver(editUserSchema),
     defaultValues: {
       fullName: '',
-      role: 'contractor_ceo',
+      role: 'org_owner',
       jobTitle: '',
       phoneNumber: '',
       mobileNumber: '',

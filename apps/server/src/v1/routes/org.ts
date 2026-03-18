@@ -29,7 +29,7 @@ orgRouter.openapi(
     description: 'Invites a new user to the organization. Requires org admin role.',
     middleware: [
       authMiddleware,
-      requireRole('contractor_ceo', 'client_owner', 'system_admin'),
+      requireRole('org_owner', 'org_owner', 'system_admin'),
       requireUserCapacity(),
       inviteLimiter,
     ] as any,
@@ -145,7 +145,7 @@ orgRouter.openapi(
     description: 'Resends invitation email to a user who has not yet activated their account.',
     middleware: [
       authMiddleware,
-      requireRole('contractor_ceo', 'client_owner'),
+      requireRole('org_owner', 'org_owner'),
       inviteLimiter,
     ] as any,
     request: {

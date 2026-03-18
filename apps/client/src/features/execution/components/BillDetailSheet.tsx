@@ -105,7 +105,7 @@ export function BillDetailSheet({
   const [showRejectForm, setShowRejectForm] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [signaturePadOpen, setSignaturePadOpen] = useState(false);
-  const [signatureType, setSignatureType] = useState<'contractor' | 'inspector'>('contractor');
+  const [signatureType, setSignatureType] = useState<'contractor' | 'reviewer'>('contractor');
 
   const { data: bill, isLoading, refetch } = useBill(billId || undefined);
 
@@ -167,7 +167,7 @@ export function BillDetailSheet({
 
   // Open signature pad for inspector (before approve)
   const handleRequestInspectorSignature = () => {
-    setSignatureType('inspector');
+    setSignatureType('reviewer');
     setSignaturePadOpen(true);
   };
 

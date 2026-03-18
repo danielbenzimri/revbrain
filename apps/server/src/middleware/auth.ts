@@ -180,7 +180,7 @@ export const authMiddleware = createMiddleware<AppEnv>(async (c, next) => {
         .onConflictDoNothing({ target: organizations.id });
 
       // Use UPSERT pattern to prevent race conditions between concurrent requests
-      // NOTE: Creating as contractor_pm (not system_admin) to minimize blast radius
+      // NOTE: Creating as admin (not system_admin) to minimize blast radius
       const [upsertedUser] = await db
         .insert(users)
         .values({
@@ -188,7 +188,7 @@ export const authMiddleware = createMiddleware<AppEnv>(async (c, next) => {
           supabaseUserId: userId,
           email: mockEmail,
           fullName: 'Mock Developer',
-          role: 'contractor_pm', // Safe default role, not admin
+          role: 'admin', // Safe default role, not admin
           isActive: true,
           isOrgAdmin: true,
           organizationId: mockOrgId,
@@ -402,7 +402,7 @@ export const authMiddlewareAllowInactive = createMiddleware<AppEnv>(async (c, ne
             organizationId: meta.organization_id,
             email: email,
             fullName: meta.full_name,
-            role: meta.role || 'contractor_pm',
+            role: meta.role || 'admin',
             isActive: false,
             invitedBy: meta.invited_by || null,
             isOrgAdmin: false,

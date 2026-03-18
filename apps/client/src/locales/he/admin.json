@@ -92,45 +92,21 @@
         "label": "מנהל מערכת",
         "description": "גישה מלאה לפלטפורמה"
       },
-      "contractor_ceo": {
-        "label": "מנכ\"ל קבלן",
-        "description": "ניהול ארגון קבלן"
+      "org_owner": {
+        "label": "בעל הארגון",
+        "description": "בעלות, חיוב וגישה מלאה"
       },
-      "contractor_pm": {
-        "label": "מנהל פרויקט קבלן",
-        "description": "ניהול פרויקטים"
+      "admin": {
+        "label": "מנהל",
+        "description": "גישה מלאה לכל הפרויקטים"
       },
-      "execution_engineer": {
-        "label": "מהנדס ביצוע",
-        "description": "ביצוע באתר"
+      "operator": {
+        "label": "מפעיל",
+        "description": "עבודת מיגרציה בפרויקטים מוקצים"
       },
-      "quantity_surveyor": {
-        "label": "מודד כמויות",
-        "description": "מדידות וכמויות"
-      },
-      "quality_controller": {
-        "label": "בקר איכות",
-        "description": "בקרת איכות"
-      },
-      "client_owner": {
-        "label": "בעל הלקוח",
-        "description": "ניהול ארגון לקוח"
-      },
-      "client_pm": {
-        "label": "מנהל פרויקט לקוח",
-        "description": "ניהול פרויקט לקוח"
-      },
-      "inspector": {
-        "label": "מפקח",
-        "description": "פיקוח באתר"
-      },
-      "quality_assurance": {
-        "label": "הבטחת איכות",
-        "description": "תקני איכות"
-      },
-      "accounts_controller": {
-        "label": "בקר חשבונות",
-        "description": "פיקוח פיננסי"
+      "reviewer": {
+        "label": "סוקר",
+        "description": "צפייה בלבד עם הערות"
       }
     },
     "userType": {

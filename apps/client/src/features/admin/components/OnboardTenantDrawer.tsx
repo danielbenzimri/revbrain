@@ -21,7 +21,6 @@ export function OnboardTenantDrawer({ open, onOpenChange }: OnboardTenantDrawerP
 
   // Form state - Company Details
   const [orgName, setOrgName] = useState('');
-  const [orgType, setOrgType] = useState<'contractor' | 'client'>('contractor');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
   const [description, setDescription] = useState('');
@@ -38,8 +37,7 @@ export function OnboardTenantDrawer({ open, onOpenChange }: OnboardTenantDrawerP
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  const adminRoleKey =
-    orgType === 'contractor' ? 'admin.onboard.contractorCeo' : 'admin.onboard.clientOwner';
+  const adminRoleKey = 'admin.onboard.orgOwner';
 
   // Auto-select default plan when plans load (React-recommended pattern)
   if (plans.length > 0 && !selectedPlanId && !hasAutoSelected) {
@@ -60,14 +58,13 @@ export function OnboardTenantDrawer({ open, onOpenChange }: OnboardTenantDrawerP
       await onboardMutation.mutateAsync({
         organization: {
           name: orgName,
-          type: orgType,
           seatLimit: selectedPlan?.limits.maxUsers || 5,
           planId: selectedPlanId,
         },
         admin: {
           email: adminEmail,
           fullName: adminName,
-          role: orgType === 'contractor' ? 'contractor_ceo' : 'client_owner',
+          role: 'org_owner',
         },
       });
 
@@ -81,7 +78,6 @@ export function OnboardTenantDrawer({ open, onOpenChange }: OnboardTenantDrawerP
 
   const resetForm = () => {
     setOrgName('');
-    setOrgType('contractor');
     setPhone('');
     setAddress('');
     setDescription('');
@@ -184,47 +180,6 @@ export function OnboardTenantDrawer({ open, onOpenChange }: OnboardTenantDrawerP
                       required
                       className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm"
                     />
-                  </div>
-
-                  {/* Org Type */}
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      {t('admin.onboard.orgType')} *
-                    </label>
-                    <div className="grid grid-cols-2 gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setOrgType('client')}
-                        className={`p-3 border-2 rounded-xl text-start transition-all ${
-                          orgType === 'client'
-                            ? 'border-emerald-500 bg-emerald-50'
-                            : 'border-slate-200 hover:border-slate-300'
-                        }`}
-                      >
-                        <p className="font-medium text-slate-900 text-sm">
-                          {t('admin.onboard.client')}
-                        </p>
-                        <p className="text-xs text-slate-500 mt-0.5">
-                          {t('admin.onboard.clientDesc')}
-                        </p>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setOrgType('contractor')}
-                        className={`p-3 border-2 rounded-xl text-start transition-all ${
-                          orgType === 'contractor'
-                            ? 'border-emerald-500 bg-emerald-50'
-                            : 'border-slate-200 hover:border-slate-300'
-                        }`}
-                      >
-                        <p className="font-medium text-slate-900 text-sm">
-                          {t('admin.onboard.contractor')}
-                        </p>
-                        <p className="text-xs text-slate-500 mt-0.5">
-                          {t('admin.onboard.contractorDesc')}
-                        </p>
-                      </button>
-                    </div>
                   </div>
 
                   {/* Phone */}

@@ -106,9 +106,9 @@ const ClientBillingView: React.FC<ClientBillingViewProps> = ({
 
   // Check if current user is an inspector (can approve quantities)
   const isInspector =
-    currentUser?.role === 'inspector' ||
-    currentUser?.role === 'client_owner' ||
-    currentUser?.role === 'client_pm' ||
+    currentUser?.role === 'reviewer' ||
+    currentUser?.role === 'org_owner' ||
+    currentUser?.role === 'admin' ||
     currentUser?.role === 'system_admin';
 
   const formatCurrency = (val: number) =>

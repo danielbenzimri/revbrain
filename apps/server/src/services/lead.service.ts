@@ -385,7 +385,6 @@ export class LeadService {
   async convertLead(
     leadId: string,
     input: {
-      orgType: 'contractor' | 'client';
       planId: string;
     },
     actorId: string
@@ -407,7 +406,7 @@ export class LeadService {
     await this.addActivity(leadId, {
       activityType: 'converted',
       title: 'Lead converted to organization',
-      metadata: { orgType: input.orgType, planId: input.planId },
+      metadata: { planId: input.planId },
       createdBy: actorId,
     });
 
@@ -420,7 +419,6 @@ export class LeadService {
         leadId,
         contactEmail: lead.contactEmail,
         companyName: lead.companyName || null,
-        orgType: input.orgType,
         planId: input.planId,
       },
     });

@@ -144,7 +144,7 @@ describe('CronService', () => {
         email: 'test@example.com',
         fullName: 'Test User',
         organizationId: 'org-1',
-        role: 'contractor_ceo',
+        role: 'org_owner',
       });
 
       const result = await cronService.runAllJobs();
@@ -181,7 +181,7 @@ describe('CronService', () => {
         email: 'test@example.com',
         fullName: 'Test User',
         organizationId: 'org-1',
-        role: 'contractor_ceo',
+        role: 'org_owner',
       });
 
       const result = await cronService.processTrialEndingWarnings();
@@ -260,7 +260,7 @@ describe('CronService', () => {
         email: 'test@example.com',
         fullName: 'Test User',
         organizationId: 'org-1',
-        role: 'contractor_ceo',
+        role: 'org_owner',
       });
 
       // Make email fail
@@ -299,7 +299,7 @@ describe('CronService', () => {
         email: 'test@example.com',
         fullName: 'Test User',
         organizationId: 'org-1',
-        role: 'contractor_ceo',
+        role: 'org_owner',
       });
 
       await cronService.processTrialEndingWarnings();
@@ -339,7 +339,7 @@ describe('CronService', () => {
         email: 'test@example.com',
         fullName: 'Test User',
         organizationId: 'org-1',
-        role: 'contractor_ceo',
+        role: 'org_owner',
       });
 
       const result = await cronService.processTrialEndedNotifications();
@@ -401,7 +401,7 @@ describe('CronService', () => {
         email: 'test@example.com',
         fullName: 'Test User',
         organizationId: 'org-1',
-        role: 'client_owner',
+        role: 'org_owner',
       });
 
       const result = await cronService.processTrialEndedNotifications();
@@ -439,7 +439,7 @@ describe('CronService', () => {
         email: 'admin@example.com',
         fullName: 'Admin User',
         organizationId: 'org-1',
-        role: 'contractor_ceo',
+        role: 'org_owner',
       });
 
       await cronService.processTrialEndingWarnings();

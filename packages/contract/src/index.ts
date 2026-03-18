@@ -61,62 +61,45 @@ export const ErrorCodes = {
 // ============================================================================
 
 /**
- * Organization Types
+ * User Roles
+ *
+ * - system_admin: Platform super admin (god mode)
+ * - org_owner: Tenant owner, billing, full access
+ * - admin: Full operational access, all projects
+ * - operator: Does migration work on assigned projects
+ * - reviewer: View-only + remarks on assigned projects
  */
-export type OrganizationType = 'contractor' | 'client';
-
-/**
- * Role Groups
- */
-export const CONTRACTOR_ROLES = [
-  'contractor_ceo',
-  'contractor_pm',
-  'execution_engineer',
-  'quantity_surveyor',
-  'quality_controller',
+export const ALL_ROLES = [
+  'system_admin',
+  'org_owner',
+  'admin',
+  'operator',
+  'reviewer',
 ] as const;
 
-export const CLIENT_ROLES = [
-  'client_owner',
-  'client_pm',
-  'inspector',
-  'quality_assurance',
-  'accounts_controller',
-] as const;
+export type UserRole = (typeof ALL_ROLES)[number];
 
-export const SYSTEM_ROLES = ['system_admin'] as const;
+/** Roles that can manage the organization (invite users, manage settings) */
+export const ORG_ADMIN_ROLES: UserRole[] = ['org_owner', 'admin'];
 
-export type ContractorRole = (typeof CONTRACTOR_ROLES)[number];
-export type ClientRole = (typeof CLIENT_ROLES)[number];
-export type SystemRole = (typeof SYSTEM_ROLES)[number];
-export type UserRole = ContractorRole | ClientRole | SystemRole;
+/** Roles scoped to specific projects (need project_members assignment) */
+export const PROJECT_SCOPED_ROLES: UserRole[] = ['operator', 'reviewer'];
+
+/** Roles with org-wide access (see all projects) */
+export const ORG_WIDE_ROLES: UserRole[] = ['org_owner', 'admin'];
 
 /**
- * Org admin roles (can invite users)
- */
-export const ORG_ADMIN_ROLES: UserRole[] = ['contractor_ceo', 'client_owner'];
-
-/**
- * Get roles available for an organization type
- */
-export function getRolesForOrgType(type: OrganizationType): UserRole[] {
-  return type === 'contractor' ? [...CONTRACTOR_ROLES] : [...CLIENT_ROLES];
-}
-
-/**
- * Get organization type for a role
- */
-export function getOrgTypeForRole(role: UserRole): OrganizationType | null {
-  if (CONTRACTOR_ROLES.includes(role as ContractorRole)) return 'contractor';
-  if (CLIENT_ROLES.includes(role as ClientRole)) return 'client';
-  return null;
-}
-
-/**
- * Check if role is an org admin role
+ * Check if role is an org admin role (can invite users, manage org)
  */
 export function isOrgAdminRole(role: UserRole): boolean {
   return ORG_ADMIN_ROLES.includes(role);
+}
+
+/**
+ * Check if role is project-scoped (needs explicit project assignment)
+ */
+export function isProjectScopedRole(role: UserRole): boolean {
+  return PROJECT_SCOPED_ROLES.includes(role);
 }
 
 /**
@@ -139,16 +122,10 @@ export const passwordSchema = z
 
 export const userRoleSchema = z.enum([
   'system_admin',
-  'contractor_ceo',
-  'contractor_pm',
-  'execution_engineer',
-  'quantity_surveyor',
-  'quality_controller',
-  'client_owner',
-  'client_pm',
-  'inspector',
-  'quality_assurance',
-  'accounts_controller',
+  'org_owner',
+  'admin',
+  'operator',
+  'reviewer',
 ]);
 
 export const fullNameSchema = z
@@ -159,22 +136,18 @@ export const fullNameSchema = z
 
 export const uuidSchema = z.string().uuid('Invalid ID format');
 
-export const orgTypeSchema = z.enum(['contractor', 'client']);
-
 /**
  * Request Schemas
  */
 export const onboardOrganizationSchema = z.object({
   organization: z.object({
     name: z.string().min(2).max(255),
-    type: orgTypeSchema,
     seatLimit: z.number().int().min(1).max(1000).default(5),
     planId: uuidSchema.optional(),
   }),
   admin: z.object({
     email: emailSchema,
     fullName: fullNameSchema,
-    role: z.enum(['contractor_ceo', 'client_owner']),
   }),
 });
 

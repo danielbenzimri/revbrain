@@ -134,7 +134,7 @@ const router = createBrowserRouter([
           {
             path: 'invite',
             element: (
-              <ProtectedRoute requiredRoles={['contractor_ceo', 'client_owner']}>
+              <ProtectedRoute requiredRoles={['org_owner', 'admin']}>
                 <Suspense fallback={<PageSkeleton />}>
                   <InviteUserPage />
                 </Suspense>

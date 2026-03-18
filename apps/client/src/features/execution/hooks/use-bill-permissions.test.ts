@@ -5,16 +5,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { useBillPermissions } from './use-bill-permissions';
 import * as authStore from '@/stores/auth-store';
-import * as authTypes from '@/types/auth';
 
 // Mock the auth store
 vi.mock('@/stores/auth-store', () => ({
   useUser: vi.fn(),
-}));
-
-// Mock the getRoleGroup function
-vi.mock('@/types/auth', () => ({
-  getRoleGroup: vi.fn(),
 }));
 
 describe('useBillPermissions', () => {
@@ -37,14 +31,13 @@ describe('useBillPermissions', () => {
     });
   });
 
-  describe('when user is a contractor', () => {
+  describe('when user is an operator role (org_owner/admin/operator)', () => {
     beforeEach(() => {
       vi.mocked(authStore.useUser).mockReturnValue({
         id: 'user-1',
-        role: 'contractor_pm',
-        email: 'contractor@test.com',
+        role: 'admin',
+        email: 'admin@test.com',
       } as ReturnType<typeof authStore.useUser>);
-      vi.mocked(authTypes.getRoleGroup).mockReturnValue('contractor');
     });
 
     it('should identify as contractor', () => {
@@ -107,14 +100,13 @@ describe('useBillPermissions', () => {
     });
   });
 
-  describe('when user is an inspector/client', () => {
+  describe('when user is a reviewer', () => {
     beforeEach(() => {
       vi.mocked(authStore.useUser).mockReturnValue({
         id: 'user-2',
-        role: 'inspector',
-        email: 'inspector@test.com',
+        role: 'reviewer',
+        email: 'reviewer@test.com',
       } as ReturnType<typeof authStore.useUser>);
-      vi.mocked(authTypes.getRoleGroup).mockReturnValue('client');
     });
 
     it('should identify as inspector', () => {
@@ -149,7 +141,7 @@ describe('useBillPermissions', () => {
       });
     });
 
-    it('should never allow contractor actions', () => {
+    it('should never allow operator actions', () => {
       const { result } = renderHook(() => useBillPermissions('draft'));
 
       expect(result.current.canCreate).toBe(false);
@@ -166,7 +158,7 @@ describe('useBillPermissions', () => {
     });
   });
 
-  describe('with unknown role group', () => {
+  describe('with unknown role', () => {
     it('should return no permissions', () => {
       vi.mocked(authStore.useUser).mockReturnValue({
         id: 'user-3',
@@ -174,7 +166,6 @@ describe('useBillPermissions', () => {
         role: 'unknown_role',
         email: 'unknown@test.com',
       } as unknown as ReturnType<typeof authStore.useUser>);
-      vi.mocked(authTypes.getRoleGroup).mockReturnValue(null);
 
       const { result } = renderHook(() => useBillPermissions('draft'));
 
@@ -189,10 +180,9 @@ describe('useBillPermissions', () => {
     it('should still return role identification', () => {
       vi.mocked(authStore.useUser).mockReturnValue({
         id: 'user-1',
-        role: 'contractor_pm',
-        email: 'contractor@test.com',
+        role: 'admin',
+        email: 'admin@test.com',
       } as ReturnType<typeof authStore.useUser>);
-      vi.mocked(authTypes.getRoleGroup).mockReturnValue('contractor');
 
       const { result } = renderHook(() => useBillPermissions(undefined));
 

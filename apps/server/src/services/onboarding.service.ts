@@ -10,14 +10,12 @@ import { withTransaction } from '../repositories/drizzle/index.ts';
 export interface OnboardOrganizationInput {
   organization: {
     name: string;
-    type: 'contractor' | 'client';
     seatLimit: number;
     planId?: string | null;
   };
   admin: {
     email: string;
     fullName: string;
-    role: string;
   };
 }
 
@@ -47,16 +45,6 @@ export class OnboardingService {
   }> {
     const { organization: orgData, admin: adminData } = input;
 
-    // Validate role matches org type
-    const expectedRole = orgData.type === 'contractor' ? 'contractor_ceo' : 'client_owner';
-    if (adminData.role !== expectedRole) {
-      throw new AppError(
-        ErrorCodes.VALIDATION_ERROR,
-        `For ${orgData.type} organizations, the first admin must have role ${expectedRole}`,
-        400
-      );
-    }
-
     // Check email uniqueness
     const existingUser = await this.repos.users.findByEmail(adminData.email);
     if (existingUser) {
@@ -73,7 +61,7 @@ export class OnboardingService {
       redirectTo: `${frontendUrl}/set-password`,
       metadata: {
         fullName: adminData.fullName,
-        role: adminData.role,
+        role: 'org_owner',
         organizationId: '', // Will be set once org is created
         organizationName: orgData.name,
         invitedBy: ctx.actorId,
@@ -88,7 +76,6 @@ export class OnboardingService {
         const org = await txRepos.organizations.create({
           name: orgData.name,
           slug,
-          type: orgData.type,
           seatLimit: orgData.seatLimit,
           createdBy: ctx.actorId,
           planId: orgData.planId ?? null,
@@ -100,7 +87,7 @@ export class OnboardingService {
           organizationId: org.id,
           email: adminData.email,
           fullName: adminData.fullName,
-          role: adminData.role,
+          role: 'org_owner',
           isOrgAdmin: true,
           isActive: false,
           invitedBy: ctx.actorId,
@@ -117,7 +104,6 @@ export class OnboardingService {
           action: 'org.created',
           metadata: {
             orgName: org.name,
-            orgType: org.type,
             adminEmail: adminData.email,
           },
           ipAddress: ctx.ipAddress,

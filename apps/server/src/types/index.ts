@@ -22,7 +22,7 @@ export interface SupabaseJWTPayload {
   // Custom data set during invite
   user_metadata: {
     full_name?: string;
-    role?: string; // YOUR app role (contractor_pm, etc.)
+    role?: string; // YOUR app role (operator, admin, etc.)
     invited_by?: string;
     invited_at?: string;
     organization_id?: string;

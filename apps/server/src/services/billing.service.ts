@@ -939,7 +939,7 @@ export class BillingService {
     if (!org) return null;
 
     // Find the primary billing contact (CEO or first admin)
-    const adminRoles = ['contractor_ceo', 'system_admin'];
+    const adminRoles = ['org_owner', 'system_admin'];
     const adminUser = await db.query.users.findFirst({
       where: and(eq(users.organizationId, orgId), inArray(users.role, adminRoles)),
     });

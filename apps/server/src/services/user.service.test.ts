@@ -43,7 +43,7 @@ vi.mock('../repositories/drizzle/index.ts', () => ({
           id: 'new-user-id',
           email: 'test@example.com',
           fullName: 'Test User',
-          role: 'contractor_pm',
+          role: 'admin',
           organizationId: 'org-123',
           isActive: false,
         }),
@@ -71,7 +71,7 @@ describe('UserService', () => {
     organizationId: 'org-123',
     email: 'test@example.com',
     fullName: 'Test User',
-    role: 'contractor_pm',
+    role: 'admin',
     isOrgAdmin: false,
     isActive: true,
     invitedBy: null,
@@ -150,7 +150,7 @@ describe('UserService', () => {
     const inviteInput = {
       email: 'newuser@example.com',
       fullName: 'New User',
-      role: 'contractor_pm',
+      role: 'admin',
       organizationId: 'org-123',
     };
 
@@ -163,7 +163,7 @@ describe('UserService', () => {
 
       const result = await userService.inviteUser(
         inviteInput,
-        'contractor_ceo',
+        'org_owner',
         mockOrg,
         mockContext
       );
@@ -175,16 +175,8 @@ describe('UserService', () => {
 
     it('should throw CANNOT_MANAGE_ROLE when actor cannot invite role', async () => {
       await expect(
-        userService.inviteUser(inviteInput, 'contractor_pm', mockOrg, mockContext)
-      ).rejects.toThrow('You cannot invite users with role contractor_pm');
-    });
-
-    it('should throw INVALID_ORG_TYPE when role does not match org type', async () => {
-      const clientOrg = { ...mockOrg, type: 'client' };
-
-      await expect(
-        userService.inviteUser(inviteInput, 'contractor_ceo', clientOrg, mockContext)
-      ).rejects.toThrow('Role contractor_pm is not valid for client organizations');
+        userService.inviteUser(inviteInput, 'admin', mockOrg, mockContext)
+      ).rejects.toThrow('You cannot invite users with role admin');
     });
 
     it('should throw SEAT_LIMIT_EXCEEDED when no seats available', async () => {
@@ -192,7 +184,7 @@ describe('UserService', () => {
       const fullOrg = { ...mockOrg, seatUsed: 12 };
 
       await expect(
-        userService.inviteUser(inviteInput, 'contractor_ceo', fullOrg, mockContext)
+        userService.inviteUser(inviteInput, 'org_owner', fullOrg, mockContext)
       ).rejects.toThrow('Seat limit reached');
     });
 
@@ -200,7 +192,7 @@ describe('UserService', () => {
       (mockRepos.users.findByEmail as ReturnType<typeof vi.fn>).mockResolvedValue(mockUser);
 
       await expect(
-        userService.inviteUser(inviteInput, 'contractor_ceo', mockOrg, mockContext)
+        userService.inviteUser(inviteInput, 'org_owner', mockOrg, mockContext)
       ).rejects.toThrow('A user with this email already exists');
     });
 
@@ -209,7 +201,7 @@ describe('UserService', () => {
       (mockAuthService.emailExists as ReturnType<typeof vi.fn>).mockResolvedValue(true);
 
       await expect(
-        userService.inviteUser(inviteInput, 'contractor_ceo', mockOrg, mockContext)
+        userService.inviteUser(inviteInput, 'org_owner', mockOrg, mockContext)
       ).rejects.toThrow('A user with this email already exists');
     });
   });

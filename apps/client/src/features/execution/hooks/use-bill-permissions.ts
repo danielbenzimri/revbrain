@@ -3,18 +3,17 @@
  *
  * Determines what actions a user can perform on bills based on their role:
  *
- * Contractor Roles (contractor group):
+ * Org roles (org_owner, admin, operator):
  * - Can create, edit, delete draft bills
  * - Can sign and submit bills
  * - Cannot approve/reject
  *
- * Client Roles (client group - inspector, client_pm, etc.):
+ * Reviewer role:
  * - Cannot create/edit bills
  * - Can start review, approve (with signature), reject
  * - Read-only view of items and measurements
  */
 import { useUser } from '@/stores/auth-store';
-import { getRoleGroup } from '@/types/auth';
 import type { BillStatus } from './use-execution-bills';
 
 export interface BillPermissions {
@@ -43,15 +42,18 @@ export interface BillPermissions {
   canDeleteMeasurements: boolean;
 }
 
+// Roles that can create/edit/submit bills
+const OPERATOR_ROLES = ['org_owner', 'admin', 'operator'];
+
 /**
  * Get permissions for a specific bill based on user role and bill status
  */
 export function useBillPermissions(status?: BillStatus): BillPermissions {
   const user = useUser();
-  const group = user?.role ? getRoleGroup(user.role) : null;
+  const role = user?.role;
 
-  const isContractor = group === 'contractor';
-  const isInspector = group === 'client';
+  const isContractor = !!role && OPERATOR_ROLES.includes(role);
+  const isInspector = role === 'reviewer';
 
   // Default no-permission state
   const noPermissions: BillPermissions = {
@@ -73,11 +75,11 @@ export function useBillPermissions(status?: BillStatus): BillPermissions {
     canDeleteMeasurements: false,
   };
 
-  if (!user || !group) {
+  if (!user || !role) {
     return noPermissions;
   }
 
-  // Contractor permissions
+  // Operator permissions (org_owner, admin, operator)
   if (isContractor) {
     const isDraft = status === 'draft';
     const isRejected = status === 'rejected';
@@ -108,7 +110,7 @@ export function useBillPermissions(status?: BillStatus): BillPermissions {
     };
   }
 
-  // Inspector/Client permissions
+  // Reviewer permissions
   if (isInspector) {
     const isSubmitted = status === 'submitted';
     const isUnderReview = status === 'under_review';

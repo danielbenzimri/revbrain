@@ -41,7 +41,7 @@ const mockProfile = {
   bio: null,
   avatarUrl: null,
   age: null,
-  role: 'contractor_pm',
+  role: 'admin',
 };
 
 describe('useProfile hooks', () => {

@@ -119,7 +119,7 @@ function getAuditContext(c: RouteContext): AuditContext {
   const role: WorkLogUserRole =
     user.role === 'system_admin'
       ? 'admin'
-      : user.role === 'supervisor' || user.role === 'inspector'
+      : user.role === 'supervisor' || user.role === 'reviewer'
         ? 'supervisor'
         : 'contractor';
 

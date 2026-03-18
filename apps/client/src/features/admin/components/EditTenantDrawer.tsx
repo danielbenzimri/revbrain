@@ -26,7 +26,6 @@ export function EditTenantDrawer({ open, onOpenChange, tenant }: EditTenantDrawe
   const getInitialFormData = (): TenantForEdit => ({
     id: tenant?.id || '',
     name: tenant?.name || '',
-    type: tenant?.type || 'contractor',
     planId: tenant?.planId || null,
     seatLimit: tenant?.seatLimit || 5,
     isActive: tenant?.isActive ?? true,
@@ -50,8 +49,8 @@ export function EditTenantDrawer({ open, onOpenChange, tenant }: EditTenantDrawe
     setError(null);
 
     try {
-      const { name, type, planId, seatLimit, isActive } = formData;
-      await updateMutation.mutateAsync({ id: tenant.id, name, type, planId, seatLimit, isActive });
+      const { name, planId, seatLimit, isActive } = formData;
+      await updateMutation.mutateAsync({ id: tenant.id, name, planId, seatLimit, isActive });
       onOpenChange(false);
     } catch (err: unknown) {
       console.error('[EditTenant] Error:', err);
@@ -110,25 +109,6 @@ export function EditTenantDrawer({ open, onOpenChange, tenant }: EditTenantDrawe
                   required
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm"
                 />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                  {t('admin.tenants.orgType', 'Type')}
-                </label>
-                <select
-                  value={formData.type}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      type: e.target.value as 'contractor' | 'client',
-                    }))
-                  }
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-white"
-                >
-                  <option value="contractor">{t('admin.onboard.contractor')}</option>
-                  <option value="client">{t('admin.onboard.client')}</option>
-                </select>
               </div>
 
               <div>

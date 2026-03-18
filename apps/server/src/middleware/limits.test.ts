@@ -42,7 +42,7 @@ describe('Limits Middleware', () => {
       c.set('user', {
         id: 'user-123',
         email: 'test@example.com',
-        role: 'contractor_ceo',
+        role: 'org_owner',
         organizationId: 'org-123',
       });
       c.set('services', { limits: mockLimitsService });

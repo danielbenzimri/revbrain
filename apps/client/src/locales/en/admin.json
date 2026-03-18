@@ -92,45 +92,21 @@
         "label": "System Admin",
         "description": "Full platform access"
       },
-      "contractor_ceo": {
-        "label": "Contractor CEO",
-        "description": "Manage contractor organization"
+      "org_owner": {
+        "label": "Organization Owner",
+        "description": "Tenant owner, billing & full access"
       },
-      "contractor_pm": {
-        "label": "Contractor PM",
-        "description": "Project management"
+      "admin": {
+        "label": "Admin",
+        "description": "Full operational access to all projects"
       },
-      "execution_engineer": {
-        "label": "Execution Engineer",
-        "description": "On-site execution"
+      "operator": {
+        "label": "Operator",
+        "description": "Migration work on assigned projects"
       },
-      "quantity_surveyor": {
-        "label": "Quantity Surveyor",
-        "description": "Measurements and quantities"
-      },
-      "quality_controller": {
-        "label": "Quality Controller",
-        "description": "Quality assurance"
-      },
-      "client_owner": {
-        "label": "Client Owner",
-        "description": "Manage client organization"
-      },
-      "client_pm": {
-        "label": "Client PM",
-        "description": "Client project management"
-      },
-      "inspector": {
-        "label": "Inspector",
-        "description": "Site inspection"
-      },
-      "quality_assurance": {
-        "label": "Quality Assurance",
-        "description": "Quality standards"
-      },
-      "accounts_controller": {
-        "label": "Accounts Controller",
-        "description": "Financial oversight"
+      "reviewer": {
+        "label": "Reviewer",
+        "description": "View-only access with remarks"
       }
     },
     "userType": {
@@ -378,8 +354,7 @@
     "successMessage": "{{orgName}} has been created and an invite email has been sent to {{email}}.",
     "onboardAnother": "Onboard Another",
     "close": "Close",
-    "contractorCeo": "Contractor CEO",
-    "clientOwner": "Client Owner",
+    "orgOwner": "Organization Owner",
     "accessDenied": "Access Denied",
     "accessDeniedDesc": "Only system administrators can access this page.",
     "goToDashboard": "Go to Dashboard",

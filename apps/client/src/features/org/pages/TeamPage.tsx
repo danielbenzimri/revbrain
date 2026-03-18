@@ -21,16 +21,10 @@ interface TeamMember {
  */
 const ROLE_LABELS: Record<string, string> = {
   system_admin: 'System Admin',
-  contractor_ceo: 'CEO',
-  contractor_pm: 'Project Manager',
-  execution_engineer: 'Execution Engineer',
-  quantity_surveyor: 'Quantity Surveyor',
-  quality_controller: 'Quality Controller',
-  client_owner: 'Owner',
-  client_pm: 'Project Manager',
-  inspector: 'Inspector',
-  quality_assurance: 'Quality Assurance',
-  accounts_controller: 'Accounts Controller',
+  org_owner: 'Organization Owner',
+  admin: 'Admin',
+  operator: 'Operator',
+  reviewer: 'Reviewer',
 };
 
 /**
@@ -48,7 +42,7 @@ export default function TeamPage() {
   const [error, setError] = useState<string | null>(null);
 
   // Check if user can invite
-  const canInvite = user?.role === 'contractor_ceo' || user?.role === 'client_owner';
+  const canInvite = user?.role === 'org_owner' || user?.role === 'org_owner';
 
   useEffect(() => {
     const fetchMembers = async () => {

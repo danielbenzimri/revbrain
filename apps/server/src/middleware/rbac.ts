@@ -1,13 +1,13 @@
 import { createMiddleware } from 'hono/factory';
 import type { UserRole } from '@revbrain/contract';
-import { AppError, ErrorCodes, getOrgTypeForRole } from '@revbrain/contract';
+import { AppError, ErrorCodes } from '@revbrain/contract';
 
 /**
  * Role-Based Access Control Middleware
  *
  * Usage:
  *   app.post('/admin/onboard', authMiddleware, requireRole('system_admin'), handler)
- *   app.post('/org/invite', authMiddleware, requireRole('contractor_ceo', 'client_owner'), handler)
+ *   app.post('/org/invite', authMiddleware, requireRole('org_owner', 'admin'), handler)
  */
 export function requireRole(...allowedRoles: UserRole[]) {
   return createMiddleware(async (c, next) => {
@@ -33,33 +33,21 @@ export function requireRole(...allowedRoles: UserRole[]) {
  * Check if an actor can invite a user with a target role
  *
  * Rules:
- * - system_admin can only invite org admins (contractor_ceo, client_owner)
- * - org admins can invite within their org type, but not other org admins
+ * - system_admin can invite anyone
+ * - org_owner can invite admin, operator, reviewer
+ * - admin can invite operator, reviewer
+ * - operator/reviewer cannot invite
  */
 export function canInviteRole(actorRole: UserRole, targetRole: UserRole): boolean {
-  // system_admin can invite anyone (God Mode)
-  if (actorRole === 'system_admin') {
-    return true;
+  if (actorRole === 'system_admin') return true;
+
+  if (actorRole === 'org_owner') {
+    return ['admin', 'operator', 'reviewer'].includes(targetRole);
   }
 
-  // Org admins can invite within their org type
-  if (actorRole === 'contractor_ceo' || actorRole === 'client_owner') {
-    const actorOrgType = getOrgTypeForRole(actorRole);
-    const targetOrgType = getOrgTypeForRole(targetRole);
-
-    // Must be same org type
-    if (actorOrgType !== targetOrgType) {
-      return false;
-    }
-
-    // Cannot invite other org admins
-    if (targetRole === 'contractor_ceo' || targetRole === 'client_owner') {
-      return false;
-    }
-
-    return true;
+  if (actorRole === 'admin') {
+    return ['operator', 'reviewer'].includes(targetRole);
   }
 
-  // No one else can invite
   return false;
 }

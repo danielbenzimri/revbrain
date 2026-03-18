@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { User, UserGroup, UserRole } from '@/types/auth';
+import type { User, UserRole } from '@/types/auth';
 import { MOCK_USERS } from '@/lib/mock-data';
 import { getAuthAdapter } from '@/lib/services';
 import { invalidateAuthCache } from '@/lib/auth-headers';
@@ -59,9 +59,8 @@ export const useAuthStore = create<AuthState>()((set) => ({
               id: user.id,
               name: user.name || '',
               email: user.email,
-              role: (user.role as UserRole) || 'contractor_pm',
+              role: (user.role as UserRole) || 'admin',
               avatar: user.avatar,
-              group: (user.metadata?.group as UserGroup) || undefined,
             };
             localStorage.setItem(USER_CACHE_KEY, JSON.stringify(appUser));
             set({ user: appUser, isLoading: false });
@@ -97,9 +96,8 @@ export const useAuthStore = create<AuthState>()((set) => ({
               id: user.id,
               name: user.name || '',
               email: user.email,
-              role: (user.role as UserRole) || 'contractor_pm',
+              role: (user.role as UserRole) || 'admin',
               avatar: user.avatar,
-              group: (user.metadata?.group as UserGroup) || undefined,
             };
             localStorage.setItem(USER_CACHE_KEY, JSON.stringify(appUser));
             set({ user: appUser, isLoading: false });

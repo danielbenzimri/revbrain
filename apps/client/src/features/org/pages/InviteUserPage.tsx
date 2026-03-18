@@ -7,58 +7,39 @@ import type { UserRole } from '@/types/auth';
 
 /**
  * Roles that can be invited by org admins
- * Grouped by org type
  */
-const INVITABLE_ROLES = {
-  contractor: [
-    {
-      value: 'contractor_pm',
-      label: 'Project Manager',
-      description: 'Manages construction projects',
-    },
-    {
-      value: 'execution_engineer',
-      label: 'Execution Engineer',
-      description: 'Handles field execution',
-    },
-    {
-      value: 'quantity_surveyor',
-      label: 'Quantity Surveyor',
-      description: 'Manages quantities and costs',
-    },
-    {
-      value: 'quality_controller',
-      label: 'Quality Controller',
-      description: 'Ensures quality standards',
-    },
-  ],
-  client: [
-    { value: 'client_pm', label: 'Project Manager', description: 'Manages client-side projects' },
-    { value: 'inspector', label: 'Inspector', description: 'Inspects and approves work' },
-    { value: 'quality_assurance', label: 'Quality Assurance', description: 'Monitors quality' },
-    { value: 'accounts_controller', label: 'Accounts Controller', description: 'Manages finances' },
-  ],
-} as const;
+const INVITABLE_ROLES = [
+  {
+    value: 'admin' as const,
+    label: 'Admin',
+    description: 'Full operational access to all projects',
+  },
+  {
+    value: 'operator' as const,
+    label: 'Operator',
+    description: 'Does migration work on assigned projects',
+  },
+  {
+    value: 'reviewer' as const,
+    label: 'Reviewer',
+    description: 'View-only access with remarks on assigned projects',
+  },
+];
 
 /**
  * InviteUserPage
  *
  * Org admin page to invite new users to their organization.
- * Accessible by contractor_ceo and client_owner roles.
+ * Accessible by org_owner and admin roles.
  */
 export default function InviteUserPage() {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
 
-  // Determine org type from user role
-  const isContractor = user?.role?.startsWith('contractor');
-  const orgType = isContractor ? 'contractor' : 'client';
-  const availableRoles = INVITABLE_ROLES[orgType];
-
   // Form state
   const [email, setEmail] = useState('');
   const [fullName, setFullName] = useState('');
-  const [role, setRole] = useState<UserRole>(availableRoles[0].value);
+  const [role, setRole] = useState<UserRole>(INVITABLE_ROLES[0].value);
 
   // UI state
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -66,12 +47,12 @@ export default function InviteUserPage() {
   const [success, setSuccess] = useState<{ email: string; seatsRemaining: number } | null>(null);
 
   // Check access - must be org admin or system admin
-  const isOrgAdmin =
-    user?.role === 'contractor_ceo' ||
-    user?.role === 'client_owner' ||
+  const canInvite =
+    user?.role === 'org_owner' ||
+    user?.role === 'admin' ||
     user?.role === 'system_admin';
 
-  if (!isOrgAdmin) {
+  if (!canInvite) {
     return (
       <div className="p-8 text-center">
         <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
@@ -148,7 +129,7 @@ export default function InviteUserPage() {
               setSuccess(null);
               setEmail('');
               setFullName('');
-              setRole(availableRoles[0].value);
+              setRole(INVITABLE_ROLES[0].value);
             }}
             variant="outline"
           >
@@ -223,7 +204,7 @@ export default function InviteUserPage() {
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">Role *</label>
               <div className="grid gap-2">
-                {availableRoles.map((r) => (
+                {INVITABLE_ROLES.map((r) => (
                   <button
                     key={r.value}
                     type="button"

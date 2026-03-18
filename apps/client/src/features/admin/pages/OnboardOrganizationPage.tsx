@@ -6,17 +6,9 @@ import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/stores/auth-store';
 
 /**
- * Organization types
+ * Admin role for first user is always org_owner
  */
-const ORG_TYPES = [{ value: 'contractor' }, { value: 'client' }] as const;
-
-/**
- * Admin roles for first user
- */
-const ADMIN_ROLES = {
-  contractor: { value: 'contractor_ceo', labelKey: 'admin.onboard.contractorCeo' },
-  client: { value: 'client_owner', labelKey: 'admin.onboard.clientOwner' },
-} as const;
+const ADMIN_ROLE = { value: 'org_owner', labelKey: 'admin.onboard.orgOwner' } as const;
 
 /**
  * OnboardOrganizationPage
@@ -33,7 +25,6 @@ export default function OnboardOrganizationPage() {
 
   // Form state
   const [orgName, setOrgName] = useState('');
-  const [orgType, setOrgType] = useState<'contractor' | 'client'>('contractor');
   const [seatLimit, setSeatLimit] = useState(10);
   const [adminEmail, setAdminEmail] = useState('');
   const [adminName, setAdminName] = useState('');
@@ -69,13 +60,12 @@ export default function OnboardOrganizationPage() {
       await api.post('/v1/admin/onboard', {
         organization: {
           name: orgName,
-          type: orgType,
           seatLimit,
         },
         firstAdmin: {
           email: adminEmail,
           fullName: adminName,
-          role: ADMIN_ROLES[orgType].value,
+          role: ADMIN_ROLE.value,
         },
       });
 
@@ -166,31 +156,6 @@ export default function OnboardOrganizationPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                {t('admin.onboard.orgType')} *
-              </label>
-              <div className="grid grid-cols-2 gap-3">
-                {ORG_TYPES.map((type) => (
-                  <button
-                    key={type.value}
-                    type="button"
-                    onClick={() => setOrgType(type.value)}
-                    className={`p-4 border rounded-lg text-left transition-all ${
-                      orgType === type.value
-                        ? 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-500'
-                        : 'border-slate-200 hover:border-slate-300'
-                    }`}
-                  >
-                    <p className="font-medium text-slate-900">{t(`admin.onboard.${type.value}`)}</p>
-                    <p className="text-xs text-slate-500 mt-1">
-                      {t(`admin.onboard.${type.value}Desc`)}
-                    </p>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
                 {t('admin.onboard.seatLimit')} *
               </label>
@@ -216,7 +181,7 @@ export default function OnboardOrganizationPage() {
           </div>
 
           <p className="text-sm text-slate-500">
-            {t('admin.onboard.adminNote', { role: t(ADMIN_ROLES[orgType].labelKey) })}
+            {t('admin.onboard.adminNote', { role: t(ADMIN_ROLE.labelKey) })}
           </p>
 
           <div className="space-y-4">

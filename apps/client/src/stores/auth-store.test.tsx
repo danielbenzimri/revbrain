@@ -25,17 +25,17 @@ vi.mock('@/lib/services', () => ({
 
 vi.mock('@/lib/mock-data', () => ({
   MOCK_USERS: {
-    contractor_pm: {
+    operator: {
       id: 'mock-pm',
       name: 'Mock PM',
       email: 'pm@mock.com',
-      role: 'contractor_pm',
+      role: 'admin',
     },
     inspector: {
       id: 'mock-inspector',
       name: 'Mock Inspector',
       email: 'inspector@mock.com',
-      role: 'inspector',
+      role: 'reviewer',
     },
   },
 }));
@@ -152,14 +152,14 @@ describe('useAuthStore', () => {
       const { result } = renderHook(() => useAuthStore());
 
       act(() => {
-        result.current.simulateRole('contractor_pm');
+        result.current.simulateRole('admin');
       });
 
       expect(result.current.user).toEqual({
         id: 'mock-pm',
         name: 'Mock PM',
         email: 'pm@mock.com',
-        role: 'contractor_pm',
+        role: 'admin',
       });
     });
 
@@ -167,10 +167,10 @@ describe('useAuthStore', () => {
       const { result } = renderHook(() => useAuthStore());
 
       act(() => {
-        result.current.simulateRole('inspector');
+        result.current.simulateRole('reviewer');
       });
 
-      expect(result.current.user?.role).toBe('inspector');
+      expect(result.current.user?.role).toBe('reviewer');
     });
 
     it('should not change user for invalid role', () => {
@@ -270,7 +270,7 @@ describe('selector hooks', () => {
         id: '1',
         name: 'Test',
         email: 'test@test.com',
-        role: 'contractor_pm' as const,
+        role: 'admin' as const,
       };
       useAuthStore.setState({ user: mockUser });
 
@@ -287,7 +287,7 @@ describe('selector hooks', () => {
 
     it('should return true when user exists', () => {
       useAuthStore.setState({
-        user: { id: '1', name: 'Test', email: 'test@test.com', role: 'contractor_pm' },
+        user: { id: '1', name: 'Test', email: 'test@test.com', role: 'admin' },
       });
 
       const { result } = renderHook(() => useIsAuthenticated());

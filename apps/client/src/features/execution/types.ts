@@ -191,27 +191,13 @@ export interface ProjectMetadata {
   chapterDiscounts?: Record<string, number>;
 }
 
-export type UserGroup = 'contractor' | 'client';
-
-export type ContractorRole =
-  | 'system_admin'
-  | 'owner'
-  | 'project_manager'
-  | 'site_manager'
-  | 'foreman'
-  | 'accountant'
-  | 'viewer';
-
-export type ClientRole = 'inspector' | 'client_owner' | 'client_pm' | 'client_viewer';
-
-export type UserRole = 'system_admin' | ContractorRole | ClientRole;
+export type UserRole = 'system_admin' | 'org_owner' | 'admin' | 'operator' | 'reviewer';
 
 export interface User {
   id: string;
   email: string;
   name: string;
   role: UserRole;
-  group: UserGroup;
   phone?: string;
   title?: string;
   signatureDataUrl?: string;

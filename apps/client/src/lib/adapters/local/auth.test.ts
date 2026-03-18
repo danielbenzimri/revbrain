@@ -39,17 +39,17 @@ describe('LocalAuthAdapter', () => {
       expect(result.session.expiresAt).toBeGreaterThan(Date.now());
     });
 
-    it('should login contractor_ceo by email', async () => {
+    it('should login org_owner by email', async () => {
       const result = await adapter.login('david@contractor.co.il');
-      expect(result.user.role).toBe('contractor_ceo');
+      expect(result.user.role).toBe('org_owner');
     });
 
-    it('should login client_owner by email', async () => {
+    it('should login org_owner by email', async () => {
       const result = await adapter.login('amit@client.co.il');
-      expect(result.user.role).toBe('client_owner');
+      expect(result.user.role).toBe('org_owner');
     });
 
-    it('should fallback to contractor_pm for unknown email', async () => {
+    it('should fallback to operator for unknown email', async () => {
       const result = await adapter.login('unknown@example.com');
       expect(result.user.role).toBe(DEFAULT_MOCK_USER.role);
     });

@@ -76,7 +76,7 @@ describe('AuthService', () => {
         redirectTo: 'http://localhost:5173/set-password',
         metadata: {
           fullName: 'Test User',
-          role: 'contractor_pm',
+          role: 'admin',
           organizationId: 'org-123',
           organizationName: 'Test Org',
           invitedBy: 'admin-123',
@@ -89,7 +89,7 @@ describe('AuthService', () => {
         redirectTo: 'http://localhost:5173/set-password',
         data: {
           full_name: 'Test User',
-          role: 'contractor_pm',
+          role: 'admin',
           organization_id: 'org-123',
           organization_name: 'Test Org',
           invited_by: 'admin-123',
@@ -110,7 +110,7 @@ describe('AuthService', () => {
           redirectTo: 'http://localhost:5173/set-password',
           metadata: {
             fullName: 'Test User',
-            role: 'contractor_pm',
+            role: 'admin',
             organizationId: 'org-123',
             organizationName: 'Test Org',
             invitedBy: 'admin-123',
@@ -132,7 +132,7 @@ describe('AuthService', () => {
           redirectTo: 'http://localhost:5173/set-password',
           metadata: {
             fullName: 'Test User',
-            role: 'contractor_pm',
+            role: 'admin',
             organizationId: 'org-123',
             organizationName: 'Test Org',
             invitedBy: 'admin-123',

@@ -1,5 +1,5 @@
 import type { Repositories, UserEntity, EmailPort, UserRole } from '@revbrain/contract';
-import { AppError, ErrorCodes, getOrgTypeForRole } from '@revbrain/contract';
+import { AppError, ErrorCodes } from '@revbrain/contract';
 import type { AuthService } from './auth.service.ts';
 import type { RequestContext } from './types.ts';
 import { checkSeatAvailability } from '../lib/seats.ts';
@@ -55,16 +55,6 @@ export class UserService {
         ErrorCodes.CANNOT_MANAGE_ROLE,
         `You cannot invite users with role ${input.role}`,
         403
-      );
-    }
-
-    // Role must match org type
-    const targetOrgType = getOrgTypeForRole(input.role as UserRole);
-    if (targetOrgType !== org.type) {
-      throw new AppError(
-        ErrorCodes.INVALID_ORG_TYPE,
-        `Role ${input.role} is not valid for ${org.type} organizations`,
-        400
       );
     }
 

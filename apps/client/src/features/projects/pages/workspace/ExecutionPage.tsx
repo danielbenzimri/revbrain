@@ -17,8 +17,8 @@ import { useAuthStore } from '@/stores/auth-store';
 import { Loader2 } from 'lucide-react';
 import type { User } from '@/features/execution/types';
 
-// Client/inspector roles that see the approval view
-const CLIENT_ROLES = ['inspector', 'client_owner', 'client_pm'];
+// Reviewer roles that see the approval view
+const REVIEWER_ROLES = ['reviewer'];
 
 export default function ExecutionPage() {
   const { id } = useParams<{ id: string }>();
@@ -38,7 +38,7 @@ export default function ExecutionPage() {
 
   // Determine if user should see client view
   const isClientView = useMemo(
-    () => authUser?.role && CLIENT_ROLES.includes(authUser.role),
+    () => authUser?.role && REVIEWER_ROLES.includes(authUser.role),
     [authUser]
   );
 
@@ -49,8 +49,7 @@ export default function ExecutionPage() {
       id: authUser.id,
       email: authUser.email || '',
       name: authUser.name || authUser.email || '',
-      role: (authUser.role || 'viewer') as User['role'],
-      group: (authUser.group || 'contractor') as User['group'],
+      role: (authUser.role || 'reviewer') as User['role'],
     };
   }, [authUser]);
 

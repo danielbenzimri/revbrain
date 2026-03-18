@@ -142,7 +142,7 @@ function createMockServices() {
     users: {
       inviteUser: vi.fn(() =>
         Promise.resolve({
-          user: { id: 'new-user', email: 'u@te.com', fullName: 'User', role: 'contractor_pm' },
+          user: { id: 'new-user', email: 'u@te.com', fullName: 'User', role: 'admin' },
           seatsRemaining: 5,
         })
       ),
@@ -239,7 +239,7 @@ describe('CRUD API Unit Tests', () => {
 
     it('GET /plans - non-admin should see only public plans with pagination', async () => {
       const res = await app.request('/plans', {
-        headers: { 'x-test-user': JSON.stringify({ role: 'contractor_pm' }) },
+        headers: { 'x-test-user': JSON.stringify({ role: 'admin' }) },
       });
       expect(res.status).toBe(200);
       expect(mockRepos.plans.findPublic).toHaveBeenCalledWith({
@@ -292,7 +292,7 @@ describe('CRUD API Unit Tests', () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-test-user': JSON.stringify({ role: 'contractor_pm' }),
+          'x-test-user': JSON.stringify({ role: 'admin' }),
         },
         body: JSON.stringify({ name: 'Plan' }),
       });
@@ -314,7 +314,7 @@ describe('CRUD API Unit Tests', () => {
         },
         body: JSON.stringify({
           organization: { name: 'New Corp', type: 'contractor', seatLimit: 10 },
-          admin: { email: 'a@te.com', fullName: 'Admin', role: 'contractor_ceo' },
+          admin: { email: 'a@te.com', fullName: 'Admin', role: 'org_owner' },
         }),
       });
       expect(res.status).toBe(201);
@@ -331,14 +331,14 @@ describe('CRUD API Unit Tests', () => {
           'x-test-user': JSON.stringify({
             id: 'actor-1',
             email: 'ceo@test.com',
-            role: 'contractor_ceo',
+            role: 'org_owner',
             organizationId: 'o1',
           }),
         },
         body: JSON.stringify({
           email: 'u@te.com',
           fullName: 'User',
-          role: 'contractor_pm',
+          role: 'admin',
         }),
       });
       expect(res.status).toBe(201);
@@ -356,14 +356,14 @@ describe('CRUD API Unit Tests', () => {
           'x-test-user': JSON.stringify({
             id: 'actor-1',
             email: 'ceo@test.com',
-            role: 'contractor_ceo',
+            role: 'org_owner',
             organizationId: 'o1',
           }),
         },
         body: JSON.stringify({
           email: 'u@te.com',
           fullName: 'User',
-          role: 'contractor_pm',
+          role: 'admin',
         }),
       });
 
