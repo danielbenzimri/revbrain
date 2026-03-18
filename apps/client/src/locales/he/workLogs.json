@@ -1,0 +1,234 @@
+{
+  "title": "יומני עבודה",
+  "subtitle": "דוחות יומיים מהאתר",
+  "empty": "אין יומני עבודה עדיין",
+  "emptyDescription": "צור את יומן העבודה היומי הראשון",
+  "create": "צור יומן עבודה",
+  "createNew": "יומן חדש",
+  "creating": "יוצר...",
+  "log": {
+    "title": "יומן עבודה - {{date}}",
+    "logNumber": "יומן מס׳ {{number}}",
+    "number": "יומן מס.",
+    "date": "תאריך",
+    "weather": "מזג אוויר",
+    "activities": "פעילויות",
+    "issues": "בעיות ותקלות",
+    "safety": "הערות בטיחות",
+    "address": "כתובת מדויקת",
+    "trafficControllers": "פקחי תנועה (שם + שעת הגעה ועזיבה)",
+    "trafficControllersPlaceholder": "שם פקח, שעת הגעה - שעת עזיבה..."
+  },
+  "sidebar": {
+    "drafts": "טיוטות",
+    "submitted": "להמתנה",
+    "approved": "ארכיון",
+    "emptyDrafts": "אין טיוטות",
+    "emptySubmitted": "אין יומנים בהמתנה",
+    "emptyApproved": "אין יומנים בארכיון",
+    "signatures": "חתימות"
+  },
+  "projectInfo": {
+    "projectName": "שם הפרויקט",
+    "contractorName": "שם הקבלן",
+    "clientName": "שם המזמין",
+    "contractNumber": "מס.חוזה/הזמנה",
+    "workName": "שם העבודה",
+    "siteName": "שם האתר"
+  },
+  "status": {
+    "title": "סטטוס",
+    "draft": "טיוטה",
+    "submitted": "הוגש",
+    "approved": "מאושר",
+    "all": "כל הסטטוסים"
+  },
+  "weather": {
+    "title": "תנאי מזג אוויר",
+    "type": "סוג מזג אוויר",
+    "temperature": "טמפרטורה",
+    "celsius": "מ״צ",
+    "sunny": "שמשי",
+    "cloudy": "מעונן",
+    "rainy": "גשום",
+    "windy": "סוער",
+    "stormy": "סערה",
+    "snowy": "שלג",
+    "foggy": "ערפילי",
+    "hot": "חם",
+    "cold": "קר"
+  },
+  "resources": {
+    "title": "כוח אדם",
+    "add": "הוסף מקצוע",
+    "trade": "מקצוע",
+    "count": "עובדים",
+    "hours": "שעות",
+    "total": "סה״כ שעות עבודה",
+    "contractorCount": "קבלן",
+    "supervisorCount": "מפקח",
+    "trades": {
+      "general": "עבודה כללית",
+      "carpenter": "נגר",
+      "electrician": "חשמלאי",
+      "plumber": "אינסטלטור",
+      "welder": "רתך",
+      "mason": "טייח",
+      "painter": "צבע",
+      "operator": "מפעיל ציוד",
+      "supervisor": "מנהל עבודה",
+      "engineer": "מהנדס",
+      "safety": "ממונה בטיחות"
+    }
+  },
+  "contractorResources": {
+    "title": "משאבי קבלן",
+    "add": "הוסף משאב",
+    "empty": "לא נוספו משאבי קבלן"
+  },
+  "externalResources": {
+    "title": "משאבים חיצוניים",
+    "add": "הוסף משאב חיצוני",
+    "empty": "לא נוספו משאבים חיצוניים"
+  },
+  "descriptions": {
+    "contractor": "תיאור עבודה קבלן",
+    "supervisor": "תיאור עבודה מפקח",
+    "contractorPlaceholder": "תאר את העבודה שבוצעה על ידי הקבלן...",
+    "supervisorPlaceholder": "תאר את העבודה שנצפתה על ידי המפקח..."
+  },
+  "notes": {
+    "contractor": "הערות קבלן",
+    "supervisor": "הערות מפקח",
+    "contractorPlaceholder": "הערות נוספות מהקבלן...",
+    "supervisorPlaceholder": "הערות נוספות מהמפקח..."
+  },
+  "equipment": {
+    "title": "ציוד",
+    "add": "הוסף ציוד",
+    "name": "שם ציוד",
+    "count": "כמות",
+    "hours": "שעות הפעלה",
+    "types": {
+      "excavator": "באגר",
+      "loader": "שופל",
+      "crane": "מנוף",
+      "truck": "משאית",
+      "mixer": "מערבל בטון",
+      "pump": "משאבת בטון",
+      "compactor": "מהדק",
+      "generator": "גנרטור",
+      "scaffolding": "פיגומים"
+    }
+  },
+  "attachments": {
+    "title": "קבצים מצורפים",
+    "add": "הוסף קובץ",
+    "remove": "הסר",
+    "empty": "אין קבצים מצורפים",
+    "uploadHint": "העלה תמונות או מסמכים"
+  },
+  "audit": {
+    "title": "יומן פעילות",
+    "empty": "לא נרשמה פעילות",
+    "actions": {
+      "created": "נוצר",
+      "updated": "עודכן",
+      "submitted": "הוגש לאישור",
+      "approved": "אושר",
+      "reverted": "הוחזר לטיוטה",
+      "signed": "נחתם"
+    }
+  },
+  "signatures": {
+    "title": "חתימות",
+    "contractor": "חתימת קבלן",
+    "inspector": "חתימת מפקח",
+    "sign": "חתום",
+    "signedBy": "נחתם ע״י {{name}}",
+    "signedAt": "נחתם בתאריך {{date}}",
+    "pending": "ממתין לחתימה"
+  },
+  "actions": {
+    "edit": "ערוך יומן",
+    "delete": "מחק יומן",
+    "deleteConfirm": "האם אתה בטוח שברצונך למחוק יומן עבודה זה?",
+    "view": "הצג פרטים",
+    "export": "ייצוא לאקסל",
+    "exportRange": "ייצוא טווח תאריכים",
+    "print": "הדפס",
+    "printPreview": "תצוגה מקדימה להדפסה",
+    "saveDraft": "שמור טיוטה",
+    "submit": "הגש לאישור",
+    "submitToInspector": "הגש למפקח",
+    "submitting": "מגיש...",
+    "approve": "אשר",
+    "approveLog": "אשר יומן",
+    "approving": "מאשר...",
+    "revert": "החזר לטיוטה",
+    "reverting": "מחזיר...",
+    "addRow": "הוסף שורה",
+    "cancel": "ביטול",
+    "add": "הוסף"
+  },
+  "warnings": {
+    "noSignature": "לא הוגדרה חתימה דיגיטלית.",
+    "noSignatureDetails": "יש להגדיר חתימה בהגדרות → פרטים אישיים לפני הגשה או אישור יומן.",
+    "pendingApproval": "לאישור מפקח",
+    "canEdit": "ניתן לעריכה",
+    "inspectorOnly": "מפקח בלבד"
+  },
+  "sections": {
+    "workDescriptions": "תיאור העבודות שבוצעו",
+    "notes": "הערות",
+    "inventory": "מצאי"
+  },
+  "filters": {
+    "dateRange": "טווח תאריכים",
+    "thisWeek": "השבוע",
+    "thisMonth": "החודש",
+    "custom": "טווח מותאם",
+    "status": "סטטוס"
+  },
+  "summary": {
+    "title": "סיכום",
+    "totalLogs": "סה״כ יומנים",
+    "totalManHours": "סה״כ שעות עבודה",
+    "totalEquipmentHours": "סה״כ שעות ציוד",
+    "avgWorkersPerDay": "ממוצע עובדים ליום",
+    "signedByContractor": "חתום ע״י קבלן",
+    "signedByInspector": "חתום ע״י מפקח",
+    "draftCount": "טיוטות",
+    "submittedCount": "ממתינים לאישור",
+    "approvedCount": "מאושרים",
+    "totalContractorResources": "משאבי קבלן",
+    "totalExternalResources": "משאבים חיצוניים"
+  },
+  "calendar": {
+    "title": "לוח שנה יומני עבודה",
+    "today": "היום",
+    "previousMonth": "חודש קודם",
+    "nextMonth": "חודש הבא",
+    "selectDate": "בחר תאריך לצפייה או יצירת יומן עבודה",
+    "hasLog": "קיים יומן עבודה",
+    "noLog": "אין יומן עבודה"
+  },
+  "validation": {
+    "dateRequired": "תאריך נדרש",
+    "dateUnique": "קיים כבר יומן לתאריך זה",
+    "activitiesRequired": "פעילויות נדרשות",
+    "cannotEditApproved": "לא ניתן לערוך יומן עבודה מאושר",
+    "cannotDeleteSigned": "לא ניתן למחוק יומן עבודה חתום"
+  },
+  "notifications": {
+    "created": "יומן העבודה נוצר בהצלחה",
+    "updated": "יומן העבודה עודכן בהצלחה",
+    "deleted": "יומן העבודה נמחק בהצלחה",
+    "submitted": "יומן העבודה הוגש לאישור",
+    "approved": "יומן העבודה אושר בהצלחה",
+    "reverted": "יומן העבודה הוחזר לטיוטה",
+    "signed": "יומן העבודה נחתם בהצלחה",
+    "attachmentAdded": "קובץ נוסף",
+    "attachmentRemoved": "קובץ הוסר"
+  }
+}

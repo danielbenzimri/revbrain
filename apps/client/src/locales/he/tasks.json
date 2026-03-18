@@ -1,0 +1,126 @@
+{
+  "title": "ניהול משימות",
+  "subtitle": "מעקב ובקרה אחר משימות הפרויקט",
+  "empty": "אין משימות עדיין",
+  "emptyDescription": "צור את המשימה הראשונה שלך להתחלה",
+  "create": "צור משימה",
+  "creating": "יוצר...",
+  "newTask": "משימה חדשה",
+  "editTask": "עריכת משימה",
+  "viewMode": {
+    "board": "לוח",
+    "list": "רשימה"
+  },
+  "search": {
+    "placeholder": "חיפוש משימות...",
+    "noResults": "לא נמצאו משימות התואמות את החיפוש"
+  },
+  "auditLog": {
+    "title": "היסטוריית מחיקות",
+    "empty": "אין רישומים בהיסטוריה",
+    "export": "ייצוא",
+    "print": "הדפסה",
+    "date": "תאריך פעולה",
+    "user": "משתמש",
+    "action": "פעולה",
+    "taskTitle": "משימה",
+    "createdAt": "נוצר ב",
+    "deletedAt": "נמחק ב",
+    "details": "פרטים",
+    "reason": "סיבה",
+    "signature": "חתימה"
+  },
+  "delete": {
+    "title": "מחיקת משימה",
+    "message": "אתה עומד למחוק את המשימה \"{{title}}\". פעולה זו דורשת תיעוד וחתימה.",
+    "reasonLabel": "סיבת המחיקה",
+    "reasonPlaceholder": "פרט מדוע המשימה נמחקת...",
+    "signatureLabel": "חתימה מאשרת",
+    "signatureHint": "חתום באמצעות העכבר או האצבע",
+    "clearSignature": "נקה",
+    "confirm": "אישור ומחיקה",
+    "cancel": "ביטול"
+  },
+  "task": {
+    "title": "כותרת",
+    "description": "תיאור",
+    "status": "סטטוס",
+    "priority": "עדיפות",
+    "assignee": "מוקצה ל",
+    "dueDate": "תאריך יעד",
+    "tags": "תגיות",
+    "createdBy": "נוצר ע״י",
+    "createdAt": "נוצר בתאריך",
+    "completedAt": "הושלם בתאריך"
+  },
+  "status": {
+    "todo": "לביצוע",
+    "in_progress": "בביצוע",
+    "review": "בבדיקה",
+    "done": "הושלם",
+    "blocked": "חסום"
+  },
+  "priority": {
+    "low": "נמוך",
+    "medium": "רגיל",
+    "high": "גבוה",
+    "critical": "קריטי"
+  },
+  "board": {
+    "title": "לוח משימות",
+    "addColumn": "הוסף עמודה",
+    "dragHint": "גרור משימות לשינוי סטטוס",
+    "emptyColumn": "אין משימות בעמודה זו"
+  },
+  "list": {
+    "title": "רשימת משימות",
+    "sortBy": "מיין לפי",
+    "groupBy": "קבץ לפי"
+  },
+  "actions": {
+    "edit": "ערוך משימה",
+    "delete": "מחק משימה",
+    "deleteConfirm": "האם אתה בטוח שברצונך למחוק משימה זו?",
+    "assign": "הקצה",
+    "unassign": "בטל הקצאה",
+    "complete": "סמן כהושלם",
+    "reopen": "פתח מחדש",
+    "duplicate": "שכפל"
+  },
+  "filters": {
+    "all": "כל המשימות",
+    "myTasks": "המשימות שלי",
+    "unassigned": "ללא הקצאה",
+    "overdue": "באיחור",
+    "dueToday": "להיום",
+    "dueThisWeek": "לשבוע זה",
+    "status": "סטטוס",
+    "priority": "עדיפות",
+    "assignee": "מוקצה",
+    "tags": "תגיות"
+  },
+  "sort": {
+    "dueDate": "תאריך יעד",
+    "priority": "עדיפות",
+    "createdAt": "תאריך יצירה",
+    "title": "כותרת"
+  },
+  "summary": {
+    "title": "סיכום",
+    "total": "סה״כ משימות",
+    "completed": "הושלמו",
+    "inProgress": "בתהליך",
+    "overdue": "באיחור"
+  },
+  "validation": {
+    "titleRequired": "כותרת נדרשת",
+    "titleMaxLength": "כותרת חייבת להיות פחות מ-255 תווים"
+  },
+  "notifications": {
+    "created": "המשימה נוצרה בהצלחה",
+    "updated": "המשימה עודכנה בהצלחה",
+    "deleted": "המשימה נמחקה בהצלחה",
+    "assigned": "המשימה הוקצתה ל-{{name}}",
+    "completed": "המשימה סומנה כהושלמה"
+  }
+}

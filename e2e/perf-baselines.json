@@ -1,0 +1,600 @@
+{
+  "latest": {
+    "timestamp": "2026-03-15T19:05:46.058Z",
+    "gitRef": "dac7351",
+    "metrics": {
+      "login.loadTime": {
+        "value": "947ms",
+        "numeric": 947
+      },
+      "login.domNodes": {
+        "value": "458",
+        "numeric": 458
+      },
+      "js.totalTransferredKB": {
+        "value": "3922.15",
+        "numeric": 3922.15
+      },
+      "js.chunkCount": {
+        "value": "45",
+        "numeric": 45
+      },
+      "js.chunk.leaflet.js": {
+        "value": "0KB cached=true",
+        "numeric": 0
+      },
+      "js.chunk.proj4.min.js": {
+        "value": "24.86KB cached=false",
+        "numeric": 24.86
+      },
+      "js.chunk.react_jsx-dev-runtime.js": {
+        "value": "12.53KB cached=false",
+        "numeric": 12.53
+      },
+      "js.chunk.react.js": {
+        "value": "1.29KB cached=false",
+        "numeric": 1.29
+      },
+      "js.chunk.react-dom_client.js": {
+        "value": "2.19KB cached=false",
+        "numeric": 2.19
+      },
+      "js.chunk.@tanstack_react-query.js": {
+        "value": "10.02KB cached=false",
+        "numeric": 10.02
+      },
+      "js.chunk.chunk-VHXUCOYC.js": {
+        "value": "16.73KB cached=false",
+        "numeric": 16.73
+      },
+      "js.chunk.chunk-3GSIOCL7.js": {
+        "value": "44.94KB cached=false",
+        "numeric": 44.94
+      },
+      "js.chunk.chunk-MVSQOVLQ.js": {
+        "value": "970.87KB cached=false",
+        "numeric": 970.87
+      },
+      "js.chunk.chunk-J4RD2FF6.js": {
+        "value": "12.06KB cached=false",
+        "numeric": 12.06
+      },
+      "js.chunk.chunk-L3XI7IPV.js": {
+        "value": "16.34KB cached=false",
+        "numeric": 16.34
+      },
+      "js.chunk.i18next.js": {
+        "value": "3.25KB cached=false",
+        "numeric": 3.25
+      },
+      "js.chunk.react-i18next.js": {
+        "value": "50.5KB cached=false",
+        "numeric": 50.5
+      },
+      "js.chunk.chunk-PUOJIG7X.js": {
+        "value": "112.6KB cached=false",
+        "numeric": 112.6
+      },
+      "js.chunk.chunk-KHCNZP75.js": {
+        "value": "12.87KB cached=false",
+        "numeric": 12.87
+      },
+      "js.chunk.chunk-U7Z2ZYSW.js": {
+        "value": "79.88KB cached=false",
+        "numeric": 79.88
+      },
+      "js.chunk.chunk-Q2PHQSKW.js": {
+        "value": "4.34KB cached=false",
+        "numeric": 4.34
+      },
+      "js.chunk.@tanstack_react-query-devtools.js": {
+        "value": "11.88KB cached=false",
+        "numeric": 11.88
+      },
+      "js.chunk.lucide-react.js": {
+        "value": "872.42KB cached=false",
+        "numeric": 872.42
+      },
+      "js.chunk.zustand.js": {
+        "value": "2.13KB cached=false",
+        "numeric": 2.13
+      },
+      "js.chunk.react-router-dom.js": {
+        "value": "13.54KB cached=false",
+        "numeric": 13.54
+      },
+      "js.chunk.sonner.js": {
+        "value": "57.32KB cached=false",
+        "numeric": 57.32
+      },
+      "js.chunk.chunk-6PRG7BWT.js": {
+        "value": "86.24KB cached=false",
+        "numeric": 86.24
+      },
+      "js.chunk.@radix-ui_react-slot.js": {
+        "value": "2.61KB cached=false",
+        "numeric": 2.61
+      },
+      "js.chunk.class-variance-authority.js": {
+        "value": "2.64KB cached=false",
+        "numeric": 2.64
+      },
+      "js.chunk.chunk-EKZ37TG5.js": {
+        "value": "1.48KB cached=false",
+        "numeric": 1.48
+      },
+      "js.chunk.chunk-AFYOSIAW.js": {
+        "value": "1.45KB cached=false",
+        "numeric": 1.45
+      },
+      "js.chunk.chunk-QRLAZPVL.js": {
+        "value": "432.76KB cached=false",
+        "numeric": 432.76
+      },
+      "js.chunk.@radix-ui_react-dialog.js": {
+        "value": "13.62KB cached=false",
+        "numeric": 13.62
+      },
+      "js.chunk.chunk-LEB7YYCH.js": {
+        "value": "5.25KB cached=false",
+        "numeric": 5.25
+      },
+      "js.chunk.chunk-L2UWKSGR.js": {
+        "value": "1.57KB cached=false",
+        "numeric": 1.57
+      },
+      "js.chunk.chunk-SIU35MPB.js": {
+        "value": "0.94KB cached=false",
+        "numeric": 0.94
+      },
+      "js.chunk.clsx.js": {
+        "value": "1.42KB cached=false",
+        "numeric": 1.42
+      },
+      "js.chunk.tailwind-merge.js": {
+        "value": "92.1KB cached=false",
+        "numeric": 92.1
+      },
+      "js.chunk.zustand_middleware.js": {
+        "value": "2.09KB cached=false",
+        "numeric": 2.09
+      },
+      "js.chunk.chunk-6XYVRQ36.js": {
+        "value": "51.37KB cached=false",
+        "numeric": 51.37
+      },
+      "js.chunk.chunk-PRW752IW.js": {
+        "value": "2.21KB cached=false",
+        "numeric": 2.21
+      },
+      "js.chunk.chunk-7RKOKDME.js": {
+        "value": "5.43KB cached=false",
+        "numeric": 5.43
+      },
+      "js.chunk.chunk-EUDX6QIS.js": {
+        "value": "12.68KB cached=false",
+        "numeric": 12.68
+      },
+      "js.chunk.chunk-XR7XIJT5.js": {
+        "value": "0.96KB cached=false",
+        "numeric": 0.96
+      },
+      "js.chunk.chunk-GQMMBQTH.js": {
+        "value": "0.81KB cached=false",
+        "numeric": 0.81
+      },
+      "js.chunk.chunk-DC4QRANA.js": {
+        "value": "16.83KB cached=false",
+        "numeric": 16.83
+      },
+      "js.chunk.@supabase_supabase-js.js": {
+        "value": "422.13KB cached=false",
+        "numeric": 422.13
+      },
+      "js.chunk.B5PP2USH-IHOWFLJA.js": {
+        "value": "1.82KB cached=false",
+        "numeric": 1.82
+      },
+      "js.chunk.chunk-7UNVPMSG.js": {
+        "value": "431.18KB cached=false",
+        "numeric": 431.18
+      },
+      "dashboard.domInteractive": {
+        "value": "92ms",
+        "numeric": 92
+      },
+      "dashboard.domContentLoaded": {
+        "value": "309.2000000476837ms",
+        "numeric": 309.2000000476837
+      },
+      "dashboard.loadComplete": {
+        "value": "311ms",
+        "numeric": 311
+      },
+      "dashboard.fcp": {
+        "value": "340ms",
+        "numeric": 340
+      },
+      "dashboard.domNodes": {
+        "value": "451",
+        "numeric": 451
+      },
+      "hints.preconnect": {
+        "value": "2",
+        "numeric": 2
+      },
+      "hints.dnsPrefetch": {
+        "value": "0",
+        "numeric": 0
+      },
+      "hints.total": {
+        "value": "2",
+        "numeric": 2
+      },
+      "routeTransition.projects": {
+        "value": "2389ms",
+        "numeric": 2389
+      },
+      "routeTransition.projects.domNodes": {
+        "value": "489",
+        "numeric": 489
+      },
+      "api.totalGETRequests": {
+        "value": "4",
+        "numeric": 4
+      },
+      "api.withCacheControl": {
+        "value": "0",
+        "numeric": 0
+      },
+      "api.withEtag": {
+        "value": "0",
+        "numeric": 0
+      },
+      "dom.projectsPage.totalNodes": {
+        "value": "489",
+        "numeric": 489
+      },
+      "caching.secondVisit.totalChunks": {
+        "value": "45",
+        "numeric": 45
+      },
+      "caching.secondVisit.cachedChunks": {
+        "value": "45",
+        "numeric": 45
+      },
+      "caching.secondVisit.cacheHitRatio": {
+        "value": "100.0%",
+        "numeric": 100
+      },
+      "longTasks.count": {
+        "value": "0",
+        "numeric": 0
+      },
+      "longTasks.totalDuration": {
+        "value": "0ms",
+        "numeric": 0
+      },
+      "memory.usedJSHeapMB": {
+        "value": "22",
+        "numeric": 22
+      },
+      "memory.totalJSHeapMB": {
+        "value": "33.68",
+        "numeric": 33.68
+      },
+      "memory.heapLimitMB": {
+        "value": "4096",
+        "numeric": 4096
+      },
+      "api.dashboard.totalRequests": {
+        "value": "4",
+        "numeric": 4
+      },
+      "api.dashboard.maxConcurrent": {
+        "value": "2",
+        "numeric": 2
+      }
+    }
+  },
+  "history": [
+    {
+      "timestamp": "2026-03-15T19:05:46.058Z",
+      "gitRef": "dac7351",
+      "metrics": {
+        "login.loadTime": {
+          "value": "947ms",
+          "numeric": 947
+        },
+        "login.domNodes": {
+          "value": "458",
+          "numeric": 458
+        },
+        "js.totalTransferredKB": {
+          "value": "3922.15",
+          "numeric": 3922.15
+        },
+        "js.chunkCount": {
+          "value": "45",
+          "numeric": 45
+        },
+        "js.chunk.leaflet.js": {
+          "value": "0KB cached=true",
+          "numeric": 0
+        },
+        "js.chunk.proj4.min.js": {
+          "value": "24.86KB cached=false",
+          "numeric": 24.86
+        },
+        "js.chunk.react_jsx-dev-runtime.js": {
+          "value": "12.53KB cached=false",
+          "numeric": 12.53
+        },
+        "js.chunk.react.js": {
+          "value": "1.29KB cached=false",
+          "numeric": 1.29
+        },
+        "js.chunk.react-dom_client.js": {
+          "value": "2.19KB cached=false",
+          "numeric": 2.19
+        },
+        "js.chunk.@tanstack_react-query.js": {
+          "value": "10.02KB cached=false",
+          "numeric": 10.02
+        },
+        "js.chunk.chunk-VHXUCOYC.js": {
+          "value": "16.73KB cached=false",
+          "numeric": 16.73
+        },
+        "js.chunk.chunk-3GSIOCL7.js": {
+          "value": "44.94KB cached=false",
+          "numeric": 44.94
+        },
+        "js.chunk.chunk-MVSQOVLQ.js": {
+          "value": "970.87KB cached=false",
+          "numeric": 970.87
+        },
+        "js.chunk.chunk-J4RD2FF6.js": {
+          "value": "12.06KB cached=false",
+          "numeric": 12.06
+        },
+        "js.chunk.chunk-L3XI7IPV.js": {
+          "value": "16.34KB cached=false",
+          "numeric": 16.34
+        },
+        "js.chunk.i18next.js": {
+          "value": "3.25KB cached=false",
+          "numeric": 3.25
+        },
+        "js.chunk.react-i18next.js": {
+          "value": "50.5KB cached=false",
+          "numeric": 50.5
+        },
+        "js.chunk.chunk-PUOJIG7X.js": {
+          "value": "112.6KB cached=false",
+          "numeric": 112.6
+        },
+        "js.chunk.chunk-KHCNZP75.js": {
+          "value": "12.87KB cached=false",
+          "numeric": 12.87
+        },
+        "js.chunk.chunk-U7Z2ZYSW.js": {
+          "value": "79.88KB cached=false",
+          "numeric": 79.88
+        },
+        "js.chunk.chunk-Q2PHQSKW.js": {
+          "value": "4.34KB cached=false",
+          "numeric": 4.34
+        },
+        "js.chunk.@tanstack_react-query-devtools.js": {
+          "value": "11.88KB cached=false",
+          "numeric": 11.88
+        },
+        "js.chunk.lucide-react.js": {
+          "value": "872.42KB cached=false",
+          "numeric": 872.42
+        },
+        "js.chunk.zustand.js": {
+          "value": "2.13KB cached=false",
+          "numeric": 2.13
+        },
+        "js.chunk.react-router-dom.js": {
+          "value": "13.54KB cached=false",
+          "numeric": 13.54
+        },
+        "js.chunk.sonner.js": {
+          "value": "57.32KB cached=false",
+          "numeric": 57.32
+        },
+        "js.chunk.chunk-6PRG7BWT.js": {
+          "value": "86.24KB cached=false",
+          "numeric": 86.24
+        },
+        "js.chunk.@radix-ui_react-slot.js": {
+          "value": "2.61KB cached=false",
+          "numeric": 2.61
+        },
+        "js.chunk.class-variance-authority.js": {
+          "value": "2.64KB cached=false",
+          "numeric": 2.64
+        },
+        "js.chunk.chunk-EKZ37TG5.js": {
+          "value": "1.48KB cached=false",
+          "numeric": 1.48
+        },
+        "js.chunk.chunk-AFYOSIAW.js": {
+          "value": "1.45KB cached=false",
+          "numeric": 1.45
+        },
+        "js.chunk.chunk-QRLAZPVL.js": {
+          "value": "432.76KB cached=false",
+          "numeric": 432.76
+        },
+        "js.chunk.@radix-ui_react-dialog.js": {
+          "value": "13.62KB cached=false",
+          "numeric": 13.62
+        },
+        "js.chunk.chunk-LEB7YYCH.js": {
+          "value": "5.25KB cached=false",
+          "numeric": 5.25
+        },
+        "js.chunk.chunk-L2UWKSGR.js": {
+          "value": "1.57KB cached=false",
+          "numeric": 1.57
+        },
+        "js.chunk.chunk-SIU35MPB.js": {
+          "value": "0.94KB cached=false",
+          "numeric": 0.94
+        },
+        "js.chunk.clsx.js": {
+          "value": "1.42KB cached=false",
+          "numeric": 1.42
+        },
+        "js.chunk.tailwind-merge.js": {
+          "value": "92.1KB cached=false",
+          "numeric": 92.1
+        },
+        "js.chunk.zustand_middleware.js": {
+          "value": "2.09KB cached=false",
+          "numeric": 2.09
+        },
+        "js.chunk.chunk-6XYVRQ36.js": {
+          "value": "51.37KB cached=false",
+          "numeric": 51.37
+        },
+        "js.chunk.chunk-PRW752IW.js": {
+          "value": "2.21KB cached=false",
+          "numeric": 2.21
+        },
+        "js.chunk.chunk-7RKOKDME.js": {
+          "value": "5.43KB cached=false",
+          "numeric": 5.43
+        },
+        "js.chunk.chunk-EUDX6QIS.js": {
+          "value": "12.68KB cached=false",
+          "numeric": 12.68
+        },
+        "js.chunk.chunk-XR7XIJT5.js": {
+          "value": "0.96KB cached=false",
+          "numeric": 0.96
+        },
+        "js.chunk.chunk-GQMMBQTH.js": {
+          "value": "0.81KB cached=false",
+          "numeric": 0.81
+        },
+        "js.chunk.chunk-DC4QRANA.js": {
+          "value": "16.83KB cached=false",
+          "numeric": 16.83
+        },
+        "js.chunk.@supabase_supabase-js.js": {
+          "value": "422.13KB cached=false",
+          "numeric": 422.13
+        },
+        "js.chunk.B5PP2USH-IHOWFLJA.js": {
+          "value": "1.82KB cached=false",
+          "numeric": 1.82
+        },
+        "js.chunk.chunk-7UNVPMSG.js": {
+          "value": "431.18KB cached=false",
+          "numeric": 431.18
+        },
+        "dashboard.domInteractive": {
+          "value": "92ms",
+          "numeric": 92
+        },
+        "dashboard.domContentLoaded": {
+          "value": "309.2000000476837ms",
+          "numeric": 309.2000000476837
+        },
+        "dashboard.loadComplete": {
+          "value": "311ms",
+          "numeric": 311
+        },
+        "dashboard.fcp": {
+          "value": "340ms",
+          "numeric": 340
+        },
+        "dashboard.domNodes": {
+          "value": "451",
+          "numeric": 451
+        },
+        "hints.preconnect": {
+          "value": "2",
+          "numeric": 2
+        },
+        "hints.dnsPrefetch": {
+          "value": "0",
+          "numeric": 0
+        },
+        "hints.total": {
+          "value": "2",
+          "numeric": 2
+        },
+        "routeTransition.projects": {
+          "value": "2389ms",
+          "numeric": 2389
+        },
+        "routeTransition.projects.domNodes": {
+          "value": "489",
+          "numeric": 489
+        },
+        "api.totalGETRequests": {
+          "value": "4",
+          "numeric": 4
+        },
+        "api.withCacheControl": {
+          "value": "0",
+          "numeric": 0
+        },
+        "api.withEtag": {
+          "value": "0",
+          "numeric": 0
+        },
+        "dom.projectsPage.totalNodes": {
+          "value": "489",
+          "numeric": 489
+        },
+        "caching.secondVisit.totalChunks": {
+          "value": "45",
+          "numeric": 45
+        },
+        "caching.secondVisit.cachedChunks": {
+          "value": "45",
+          "numeric": 45
+        },
+        "caching.secondVisit.cacheHitRatio": {
+          "value": "100.0%",
+          "numeric": 100
+        },
+        "longTasks.count": {
+          "value": "0",
+          "numeric": 0
+        },
+        "longTasks.totalDuration": {
+          "value": "0ms",
+          "numeric": 0
+        },
+        "memory.usedJSHeapMB": {
+          "value": "22",
+          "numeric": 22
+        },
+        "memory.totalJSHeapMB": {
+          "value": "33.68",
+          "numeric": 33.68
+        },
+        "memory.heapLimitMB": {
+          "value": "4096",
+          "numeric": 4096
+        },
+        "api.dashboard.totalRequests": {
+          "value": "4",
+          "numeric": 4
+        },
+        "api.dashboard.maxConcurrent": {
+          "value": "2",
+          "numeric": 2
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+{
+  "name": "geometrix",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Hexagonal architecture monorepo with vendor-agnostic design",
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.15.0",
+  "scripts": {
+    "dev": "turbo run dev",
+    "dev:remote": "pnpm --filter client dev:remote",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "test:unit": "turbo run test:unit",
+    "test:integration": "turbo run test:integration",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "db:generate": "pnpm --filter @geometrix/database db:generate",
+    "db:migrate": "pnpm --filter @geometrix/database db:migrate",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "setup:cloud": "./scripts/init-supabase-cloud.sh",
+    "perf:test": "playwright test --project=performance",
+    "perf:baseline": "tsx scripts/capture-perf-baseline.ts",
+    "perf:compare": "tsx scripts/capture-perf-baseline.ts --compare",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.11.1",
+    "@eslint/js": "^9.39.1",
+    "@playwright/test": "^1.58.1",
+    "eslint": "^9.39.1",
+    "globals": "^16.5.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
+    "prettier": "^3.8.1",
+    "turbo": "^1.11.0",
+    "typescript": "^5.3.3",
+    "typescript-eslint": "^8.46.4"
+  },
+  "pnpm": {
+    "overrides": {
+      "drizzle-orm": "0.29.5"
+    },
+    "peerDependencyRules": {
+      "ignoreMissing": [
+        "@opentelemetry/api"
+      ]
+    }
+  },
+  "lint-staged": {
+    "apps/client/**/*.{ts,tsx}": [
+      "prettier --write",
+      "eslint --fix --max-warnings 50"
+    ],
+    "apps/server/**/*.{ts,tsx}": [
+      "prettier --write",
+      "eslint --fix --max-warnings 50"
+    ],
+    "packages/**/*.{ts,tsx}": [
+      "prettier --write"
+    ],
+    "*.{js,jsx,json,md,yml,yaml,css}": [
+      "prettier --write"
+    ]
+  }
+}

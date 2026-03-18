@@ -1,0 +1,92 @@
+{
+  "title": "כתב כמויות",
+  "subtitle": "ניהול כמויות ותמחור פרויקט",
+  "empty": "אין פריטים עדיין",
+  "emptyDescription": "ייבא כתב כמויות מאקסל או צור פריטים ידנית",
+  "import": {
+    "title": "ייבוא כתב כמויות",
+    "button": "ייבוא מאקסל",
+    "uploading": "מעלה...",
+    "processing": "מעבד...",
+    "success": "כתב הכמויות יובא בהצלחה",
+    "error": "ייבוא כתב הכמויות נכשל",
+    "template": "הורד תבנית",
+    "dropzone": "גרור קובץ אקסל לכאן או לחץ לבחירה",
+    "supported": "פורמטים נתמכים: xlsx, xls",
+    "options": "אפשרויות ייבוא",
+    "replaceMode": "החלף פריטים קיימים",
+    "replaceModeHelp": "מחק את כל הפריטים הקיימים לפני הייבוא",
+    "mergeMode": "מזג עם קיימים",
+    "mergeModeHelp": "הייבוא ייכשל אם קודים כבר קיימים",
+    "startRow": "שורת התחלה",
+    "startRowHelp": "מספר השורה בה מתחילים הנתונים (ברירת מחדל: 2)",
+    "sheetName": "גיליון",
+    "sheetNameHelp": "שם או מספר הגיליון (ברירת מחדל: ראשון)",
+    "columnMapping": "מיפוי עמודות",
+    "columnCode": "מק״ט",
+    "columnDescription": "תיאור",
+    "columnUnit": "יחידה",
+    "columnQuantity": "כמות",
+    "columnUnitPrice": "מחיר יחידה",
+    "defaultColumns": "ברירת מחדל: A, B, C, D, E",
+    "result": {
+      "imported": "{{count}} פריטים יובאו",
+      "errors": "{{count}} שגיאות",
+      "viewErrors": "הצג שגיאות",
+      "row": "שורה {{row}}"
+    }
+  },
+  "export": {
+    "button": "ייצוא לאקסל",
+    "exporting": "מייצא..."
+  },
+  "item": {
+    "create": "הוסף פריט",
+    "edit": "ערוך פריט",
+    "editSubtitle": "עדכון פרטי הפריט",
+    "createSubtitle": "הוספת פריט חדש",
+    "delete": "מחק פריט",
+    "deleteConfirm": "האם אתה בטוח שברצונך למחוק פריט זה?",
+    "code": "מק״ט",
+    "description": "תיאור",
+    "descriptionPlaceholder": "הזן תיאור הפריט",
+    "unit": "יחידה",
+    "quantity": "כמות חוזית",
+    "unitPrice": "מחיר יחידה",
+    "totalPrice": "סה״כ",
+    "level": "רמה",
+    "parent": "פריט אב",
+    "noParent": "רמת שורש"
+  },
+  "tree": {
+    "expand": "הרחב הכל",
+    "collapse": "כווץ הכל",
+    "search": "חפש פריטים...",
+    "noResults": "לא נמצאו פריטים תואמים",
+    "loading": "טוען כתב כמויות..."
+  },
+  "summary": {
+    "title": "סיכום כתב כמויות",
+    "totalItems": "סה״כ פריטים",
+    "totalValue": "סה״כ ערך חוזי",
+    "categories": "קטגוריות"
+  },
+  "units": {
+    "m": "מ׳",
+    "m2": "מ״ר",
+    "m3": "מ״ק",
+    "kg": "ק״ג",
+    "ton": "טון",
+    "unit": "יח׳",
+    "ls": "פאושלי",
+    "day": "יום",
+    "hour": "שעה"
+  },
+  "validation": {
+    "codeRequired": "מק״ט נדרש",
+    "codeUnique": "מק״ט חייב להיות ייחודי",
+    "descriptionRequired": "תיאור נדרש",
+    "quantityPositive": "כמות חייבת להיות חיובית",
+    "pricePositive": "מחיר חייב להיות חיובי"
+  }
+}

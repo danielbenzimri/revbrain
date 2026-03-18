@@ -1,0 +1,95 @@
+{
+  "title": "קבצים",
+  "subtitle": "מסמכים ומדיה של הפרויקט",
+  "empty": "אין קבצים עדיין",
+  "emptyDescription": "העלה את הקובץ הראשון שלך להתחלה",
+  "upload": {
+    "button": "העלה קבצים",
+    "uploading": "מעלה...",
+    "dropzone": "גרור קבצים לכאן או לחץ לבחירה",
+    "maxSize": "גודל קובץ מקסימלי: {{size}}",
+    "success": "{{count}} קבצים הועלו בהצלחה",
+    "error": "העלאת קבצים נכשלה"
+  },
+  "file": {
+    "name": "שם קובץ",
+    "type": "סוג",
+    "size": "גודל",
+    "uploadedBy": "הועלה ע״י",
+    "uploadedAt": "הועלה בתאריך",
+    "folder": "תיקייה"
+  },
+  "folders": {
+    "title": "תיקיות",
+    "create": "צור תיקייה",
+    "creating": "יוצר...",
+    "name": "שם תיקייה",
+    "rename": "שנה שם תיקייה",
+    "delete": "מחק תיקייה",
+    "deleteConfirm": "למחוק תיקייה זו וכל תכולתה?",
+    "root": "שורש",
+    "back": "חזור"
+  },
+  "actions": {
+    "download": "הורד",
+    "preview": "תצוגה מקדימה",
+    "rename": "שנה שם",
+    "move": "העבר לתיקייה",
+    "copy": "העתק",
+    "delete": "מחק",
+    "deleteConfirm": "האם אתה בטוח שברצונך למחוק קובץ זה?",
+    "share": "שתף",
+    "details": "פרטים"
+  },
+  "types": {
+    "image": "תמונה",
+    "document": "מסמך",
+    "spreadsheet": "גיליון אלקטרוני",
+    "presentation": "מצגת",
+    "pdf": "PDF",
+    "cad": "שרטוט CAD",
+    "archive": "ארכיון",
+    "other": "אחר"
+  },
+  "filters": {
+    "all": "כל הקבצים",
+    "images": "תמונות",
+    "documents": "מסמכים",
+    "drawings": "שרטוטי CAD",
+    "recent": "אחרונים",
+    "search": "חפש קבצים..."
+  },
+  "sort": {
+    "name": "שם",
+    "date": "תאריך",
+    "size": "גודל",
+    "type": "סוג"
+  },
+  "view": {
+    "grid": "תצוגת רשת",
+    "list": "תצוגת רשימה"
+  },
+  "preview": {
+    "title": "תצוגה מקדימה",
+    "unsupported": "תצוגה מקדימה לא זמינה לסוג קובץ זה",
+    "download": "הורד לצפייה"
+  },
+  "storage": {
+    "title": "אחסון",
+    "used": "בשימוש",
+    "available": "זמין",
+    "total": "סה״כ"
+  },
+  "validation": {
+    "nameRequired": "שם קובץ נדרש",
+    "invalidType": "סוג קובץ לא מותר",
+    "tooLarge": "הקובץ חורג מהגודל המקסימלי"
+  },
+  "notifications": {
+    "uploaded": "הקובץ הועלה בהצלחה",
+    "renamed": "שם הקובץ שונה בהצלחה",
+    "moved": "הקובץ הועבר בהצלחה",
+    "deleted": "הקובץ נמחק בהצלחה",
+    "folderCreated": "התיקייה נוצרה בהצלחה"
+  }
+}

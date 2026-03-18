@@ -1,0 +1,234 @@
+{
+  "title": "Work Logs",
+  "subtitle": "Daily site reports and documentation",
+  "empty": "No work logs yet",
+  "emptyDescription": "Create your first daily work log",
+  "create": "Create Work Log",
+  "createNew": "New Log",
+  "creating": "Creating...",
+  "log": {
+    "title": "Work Log - {{date}}",
+    "logNumber": "Log #{{number}}",
+    "number": "Log No.",
+    "date": "Date",
+    "weather": "Weather",
+    "activities": "Activities",
+    "issues": "Issues & Problems",
+    "safety": "Safety Notes",
+    "address": "Exact Address",
+    "trafficControllers": "Traffic Controllers Info",
+    "trafficControllersPlaceholder": "Name, arrival time - departure time..."
+  },
+  "sidebar": {
+    "drafts": "Drafts",
+    "submitted": "Pending",
+    "approved": "Archive",
+    "emptyDrafts": "No drafts",
+    "emptySubmitted": "No pending logs",
+    "emptyApproved": "No archived logs",
+    "signatures": "signatures"
+  },
+  "projectInfo": {
+    "projectName": "Project Name",
+    "contractorName": "Contractor Name",
+    "clientName": "Client Name",
+    "contractNumber": "Contract/Order No.",
+    "workName": "Work Name",
+    "siteName": "Site Name"
+  },
+  "status": {
+    "title": "Status",
+    "draft": "Draft",
+    "submitted": "Submitted",
+    "approved": "Approved",
+    "all": "All Statuses"
+  },
+  "weather": {
+    "title": "Weather Conditions",
+    "type": "Weather Type",
+    "temperature": "Temperature",
+    "celsius": "°C",
+    "sunny": "Sunny",
+    "cloudy": "Cloudy",
+    "rainy": "Rainy",
+    "windy": "Windy",
+    "stormy": "Stormy",
+    "snowy": "Snowy",
+    "foggy": "Foggy",
+    "hot": "Hot",
+    "cold": "Cold"
+  },
+  "resources": {
+    "title": "Manpower",
+    "add": "Add Trade",
+    "trade": "Trade",
+    "count": "Workers",
+    "hours": "Hours",
+    "total": "Total Man-Hours",
+    "contractorCount": "Contractor",
+    "supervisorCount": "Supervisor",
+    "trades": {
+      "general": "General Labor",
+      "carpenter": "Carpenter",
+      "electrician": "Electrician",
+      "plumber": "Plumber",
+      "welder": "Welder",
+      "mason": "Mason",
+      "painter": "Painter",
+      "operator": "Equipment Operator",
+      "supervisor": "Supervisor",
+      "engineer": "Engineer",
+      "safety": "Safety Officer"
+    }
+  },
+  "contractorResources": {
+    "title": "Contractor Resources",
+    "add": "Add Resource",
+    "empty": "No contractor resources added"
+  },
+  "externalResources": {
+    "title": "External Resources",
+    "add": "Add External Resource",
+    "empty": "No external resources added"
+  },
+  "descriptions": {
+    "contractor": "Contractor Work Description",
+    "supervisor": "Supervisor Work Description",
+    "contractorPlaceholder": "Describe the work performed by the contractor...",
+    "supervisorPlaceholder": "Describe the work observed by the supervisor..."
+  },
+  "notes": {
+    "contractor": "Contractor Notes",
+    "supervisor": "Supervisor Notes",
+    "contractorPlaceholder": "Additional notes from the contractor...",
+    "supervisorPlaceholder": "Additional notes from the supervisor..."
+  },
+  "equipment": {
+    "title": "Equipment",
+    "add": "Add Equipment",
+    "name": "Equipment Name",
+    "count": "Quantity",
+    "hours": "Operating Hours",
+    "types": {
+      "excavator": "Excavator",
+      "loader": "Loader",
+      "crane": "Crane",
+      "truck": "Truck",
+      "mixer": "Concrete Mixer",
+      "pump": "Concrete Pump",
+      "compactor": "Compactor",
+      "generator": "Generator",
+      "scaffolding": "Scaffolding"
+    }
+  },
+  "attachments": {
+    "title": "Attachments",
+    "add": "Add Attachment",
+    "remove": "Remove",
+    "empty": "No attachments",
+    "uploadHint": "Upload photos or documents"
+  },
+  "audit": {
+    "title": "Activity Log",
+    "empty": "No activity recorded",
+    "actions": {
+      "created": "Created",
+      "updated": "Updated",
+      "submitted": "Submitted for approval",
+      "approved": "Approved",
+      "reverted": "Reverted to draft",
+      "signed": "Signed"
+    }
+  },
+  "signatures": {
+    "title": "Signatures",
+    "contractor": "Contractor Signature",
+    "inspector": "Inspector Signature",
+    "sign": "Sign",
+    "signedBy": "Signed by {{name}}",
+    "signedAt": "Signed at {{date}}",
+    "pending": "Pending Signature"
+  },
+  "actions": {
+    "edit": "Edit Log",
+    "delete": "Delete Log",
+    "deleteConfirm": "Are you sure you want to delete this work log?",
+    "view": "View Details",
+    "export": "Export to Excel",
+    "exportRange": "Export Date Range",
+    "print": "Print",
+    "printPreview": "Print Preview",
+    "saveDraft": "Save Draft",
+    "submit": "Submit for Approval",
+    "submitToInspector": "Submit to Inspector",
+    "submitting": "Submitting...",
+    "approve": "Approve",
+    "approveLog": "Approve Log",
+    "approving": "Approving...",
+    "revert": "Revert to Draft",
+    "reverting": "Reverting...",
+    "addRow": "Add Row",
+    "cancel": "Cancel",
+    "add": "Add"
+  },
+  "warnings": {
+    "noSignature": "No digital signature set.",
+    "noSignatureDetails": "Please set a digital signature in Settings → Personal Details before submitting or approving a log.",
+    "pendingApproval": "Pending inspector approval",
+    "canEdit": "Editable",
+    "inspectorOnly": "Inspector only"
+  },
+  "sections": {
+    "workDescriptions": "Work Descriptions",
+    "notes": "Notes",
+    "inventory": "Inventory"
+  },
+  "filters": {
+    "dateRange": "Date Range",
+    "thisWeek": "This Week",
+    "thisMonth": "This Month",
+    "custom": "Custom Range",
+    "status": "Status"
+  },
+  "summary": {
+    "title": "Summary",
+    "totalLogs": "Total Logs",
+    "totalManHours": "Total Man-Hours",
+    "totalEquipmentHours": "Total Equipment Hours",
+    "avgWorkersPerDay": "Avg Workers/Day",
+    "signedByContractor": "Signed by Contractor",
+    "signedByInspector": "Signed by Inspector",
+    "draftCount": "Drafts",
+    "submittedCount": "Pending Approval",
+    "approvedCount": "Approved",
+    "totalContractorResources": "Contractor Resources",
+    "totalExternalResources": "External Resources"
+  },
+  "calendar": {
+    "title": "Work Log Calendar",
+    "today": "Today",
+    "previousMonth": "Previous Month",
+    "nextMonth": "Next Month",
+    "selectDate": "Select a date to view or create work log",
+    "hasLog": "Work log exists",
+    "noLog": "No work log"
+  },
+  "validation": {
+    "dateRequired": "Date is required",
+    "dateUnique": "A log already exists for this date",
+    "activitiesRequired": "Activities are required",
+    "cannotEditApproved": "Cannot edit an approved work log",
+    "cannotDeleteSigned": "Cannot delete a signed work log"
+  },
+  "notifications": {
+    "created": "Work log created successfully",
+    "updated": "Work log updated successfully",
+    "deleted": "Work log deleted successfully",
+    "submitted": "Work log submitted for approval",
+    "approved": "Work log approved successfully",
+    "reverted": "Work log reverted to draft",
+    "signed": "Work log signed successfully",
+    "attachmentAdded": "Attachment added",
+    "attachmentRemoved": "Attachment removed"
+  }
+}

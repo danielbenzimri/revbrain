@@ -1,0 +1,73 @@
+# Supabase Configuration
+# Generated with "supabase init"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 15
+
+[db.pooler]
+enabled = true
+port = 54329
+pool_mode = "transaction"
+default_pool_size = 20
+max_client_conn = 100
+
+[realtime]
+enabled = true
+# port = 54323  <-- Removed invalid key
+
+[studio]
+enabled = true
+port = 54323
+# api_url = "http://localhost" <-- removed potential invalid key
+
+[inbucket]
+enabled = true
+port = 54324
+smtp_port = 54325
+pop3_port = 54326
+
+[storage]
+enabled = true
+file_size_limit = "50MiB"
+
+[auth]
+enabled = true
+site_url = "http://localhost:5173"
+additional_redirect_urls = [
+  "http://localhost:5173/set-password",
+  "http://localhost:5173/reset-password",
+  "https://app.geometrixlabs.com/set-password",
+  "https://app.geometrixlabs.com/reset-password",
+  "https://app.geometrixlabs.com/login",
+  "https://stg.geometrixlabs.com/set-password",
+  "https://stg.geometrixlabs.com/reset-password",
+  "https://stg.geometrixlabs.com/login"
+]
+jwt_expiry = 3600
+enable_signup = false
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = false
+
+[auth.email.template.invite]
+subject = "You have been invited to join Geometrix"
+content_path = "./supabase/templates/invite.html"
+
+[auth.email.template.recovery]
+subject = "Reset your Geometrix password"
+content_path = "./supabase/templates/recovery.html"
+
+[auth.email.template.magic_link]
+subject = "Your Geometrix Login Link"
+content_path = "./supabase/templates/magic-link.html"

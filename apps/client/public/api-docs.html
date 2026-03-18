@@ -1,0 +1,24 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Geometrix API Reference</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  </head>
+  <body>
+    <script>
+      // Allow overriding spec URL via ?spec= query parameter
+      // Default: dev Supabase edge function
+      const params = new URLSearchParams(window.location.search);
+      const specUrl =
+        params.get('spec') || 'https://zhotzdemwwyfzevtygob.supabase.co/functions/v1/api/doc';
+
+      const el = document.createElement('script');
+      el.id = 'api-reference';
+      el.setAttribute('data-url', specUrl);
+      el.setAttribute('data-configuration', JSON.stringify({ theme: 'purple' }));
+      document.body.appendChild(el);
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+  </body>
+</html>

@@ -1,0 +1,92 @@
+{
+  "title": "Bill of Quantities",
+  "subtitle": "Manage project quantities and pricing",
+  "empty": "No BOQ items yet",
+  "emptyDescription": "Import a BOQ from Excel or create items manually",
+  "import": {
+    "title": "Import BOQ",
+    "button": "Import from Excel",
+    "uploading": "Uploading...",
+    "processing": "Processing...",
+    "success": "BOQ imported successfully",
+    "error": "Failed to import BOQ",
+    "template": "Download Template",
+    "dropzone": "Drop Excel file here or click to browse",
+    "supported": "Supported formats: .xlsx, .xls",
+    "options": "Import Options",
+    "replaceMode": "Replace existing items",
+    "replaceModeHelp": "Delete all existing BOQ items before import",
+    "mergeMode": "Merge with existing",
+    "mergeModeHelp": "Import will fail if codes already exist",
+    "startRow": "Start Row",
+    "startRowHelp": "Row number where data begins (default: 2)",
+    "sheetName": "Sheet",
+    "sheetNameHelp": "Sheet name or number (default: first)",
+    "columnMapping": "Column Mapping",
+    "columnCode": "Code",
+    "columnDescription": "Description",
+    "columnUnit": "Unit",
+    "columnQuantity": "Quantity",
+    "columnUnitPrice": "Unit Price",
+    "defaultColumns": "Default: A, B, C, D, E",
+    "result": {
+      "imported": "{{count}} items imported",
+      "errors": "{{count}} errors occurred",
+      "viewErrors": "View Errors",
+      "row": "Row {{row}}"
+    }
+  },
+  "export": {
+    "button": "Export to Excel",
+    "exporting": "Exporting..."
+  },
+  "item": {
+    "create": "Add Item",
+    "edit": "Edit Item",
+    "editSubtitle": "Update item details",
+    "createSubtitle": "Add a new BOQ item",
+    "delete": "Delete Item",
+    "deleteConfirm": "Are you sure you want to delete this item?",
+    "code": "Item Code",
+    "description": "Description",
+    "descriptionPlaceholder": "Enter item description",
+    "unit": "Unit",
+    "quantity": "Contract Quantity",
+    "unitPrice": "Unit Price",
+    "totalPrice": "Total Price",
+    "level": "Level",
+    "parent": "Parent Item",
+    "noParent": "Root Level"
+  },
+  "tree": {
+    "expand": "Expand All",
+    "collapse": "Collapse All",
+    "search": "Search items...",
+    "noResults": "No items match your search",
+    "loading": "Loading BOQ..."
+  },
+  "summary": {
+    "title": "BOQ Summary",
+    "totalItems": "Total Items",
+    "totalValue": "Total Contract Value",
+    "categories": "Categories"
+  },
+  "units": {
+    "m": "m",
+    "m2": "m\u00b2",
+    "m3": "m\u00b3",
+    "kg": "kg",
+    "ton": "ton",
+    "unit": "unit",
+    "ls": "L.S.",
+    "day": "day",
+    "hour": "hour"
+  },
+  "validation": {
+    "codeRequired": "Item code is required",
+    "codeUnique": "Item code must be unique",
+    "descriptionRequired": "Description is required",
+    "quantityPositive": "Quantity must be positive",
+    "pricePositive": "Price must be positive"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "underConstruction": "Module under development...",
+  "user": "User",
+  "pendingSetup": "Pending Setup",
+  "systemSubtitle": "Calculation System",
+  "loading": "Loading...",
+  "error": "Error",
+  "save": "Save",
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "edit": "Edit",
+  "add": "Add",
+  "search": "Search",
+  "filter": "Filter",
+  "all": "All",
+  "select": "Select",
+  "actions": "Actions",
+  "unknown": "Unknown",
+  "saving": "Saving...",
+  "done": "Done",
+  "sending": "Sending...",
+  "back": "Back"
+}

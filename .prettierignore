@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build outputs
+dist/
+**/dist/
+.next/
+.turbo/
+.vercel/
+
+# Generated files
+*.generated.ts
+pnpm-lock.yaml
+package-lock.json
+*.tsbuildinfo
+
+# Database
+supabase/.branches/
+supabase/.temp/
+
+# Coverage
+coverage/
+
+# IDE
+.idea/
+*.swp
+*.swo
+
+# Legacy apps (separate formatting rules)
+apps/client-legacy/
+
+# Misc
+.DS_Store
+*.log

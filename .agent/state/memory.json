@@ -1,0 +1,25 @@
+{
+  "project": {
+    "name": "Antigravity Project",
+    "status": "active",
+    "techStack": [
+      "hono",
+      "drizzle",
+      "react",
+      "vitest",
+      "tailwind",
+      "postgres",
+      "supabase",
+      "pgvector",
+      "rls"
+    ]
+  },
+  "performanceBaseline": {
+    "fcp": null,
+    "bundleSize": null
+  },
+  "context": {
+    "completedFeatures": ["Backend Specifications (Enterprise + Full Coverage)"],
+    "knownIssues": []
+  }
+}

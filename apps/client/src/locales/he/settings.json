@@ -1,0 +1,45 @@
+{
+  "title": "הגדרות",
+  "subtitle": "הגדרות המערכת והעדפות אישיות",
+  "tabs": {
+    "profile": "פרופיל",
+    "security": "אבטחה",
+    "account": "חשבון"
+  },
+  "profile": {
+    "saved": "הפרופיל נשמר בהצלחה",
+    "saveFailed": "שגיאה בשמירת הפרופיל",
+    "email": "אימייל",
+    "emailHint": "לא ניתן לשנות את כתובת האימייל",
+    "fullName": "שם מלא",
+    "phone": "מספר טלפון",
+    "mobile": "מספר נייד",
+    "jobTitle": "תפקיד",
+    "address": "כתובת",
+    "avatarUrl": "קישור לתמונת פרופיל",
+    "bio": "אודות",
+    "save": "שמור שינויים"
+  },
+  "security": {
+    "changePassword": "שינוי סיסמה",
+    "changePasswordDescription": "עדכן את הסיסמה שלך כדי לשמור על אבטחת החשבון.",
+    "passwordChanged": "הסיסמה שונתה בהצלחה",
+    "updatePassword": "עדכן סיסמה",
+    "signOutEverywhere": "התנתקות מכל המכשירים",
+    "signOutEverywhereDescription": "התנתק מכל המכשירים והסשנים. תצטרך להתחבר מחדש.",
+    "signingOut": "מתנתק...",
+    "signOutAll": "התנתק מכל המכשירים"
+  },
+  "account": {
+    "dangerZone": "אזור מסוכן",
+    "deleteTitle": "מחיקת חשבון",
+    "deleteDescription": "מחיקת החשבון לצמיתות. פעולה זו אינה ניתנת לביטול.",
+    "deleteWarning1": "כל הנתונים שלך יימחקו לצמיתות",
+    "deleteWarning2": "תאבד גישה לכל הפרויקטים והמשאבים",
+    "deleteWarning3": "לא ניתן לבטל פעולה זו",
+    "typeDelete": "הקלד DELETE לאישור",
+    "deleteFailed": "שגיאה במחיקת החשבון",
+    "deleting": "מוחק...",
+    "deleteButton": "מחק את החשבון שלי"
+  }
+}

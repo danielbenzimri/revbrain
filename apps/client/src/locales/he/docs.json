@@ -1,0 +1,40 @@
+{
+  "title": "אסמכתאות",
+  "subtitle": "ניהול מסמכים וקבצי פרויקט",
+  "uploadFile": "העלאת קובץ",
+  "uploading": "מעלה...",
+  "searchFiles": "חפש קבצים...",
+  "noFiles": "אין קבצים בפרויקט",
+  "emptyFolder": "תיקייה זו ריקה",
+  "dragHint": "גרור לכאן קבצים להעלאה",
+  "additionalFiles": "קבצים נוספים",
+  "uploadToFolder": "העלה לתיקייה זו",
+  "moveToFolder": "העבר לתיקייה...",
+  "delete": "מחק",
+  "download": "הורד",
+  "show": "הצג",
+  "hide": "הסתר",
+  "deleteConfirm": "האם אתה בטוח שברצונך למחוק קובץ זה?",
+
+  "folders": {
+    "contractorContract": "חוזה קבלן",
+    "technicalSpecs": "מפרטים טכניים",
+    "generalSpec": "המפרט הכללי",
+    "catalogs": "קטלוגים",
+    "priceLists": "מחירונים",
+    "plannerGuidelines": "הנחיות מתכננים",
+    "fieldPhotos": "תמונות מהשטח",
+    "deliveryCerts": "תעודות משלוח",
+    "guarantees": "אזמידים",
+    "quantityCalcs": "חישובי כמויות"
+  },
+
+  "toast": {
+    "uploaded": "הקובץ הועלה בהצלחה",
+    "uploadError": "שגיאה בהעלאת הקובץ",
+    "deleted": "הקובץ נמחק בהצלחה",
+    "deleteError": "שגיאה במחיקת הקובץ",
+    "moved": "הקובץ הועבר בהצלחה",
+    "moveError": "שגיאה בהעברת הקובץ"
+  }
+}

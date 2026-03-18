@@ -1,0 +1,20 @@
+{
+  "dashboard": "דשבורד ראשי",
+  "projects": "הפרויקטים שלי",
+  "billing": "דוחות וחשבונות",
+  "settings": "הגדרות",
+  "help": "עזרה ותמיכה",
+  "admin": {
+    "dashboard": "מבט על",
+    "tenants": "ארגונים",
+    "users": "משתמשים",
+    "pricing": "חבילות ומחירים",
+    "coupons": "קופונים",
+    "support": "תמיכה"
+  },
+  "logout": "התנתק",
+  "collapse": "כווץ",
+  "expand": "הרחב",
+  "backToMain": "חזרה למסך ראשי",
+  "backToProjects": "חזרה לפרויקטים"
+}

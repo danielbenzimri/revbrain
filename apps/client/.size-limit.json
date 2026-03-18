@@ -1,0 +1,42 @@
+[
+  {
+    "name": "main-entry",
+    "path": "dist/assets/index-*.js",
+    "limit": "3000 KB"
+  },
+  {
+    "name": "react-vendor",
+    "path": "dist/assets/react-vendor-*.js",
+    "limit": "5 KB"
+  },
+  {
+    "name": "ui-vendor",
+    "path": "dist/assets/ui-vendor-*.js",
+    "limit": "180 KB"
+  },
+  {
+    "name": "query-vendor",
+    "path": "dist/assets/query-vendor-*.js",
+    "limit": "70 KB"
+  },
+  {
+    "name": "chart-vendor",
+    "path": "dist/assets/chart-vendor-*.js",
+    "limit": "400 KB"
+  },
+  {
+    "name": "geo-vendor",
+    "path": "dist/assets/geo-vendor-*.js",
+    "limit": "775 KB"
+  },
+  {
+    "name": "form-vendor",
+    "path": "dist/assets/form-vendor-*.js",
+    "limit": "100 KB"
+  },
+  {
+    "name": "i18n-vendor",
+    "path": "dist/assets/i18n-vendor-*.js",
+    "limit": "55 KB"
+  }
+]

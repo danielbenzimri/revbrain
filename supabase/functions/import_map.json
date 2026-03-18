@@ -1,0 +1,23 @@
+{
+  "imports": {
+    "@geometrix/server": "../../apps/server/src/index.ts",
+    "@geometrix/contract": "../../packages/contract/src/index.ts",
+    "@geometrix/database": "../../packages/database/src/index.ts",
+    "@geometrix/database/schema": "../../packages/database/src/schema.ts",
+    "hono": "https://esm.sh/hono@4.1.1",
+    "hono/": "https://esm.sh/hono@4.1.1/",
+    "hono-rate-limiter": "https://esm.sh/hono-rate-limiter@0.3.0?target=deno",
+    "@hono/zod-validator": "https://esm.sh/@hono/zod-validator@0.7.6?target=deno",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.93.3?target=deno",
+    "drizzle-orm": "https://esm.sh/drizzle-orm@0.29.5?target=deno",
+    "drizzle-orm/": "https://esm.sh/drizzle-orm@0.29.5/",
+    "drizzle-orm/pg-core": "https://esm.sh/drizzle-orm@0.29.5/pg-core?target=deno",
+    "drizzle-orm/postgres-js": "https://esm.sh/drizzle-orm@0.29.5/postgres-js?target=deno",
+    "postgres": "https://deno.land/x/postgresjs@v3.4.5/mod.js",
+    "zod": "https://esm.sh/zod@3.22.4?target=deno",
+    "@hono/zod-openapi": "https://esm.sh/@hono/zod-openapi@1.2.1?target=deno",
+    "@scalar/hono-api-reference": "https://esm.sh/@scalar/hono-api-reference@0.5.150?target=deno",
+    "stripe": "https://esm.sh/stripe@20.3.0?target=deno",
+    "xlsx": "https://esm.sh/xlsx@0.18.5?target=deno"
+  }
+}

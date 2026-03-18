@@ -1,0 +1,46 @@
+{
+  "name": "@geometrix/server",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./src/index.ts",
+      "types": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "dev": "APP_ENV=local NODE_OPTIONS='--max-old-space-size=8192' tsx watch src/dev.ts",
+    "build": "NODE_OPTIONS='--max-old-space-size=8192' tsc",
+    "lint": "NODE_OPTIONS='--max-old-space-size=8192' eslint . && tsc --noEmit",
+    "test": "vitest run",
+    "test:unit": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@geometrix/contract": "workspace:*",
+    "@geometrix/database": "workspace:*",
+    "@hono/node-server": "^1.19.9",
+    "@hono/zod-openapi": "^1.2.1",
+    "@hono/zod-validator": "^0.7.6",
+    "@scalar/hono-api-reference": "^0.9.39",
+    "@sentry/node": "^8.55.0",
+    "@supabase/supabase-js": "^2.93.3",
+    "dotenv": "^17.2.4",
+    "hono": "^4.1.1",
+    "hono-rate-limiter": "^0.3.0",
+    "stripe": "^20.3.0",
+    "xlsx": "0.18.5",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@types/node": "^20.10.6",
+    "@vitest/coverage-v8": "^1.1.0",
+    "eslint": "^9.39.1",
+    "globals": "^16.5.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3",
+    "typescript-eslint": "^8.46.4",
+    "vitest": "^1.1.0"
+  }
+}

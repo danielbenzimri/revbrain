@@ -1,0 +1,23 @@
+{
+  "underConstruction": "מודול בפיתוח...",
+  "user": "משתמש",
+  "pendingSetup": "ממתין להגדרה",
+  "systemSubtitle": "מערכת חישובים",
+  "loading": "טוען...",
+  "error": "שגיאה",
+  "save": "שמור",
+  "cancel": "בטל",
+  "delete": "מחק",
+  "edit": "ערוך",
+  "add": "הוסף",
+  "search": "חיפוש",
+  "filter": "סינון",
+  "all": "הכל",
+  "select": "בחר",
+  "actions": "פעולות",
+  "unknown": "לא ידוע",
+  "saving": "שומר...",
+  "done": "סיום",
+  "sending": "שולח...",
+  "back": "חזרה"
+}

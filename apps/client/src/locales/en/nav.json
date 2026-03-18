@@ -1,0 +1,20 @@
+{
+  "dashboard": "Main Dashboard",
+  "projects": "My Projects",
+  "billing": "Reports & Invoices",
+  "settings": "Settings",
+  "help": "Help & Support",
+  "admin": {
+    "dashboard": "Platform Overview",
+    "tenants": "Tenants",
+    "users": "Users",
+    "pricing": "Pricing",
+    "coupons": "Coupons",
+    "support": "Support"
+  },
+  "logout": "Logout",
+  "collapse": "Collapse",
+  "expand": "Expand",
+  "backToMain": "Back to Main",
+  "backToProjects": "Back to Projects"
+}

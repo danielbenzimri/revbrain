@@ -1,0 +1,210 @@
+import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import { authMiddleware } from '../../../middleware/auth.ts';
+import { requireRole } from '../../../middleware/rbac.ts';
+import { listLimiter } from '../../../middleware/rate-limit.ts';
+import { AppError, ErrorCodes } from '@geometrix/contract';
+import type { AppEnv } from '../../../types/index.ts';
+
+const DEFAULT_LIMIT = 50;
+const MAX_LIMIT = 100;
+
+const adminTenantsRouter = new OpenAPIHono<AppEnv>();
+
+/**
+ * GET /v1/admin/tenants — List all tenants with pagination
+ */
+adminTenantsRouter.openapi(
+  createRoute({
+    method: 'get',
+    path: '/',
+    tags: ['Admin'],
+    summary: 'List All Tenants',
+    description: 'Fetch tenants with plan details. Supports pagination.',
+    middleware: [authMiddleware, requireRole('system_admin'), listLimiter] as any,
+    request: {
+      query: z.object({
+        limit: z.coerce.number().min(1).max(MAX_LIMIT).optional(),
+        offset: z.coerce.number().min(0).optional(),
+      }),
+    },
+    responses: {
+      200: {
+        content: {
+          'application/json': {
+            schema: z.object({
+              success: z.boolean(),
+              data: z.array(z.any()),
+              pagination: z.object({
+                limit: z.number(),
+                offset: z.number(),
+                hasMore: z.boolean(),
+              }),
+            }),
+          },
+        },
+        description: 'List of tenants with pagination',
+      },
+    },
+  }),
+  async (c) => {
+    const { limit = DEFAULT_LIMIT, offset = 0 } = c.req.query();
+    const parsedLimit = Math.min(Number(limit) || DEFAULT_LIMIT, MAX_LIMIT);
+    const parsedOffset = Number(offset) || 0;
+
+    const result = await c.var.services.organizations.listTenants({
+      limit: parsedLimit,
+      offset: parsedOffset,
+    });
+
+    return c.json({
+      success: true,
+      data: result.tenants.map((org) => ({
+        id: org.id,
+        name: org.name,
+        type: org.type,
+        slug: org.slug,
+        seatLimit: org.seatLimit,
+        seatUsed: org.seatUsed,
+        isActive: org.isActive,
+        createdAt: org.createdAt,
+        plan: org.plan
+          ? {
+              id: org.plan.id,
+              name: org.plan.name,
+              code: org.plan.code,
+            }
+          : null,
+      })),
+      pagination: {
+        limit: parsedLimit,
+        offset: parsedOffset,
+        hasMore: result.hasMore,
+      },
+    });
+  }
+);
+
+/**
+ * PUT /v1/admin/tenants/:id — Update tenant
+ */
+adminTenantsRouter.openapi(
+  createRoute({
+    method: 'put',
+    path: '/{id}',
+    tags: ['Admin'],
+    summary: 'Update Tenant',
+    description: 'Update tenant details.',
+    middleware: [authMiddleware, requireRole('system_admin')] as any,
+    request: {
+      params: z.object({
+        id: z.string().uuid('Invalid tenant ID format'),
+      }),
+      body: {
+        content: {
+          'application/json': {
+            schema: z.object({
+              name: z.string().optional(),
+              type: z.enum(['contractor', 'client']).optional(),
+              seatLimit: z.number().optional(),
+              isActive: z.boolean().optional(),
+              planId: z.string().uuid('Invalid plan ID format').nullable().optional(),
+            }),
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        content: {
+          'application/json': {
+            schema: z.object({
+              success: z.boolean(),
+              data: z.any(),
+            }),
+          },
+        },
+        description: 'Tenant updated',
+      },
+    },
+  }),
+  async (c) => {
+    const id = c.req.param('id');
+    const input = c.req.valid('json');
+    const user = c.get('user');
+
+    const ctx = {
+      actorId: user.id,
+      actorEmail: user.email,
+      ipAddress:
+        c.req.header('CF-Connecting-IP') ||
+        c.req.header('X-Forwarded-For')?.split(',')[0].trim() ||
+        null,
+      userAgent: c.req.header('User-Agent') || null,
+    };
+
+    try {
+      const updated = await c.var.services.organizations.updateTenant(id, input as any, ctx);
+      return c.json({ success: true, data: updated });
+    } catch (error) {
+      if (error instanceof Error && error.message === 'Tenant not found') {
+        throw new AppError(ErrorCodes.NOT_FOUND, 'Tenant not found', 404);
+      }
+      throw error;
+    }
+  }
+);
+
+/**
+ * DELETE /v1/admin/tenants/:id — Deactivate tenant
+ */
+adminTenantsRouter.openapi(
+  createRoute({
+    method: 'delete',
+    path: '/{id}',
+    tags: ['Admin'],
+    summary: 'Deactivate Tenant',
+    description: 'Soft delete/deactivate a tenant.',
+    middleware: [authMiddleware, requireRole('system_admin')] as any,
+    request: {
+      params: z.object({
+        id: z.string().uuid('Invalid tenant ID format'),
+      }),
+    },
+    responses: {
+      200: {
+        content: {
+          'application/json': {
+            schema: z.object({
+              success: z.boolean(),
+              message: z.string(),
+            }),
+          },
+        },
+        description: 'Tenant deactivated',
+      },
+    },
+  }),
+  async (c) => {
+    const id = c.req.param('id');
+    const user = c.get('user');
+
+    const ctx = {
+      actorId: user.id,
+      actorEmail: user.email,
+      ipAddress:
+        c.req.header('CF-Connecting-IP') ||
+        c.req.header('X-Forwarded-For')?.split(',')[0].trim() ||
+        null,
+      userAgent: c.req.header('User-Agent') || null,
+    };
+
+    await c.var.services.organizations.deactivateTenant(id, ctx);
+
+    return c.json({
+      success: true,
+      message: 'Tenant deactivated',
+    });
+  }
+);
+
+export { adminTenantsRouter };

@@ -1,0 +1,45 @@
+{
+  "title": "Settings",
+  "subtitle": "System settings and personal preferences",
+  "tabs": {
+    "profile": "Profile",
+    "security": "Security",
+    "account": "Account"
+  },
+  "profile": {
+    "saved": "Profile saved successfully",
+    "saveFailed": "Failed to save profile",
+    "email": "Email",
+    "emailHint": "Email cannot be changed",
+    "fullName": "Full Name",
+    "phone": "Phone Number",
+    "mobile": "Mobile Number",
+    "jobTitle": "Job Title",
+    "address": "Address",
+    "avatarUrl": "Avatar URL",
+    "bio": "Bio",
+    "save": "Save Changes"
+  },
+  "security": {
+    "changePassword": "Change Password",
+    "changePasswordDescription": "Update your password to keep your account secure.",
+    "passwordChanged": "Password changed successfully",
+    "updatePassword": "Update Password",
+    "signOutEverywhere": "Sign Out Everywhere",
+    "signOutEverywhereDescription": "Sign out of all devices and sessions. You will need to sign in again.",
+    "signingOut": "Signing out...",
+    "signOutAll": "Sign Out All Devices"
+  },
+  "account": {
+    "dangerZone": "Danger Zone",
+    "deleteTitle": "Delete Account",
+    "deleteDescription": "Permanently delete your account. This action cannot be undone.",
+    "deleteWarning1": "All your data will be permanently removed",
+    "deleteWarning2": "You will lose access to all projects and resources",
+    "deleteWarning3": "This action cannot be reversed",
+    "typeDelete": "Type DELETE to confirm",
+    "deleteFailed": "Failed to delete account",
+    "deleting": "Deleting...",
+    "deleteButton": "Delete My Account"
+  }
+}

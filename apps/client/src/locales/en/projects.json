@@ -1,0 +1,149 @@
+{
+  "title": "My Projects",
+  "subtitle": "Manage and track all projects",
+  "total": "Total Projects",
+  "active": "Active Projects",
+  "completed": "Completed",
+  "attention": "Needs Attention",
+  "empty": "No projects yet",
+  "emptyDescription": "Create your first project and start managing calculations",
+  "create": "Create New Project",
+  "creating": "Creating...",
+  "edit": "Edit Project",
+  "delete": "Delete Project",
+  "deleteConfirm": "Are you sure you want to delete this project? This action cannot be undone.",
+  "colName": "Project Name",
+  "colStatus": "Status",
+  "colBudget": "Budget",
+  "colContractor": "Contractor",
+  "colClient": "Client",
+  "colStartDate": "Start Date",
+  "colEndDate": "End Date",
+
+  "status": {
+    "active": "Active",
+    "on_hold": "On Hold",
+    "completed": "Completed",
+    "cancelled": "Cancelled"
+  },
+
+  "form": {
+    "editSubtitle": "Update project details",
+    "createSubtitle": "Add a new project",
+    "basicInfo": "Basic Information",
+    "name": "Project Name",
+    "namePlaceholder": "Enter project name",
+    "description": "Description",
+    "descriptionPlaceholder": "Enter project description",
+    "location": "Location",
+    "locationPlaceholder": "Enter project location or address",
+    "notes": "Notes",
+    "notesPlaceholder": "Additional notes about the project",
+
+    "contractDetails": "Contract Details",
+    "contractNumber": "Contract Number",
+    "contractNumberPlaceholder": "e.g., CNT-2026-001",
+    "contractDate": "Contract Date",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+
+    "parties": "Contract Parties",
+    "contractorName": "Contractor Name",
+    "contractorNamePlaceholder": "Enter contractor company name",
+    "contractorId": "Contractor ID",
+    "contractorIdPlaceholder": "Company registration number",
+    "clientName": "Client Name",
+    "clientNamePlaceholder": "Enter client company name",
+    "clientId": "Client ID",
+    "clientIdPlaceholder": "Company registration number",
+
+    "financials": "Financial Details",
+    "contractValue": "Contract Value",
+    "contractValuePlaceholder": "Total contract value",
+    "globalDiscount": "Global Discount (%)",
+    "globalDiscountPlaceholder": "Default discount for all BOQ items",
+    "chapterDiscounts": "Chapter Discounts",
+    "chapterDiscountsHelp": "Override discount per chapter",
+    "addChapterDiscount": "Add Chapter Discount",
+    "chapterCode": "Chapter Code",
+    "discountPercent": "Discount %",
+
+    "statusSection": "Status",
+    "changeStatus": "Change Status",
+    "statusHelp": "Changing status to Completed or Cancelled will record the timestamp"
+  },
+
+  "validation": {
+    "nameRequired": "Project name is required",
+    "nameMinLength": "Project name must be at least 3 characters",
+    "invalidDiscount": "Discount must be between 0 and 100",
+    "endDateBeforeStart": "End date cannot be before start date",
+    "contractValuePositive": "Contract value must be a positive number"
+  },
+
+  "actions": {
+    "save": "Save Project",
+    "saving": "Saving...",
+    "cancel": "Cancel",
+    "markCompleted": "Mark as Completed",
+    "markOnHold": "Put On Hold",
+    "reactivate": "Reactivate",
+    "markCancelled": "Cancel Project"
+  },
+
+  "tabs": {
+    "overview": "Overview",
+    "boq": "Bill of Quantities",
+    "tasks": "Tasks",
+    "execution": "Bills",
+    "payments": "Payment Requests",
+    "worklogs": "Work Logs",
+    "modules": "Calculations",
+    "docs": "Documents",
+    "workspace": "Workspace",
+    "users": "User Management",
+    "settings": "Settings"
+  },
+
+  "workspace": "Project Workspace",
+  "currentProject": "Current Project",
+  "backToProjects": "Back to Projects",
+  "attendanceControl": "Attendance Control",
+  "workTime": "Work Time on Project",
+  "timeTracking": "Time Tracking",
+
+  "notFound": "Project not found",
+
+  "details": {
+    "overview": "Overview",
+    "contract": "Contract",
+    "timeline": "Timeline",
+    "financial": "Financial",
+    "noContractNumber": "No contract number",
+    "noContractor": "No contractor assigned",
+    "noClient": "No client assigned",
+    "createdAt": "Created",
+    "updatedAt": "Last Updated",
+    "completedAt": "Completed",
+    "cancelledAt": "Cancelled"
+  },
+
+  "filters": {
+    "all": "All Projects",
+    "byStatus": "Filter by Status",
+    "byContractor": "Filter by Contractor",
+    "byClient": "Filter by Client",
+    "dateRange": "Date Range",
+    "clearFilters": "Clear Filters"
+  },
+
+  "toast": {
+    "created": "Project created successfully",
+    "updated": "Project updated successfully",
+    "deleted": "Project deleted successfully",
+    "statusChanged": "Project status updated",
+    "createError": "Failed to create project",
+    "updateError": "Failed to update project",
+    "deleteError": "Failed to delete project"
+  }
+}

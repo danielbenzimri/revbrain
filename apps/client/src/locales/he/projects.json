@@ -1,0 +1,149 @@
+{
+  "title": "הפרויקטים שלי",
+  "subtitle": "נהל ועקוב אחר כל הפרויקטים",
+  "total": "סה״כ פרויקטים",
+  "active": "פרויקטים פעילים",
+  "completed": "הושלמו",
+  "attention": "דורשים תשומת לב",
+  "empty": "אין פרויקטים עדיין",
+  "emptyDescription": "צור את הפרויקט הראשון שלך והתחל לנהל את החישובים",
+  "create": "צור פרויקט חדש",
+  "creating": "יוצר...",
+  "edit": "עריכת פרויקט",
+  "delete": "מחיקת פרויקט",
+  "deleteConfirm": "האם אתה בטוח שברצונך למחוק פרויקט זה? לא ניתן לבטל פעולה זו.",
+  "colName": "שם הפרויקט",
+  "colStatus": "סטטוס",
+  "colBudget": "תקציב",
+  "colContractor": "קבלן",
+  "colClient": "מזמין",
+  "colStartDate": "תאריך התחלה",
+  "colEndDate": "תאריך סיום",
+
+  "status": {
+    "active": "פעיל",
+    "on_hold": "בהמתנה",
+    "completed": "הושלם",
+    "cancelled": "בוטל"
+  },
+
+  "form": {
+    "editSubtitle": "עדכון פרטי הפרויקט",
+    "createSubtitle": "הוספת פרויקט חדש",
+    "basicInfo": "פרטים בסיסיים",
+    "name": "שם הפרויקט",
+    "namePlaceholder": "הזן שם פרויקט",
+    "description": "תיאור",
+    "descriptionPlaceholder": "הזן תיאור הפרויקט",
+    "location": "מיקום",
+    "locationPlaceholder": "הזן מיקום או כתובת הפרויקט",
+    "notes": "הערות",
+    "notesPlaceholder": "הערות נוספות על הפרויקט",
+
+    "contractDetails": "פרטי החוזה",
+    "contractNumber": "מספר חוזה",
+    "contractNumberPlaceholder": "לדוגמה: CNT-2026-001",
+    "contractDate": "תאריך חוזה",
+    "startDate": "תאריך התחלה",
+    "endDate": "תאריך סיום",
+
+    "parties": "צדדים לחוזה",
+    "contractorName": "שם הקבלן",
+    "contractorNamePlaceholder": "הזן שם חברת הקבלן",
+    "contractorId": "ח.פ. קבלן",
+    "contractorIdPlaceholder": "מספר רישום החברה",
+    "clientName": "שם המזמין",
+    "clientNamePlaceholder": "הזן שם חברת המזמין",
+    "clientId": "ח.פ. מזמין",
+    "clientIdPlaceholder": "מספר רישום החברה",
+
+    "financials": "פרטים כספיים",
+    "contractValue": "ערך החוזה",
+    "contractValuePlaceholder": "סכום החוזה הכולל",
+    "globalDiscount": "הנחה גלובלית (%)",
+    "globalDiscountPlaceholder": "הנחה ברירת מחדל לכל פריטי הכתב כמויות",
+    "chapterDiscounts": "הנחות לפי פרק",
+    "chapterDiscountsHelp": "דריסת הנחה לפי פרק",
+    "addChapterDiscount": "הוסף הנחת פרק",
+    "chapterCode": "קוד פרק",
+    "discountPercent": "אחוז הנחה",
+
+    "statusSection": "סטטוס",
+    "changeStatus": "שינוי סטטוס",
+    "statusHelp": "שינוי הסטטוס להושלם או בוטל יתעד את הזמן"
+  },
+
+  "validation": {
+    "nameRequired": "שם הפרויקט נדרש",
+    "nameMinLength": "שם הפרויקט חייב להכיל לפחות 3 תווים",
+    "invalidDiscount": "ההנחה חייבת להיות בין 0 ל-100",
+    "endDateBeforeStart": "תאריך הסיום לא יכול להיות לפני תאריך ההתחלה",
+    "contractValuePositive": "ערך החוזה חייב להיות מספר חיובי"
+  },
+
+  "actions": {
+    "save": "שמור פרויקט",
+    "saving": "שומר...",
+    "cancel": "ביטול",
+    "markCompleted": "סמן כהושלם",
+    "markOnHold": "העבר להמתנה",
+    "reactivate": "הפעל מחדש",
+    "markCancelled": "בטל פרויקט"
+  },
+
+  "tabs": {
+    "overview": "דשבורד ראשי",
+    "boq": "כתב כמויות",
+    "tasks": "משימות",
+    "execution": "חשבונות",
+    "payments": "דרישות לתשלום",
+    "worklogs": "יומני עבודה",
+    "modules": "חישובים",
+    "docs": "אסמכתאות",
+    "workspace": "סביבת עבודה",
+    "users": "ניהול משתמשים",
+    "settings": "הגדרות"
+  },
+
+  "workspace": "סביבת עבודה פרויקט",
+  "currentProject": "פרויקט נוכחי",
+  "backToProjects": "חזרה לפרויקטים",
+  "attendanceControl": "בקרת נוכחות",
+  "workTime": "זמן עבודה בפרויקט",
+  "timeTracking": "מעקב זמנים",
+
+  "notFound": "הפרויקט לא נמצא",
+
+  "details": {
+    "overview": "סקירה",
+    "contract": "חוזה",
+    "timeline": "ציר זמן",
+    "financial": "כספי",
+    "noContractNumber": "אין מספר חוזה",
+    "noContractor": "לא הוקצה קבלן",
+    "noClient": "לא הוקצה מזמין",
+    "createdAt": "נוצר",
+    "updatedAt": "עודכן לאחרונה",
+    "completedAt": "הושלם",
+    "cancelledAt": "בוטל"
+  },
+
+  "filters": {
+    "all": "כל הפרויקטים",
+    "byStatus": "סינון לפי סטטוס",
+    "byContractor": "סינון לפי קבלן",
+    "byClient": "סינון לפי מזמין",
+    "dateRange": "טווח תאריכים",
+    "clearFilters": "נקה מסננים"
+  },
+
+  "toast": {
+    "created": "הפרויקט נוצר בהצלחה",
+    "updated": "הפרויקט עודכן בהצלחה",
+    "deleted": "הפרויקט נמחק בהצלחה",
+    "statusChanged": "סטטוס הפרויקט עודכן",
+    "createError": "יצירת הפרויקט נכשלה",
+    "updateError": "עדכון הפרויקט נכשל",
+    "deleteError": "מחיקת הפרויקט נכשלה"
+  }
+}

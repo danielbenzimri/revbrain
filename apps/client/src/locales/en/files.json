@@ -1,0 +1,95 @@
+{
+  "title": "Files",
+  "subtitle": "Project documents and media",
+  "empty": "No files yet",
+  "emptyDescription": "Upload your first file to get started",
+  "upload": {
+    "button": "Upload Files",
+    "uploading": "Uploading...",
+    "dropzone": "Drop files here or click to browse",
+    "maxSize": "Max file size: {{size}}",
+    "success": "{{count}} file(s) uploaded successfully",
+    "error": "Failed to upload files"
+  },
+  "file": {
+    "name": "File Name",
+    "type": "Type",
+    "size": "Size",
+    "uploadedBy": "Uploaded By",
+    "uploadedAt": "Uploaded At",
+    "folder": "Folder"
+  },
+  "folders": {
+    "title": "Folders",
+    "create": "Create Folder",
+    "creating": "Creating...",
+    "name": "Folder Name",
+    "rename": "Rename Folder",
+    "delete": "Delete Folder",
+    "deleteConfirm": "Delete this folder and all its contents?",
+    "root": "Root",
+    "back": "Back"
+  },
+  "actions": {
+    "download": "Download",
+    "preview": "Preview",
+    "rename": "Rename",
+    "move": "Move to Folder",
+    "copy": "Copy",
+    "delete": "Delete",
+    "deleteConfirm": "Are you sure you want to delete this file?",
+    "share": "Share",
+    "details": "Details"
+  },
+  "types": {
+    "image": "Image",
+    "document": "Document",
+    "spreadsheet": "Spreadsheet",
+    "presentation": "Presentation",
+    "pdf": "PDF",
+    "cad": "CAD Drawing",
+    "archive": "Archive",
+    "other": "Other"
+  },
+  "filters": {
+    "all": "All Files",
+    "images": "Images",
+    "documents": "Documents",
+    "drawings": "CAD Drawings",
+    "recent": "Recent",
+    "search": "Search files..."
+  },
+  "sort": {
+    "name": "Name",
+    "date": "Date",
+    "size": "Size",
+    "type": "Type"
+  },
+  "view": {
+    "grid": "Grid View",
+    "list": "List View"
+  },
+  "preview": {
+    "title": "File Preview",
+    "unsupported": "Preview not available for this file type",
+    "download": "Download to view"
+  },
+  "storage": {
+    "title": "Storage",
+    "used": "Used",
+    "available": "Available",
+    "total": "Total"
+  },
+  "validation": {
+    "nameRequired": "File name is required",
+    "invalidType": "File type not allowed",
+    "tooLarge": "File exceeds maximum size"
+  },
+  "notifications": {
+    "uploaded": "File uploaded successfully",
+    "renamed": "File renamed successfully",
+    "moved": "File moved successfully",
+    "deleted": "File deleted successfully",
+    "folderCreated": "Folder created successfully"
+  }
+}
