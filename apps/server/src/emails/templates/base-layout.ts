@@ -2,7 +2,7 @@
  * Base email layout matching RevBrain branding.
  * Uses table-based HTML for maximum email client compatibility.
  * Branding matches supabase/templates/invite.html:
- *   - Slate-900 gradient header with emerald "G" logo
+ *   - Slate-900 gradient header with violet RevBrain logo
  *   - White content body
  *   - Slate footer with copyright
  */
@@ -33,8 +33,8 @@ export function wrapInLayout(content: string, previewText?: string): string {
             <td style="background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:32px 40px;text-align:center;">
               <table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 auto;">
                 <tr>
-                  <td style="background-color:#10b981;width:40px;height:40px;border-radius:10px;text-align:center;vertical-align:middle;">
-                    <span style="color:#ffffff;font-size:20px;font-weight:bold;line-height:40px;">G</span>
+                  <td style="background:linear-gradient(135deg,#7c3aed 0%,#9333ea 100%);width:40px;height:40px;border-radius:10px;text-align:center;vertical-align:middle;">
+                    <span style="color:#ffffff;font-size:18px;font-weight:bold;line-height:40px;">&#8644;</span>
                   </td>
                   <td style="padding-left:12px;">
                     <span style="color:#ffffff;font-size:22px;font-weight:700;letter-spacing:-0.5px;">RevBrain</span>
@@ -55,7 +55,7 @@ export function wrapInLayout(content: string, previewText?: string): string {
           <tr>
             <td style="background-color:#f8fafc;padding:20px 40px;text-align:center;border-top:1px solid #e2e8f0;">
               <p style="margin:0;font-size:12px;color:#94a3b8;">
-                &copy; ${new Date().getFullYear()} RevBrain &mdash; Construction Management
+                &copy; ${new Date().getFullYear()} RevBrain &mdash; Revenue Operations
               </p>
             </td>
           </tr>
@@ -73,7 +73,7 @@ export function wrapInLayout(content: string, previewText?: string): string {
 export function ctaButton(text: string, href: string): string {
   return `<table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 auto 24px;">
   <tr>
-    <td style="border-radius:8px;background-color:#10b981;">
+    <td style="border-radius:8px;background-color:#7c3aed;">
       <a href="${escapeHtml(href)}"
          target="_blank"
          style="display:inline-block;padding:14px 32px;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:8px;">

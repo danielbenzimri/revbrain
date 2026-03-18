@@ -71,7 +71,7 @@ export function renderRefundConfirmationEmail(data: RefundConfirmationEmailData)
             </tr>
             <tr>
               <td style="padding:8px 0;font-size:16px;font-weight:600;color:#0f172a;">Refund Amount</td>
-              <td style="padding:8px 0;font-size:16px;font-weight:700;color:#10b981;text-align:right;">${escapeHtml(refundAmount)}</td>
+              <td style="padding:8px 0;font-size:16px;font-weight:700;color:#7c3aed;text-align:right;">${escapeHtml(refundAmount)}</td>
             </tr>
           </table>
         </td>

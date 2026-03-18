@@ -173,7 +173,7 @@ adminUsersRouter.openapi(
           ? 'bg-purple-500'
           : u.role.includes('client')
             ? 'bg-blue-500'
-            : 'bg-emerald-500',
+            : 'bg-violet-500',
       createdAt: u.createdAt,
       jobTitle: u.jobTitle,
       phoneNumber: u.phoneNumber,

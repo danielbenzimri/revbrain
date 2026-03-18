@@ -35,10 +35,10 @@ export function renderSubscriptionChangedEmail(data: SubscriptionChangedEmailDat
   };
 
   const descriptions: Record<string, string> = {
-    upgrade: `Great news! Your subscription has been upgraded to <strong style="color:#10b981;">${escapeHtml(newPlan)}</strong>.`,
+    upgrade: `Great news! Your subscription has been upgraded to <strong style="color:#7c3aed;">${escapeHtml(newPlan)}</strong>.`,
     downgrade: `Your plan has been changed from ${previousPlan ? escapeHtml(previousPlan) : 'your previous plan'} to <strong style="color:#0f172a;">${escapeHtml(newPlan)}</strong>.`,
     canceled: `Your <strong style="color:#0f172a;">${escapeHtml(newPlan)}</strong> subscription has been canceled.`,
-    reactivated: `Your <strong style="color:#10b981;">${escapeHtml(newPlan)}</strong> subscription has been reactivated!`,
+    reactivated: `Your <strong style="color:#7c3aed;">${escapeHtml(newPlan)}</strong> subscription has been reactivated!`,
   };
 
   let featuresSection = '';

@@ -144,7 +144,7 @@ test.describe('Billing Page UI', () => {
         'text=/\\d+\\s*\\/\\s*\\d+|unlimited|ללא הגבלה/i'
       );
       const progressBars = authenticatedPage.locator(
-        '[role="progressbar"], .bg-emerald-500, .bg-amber-500, .bg-red-500'
+        '[role="progressbar"], .bg-violet-500, .bg-amber-500, .bg-red-500'
       );
 
       const hasUsageNumbers = (await usageNumbers.count()) > 0;

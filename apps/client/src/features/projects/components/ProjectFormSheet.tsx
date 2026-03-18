@@ -176,7 +176,7 @@ export function ProjectFormSheet({
         className="w-full sm:max-w-2xl p-0 flex flex-col"
         hideCloseButton
       >
-        {/* Header - Emerald gradient for projects */}
+        {/* Header - Violet gradient for projects */}
         <div className="bg-gradient-to-r from-violet-500 to-teal-500 px-6 py-5 text-white">
           <div className="flex items-center justify-between">
             <div className="flex-1" />

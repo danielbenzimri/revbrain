@@ -47,7 +47,7 @@ export function renderLeadNotificationEmail(data: LeadNotificationEmailData): st
         <tr>
           <td style="padding:8px 0;color:#64748b;font-size:14px;">Email</td>
           <td style="padding:8px 0;color:#0f172a;font-size:14px;font-weight:500;">
-            <a href="mailto:${escapeHtml(leadEmail)}" style="color:#10b981;text-decoration:none;">${escapeHtml(leadEmail)}</a>
+            <a href="mailto:${escapeHtml(leadEmail)}" style="color:#7c3aed;text-decoration:none;">${escapeHtml(leadEmail)}</a>
           </td>
         </tr>
         <tr>

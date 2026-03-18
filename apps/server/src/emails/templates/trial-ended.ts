@@ -21,7 +21,7 @@ export function renderTrialEndedEmail(data: TrialEndedEmailData): string {
   let offerSection = '';
   if (specialOffer) {
     offerSection = `
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 24px;border:2px solid #10b981;border-radius:8px;overflow:hidden;">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 24px;border:2px solid #7c3aed;border-radius:8px;overflow:hidden;">
         <tr>
           <td style="background:linear-gradient(135deg,#ecfdf5 0%,#d1fae5 100%);padding:24px;text-align:center;">
             <p style="margin:0 0 8px;font-size:14px;color:#059669;font-weight:600;">🎁 SPECIAL OFFER</p>

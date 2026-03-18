@@ -237,7 +237,7 @@ export function ContactSalesModal({ isOpen, onClose }: ContactSalesModalProps) {
               value={formData.companyName}
               onChange={(e) => updateField('companyName', e.target.value)}
               required
-              placeholder={t('billing.contactSales.companyPlaceholder', 'Acme Construction Ltd')}
+              placeholder={t('billing.contactSales.companyPlaceholder', 'Acme Corp')}
               className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm"
             />
           </div>
