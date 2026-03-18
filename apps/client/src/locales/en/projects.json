@@ -64,14 +64,7 @@
 
   "tabs": {
     "overview": "Overview",
-    "boq": "Bill of Quantities",
-    "tasks": "Tasks",
-    "execution": "Bills",
-    "payments": "Payment Requests",
-    "worklogs": "Work Logs",
-    "modules": "Calculations",
     "docs": "Documents",
-    "workspace": "Workspace",
     "users": "User Management",
     "settings": "Settings"
   },
@@ -79,9 +72,6 @@
   "workspace": "Project Workspace",
   "currentProject": "Current Project",
   "backToProjects": "Back to Projects",
-  "attendanceControl": "Attendance Control",
-  "workTime": "Work Time on Project",
-  "timeTracking": "Time Tracking",
 
   "notFound": "Project not found",
 

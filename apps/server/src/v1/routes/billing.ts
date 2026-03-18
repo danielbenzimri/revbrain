@@ -8,6 +8,7 @@ import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { db, organizations, eq } from '@revbrain/database';
 import { authMiddleware } from '../../middleware/auth.ts';
 import { requireActiveSubscription } from '../../middleware/limits.ts';
+import { routeMiddleware } from '../../lib/middleware-types.ts';
 import { BillingService } from '../../services/billing.service.ts';
 import { CouponService } from '../../services/coupon.service.ts';
 import { isStripeConfigured } from '../../lib/stripe.ts';
@@ -30,7 +31,7 @@ billingRouter.openapi(
     tags: ['Billing'],
     summary: 'Create Checkout Session',
     description: 'Creates a Stripe Checkout Session for subscription purchase.',
-    middleware: [authMiddleware] as any,
+    middleware: routeMiddleware(authMiddleware),
     request: {
       body: {
         content: {
@@ -107,7 +108,7 @@ billingRouter.openapi(
     summary: 'Create Customer Portal Session',
     description:
       'Creates a Stripe Customer Portal session for managing billing. Requires active subscription.',
-    middleware: [authMiddleware, requireActiveSubscription()] as any,
+    middleware: routeMiddleware(authMiddleware, requireActiveSubscription()),
     responses: {
       200: {
         content: {
@@ -160,7 +161,7 @@ billingRouter.openapi(
     tags: ['Billing'],
     summary: 'Get Subscription Status',
     description: 'Returns the current subscription status for the organization.',
-    middleware: [authMiddleware] as any,
+    middleware: routeMiddleware(authMiddleware),
     responses: {
       200: {
         content: {
@@ -199,7 +200,7 @@ billingRouter.openapi(
     tags: ['Billing'],
     summary: 'Get Payment History',
     description: 'Returns paginated payment history for the organization.',
-    middleware: [authMiddleware] as any,
+    middleware: routeMiddleware(authMiddleware),
     request: {
       query: z.object({
         limit: z.coerce.number().min(1).max(MAX_PAYMENT_LIMIT).optional(),
@@ -260,7 +261,7 @@ billingRouter.openapi(
     tags: ['Billing'],
     summary: 'Get Usage Statistics',
     description: 'Returns current usage statistics including users, projects, and storage.',
-    middleware: [authMiddleware] as any,
+    middleware: routeMiddleware(authMiddleware),
     responses: {
       200: {
         content: {
@@ -323,7 +324,7 @@ billingRouter.openapi(
     tags: ['Billing'],
     summary: 'Validate Coupon Code',
     description: 'Validates a coupon code before checkout.',
-    middleware: [authMiddleware] as any,
+    middleware: routeMiddleware(authMiddleware),
     request: {
       body: {
         content: {
@@ -381,7 +382,7 @@ billingRouter.openapi(
     tags: ['Billing'],
     summary: 'Change Subscription Plan',
     description: 'Changes the subscription to a different plan. Requires active subscription.',
-    middleware: [authMiddleware, requireActiveSubscription()] as any,
+    middleware: routeMiddleware(authMiddleware, requireActiveSubscription()),
     request: {
       body: {
         content: {
@@ -449,7 +450,7 @@ billingRouter.openapi(
     tags: ['Billing'],
     summary: 'Cancel Subscription',
     description: 'Cancels the current subscription. By default, cancels at period end.',
-    middleware: [authMiddleware, requireActiveSubscription()] as any,
+    middleware: routeMiddleware(authMiddleware, requireActiveSubscription()),
     request: {
       body: {
         content: {
@@ -518,7 +519,7 @@ billingRouter.openapi(
     tags: ['Billing'],
     summary: 'Reactivate Subscription',
     description: 'Reactivates a subscription scheduled to cancel at period end.',
-    middleware: [authMiddleware] as any,
+    middleware: routeMiddleware(authMiddleware),
     responses: {
       200: {
         content: {

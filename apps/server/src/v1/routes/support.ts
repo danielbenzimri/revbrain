@@ -7,6 +7,7 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { authMiddleware } from '../../middleware/auth.ts';
 import { listLimiter } from '../../middleware/rate-limit.ts';
+import { routeMiddleware } from '../../lib/middleware-types.ts';
 import { AppError, ErrorCodes } from '@revbrain/contract';
 import { TicketService } from '../../services/ticket.service.ts';
 import type { AppEnv } from '../../types/index.ts';
@@ -26,7 +27,7 @@ supportRouter.openapi(
     tags: ['Support'],
     summary: 'Create Support Ticket',
     description: 'Create a new support ticket.',
-    middleware: [authMiddleware] as any,
+    middleware: routeMiddleware(authMiddleware),
     request: {
       body: {
         content: {
@@ -96,7 +97,7 @@ supportRouter.openapi(
     tags: ['Support'],
     summary: 'List My Tickets',
     description: 'List support tickets for the current user.',
-    middleware: [authMiddleware, listLimiter] as any,
+    middleware: routeMiddleware(authMiddleware, listLimiter),
     request: {
       query: z.object({
         limit: z.coerce.number().min(1).max(MAX_LIMIT).optional(),
@@ -171,7 +172,7 @@ supportRouter.openapi(
     tags: ['Support'],
     summary: 'Get Ticket Details',
     description: 'Get details of a support ticket including messages.',
-    middleware: [authMiddleware] as any,
+    middleware: routeMiddleware(authMiddleware),
     request: {
       params: z.object({
         id: z.string().uuid('Invalid ticket ID'),
@@ -244,7 +245,7 @@ supportRouter.openapi(
     tags: ['Support'],
     summary: 'Reply to Ticket',
     description: 'Add a message/reply to an existing ticket.',
-    middleware: [authMiddleware] as any,
+    middleware: routeMiddleware(authMiddleware),
     request: {
       params: z.object({
         id: z.string().uuid('Invalid ticket ID'),
@@ -328,7 +329,7 @@ supportRouter.openapi(
     tags: ['Support'],
     summary: 'Close Ticket',
     description: 'Close a support ticket (user can close their own tickets).',
-    middleware: [authMiddleware] as any,
+    middleware: routeMiddleware(authMiddleware),
     request: {
       params: z.object({
         id: z.string().uuid('Invalid ticket ID'),

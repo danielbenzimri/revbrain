@@ -124,7 +124,7 @@ export async function initSentry(): Promise<void> {
 
         // Don't send 4xx errors (client errors)
         if (error && typeof error === 'object' && 'statusCode' in error) {
-          const statusCode = (error as any).statusCode;
+          const statusCode = (error as { statusCode: number }).statusCode;
           if (statusCode >= 400 && statusCode < 500) {
             return null; // Drop the event
           }

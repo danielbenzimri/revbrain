@@ -4,7 +4,7 @@
  *
  * Includes test cleanup endpoints for E2E tests.
  */
-import { Hono } from 'hono';
+import { Hono, type Context } from 'hono';
 import { timingSafeEqual } from 'node:crypto';
 import { type AppEnv } from '../../types/index.ts';
 import { isProduction } from '../../lib/config.ts';
@@ -29,7 +29,7 @@ const TEST_CLEANUP_KEY = process.env.TEST_CLEANUP_KEY;
  * Middleware to verify test cleanup requests
  * Checks for X-Test-Cleanup-Key header using timing-safe comparison
  */
-function verifyTestCleanupKey(c: any, next: () => Promise<void>) {
+function verifyTestCleanupKey(c: Context<AppEnv>, next: () => Promise<void>) {
   if (!TEST_CLEANUP_KEY) {
     return c.json({ success: false, error: 'Cleanup key not configured' }, 503);
   }

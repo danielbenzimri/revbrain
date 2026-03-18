@@ -2,6 +2,7 @@ import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { authMiddleware } from '../../../middleware/auth.ts';
 import { requireRole } from '../../../middleware/rbac.ts';
 import { adminLimiter } from '../../../middleware/rate-limit.ts';
+import { routeMiddleware } from '../../../lib/middleware-types.ts';
 import { AppError, ErrorCodes, onboardOrganizationSchema } from '@revbrain/contract';
 import type { AppEnv } from '../../../types/index.ts';
 import type { RequestContext } from '../../../services/types.ts';
@@ -19,11 +20,12 @@ onboardingRouter.openapi(
     tags: ['Admin'],
     summary: 'Onboard Organization',
     description: 'System admin onboards a new organization + first admin user.',
-    middleware: [authMiddleware, requireRole('system_admin'), adminLimiter] as any,
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), adminLimiter),
     request: {
       body: {
         content: {
           'application/json': {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Zod schema type incompatible with Hono OpenAPI expected type
             schema: onboardOrganizationSchema as any,
           },
         },
@@ -53,7 +55,7 @@ onboardingRouter.openapi(
       throw new AppError(ErrorCodes.UNAUTHORIZED, 'Authentication required', 401);
     }
 
-    const input = c.req.valid('json') as any;
+    const input = c.req.valid('json') as z.infer<typeof onboardOrganizationSchema>;
     const ctx: RequestContext = {
       actorId: actor.id,
       actorEmail: actor.email,

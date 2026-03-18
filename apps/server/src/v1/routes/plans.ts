@@ -100,6 +100,7 @@ plansRouter.openapi(
           'application/json': {
             schema: z.object({
               success: z.boolean(),
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Zod schema type incompatible with Hono OpenAPI expected type
               data: z.array(planSchema as any),
               pagination: z.object({
                 limit: z.number(),
@@ -114,6 +115,7 @@ plansRouter.openapi(
     },
   }),
   async (c) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Hono OpenAPI context type mismatch with middleware parameter
     await authMiddleware(c as any, async () => {});
 
     const actor = c.get('user');
@@ -162,6 +164,7 @@ plansRouter.post(
   '/',
   authMiddleware,
   requireRole('system_admin'),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Zod schema type incompatible with zValidator expected type
   zValidator('json', planSchema as any),
   async (c) => {
     const input = c.req.valid('json');
@@ -243,6 +246,7 @@ plansRouter.put(
   validateUuidParam(),
   authMiddleware,
   requireRole('system_admin'),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Zod schema type incompatible with zValidator expected type
   zValidator('json', planSchema.partial() as any),
   async (c) => {
     const id = c.req.param('id');

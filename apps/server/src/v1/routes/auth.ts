@@ -1,6 +1,7 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { authMiddlewareAllowInactive } from '../../middleware/auth.ts';
 import { authLimiter } from '../../middleware/rate-limit.ts';
+import { routeMiddleware } from '../../lib/middleware-types.ts';
 import type { AppEnv } from '../../types/index.ts';
 import { AppError, ErrorCodes } from '@revbrain/contract';
 import type { RequestContext } from '../../services/types.ts';
@@ -21,7 +22,7 @@ authRouter.openapi(
     summary: 'Get Current User',
     description:
       'Returns the authenticated user profile including organization details. Auto-activates inactive users and records login timestamp.',
-    middleware: [authMiddlewareAllowInactive] as any,
+    middleware: routeMiddleware(authMiddlewareAllowInactive),
     responses: {
       200: {
         content: {
@@ -110,7 +111,7 @@ authRouter.openapi(
     summary: 'Activate Account',
     description:
       'Activates an inactive user account. Typically called after the user sets their password for the first time. Rate limited to prevent abuse.',
-    middleware: [authLimiter, authMiddlewareAllowInactive] as any,
+    middleware: routeMiddleware(authLimiter, authMiddlewareAllowInactive),
     responses: {
       200: {
         content: {

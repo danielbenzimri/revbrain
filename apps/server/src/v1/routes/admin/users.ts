@@ -2,7 +2,9 @@ import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { authMiddleware } from '../../../middleware/auth.ts';
 import { requireRole } from '../../../middleware/rbac.ts';
 import { adminLimiter, listLimiter } from '../../../middleware/rate-limit.ts';
+import { routeMiddleware } from '../../../lib/middleware-types.ts';
 import { AppError, ErrorCodes, inviteUserSchema } from '@revbrain/contract';
+import type { AdminUpdateUserInput } from '../../../services/user.service.ts';
 import type { AppEnv } from '../../../types/index.ts';
 import type { RequestContext } from '../../../services/types.ts';
 import { getClientIpOrNull } from '../../../lib/request-ip.ts';
@@ -22,11 +24,12 @@ adminUsersRouter.openapi(
     tags: ['Admin'],
     summary: 'Invite User',
     description: 'System admin invites a user to any organization.',
-    middleware: [authMiddleware, requireRole('system_admin'), adminLimiter] as any,
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), adminLimiter),
     request: {
       body: {
         content: {
           'application/json': {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Zod schema type incompatible with Hono OpenAPI expected type
             schema: inviteUserSchema as any,
           },
         },
@@ -52,7 +55,7 @@ adminUsersRouter.openapi(
       throw new AppError(ErrorCodes.UNAUTHORIZED, 'Authentication required', 401);
     }
 
-    const input = c.req.valid('json') as any;
+    const input = c.req.valid('json') as z.infer<typeof inviteUserSchema>;
     const ctx: RequestContext = {
       actorId: actor.id,
       actorEmail: actor.email,
@@ -115,7 +118,7 @@ adminUsersRouter.openapi(
     tags: ['Admin'],
     summary: 'List All Users',
     description: 'Fetch users with their organization details. Supports pagination.',
-    middleware: [authMiddleware, requireRole('system_admin'), listLimiter] as any,
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), listLimiter),
     request: {
       query: z.object({
         limit: z.coerce.number().min(1).max(MAX_LIMIT).optional(),
@@ -205,7 +208,7 @@ adminUsersRouter.openapi(
     tags: ['Admin'],
     summary: 'Update User',
     description: 'Update user profile details.',
-    middleware: [authMiddleware, requireRole('system_admin'), adminLimiter] as any,
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), adminLimiter),
     request: {
       params: z.object({
         id: z.string().uuid('Invalid user ID format'),
@@ -244,7 +247,7 @@ adminUsersRouter.openapi(
   async (c) => {
     const actor = c.get('user');
     const id = c.req.param('id');
-    const input = c.req.valid('json') as any;
+    const input = c.req.valid('json') as AdminUpdateUserInput;
 
     const ctx: RequestContext = {
       actorId: actor?.id || 'system',
@@ -283,7 +286,7 @@ adminUsersRouter.openapi(
     tags: ['Admin'],
     summary: 'Delete User',
     description: 'Soft-delete a user and remove from Supabase Auth. Frees email for re-invitation.',
-    middleware: [authMiddleware, requireRole('system_admin'), adminLimiter] as any,
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), adminLimiter),
     request: {
       params: z.object({
         id: z.string().uuid('Invalid user ID format'),

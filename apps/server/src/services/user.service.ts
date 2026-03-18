@@ -1,4 +1,10 @@
-import type { Repositories, UserEntity, EmailPort, UserRole } from '@revbrain/contract';
+import type {
+  Repositories,
+  UserEntity,
+  EmailPort,
+  UserRole,
+  UpdateUserInput,
+} from '@revbrain/contract';
 import { AppError, ErrorCodes } from '@revbrain/contract';
 import type { AuthService } from './auth.service.ts';
 import type { RequestContext } from './types.ts';
@@ -286,7 +292,7 @@ export class UserService {
     updates: Record<string, unknown>,
     ctx: RequestContext
   ): Promise<UserEntity> {
-    const updated = await this.repos.users.update(userId, updates as any);
+    const updated = await this.repos.users.update(userId, updates as UpdateUserInput);
     if (!updated) {
       throw new AppError(ErrorCodes.NOT_FOUND, 'User not found', 404);
     }
@@ -336,7 +342,7 @@ export class UserService {
       return targetUser;
     }
 
-    const updated = await this.repos.users.update(targetUserId, updateData as any);
+    const updated = await this.repos.users.update(targetUserId, updateData as UpdateUserInput);
     if (!updated) {
       throw new AppError(ErrorCodes.NOT_FOUND, 'User not found', 404);
     }

@@ -6,6 +6,7 @@
  */
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { rateLimiter } from 'hono-rate-limiter';
+import { routeMiddleware } from '../../lib/middleware-types.ts';
 import { LeadService } from '../../services/lead.service.ts';
 import { AppError, ErrorCodes } from '@revbrain/contract';
 import type { AppEnv } from '../../types/index.ts';
@@ -57,7 +58,7 @@ leadsRouter.openapi(
     summary: 'Submit Enterprise Contact Form',
     description:
       'Submit a contact request for enterprise pricing. No authentication required. Rate-limited to 5 requests per hour per IP.',
-    middleware: [contactFormLimiter] as any,
+    middleware: routeMiddleware(contactFormLimiter),
     request: {
       body: {
         content: {

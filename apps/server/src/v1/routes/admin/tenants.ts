@@ -2,7 +2,8 @@ import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { authMiddleware } from '../../../middleware/auth.ts';
 import { requireRole } from '../../../middleware/rbac.ts';
 import { listLimiter } from '../../../middleware/rate-limit.ts';
-import { AppError, ErrorCodes } from '@revbrain/contract';
+import { routeMiddleware } from '../../../lib/middleware-types.ts';
+import { AppError, ErrorCodes, type UpdateOrganizationInput } from '@revbrain/contract';
 import type { AppEnv } from '../../../types/index.ts';
 
 const DEFAULT_LIMIT = 50;
@@ -20,7 +21,7 @@ adminTenantsRouter.openapi(
     tags: ['Admin'],
     summary: 'List All Tenants',
     description: 'Fetch tenants with plan details. Supports pagination.',
-    middleware: [authMiddleware, requireRole('system_admin'), listLimiter] as any,
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), listLimiter),
     request: {
       query: z.object({
         limit: z.coerce.number().min(1).max(MAX_LIMIT).optional(),
@@ -94,7 +95,7 @@ adminTenantsRouter.openapi(
     tags: ['Admin'],
     summary: 'Update Tenant',
     description: 'Update tenant details.',
-    middleware: [authMiddleware, requireRole('system_admin')] as any,
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin')),
     request: {
       params: z.object({
         id: z.string().uuid('Invalid tenant ID format'),
@@ -143,7 +144,11 @@ adminTenantsRouter.openapi(
     };
 
     try {
-      const updated = await c.var.services.organizations.updateTenant(id, input as any, ctx);
+      const updated = await c.var.services.organizations.updateTenant(
+        id,
+        input as UpdateOrganizationInput,
+        ctx
+      );
       return c.json({ success: true, data: updated });
     } catch (error) {
       if (error instanceof Error && error.message === 'Tenant not found') {
@@ -164,7 +169,7 @@ adminTenantsRouter.openapi(
     tags: ['Admin'],
     summary: 'Deactivate Tenant',
     description: 'Soft delete/deactivate a tenant.',
-    middleware: [authMiddleware, requireRole('system_admin')] as any,
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin')),
     request: {
       params: z.object({
         id: z.string().uuid('Invalid tenant ID format'),

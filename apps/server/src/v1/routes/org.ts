@@ -9,6 +9,7 @@ import { authMiddleware } from '../../middleware/auth.ts';
 import { requireRole } from '../../middleware/rbac.ts';
 import { requireUserCapacity } from '../../middleware/limits.ts';
 import { inviteLimiter, listLimiter } from '../../middleware/rate-limit.ts';
+import { routeMiddleware } from '../../lib/middleware-types.ts';
 import { AppError, ErrorCodes } from '@revbrain/contract';
 import type { AppEnv } from '../../types/index.ts';
 import type { RequestContext } from '../../services/types.ts';
@@ -27,12 +28,12 @@ orgRouter.openapi(
     tags: ['Organization'],
     summary: 'Invite User',
     description: 'Invites a new user to the organization. Requires org admin role.',
-    middleware: [
+    middleware: routeMiddleware(
       authMiddleware,
       requireRole('org_owner', 'org_owner', 'system_admin'),
       requireUserCapacity(),
-      inviteLimiter,
-    ] as any,
+      inviteLimiter
+    ),
     request: {
       body: {
         content: {
@@ -143,7 +144,7 @@ orgRouter.openapi(
     tags: ['Organization'],
     summary: 'Resend Invitation',
     description: 'Resends invitation email to a user who has not yet activated their account.',
-    middleware: [authMiddleware, requireRole('org_owner', 'org_owner'), inviteLimiter] as any,
+    middleware: routeMiddleware(authMiddleware, requireRole('org_owner', 'admin'), inviteLimiter),
     request: {
       body: {
         content: {
@@ -200,7 +201,7 @@ orgRouter.openapi(
     tags: ['Organization'],
     summary: 'List Organization Users',
     description: "Returns paginated list of all users in the authenticated user's organization.",
-    middleware: [authMiddleware, listLimiter] as any,
+    middleware: routeMiddleware(authMiddleware, listLimiter),
     request: {
       query: z.object({
         limit: z.coerce.number().int().min(1).max(100).optional(),

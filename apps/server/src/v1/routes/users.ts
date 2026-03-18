@@ -8,6 +8,7 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { authMiddleware } from '../../middleware/auth.ts';
 import { authLimiter } from '../../middleware/rate-limit.ts';
+import { routeMiddleware } from '../../lib/middleware-types.ts';
 import type { AppEnv } from '../../types/index.ts';
 import { AppError, ErrorCodes } from '@revbrain/contract';
 import type { RequestContext } from '../../services/types.ts';
@@ -41,7 +42,7 @@ usersRouter.openapi(
     tags: ['Users'],
     summary: 'Get Current User',
     description: "Returns the authenticated user's profile.",
-    middleware: [authMiddleware] as any,
+    middleware: routeMiddleware(authMiddleware),
     responses: {
       200: {
         content: {
@@ -92,7 +93,7 @@ usersRouter.openapi(
     tags: ['Users'],
     summary: 'Update Profile',
     description: "Updates the authenticated user's profile.",
-    middleware: [authMiddleware] as any,
+    middleware: routeMiddleware(authMiddleware),
     request: {
       body: {
         content: {
@@ -199,7 +200,7 @@ usersRouter.openapi(
     tags: ['Users'],
     summary: 'Change Password',
     description: "Changes the authenticated user's password.",
-    middleware: [authLimiter, authMiddleware] as any,
+    middleware: routeMiddleware(authLimiter, authMiddleware),
     request: {
       body: {
         content: {
@@ -260,7 +261,7 @@ usersRouter.openapi(
     tags: ['Users'],
     summary: 'Delete Account',
     description: "Deletes the authenticated user's account (self-deletion).",
-    middleware: [authLimiter, authMiddleware] as any,
+    middleware: routeMiddleware(authLimiter, authMiddleware),
     responses: {
       200: {
         content: {

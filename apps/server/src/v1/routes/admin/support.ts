@@ -8,8 +8,9 @@ import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { authMiddleware } from '../../../middleware/auth.ts';
 import { requireRole } from '../../../middleware/rbac.ts';
 import { listLimiter } from '../../../middleware/rate-limit.ts';
+import { routeMiddleware } from '../../../lib/middleware-types.ts';
 import { AppError, ErrorCodes } from '@revbrain/contract';
-import { TicketService } from '../../../services/ticket.service.ts';
+import { TicketService, type UpdateTicketInput } from '../../../services/ticket.service.ts';
 import type { AppEnv } from '../../../types/index.ts';
 
 const DEFAULT_LIMIT = 50;
@@ -27,7 +28,7 @@ adminSupportRouter.openapi(
     tags: ['Admin Support'],
     summary: 'List All Tickets',
     description: 'List all support tickets with filters and pagination.',
-    middleware: [authMiddleware, requireRole('system_admin'), listLimiter] as any,
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), listLimiter),
     request: {
       query: z.object({
         limit: z.coerce.number().min(1).max(MAX_LIMIT).optional(),
@@ -136,7 +137,7 @@ adminSupportRouter.openapi(
     tags: ['Admin Support'],
     summary: 'Get Ticket Statistics',
     description: 'Get aggregate statistics for support tickets.',
-    middleware: [authMiddleware, requireRole('system_admin')] as any,
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin')),
     responses: {
       200: {
         content: {
@@ -180,7 +181,7 @@ adminSupportRouter.openapi(
     tags: ['Admin Support'],
     summary: 'Get Ticket Details',
     description: 'Get full ticket details including internal notes.',
-    middleware: [authMiddleware, requireRole('system_admin')] as any,
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin')),
     request: {
       params: z.object({
         id: z.string().uuid('Invalid ticket ID'),
@@ -269,7 +270,7 @@ adminSupportRouter.openapi(
     tags: ['Admin Support'],
     summary: 'Update Ticket',
     description: 'Update ticket status, priority, category, or assignment.',
-    middleware: [authMiddleware, requireRole('system_admin')] as any,
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin')),
     request: {
       params: z.object({
         id: z.string().uuid('Invalid ticket ID'),
@@ -309,7 +310,7 @@ adminSupportRouter.openapi(
     const user = c.get('user');
 
     const ticketService = new TicketService();
-    const ticket = await ticketService.updateTicket(id, input as any, user.id);
+    const ticket = await ticketService.updateTicket(id, input as UpdateTicketInput, user.id);
 
     return c.json({
       success: true,
@@ -336,7 +337,7 @@ adminSupportRouter.openapi(
     tags: ['Admin Support'],
     summary: 'Reply to Ticket',
     description: 'Add a message to a ticket (can be internal note or customer-visible reply).',
-    middleware: [authMiddleware, requireRole('system_admin')] as any,
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin')),
     request: {
       params: z.object({
         id: z.string().uuid('Invalid ticket ID'),
@@ -407,7 +408,7 @@ adminSupportRouter.openapi(
     tags: ['Admin Support'],
     summary: 'Assign Ticket',
     description: 'Assign or unassign a ticket to an admin user.',
-    middleware: [authMiddleware, requireRole('system_admin')] as any,
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin')),
     request: {
       params: z.object({
         id: z.string().uuid('Invalid ticket ID'),

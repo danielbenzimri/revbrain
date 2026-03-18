@@ -7,6 +7,7 @@ import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { authMiddleware } from '../../../middleware/auth.ts';
 import { requireRole } from '../../../middleware/rbac.ts';
 import { adminLimiter } from '../../../middleware/rate-limit.ts';
+import { routeMiddleware } from '../../../lib/middleware-types.ts';
 import { AppError, ErrorCodes } from '@revbrain/contract';
 import { BillingService } from '../../../services/billing.service.ts';
 import { formatAmount } from '../../../lib/stripe.ts';
@@ -31,7 +32,7 @@ adminBillingRouter.openapi(
     tags: ['Admin', 'Billing'],
     summary: 'Get Payment Details',
     description: 'Fetch detailed payment information including refund status.',
-    middleware: [authMiddleware, requireRole('system_admin'), adminLimiter] as any,
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), adminLimiter),
     request: {
       params: z.object({
         id: z.string().uuid(),
@@ -98,7 +99,7 @@ adminBillingRouter.openapi(
     tags: ['Admin', 'Billing'],
     summary: 'Issue Refund',
     description: 'Issue a full or partial refund for a payment. Requires system_admin role.',
-    middleware: [authMiddleware, requireRole('system_admin'), adminLimiter] as any,
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), adminLimiter),
     request: {
       body: {
         content: {

@@ -53,11 +53,11 @@
   "lint-staged": {
     "apps/client/**/*.{ts,tsx}": [
       "prettier --write",
-      "eslint --fix --max-warnings 150"
+      "eslint --fix --max-warnings 30"
     ],
     "apps/server/**/*.{ts,tsx}": [
       "prettier --write",
-      "eslint --fix --max-warnings 150"
+      "eslint --fix --max-warnings 30"
     ],
     "packages/**/*.{ts,tsx}": [
       "prettier --write"

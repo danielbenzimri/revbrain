@@ -45,7 +45,7 @@ function createCachePresetMiddleware(presetName: keyof typeof PRESETS) {
   });
 }
 
-/** Tasks, work logs — fast-changing data (15s cache) */
+/** Fast-changing data (15s cache) */
 export const cacheShort = createCachePresetMiddleware('short');
 
 /** Project lists, records — moderate data (60s cache, backward-compatible default) */

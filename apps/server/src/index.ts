@@ -8,12 +8,7 @@ import { loggerMiddleware } from './middleware/logger.ts';
 import { securityHeadersMiddleware } from './middleware/security-headers.ts';
 import { authMiddleware } from './middleware/auth.ts';
 import { authLimiter, apiLimiter } from './middleware/rate-limit.ts';
-import {
-  apiBodyLimit,
-  webhookBodyLimit,
-  fileUploadBodyLimit,
-  createBodyLimit,
-} from './middleware/body-limit.ts';
+import { apiBodyLimit, webhookBodyLimit, fileUploadBodyLimit } from './middleware/body-limit.ts';
 import {
   timeoutMiddleware,
   webhookTimeoutMiddleware,
@@ -120,8 +115,6 @@ app.use('/v1/webhooks/*', webhookTimeoutMiddleware);
 // File upload endpoints get longer timeout (2 minutes)
 app.use('/api/v1/projects/*/files', fileUploadTimeoutMiddleware);
 app.use('/v1/projects/*/files', fileUploadTimeoutMiddleware);
-app.use('/api/v1/boq/*/import', fileUploadTimeoutMiddleware);
-app.use('/v1/boq/*/import', fileUploadTimeoutMiddleware);
 // General API endpoints get 30s timeout
 app.use('/api/*', timeoutMiddleware);
 app.use('/v1/*', timeoutMiddleware);
@@ -134,8 +127,6 @@ app.use('/v1/webhooks/*', webhookBodyLimit);
 // File upload endpoints get larger limits (50MB) - applied ONLY to these paths
 app.use('/api/v1/projects/*/files', fileUploadBodyLimit);
 app.use('/v1/projects/*/files', fileUploadBodyLimit);
-app.use('/api/v1/boq/*/import', fileUploadBodyLimit);
-app.use('/v1/boq/*/import', fileUploadBodyLimit);
 // General API endpoints get standard limits (100KB)
 // Skip paths that have their own body limits
 app.use('/api/*', async (c, next) => {
@@ -173,10 +164,6 @@ app.use('/api/v1/org/*', authMiddleware);
 app.use('/api/v1/billing/*', authMiddleware);
 app.use('/api/v1/support/*', authMiddleware);
 app.use('/api/v1/projects/*', authMiddleware);
-app.use('/api/v1/boq/*', authMiddleware);
-app.use('/api/v1/execution/*', authMiddleware);
-app.use('/api/v1/work-logs/*', authMiddleware);
-app.use('/api/v1/tasks/*', authMiddleware);
 app.use('/api/v1/chat/*', authMiddleware);
 app.use('/api/v1/storage/*', authMiddleware);
 app.use('/v1/users/*', authMiddleware);
@@ -185,10 +172,6 @@ app.use('/v1/org/*', authMiddleware);
 app.use('/v1/billing/*', authMiddleware);
 app.use('/v1/support/*', authMiddleware);
 app.use('/v1/projects/*', authMiddleware);
-app.use('/v1/boq/*', authMiddleware);
-app.use('/v1/execution/*', authMiddleware);
-app.use('/v1/work-logs/*', authMiddleware);
-app.use('/v1/tasks/*', authMiddleware);
 app.use('/v1/chat/*', authMiddleware);
 app.use('/v1/storage/*', authMiddleware);
 

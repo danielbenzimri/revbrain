@@ -63,23 +63,14 @@
   },
 
   "tabs": {
-    "overview": "דשבורד ראשי",
-    "boq": "כתב כמויות",
-    "tasks": "משימות",
-    "execution": "חשבונות",
-    "payments": "דרישות לתשלום",
-    "worklogs": "יומני עבודה",
-    "modules": "חישובים",
-    "docs": "אסמכתאות",
-    "workspace": "סביבת עבודה",
+    "overview": "סקירה",
+    "docs": "מסמכים",
     "users": "ניהול משתמשים",
     "settings": "הגדרות"
   },
 
-  "workspace": "סביבת עבודה פרויקט",
   "currentProject": "פרויקט נוכחי",
   "backToProjects": "חזרה לפרויקטים",
-  "attendanceControl": "בקרת נוכחות",
   "workTime": "זמן עבודה בפרויקט",
   "timeTracking": "מעקב זמנים",
 

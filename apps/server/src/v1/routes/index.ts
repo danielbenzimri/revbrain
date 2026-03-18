@@ -11,7 +11,6 @@ import { supportRouter } from './support.ts';
 import { webhooksRouter } from './webhooks.ts';
 import { devRouter } from './dev.ts';
 import { projectsRouter } from './projects.ts';
-import { storageRouter } from './storage.ts';
 import { type AppEnv } from '../../types/index.ts';
 
 /**
@@ -52,9 +51,6 @@ v1Router.route('/support', supportRouter);
 
 // Projects routes (project management)
 v1Router.route('/projects', projectsRouter);
-
-// Storage routes (file uploads)
-v1Router.route('/storage', storageRouter);
 
 // Webhook routes (external services - no auth, uses signature verification)
 v1Router.route('/webhooks', webhooksRouter);
