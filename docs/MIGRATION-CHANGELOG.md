@@ -175,6 +175,61 @@ CREATE TABLE project_members (
 
 ---
 
+## [2026-03-19] Mock Mode Implementation
+
+### Added — Mock Repository Engine
+
+- 5 mock repository implementations (52 methods total): User, Organization, Plan, AuditLog, Project
+- Shared helpers: pagination, sorting, filter validation
+- Mock-aware `withTransaction` in neutral module (`repositories/with-transaction.ts`)
+- Repository middleware switches between mock and Drizzle via `USE_MOCK_DATA` env var
+- Singleton mock repos (created once, shared across requests)
+
+### Added — Mock Data
+
+- 8 mock data files: constants, helpers, plans (3), organizations (2), users (8), projects (4), audit logs (10)
+- Deterministic UUIDs (`MOCK_IDS` constants shared between server and client)
+- Parity test ensures client/server mock IDs stay in sync
+
+### Added — Mock Auth
+
+- `AUTH_MODE=mock` path in auth middleware
+- Parses `mock_token_{userId}`, looks up user in mock repos
+- Defaults to Acme org_owner when no auth header (local convenience)
+- Returns 401 for invalid/nonexistent tokens
+
+### Added — Safety & Config
+
+- Production safety guard: server exits if mock mode enabled in prod/staging
+- Contradictory config guard: USE_MOCK_DATA and AUTH_MODE must match
+- Dev scripts: `dev` defaults to mock, `dev:real` for database mode
+- 3-line startup logging in mock mode
+
+### Added — Dev Endpoint
+
+- `POST /v1/dev/reset-mock-data`: resets all data to seed state
+- Conditionally registered (local + mock only)
+- Excluded from OpenAPI
+
+### Added — Tests
+
+- Integration smoke tests (9 tests: auth, tenant isolation, project detail, 401s)
+- Contract test infrastructure for all 5 repos (shared between mock and Drizzle)
+- Admin endpoint verification tests
+- Mock ID parity test (server reads client file, compares values)
+- Mock data integrity tests
+- 5 mock repo unit test suites
+
+### Added — Client Updates
+
+- Mock mode banner in header (`[MOCK MODE]` badge)
+- Dashboard fetches API data (stats + recent activity)
+- Client mock IDs synced with server constants
+- Client `.env.local` for mock mode
+- `dev:real` script for client
+
+---
+
 ## Pending — Database Migrations Summary
 
 These changes exist in the Drizzle schema code but have **not yet been applied** to any database. They will be applied when connecting to a Supabase project.
