@@ -45,7 +45,7 @@ describe('LocalAuthAdapter', () => {
     });
 
     it('should login reviewer by email', async () => {
-      const result = await adapter.login('amy@client.com');
+      const result = await adapter.login('amy@acme.com');
       expect(result.user.role).toBe('reviewer');
     });
 

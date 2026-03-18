@@ -48,6 +48,13 @@ export function Header() {
         <span className="font-bold text-violet-400">REVBRAIN</span>
       </div>
 
+      {/* Mock Mode Badge */}
+      {import.meta.env.VITE_AUTH_MODE === 'mock' && (
+        <span className="px-2 py-0.5 text-[10px] font-bold bg-violet-100 text-violet-700 rounded-full">
+          MOCK MODE
+        </span>
+      )}
+
       {/* Spacer (Desktop) */}
       <div className="flex-1 hidden md:block" />
 

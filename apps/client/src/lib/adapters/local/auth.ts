@@ -40,8 +40,8 @@ export class LocalAuthAdapter implements AuthAdapter {
     const mockUser = Object.values(MOCK_USERS).find((u) => u.email === email);
 
     if (!mockUser) {
-      // Default to operator if email not found
-      const defaultUser = MOCK_USERS.operator;
+      // Default to org_owner if email not found
+      const defaultUser = MOCK_USERS.org_owner;
       return this.createSession(defaultUser);
     }
 
@@ -148,7 +148,7 @@ export class LocalAuthAdapter implements AuthAdapter {
 
   async setSession(accessToken: string, refreshToken: string): Promise<AuthResult> {
     await this.delay();
-    const mockUser = MOCK_USERS.operator;
+    const mockUser = MOCK_USERS.org_owner;
     console.log('[LocalAuth] setSession', {
       accessToken: accessToken.substring(0, 10),
       refreshToken: refreshToken.substring(0, 10),
