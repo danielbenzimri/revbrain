@@ -248,7 +248,7 @@ apps/server/src/mocks/
 | ------------- | ----- | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | Organizations | 2     | "Acme Corp" (main demo, Pro plan, 5 users, active), "Beta Industries" (secondary, Starter plan, 2 users, quieter)                         |
 | Plans         | 3     | Starter (free trial, 5 users, 3 projects), Pro ($99/mo, 25 users, unlimited projects), Enterprise ($499/mo, unlimited, SSO)               |
-| Users         | 7     | system_admin (1, platform-level), Acme: org_owner + admin + operator + reviewer (4), Beta: org_owner + operator (2)                       |
+| Users         | 8     | system_admin (1, platform-level), Acme: org_owner + admin + operator + reviewer + invited-pending (5), Beta: org_owner + operator (2)     |
 | Projects      | 4     | Acme owns all 4: "Q1 Product Migration" (active), "Legacy Pricing Cleanup" (active), "RCA Pilot" (completed), "Phase 2 Migration" (draft) |
 | Audit Logs    | 10    | Mix of user.invited, project.created, project.updated, tenant.onboarded actions                                                           |
 
