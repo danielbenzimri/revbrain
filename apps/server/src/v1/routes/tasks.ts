@@ -8,7 +8,7 @@ import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import type { AppEnv } from '../../types/index.ts';
 import { TaskService } from '../../services/task.service.ts';
 import { logger } from '../../lib/logger.ts';
-import { AppError, ErrorCodes } from '@geometrix/contract';
+import { AppError, ErrorCodes } from '@revbrain/contract';
 import { type RouteContext, getRepos, getUser } from '../../lib/route-helpers.ts';
 
 const tasks = new OpenAPIHono<AppEnv>();

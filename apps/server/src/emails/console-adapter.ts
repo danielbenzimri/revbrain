@@ -4,7 +4,7 @@
  * Dev/test adapter that logs emails to console instead of sending.
  * Used automatically when RESEND_API_KEY is not configured.
  */
-import type { EmailPort, SendEmailOptions, EmailResult } from '@geometrix/contract';
+import type { EmailPort, SendEmailOptions, EmailResult } from '@revbrain/contract';
 
 export class ConsoleEmailAdapter implements EmailPort {
   async send(options: SendEmailOptions): Promise<EmailResult> {

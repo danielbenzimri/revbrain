@@ -21,8 +21,8 @@ import type {
   FindManyOptions,
   TaskStatus,
   TaskPriority,
-} from '@geometrix/contract';
-import { AppError, ErrorCodes } from '@geometrix/contract';
+} from '@revbrain/contract';
+import { AppError, ErrorCodes } from '@revbrain/contract';
 import { logger } from '../lib/logger.ts';
 
 // ============================================================================

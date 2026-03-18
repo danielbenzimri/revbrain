@@ -220,7 +220,7 @@ export default function SetPasswordPage() {
             <div className="h-12 w-12 bg-emerald-500 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
               G
             </div>
-            <span className="text-2xl font-bold">Geometrix</span>
+            <span className="text-2xl font-bold">RevBrain</span>
           </div>
         </div>
 
@@ -228,14 +228,14 @@ export default function SetPasswordPage() {
           <h1 className="text-4xl font-bold leading-tight">
             Welcome to
             <br />
-            <span className="text-emerald-400">Geometrix</span>
+            <span className="text-emerald-400">RevBrain</span>
           </h1>
           <p className="text-slate-400 text-lg max-w-md">
             Set your password to complete your account setup and start using the platform.
           </p>
         </div>
 
-        <div className="text-slate-500 text-sm">© 2024 Geometrix. All rights reserved.</div>
+        <div className="text-slate-500 text-sm">© 2024 RevBrain. All rights reserved.</div>
       </div>
 
       {/* Right Panel - Password Form */}

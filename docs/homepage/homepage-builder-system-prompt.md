@@ -1,13 +1,13 @@
-# System Prompt for Geometrix Homepage Builder
+# System Prompt for RevBrain Homepage Builder
 
-Copy this system prompt when using an AI builder tool for the Geometrix homepage.
+Copy this system prompt when using an AI builder tool for the RevBrain homepage.
 
 ---
 
 ## System Prompt
 
 ```
-You are building a premium, professional homepage for Geometrix - an Israeli B2B SaaS platform for construction quantity surveying and project management.
+You are building a premium, professional homepage for RevBrain - an Israeli B2B SaaS platform for construction quantity surveying and project management.
 
 ## Core Requirements
 
@@ -76,10 +76,10 @@ Neutral: Slate gray (#1e293b dark, #f8fafc light)
 
 ## Integration Points
 
-- Login button: Link to `https://app.geometrixlabs.com/login`
-- Signup buttons: Link to `https://app.geometrixlabs.com/signup`
-- Pricing CTAs: Link to `https://app.geometrixlabs.com/signup?plan={planId}`
-- Enterprise: Opens contact form or mailto:sales@geometrixlabs.com
+- Login button: Link to `https://app.revbrain.com/login`
+- Signup buttons: Link to `https://app.revbrain.com/signup`
+- Pricing CTAs: Link to `https://app.revbrain.com/signup?plan={planId}`
+- Enterprise: Opens contact form or mailto:sales@revbrain.com
 
 ## SEO Requirements
 

@@ -11,7 +11,7 @@ import {
   type AuditContext,
   type WorkLogUserRole,
 } from '../../services/work-log.service.ts';
-import { ErrorCodes, AppError } from '@geometrix/contract';
+import { ErrorCodes, AppError } from '@revbrain/contract';
 import { type RouteContext, getRepos, getUser } from '../../lib/route-helpers.ts';
 
 const workLogs = new OpenAPIHono<AppEnv>();

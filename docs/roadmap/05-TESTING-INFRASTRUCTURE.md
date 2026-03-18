@@ -263,7 +263,7 @@ global.IntersectionObserver = vi.fn().mockImplementation(() => ({
 
 ```typescript
 import { Hono } from 'hono';
-import type { Repositories } from '@geometrix/contract';
+import type { Repositories } from '@revbrain/contract';
 
 // Create a test app instance
 export function createTestApp(overrides?: Partial<{ repos: Repositories }>) {
@@ -597,7 +597,7 @@ describe('Rate Limit Middleware', () => {
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { app } from '../../../index';
 import { db } from '../../../lib/db';
-import { plans } from '@geometrix/database';
+import { plans } from '@revbrain/database';
 import { eq } from 'drizzle-orm';
 
 describe('Plans API (Integration)', () => {

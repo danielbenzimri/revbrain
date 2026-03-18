@@ -1,4 +1,4 @@
-import { db as defaultDb, workLogs, eq, desc, asc, and, sql, gte, lte } from '@geometrix/database';
+import { db as defaultDb, workLogs, eq, desc, asc, and, sql, gte, lte } from '@revbrain/database';
 import type {
   WorkLogRepository,
   WorkLogEntity,
@@ -13,7 +13,7 @@ import type {
   WorkLogResourceEntry,
   WorkLogAttachment,
   WorkLogAuditEntry,
-} from '@geometrix/contract';
+} from '@revbrain/contract';
 import type { DrizzleDB } from './index.ts';
 
 /**

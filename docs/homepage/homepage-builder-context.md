@@ -1,6 +1,6 @@
-# Geometrix Homepage Builder Context
+# RevBrain Homepage Builder Context
 
-> Complete context document for building a premium, bilingual homepage for the Geometrix platform.
+> Complete context document for building a premium, bilingual homepage for the RevBrain platform.
 
 ---
 
@@ -98,7 +98,7 @@ font-family:
 
 ## 3. Platform Overview
 
-**Geometrix** is a construction project management and quantity surveying platform designed specifically for the Israeli infrastructure and construction market. The platform digitizes the traditionally manual, error-prone process of quantity calculations, bill verification, and project execution tracking.
+**RevBrain** is a construction project management and quantity surveying platform designed specifically for the Israeli infrastructure and construction market. The platform digitizes the traditionally manual, error-prone process of quantity calculations, bill verification, and project execution tracking.
 
 ### Core Value Proposition
 
@@ -129,9 +129,9 @@ font-family:
 - Version Tracking
 - Excel Export
 
-**Message (HE):** "מחשבים כמויות? עברו מאקסל ל-Geometrix. חישובים מדויקים, מעקב שינויים, ודוחות מוכנים להגשה."
+**Message (HE):** "מחשבים כמויות? עברו מאקסל ל-RevBrain. חישובים מדויקים, מעקב שינויים, ודוחות מוכנים להגשה."
 
-**Message (EN):** "Calculating quantities? Switch from Excel to Geometrix. Accurate calculations, change tracking, and reports ready for submission."
+**Message (EN):** "Calculating quantities? Switch from Excel to RevBrain. Accurate calculations, change tracking, and reports ready for submission."
 
 ---
 
@@ -154,9 +154,9 @@ font-family:
 - Notes & approval workflow
 - Photo evidence attachment
 
-**Message (HE):** "קיבלתם חשבון ביצוע? בדקו אותו ב-Geometrix. כל הנתונים, התמונות והחישובים - במקום אחד."
+**Message (HE):** "קיבלתם חשבון ביצוע? בדקו אותו ב-RevBrain. כל הנתונים, התמונות והחישובים - במקום אחד."
 
-**Message (EN):** "Received an execution bill? Verify it with Geometrix. All data, photos, and calculations - in one place."
+**Message (EN):** "Received an execution bill? Verify it with RevBrain. All data, photos, and calculations - in one place."
 
 ---
 
@@ -214,7 +214,7 @@ font-family:
 ### Section 2: Trusted By (Social Proof)
 
 - Logo carousel of customers/partners
-- "X פרויקטים חושבו ב-Geometrix"
+- "X פרויקטים חושבו ב-RevBrain"
 - Trust badges (security certifications if any)
 
 ### Section 3: Features Overview
@@ -288,28 +288,28 @@ font-family:
 
 ### Authentication Integration
 
-The homepage must integrate with the main application at `app.geometrixlabs.com`:
+The homepage must integrate with the main application at `app.revbrain.com`:
 
 **Login Button:**
 
-- URL: `https://app.geometrixlabs.com/login`
+- URL: `https://app.revbrain.com/login`
 - Opens in same tab
 - Visible in header (all pages)
 
 **Signup Flow:**
 
-- URL: `https://app.geometrixlabs.com/signup`
-- Or: `https://app.geometrixlabs.com/signup?plan=professional` (with plan preselected)
+- URL: `https://app.revbrain.com/signup`
+- Or: `https://app.revbrain.com/signup?plan=professional` (with plan preselected)
 - Primary CTA throughout the site
 
 **Pricing CTA Links:**
 | Plan | URL |
 |------|-----|
-| Free Trial | `https://app.geometrixlabs.com/signup?plan=free` |
-| Starter | `https://app.geometrixlabs.com/signup?plan=starter` |
-| Professional | `https://app.geometrixlabs.com/signup?plan=professional` |
-| Business | `https://app.geometrixlabs.com/signup?plan=business` |
-| Enterprise | Opens contact form / `mailto:sales@geometrixlabs.com` |
+| Free Trial | `https://app.revbrain.com/signup?plan=free` |
+| Starter | `https://app.revbrain.com/signup?plan=starter` |
+| Professional | `https://app.revbrain.com/signup?plan=professional` |
+| Business | `https://app.revbrain.com/signup?plan=business` |
+| Enterprise | Opens contact form / `mailto:sales@revbrain.com` |
 
 ### Analytics & Tracking
 

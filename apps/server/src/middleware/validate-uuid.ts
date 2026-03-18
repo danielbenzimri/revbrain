@@ -1,5 +1,5 @@
 import { createMiddleware } from 'hono/factory';
-import { AppError, ErrorCodes } from '@geometrix/contract';
+import { AppError, ErrorCodes } from '@revbrain/contract';
 
 /**
  * UUID Validation Regex

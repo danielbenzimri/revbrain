@@ -4,7 +4,7 @@ import { MOCK_USERS } from '@/lib/mock-data';
 import { getAuthAdapter } from '@/lib/services';
 import { invalidateAuthCache } from '@/lib/auth-headers';
 
-const USER_CACHE_KEY = 'geometrix_user';
+const USER_CACHE_KEY = 'revbrain_user';
 
 interface AuthState {
   // State

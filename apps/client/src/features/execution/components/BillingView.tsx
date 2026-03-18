@@ -3520,7 +3520,7 @@ const PrintableContent: React.FC<{
       )}
 
       <div className="mt-12 text-center text-xs text-slate-400 border-t border-slate-200 pt-4">
-        הופק באמצעות מערכת Geometrix | {new Date().toLocaleString()}
+        הופק באמצעות מערכת RevBrain | {new Date().toLocaleString()}
       </div>
     </div>
   );

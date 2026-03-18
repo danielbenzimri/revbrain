@@ -4,7 +4,7 @@
  * Pure Adapter Pattern - No business logic here.
  *
  * This file is the ONLY place that knows about Supabase Edge Functions.
- * All business logic lives in @geometrix/server (Hono app).
+ * All business logic lives in @revbrain/server (Hono app).
  *
  * This design allows us to redeploy the same Hono app to:
  * - AWS Lambda
@@ -36,7 +36,7 @@
  * _core.ts captures: `const core = (globalThis as any).Deno?.core`
  * If we replace globalThis.Deno with a Proxy BEFORE _core.ts loads, then
  * `core` becomes our Proxy, and `core.runMicrotasks()` calls our no-op.
- * Dynamic import guarantees our patches run before @geometrix/server
+ * Dynamic import guarantees our patches run before @revbrain/server
  * (which transitively loads postgres.js → process.ts → _next_tick.ts → _core.ts).
  *
  * Layers:
@@ -120,10 +120,10 @@ try {
 
 // ── Layer 4: Dynamic import ──────────────────────────────────────────────────
 // Static imports are hoisted — they always execute before module body code.
-// Dynamic import guarantees Layers 1-3 are active before @geometrix/server
+// Dynamic import guarantees Layers 1-3 are active before @revbrain/server
 // (and its transitive deps: postgres.js, deno_std/node/process.ts, _core.ts)
 // are evaluated.
-const { default: app } = await import('@geometrix/server');
+const { default: app } = await import('@revbrain/server');
 
 // Deno.serve is the Supabase Edge Function entry point
 Deno.serve(app.fetch);

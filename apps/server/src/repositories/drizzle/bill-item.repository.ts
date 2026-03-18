@@ -1,4 +1,4 @@
-import { db as defaultDb, billItems, eq, sql } from '@geometrix/database';
+import { db as defaultDb, billItems, eq, sql } from '@revbrain/database';
 import type {
   BillItemRepository,
   BillItemEntity,
@@ -6,7 +6,7 @@ import type {
   CreateBillItemInput,
   UpdateBillItemInput,
   FindManyOptions,
-} from '@geometrix/contract';
+} from '@revbrain/contract';
 import type { DrizzleDB } from './index.ts';
 
 /**

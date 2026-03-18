@@ -1,6 +1,6 @@
-# Geometrix Codebase Audit — 2026-03-15
+# RevBrain Codebase Audit — 2026-03-15
 
-> Comprehensive assessment of the Geometrix engineering SaaS platform.
+> Comprehensive assessment of the RevBrain engineering SaaS platform.
 > Previous audit: 2026-02-17 (zero-trust, scored 6.4/10).
 
 ---

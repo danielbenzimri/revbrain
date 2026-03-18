@@ -1,11 +1,11 @@
-import { db as defaultDb, boqItems, eq, desc, asc, sql, and, isNull } from '@geometrix/database';
+import { db as defaultDb, boqItems, eq, desc, asc, sql, and, isNull } from '@revbrain/database';
 import type {
   BOQRepository,
   BOQItemEntity,
   CreateBOQItemInput,
   UpdateBOQItemInput,
   FindManyOptions,
-} from '@geometrix/contract';
+} from '@revbrain/contract';
 import type { DrizzleDB } from './index.ts';
 
 /**

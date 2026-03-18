@@ -5,7 +5,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { UserService } from './user.service.ts';
-import type { Repositories, UserEntity, EmailPort } from '@geometrix/contract';
+import type { Repositories, UserEntity, EmailPort } from '@revbrain/contract';
 import type { AuthService } from './auth.service.ts';
 import type { RequestContext } from './types.ts';
 
@@ -23,7 +23,7 @@ vi.mock('../lib/env.ts', () => ({
   getEnv: vi.fn((key: string) => {
     const envs: Record<string, string> = {
       FRONTEND_URL: 'http://localhost:5173',
-      APP_URL: 'https://geometrix.io',
+      APP_URL: 'https://revbrain.io',
     };
     return envs[key];
   }),
@@ -405,7 +405,7 @@ describe('UserService', () => {
       expect(mockEmailService.send).toHaveBeenCalledWith(
         expect.objectContaining({
           to: 'test@example.com',
-          subject: 'Welcome to Geometrix!',
+          subject: 'Welcome to RevBrain!',
         })
       );
     });

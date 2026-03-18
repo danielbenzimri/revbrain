@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Loader2, X, Trash2, AlertTriangle, Eye, EyeOff, Power, Percent } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
-import type { Plan } from '@geometrix/contract';
+import type { Plan } from '@revbrain/contract';
 
 export const WORK_MODULES = [
   'earthworks',

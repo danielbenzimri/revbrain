@@ -7,7 +7,7 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import type { AppEnv } from '../../types/index.ts';
 import { logger } from '../../lib/logger.ts';
-import { AppError, ErrorCodes } from '@geometrix/contract';
+import { AppError, ErrorCodes } from '@revbrain/contract';
 import { projectFilesRouter } from './project-files.ts';
 
 const projectsRouter = new OpenAPIHono<AppEnv>();

@@ -17,7 +17,7 @@ import {
   isNull,
   and,
   inArray,
-} from '@geometrix/database';
+} from '@revbrain/database';
 import { getStripe, formatAmount, isStripeConfigured } from '../lib/stripe.ts';
 import { getEnv } from '../lib/env.ts';
 import { logger } from '../lib/logger.ts';

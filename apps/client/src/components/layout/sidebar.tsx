@@ -105,7 +105,7 @@ export function Sidebar({ className }: SidebarProps) {
         {!isCollapsed && (
           <>
             <div className="flex-1">
-              <h2 className="text-lg font-bold tracking-tight">GEOMETRIX</h2>
+              <h2 className="text-lg font-bold tracking-tight">REVBRAIN</h2>
               <p className="text-xs text-slate-400">{t('common.systemSubtitle')}</p>
             </div>
             {/* Toggle Button - Inside sidebar */}

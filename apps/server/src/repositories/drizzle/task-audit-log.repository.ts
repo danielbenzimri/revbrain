@@ -1,4 +1,4 @@
-import { db as defaultDb, taskAuditLog, eq, desc, sql } from '@geometrix/database';
+import { db as defaultDb, taskAuditLog, eq, desc, sql } from '@revbrain/database';
 import type {
   TaskAuditLogRepository,
   TaskAuditLogEntity,
@@ -6,7 +6,7 @@ import type {
   FindManyOptions,
   TaskAuditAction,
   TaskStatus,
-} from '@geometrix/contract';
+} from '@revbrain/contract';
 import type { DrizzleDB } from './index.ts';
 
 /**

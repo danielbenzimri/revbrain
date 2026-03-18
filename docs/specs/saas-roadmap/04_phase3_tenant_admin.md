@@ -114,7 +114,7 @@ system_admin > contractor_ceo / client_owner > project_manager > worker
    ```typescript
    // apps/server/src/middleware/authorize.ts
    import { createMiddleware } from 'hono/factory';
-   import { hasMinimumRole } from '@geometrix/contract';
+   import { hasMinimumRole } from '@revbrain/contract';
 
    export function requireRole(...roles: string[]) {
      return createMiddleware(async (c, next) => {

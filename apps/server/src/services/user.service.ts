@@ -1,5 +1,5 @@
-import type { Repositories, UserEntity, EmailPort, UserRole } from '@geometrix/contract';
-import { AppError, ErrorCodes, getOrgTypeForRole } from '@geometrix/contract';
+import type { Repositories, UserEntity, EmailPort, UserRole } from '@revbrain/contract';
+import { AppError, ErrorCodes, getOrgTypeForRole } from '@revbrain/contract';
 import type { AuthService } from './auth.service.ts';
 import type { RequestContext } from './types.ts';
 import { checkSeatAvailability } from '../lib/seats.ts';
@@ -428,15 +428,15 @@ export class UserService {
 
     // Send welcome email (fire-and-forget)
     const org = await this.repos.organizations.findById(activated.organizationId);
-    const loginUrl = `${getEnv('APP_URL') || 'https://app.geometrixlabs.com'}/login`;
+    const loginUrl = `${getEnv('APP_URL') || 'https://app.revbrain.com'}/login`;
     const html = renderWelcomeEmail({
       userName: activated.fullName || activated.email,
-      orgName: org?.name || 'Geometrix',
+      orgName: org?.name || 'RevBrain',
       loginUrl,
     });
 
     this.emailService
-      .send({ to: activated.email, subject: 'Welcome to Geometrix!', html })
+      .send({ to: activated.email, subject: 'Welcome to RevBrain!', html })
       .catch((err) => logger.error('Welcome email failed', { userId }, err as Error));
   }
 

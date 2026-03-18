@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getAuthHeaders } from '@/lib/auth-headers';
 import { adminKeys } from './query-keys';
-import type { Plan } from '@geometrix/contract';
+import type { Plan } from '@revbrain/contract';
 
 const apiUrl = import.meta.env.VITE_API_URL || '/api';
 

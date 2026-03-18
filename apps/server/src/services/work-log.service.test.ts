@@ -5,7 +5,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { WorkLogService, type AuditContext } from './work-log.service.ts';
-import type { WorkLogRepository, ProjectRepository, WorkLogEntity } from '@geometrix/contract';
+import type { WorkLogRepository, ProjectRepository, WorkLogEntity } from '@revbrain/contract';
 
 // Mock dependencies
 vi.mock('../lib/logger.ts', () => ({

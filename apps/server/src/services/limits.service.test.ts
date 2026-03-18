@@ -5,12 +5,12 @@ import type {
   OrganizationWithPlan,
   PlanLimits,
   PlanFeatures,
-} from '@geometrix/contract';
+} from '@revbrain/contract';
 
 // Mock the subscription query
 const mockSubscriptionsFindFirst = vi.hoisted(() => vi.fn());
 
-vi.mock('@geometrix/database', () => ({
+vi.mock('@revbrain/database', () => ({
   db: {
     query: {
       subscriptions: {

@@ -108,7 +108,7 @@ export const securityHeaders = (options: SecurityHeadersOptions = {}) => {
 
 ```typescript
 import { createMiddleware } from 'hono/factory';
-import { AppError, ErrorCodes } from '@geometrix/contract';
+import { AppError, ErrorCodes } from '@revbrain/contract';
 
 // Characters that could be used for SQL injection
 const SQL_INJECTION_PATTERNS = [
@@ -280,7 +280,7 @@ function isAllowedSpecialChar(value: string, path: string): boolean {
 
 ```typescript
 import { createMiddleware } from 'hono/factory';
-import { AppError, ErrorCodes } from '@geometrix/contract';
+import { AppError, ErrorCodes } from '@revbrain/contract';
 
 export interface BodyLimitOptions {
   maxSize: number; // bytes
@@ -327,7 +327,7 @@ Improve existing rate limiter until Redis is available:
 
 ```typescript
 import { createMiddleware } from 'hono/factory';
-import { AppError, ErrorCodes } from '@geometrix/contract';
+import { AppError, ErrorCodes } from '@revbrain/contract';
 
 interface RateLimitEntry {
   count: number;
@@ -479,7 +479,7 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 // Allowed origins based on environment
 const allowedOrigins = isProduction
-  ? ['https://app.geometrix.io', 'https://geometrix.io']
+  ? ['https://app.revbrain.io', 'https://revbrain.io']
   : ['http://localhost:5173', 'http://localhost:3000', 'http://127.0.0.1:5173'];
 
 export const corsMiddleware = cors({
@@ -567,7 +567,7 @@ export const requestIdMiddleware = createMiddleware(async (c, next) => {
 
 ```typescript
 import { ErrorHandler } from 'hono';
-import { AppError } from '@geometrix/contract';
+import { AppError } from '@revbrain/contract';
 import { ZodError } from 'zod';
 
 const isProduction = process.env.NODE_ENV === 'production';
@@ -732,20 +732,20 @@ app.use('/v1/admin/*', rateLimiters.admin);
 
 ```bash
 # Test security headers
-curl -I https://api.geometrix.io/v1/health
+curl -I https://api.revbrain.io/v1/health
 
 # Test rate limiting
-for i in {1..15}; do curl -s https://api.geometrix.io/v1/health; done
+for i in {1..15}; do curl -s https://api.revbrain.io/v1/health; done
 
 # Test input sanitization
-curl -X POST https://api.geometrix.io/v1/test \
+curl -X POST https://api.revbrain.io/v1/test \
   -H "Content-Type: application/json" \
   -d '{"name": "<script>alert(1)</script>"}'
 
 # Test body size limit
 dd if=/dev/zero bs=2M count=1 | curl -X POST \
   -H "Content-Type: application/json" \
-  --data-binary @- https://api.geometrix.io/v1/test
+  --data-binary @- https://api.revbrain.io/v1/test
 ```
 
 ---

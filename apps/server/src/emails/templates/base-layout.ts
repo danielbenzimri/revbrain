@@ -1,5 +1,5 @@
 /**
- * Base email layout matching Geometrix branding.
+ * Base email layout matching RevBrain branding.
  * Uses table-based HTML for maximum email client compatibility.
  * Branding matches supabase/templates/invite.html:
  *   - Slate-900 gradient header with emerald "G" logo
@@ -8,7 +8,7 @@
  */
 
 /**
- * Wraps email body content in the standard Geometrix layout.
+ * Wraps email body content in the standard RevBrain layout.
  */
 export function wrapInLayout(content: string, previewText?: string): string {
   const previewHtml = previewText
@@ -20,7 +20,7 @@ export function wrapInLayout(content: string, previewText?: string): string {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Geometrix</title>
+  <title>RevBrain</title>
 </head>
 <body style="margin:0;padding:0;background-color:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
   ${previewHtml}
@@ -37,7 +37,7 @@ export function wrapInLayout(content: string, previewText?: string): string {
                     <span style="color:#ffffff;font-size:20px;font-weight:bold;line-height:40px;">G</span>
                   </td>
                   <td style="padding-left:12px;">
-                    <span style="color:#ffffff;font-size:22px;font-weight:700;letter-spacing:-0.5px;">Geometrix</span>
+                    <span style="color:#ffffff;font-size:22px;font-weight:700;letter-spacing:-0.5px;">RevBrain</span>
                   </td>
                 </tr>
               </table>
@@ -55,7 +55,7 @@ export function wrapInLayout(content: string, previewText?: string): string {
           <tr>
             <td style="background-color:#f8fafc;padding:20px 40px;text-align:center;border-top:1px solid #e2e8f0;">
               <p style="margin:0;font-size:12px;color:#94a3b8;">
-                &copy; ${new Date().getFullYear()} Geometrix &mdash; Construction Management
+                &copy; ${new Date().getFullYear()} RevBrain &mdash; Construction Management
               </p>
             </td>
           </tr>

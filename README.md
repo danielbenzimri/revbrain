@@ -1,8 +1,8 @@
-# Geometrix
+# RevBrain
 
 > **High-performance, vendor-agnostic full-stack application with hexagonal architecture**
 
-Geometrix achieves "Day 1 Velocity without sacrificing Year 2 Scalability" by combining the speed of Backend-as-a-Service (Supabase) with the architectural rigor of a custom microservices platform.
+RevBrain achieves "Day 1 Velocity without sacrificing Year 2 Scalability" by combining the speed of Backend-as-a-Service (Supabase) with the architectural rigor of a custom microservices platform.
 
 ## 🎯 Core Philosophy
 
@@ -41,7 +41,7 @@ We reject the binary choice between "Speed" and "Quality." Instead, we:
 ## 📁 Repository Structure
 
 ```
-geometrix/
+revbrain/
 ├── apps/
 │   ├── server/          # Hono backend (vendor-agnostic)
 │   └── client/          # React frontend (to be implemented)
@@ -73,7 +73,7 @@ geometrix/
 ```bash
 # Clone the repository
 git clone <repository-url>
-cd geometrix
+cd revbrain
 
 # Install dependencies
 pnpm install
@@ -168,7 +168,7 @@ pnpm test -- --watch
 ```typescript
 // Configured in apps/server/src/index.ts
 origin: [
-  'https://app.geometrixlabs.com', // Production
+  'https://app.revbrain.com', // Production
   'http://localhost:5173', // Development
 ];
 ```
@@ -227,7 +227,7 @@ export DATABASE_URL="postgresql://user:pass@rds-endpoint:6543/db"
 pnpm db:migrate
 
 # 2. Compute: Deploy to App Runner
-docker build -t geometrix-api apps/server
+docker build -t revbrain-api apps/server
 aws apprunner create-service --source-configuration file://apprunner.json
 
 # 3. Auth: Update middleware
@@ -241,8 +241,8 @@ aws apprunner create-service --source-configuration file://apprunner.json
 docker run -p 5432:5432 postgres:15
 
 # 2. Run API in Docker
-docker build -t geometrix-api .
-docker run -p 3000:3000 geometrix-api
+docker build -t revbrain-api .
+docker run -p 3000:3000 revbrain-api
 
 # 3. Update auth middleware
 ```
@@ -313,7 +313,7 @@ All logs are JSON-formatted for easy parsing:
 
 ### Vendor Agnostic Design
 
-- Core logic imports from `@geometrix/contract`, not `@supabase/supabase-js`
+- Core logic imports from `@revbrain/contract`, not `@supabase/supabase-js`
 - Infrastructure adapters are thin wrappers
 - Swapping vendors = updating adapters only
 

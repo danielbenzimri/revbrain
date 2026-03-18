@@ -26,7 +26,7 @@ vi.mock('../lib/logger.ts', () => ({
 }));
 
 // Mock database - not used in mock rejection tests
-vi.mock('@geometrix/database', () => ({
+vi.mock('@revbrain/database', () => ({
   db: {
     query: {
       users: { findFirst: vi.fn() },
@@ -46,7 +46,7 @@ vi.mock('@geometrix/database', () => ({
 
 // Import after mocks
 import { authMiddleware } from './auth.ts';
-import { AppError } from '@geometrix/contract';
+import { AppError } from '@revbrain/contract';
 
 // Helper to create app with error handling
 function createTestApp() {

@@ -1,9 +1,9 @@
 {
   "imports": {
-    "@geometrix/server": "../../apps/server/src/index.ts",
-    "@geometrix/contract": "../../packages/contract/src/index.ts",
-    "@geometrix/database": "../../packages/database/src/index.ts",
-    "@geometrix/database/schema": "../../packages/database/src/schema.ts",
+    "@revbrain/server": "../../apps/server/src/index.ts",
+    "@revbrain/contract": "../../packages/contract/src/index.ts",
+    "@revbrain/database": "../../packages/database/src/index.ts",
+    "@revbrain/database/schema": "../../packages/database/src/schema.ts",
     "hono": "https://esm.sh/hono@4.1.1",
     "hono/": "https://esm.sh/hono@4.1.1/",
     "hono-rate-limiter": "https://esm.sh/hono-rate-limiter@0.3.0?target=deno",

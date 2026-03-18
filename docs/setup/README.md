@@ -1,6 +1,6 @@
 # Project Setup Guide
 
-This folder contains setup instructions for all external services required by the Geometrix backend.
+This folder contains setup instructions for all external services required by the RevBrain backend.
 
 ## Services Overview
 

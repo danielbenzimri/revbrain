@@ -1,5 +1,5 @@
 import { createMiddleware } from 'hono/factory';
-import type { Repositories, RepositoryEngine } from '@geometrix/contract';
+import type { Repositories, RepositoryEngine } from '@revbrain/contract';
 import { createDrizzleRepositories } from './drizzle/index.ts';
 
 /**

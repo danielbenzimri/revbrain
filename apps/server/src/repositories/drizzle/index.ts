@@ -5,9 +5,9 @@
  * Best for: Complex queries, transactions, local development, Node.js environments.
  */
 
-import type { Repositories } from '@geometrix/contract';
-import { db as defaultDb } from '@geometrix/database';
-import type { DrizzleDB } from '@geometrix/database';
+import type { Repositories } from '@revbrain/contract';
+import { db as defaultDb } from '@revbrain/database';
+import type { DrizzleDB } from '@revbrain/database';
 import { DrizzleUserRepository } from './user.repository.ts';
 import { DrizzleOrganizationRepository } from './organization.repository.ts';
 import { DrizzlePlanRepository } from './plan.repository.ts';
@@ -20,7 +20,7 @@ import { DrizzleMeasurementRepository } from './measurement.repository.ts';
 import { DrizzleWorkLogRepository } from './work-log.repository.ts';
 import { DrizzleTaskRepository } from './task.repository.ts';
 import { DrizzleTaskAuditLogRepository } from './task-audit-log.repository.ts';
-export type { DrizzleDB } from '@geometrix/database';
+export type { DrizzleDB } from '@revbrain/database';
 
 // Re-export individual repositories
 export { DrizzleUserRepository } from './user.repository.ts';

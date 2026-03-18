@@ -51,17 +51,17 @@ if [[ "$CONFIRM" =~ ^[nN] ]]; then
 fi
 
 echo ""
-echo "Creating new Vercel project: geometrix-client-staging"
+echo "Creating new Vercel project: revbrain-client-staging"
 echo ""
 
 # Link to a new project
 echo "Linking to new Vercel project..."
-vercel link --yes --project geometrix-client-staging 2>&1 || true
+vercel link --yes --project revbrain-client-staging 2>&1 || true
 
 # Deploy to create the project if it doesn't exist
 echo ""
 echo "Initial deployment to create project..."
-vercel --yes --name geometrix-client-staging --prod 2>&1 | tail -5 || true
+vercel --yes --name revbrain-client-staging --prod 2>&1 | tail -5 || true
 
 # Get the project ID
 PROJECT_JSON=".vercel/project.json"
@@ -71,7 +71,7 @@ if [ -f "$PROJECT_JSON" ]; then
     echo "Staging Project ID: $STAGING_PROJECT_ID"
 else
     echo "Error: Could not find project.json"
-    echo "Please run 'vercel link --project geometrix-client-staging' manually"
+    echo "Please run 'vercel link --project revbrain-client-staging' manually"
     exit 1
 fi
 
@@ -92,7 +92,7 @@ echo "Staging Setup Complete!"
 echo "================================================"
 echo ""
 echo "Staging Project ID: $STAGING_PROJECT_ID"
-echo "Staging URL: https://geometrix-client-staging.vercel.app"
+echo "Staging URL: https://revbrain-client-staging.vercel.app"
 echo ""
 echo "Next steps:"
 echo "1. Copy any required env vars to the staging project:"

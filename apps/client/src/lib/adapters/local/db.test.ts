@@ -68,7 +68,7 @@ describe('LocalDBAdapter', () => {
     it('should persist to localStorage', async () => {
       await db.insert<TestItem>('projects', { name: 'Test', value: 1 });
       expect(localStorage.setItem).toHaveBeenCalledWith(
-        'geometrix_db_projects',
+        'revbrain_db_projects',
         expect.any(String)
       );
     });

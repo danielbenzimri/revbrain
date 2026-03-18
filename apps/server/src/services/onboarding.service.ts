@@ -1,5 +1,5 @@
-import type { Repositories, OrganizationEntity, UserEntity } from '@geometrix/contract';
-import { AppError, ErrorCodes } from '@geometrix/contract';
+import type { Repositories, OrganizationEntity, UserEntity } from '@revbrain/contract';
+import { AppError, ErrorCodes } from '@revbrain/contract';
 import type { AuthService } from './auth.service.ts';
 import type { OrganizationService } from './organization.service.ts';
 import type { RequestContext } from './types.ts';

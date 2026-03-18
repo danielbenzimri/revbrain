@@ -1,5 +1,5 @@
 {
-  "name": "@geometrix/server",
+  "name": "@revbrain/server",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -17,8 +17,8 @@
     "test:unit": "vitest run --coverage"
   },
   "dependencies": {
-    "@geometrix/contract": "workspace:*",
-    "@geometrix/database": "workspace:*",
+    "@revbrain/contract": "workspace:*",
+    "@revbrain/database": "workspace:*",
     "@hono/node-server": "^1.19.9",
     "@hono/zod-openapi": "^1.2.1",
     "@hono/zod-validator": "^0.7.6",

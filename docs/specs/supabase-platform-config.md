@@ -1,6 +1,6 @@
 # Supabase Platform Configuration
 
-> Required dashboard/CLI settings for the Geometrix hybrid auth flow.
+> Required dashboard/CLI settings for the RevBrain hybrid auth flow.
 > Without these, magic links, password resets, and invites will break.
 
 ---
@@ -22,7 +22,7 @@
 Set to your production frontend URL:
 
 ```
-https://app.geometrix.com
+https://app.revbrain.com
 ```
 
 ### Redirect URLs (Whitelist)
@@ -35,12 +35,12 @@ http://localhost:5173/set-password
 http://localhost:5173/reset-password
 
 # Production
-https://app.geometrix.com/set-password
-https://app.geometrix.com/reset-password
+https://app.revbrain.com/set-password
+https://app.revbrain.com/reset-password
 
 # Staging (if applicable)
-https://staging.geometrix.com/set-password
-https://staging.geometrix.com/reset-password
+https://staging.revbrain.com/set-password
+https://staging.revbrain.com/reset-password
 ```
 
 **If these are missing:** Magic links will redirect to the Site URL homepage instead of the intended page, breaking the invite and password reset flows.
@@ -51,12 +51,12 @@ https://staging.geometrix.com/reset-password
 
 Used when `inviteUserByEmail()` is called (admin invites a new team member).
 
-**Subject:** `You have been invited to join Geometrix`
+**Subject:** `You have been invited to join RevBrain`
 
 **Body:**
 
 ```html
-<h2>Welcome to Geometrix!</h2>
+<h2>Welcome to RevBrain!</h2>
 <p>You have been invited to join the platform.</p>
 <p>
   <a
@@ -71,7 +71,7 @@ Used when `inviteUserByEmail()` is called (admin invites a new team member).
 
 Used when `resetPasswordForEmail()` is called (forgot password flow).
 
-**Subject:** `Reset your Geometrix password`
+**Subject:** `Reset your RevBrain password`
 
 **Body:**
 
@@ -159,12 +159,12 @@ Email templates can be managed via the Supabase CLI config file:
 ```bash
 # supabase/config.toml
 [auth]
-site_url = "https://app.geometrix.com"
+site_url = "https://app.revbrain.com"
 additional_redirect_urls = [
   "http://localhost:5173/set-password",
   "http://localhost:5173/reset-password",
-  "https://app.geometrix.com/set-password",
-  "https://app.geometrix.com/reset-password"
+  "https://app.revbrain.com/set-password",
+  "https://app.revbrain.com/reset-password"
 ]
 enable_signup = false
 enable_confirmations = false
@@ -175,11 +175,11 @@ double_confirm_changes = true
 enable_confirmations = false
 
 [auth.email.template.invite]
-subject = "You have been invited to join Geometrix"
+subject = "You have been invited to join RevBrain"
 content_path = "./supabase/templates/invite.html"
 
 [auth.email.template.recovery]
-subject = "Reset your Geometrix password"
+subject = "Reset your RevBrain password"
 content_path = "./supabase/templates/recovery.html"
 ```
 

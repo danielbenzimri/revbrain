@@ -2,7 +2,7 @@
  * AlertingService Unit Tests
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import type { Alert, AlertChannel, AlertResult } from '@geometrix/contract';
+import type { Alert, AlertChannel, AlertResult } from '@revbrain/contract';
 import { AlertingService } from './alerting.service.ts';
 
 // Mock logger

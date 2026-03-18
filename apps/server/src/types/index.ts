@@ -1,4 +1,4 @@
-import type { User } from '@geometrix/database/schema';
+import type { User } from '@revbrain/database/schema';
 
 /**
  * Supabase JWT Payload Structure

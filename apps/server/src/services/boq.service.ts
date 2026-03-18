@@ -11,7 +11,7 @@ import type {
   BOQItemEntity,
   CreateBOQItemInput,
   ProjectRepository,
-} from '@geometrix/contract';
+} from '@revbrain/contract';
 import { logger } from '../lib/logger.ts';
 
 // ============================================================================

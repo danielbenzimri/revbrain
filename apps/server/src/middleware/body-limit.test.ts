@@ -5,7 +5,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { Hono } from 'hono';
-import { AppError } from '@geometrix/contract';
+import { AppError } from '@revbrain/contract';
 
 type AnyJson = any;
 import {

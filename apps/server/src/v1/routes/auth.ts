@@ -2,7 +2,7 @@ import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { authMiddlewareAllowInactive } from '../../middleware/auth.ts';
 import { authLimiter } from '../../middleware/rate-limit.ts';
 import type { AppEnv } from '../../types/index.ts';
-import { AppError, ErrorCodes } from '@geometrix/contract';
+import { AppError, ErrorCodes } from '@revbrain/contract';
 import type { RequestContext } from '../../services/types.ts';
 import { getClientIpOrNull } from '../../lib/request-ip.ts';
 

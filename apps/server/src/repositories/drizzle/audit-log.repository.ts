@@ -1,10 +1,10 @@
-import { db as defaultDb, auditLogs, eq, desc, sql } from '@geometrix/database';
+import { db as defaultDb, auditLogs, eq, desc, sql } from '@revbrain/database';
 import type {
   AuditLogRepository,
   AuditLogEntity,
   CreateAuditLogInput,
   FindManyOptions,
-} from '@geometrix/contract';
+} from '@revbrain/contract';
 import type { DrizzleDB } from './index.ts';
 
 /**

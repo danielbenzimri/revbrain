@@ -15,7 +15,7 @@
  * - SLACK_ALERT_WEBHOOK_URL: Slack incoming webhook URL
  * - SENTRY_DSN: Sentry DSN (uses existing Sentry integration)
  */
-import type { EmailPort } from '@geometrix/contract';
+import type { EmailPort } from '@revbrain/contract';
 import { getEnv } from '../lib/env.ts';
 import { logger } from '../lib/logger.ts';
 import { AlertingService } from './alerting.service.ts';
@@ -65,7 +65,7 @@ export function createAlertingService(config?: AlertingConfig): AlertingService 
         emailService: config.emailService,
         defaultRecipients: emailRecipients,
         criticalRecipients: criticalRecipients.length > 0 ? criticalRecipients : emailRecipients,
-        appName: 'Geometrix',
+        appName: 'RevBrain',
       })
     );
   }
@@ -131,4 +131,4 @@ export type {
   AlertingPort,
   SendAlertOptions,
   ThrottleConfig,
-} from '@geometrix/contract';
+} from '@revbrain/contract';

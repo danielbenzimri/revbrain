@@ -3,7 +3,7 @@ import type {
   OrganizationEntity,
   OrganizationWithPlan,
   UpdateOrganizationInput,
-} from '@geometrix/contract';
+} from '@revbrain/contract';
 import type { RequestContext } from './types.ts';
 
 const PLATFORM_ORG_SLUG = 'platform';
@@ -133,7 +133,7 @@ export class OrganizationService {
     if (existing) return existing;
 
     return this.repos.organizations.create({
-      name: 'Geometrix Platform',
+      name: 'RevBrain Platform',
       slug: PLATFORM_ORG_SLUG,
       type: 'contractor',
       seatLimit: 999,

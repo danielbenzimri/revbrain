@@ -47,7 +47,7 @@ vi.mock('../../lib/logger.ts', () => ({
   },
 }));
 
-vi.mock('@geometrix/database', () => ({
+vi.mock('@revbrain/database', () => ({
   getDB: mockGetDB,
   client: mockClient,
   users: { id: 'id' },

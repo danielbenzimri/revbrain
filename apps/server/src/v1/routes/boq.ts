@@ -8,7 +8,7 @@ import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import type { AppEnv } from '../../types/index.ts';
 import { BOQService } from '../../services/boq.service.ts';
 import { logger } from '../../lib/logger.ts';
-import { AppError, ErrorCodes } from '@geometrix/contract';
+import { AppError, ErrorCodes } from '@revbrain/contract';
 import { type RouteContext, getRepos } from '../../lib/route-helpers.ts';
 
 const boq = new OpenAPIHono<AppEnv>();

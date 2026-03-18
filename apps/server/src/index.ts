@@ -3,7 +3,7 @@ import { type ContentfulStatusCode } from 'hono/utils/http-status';
 
 import { cors } from 'hono/cors';
 import { compress } from 'hono/compress';
-import { AppError } from '@geometrix/contract';
+import { AppError } from '@revbrain/contract';
 import { loggerMiddleware } from './middleware/logger.ts';
 import { securityHeadersMiddleware } from './middleware/security-headers.ts';
 import { authMiddleware } from './middleware/auth.ts';
@@ -46,16 +46,16 @@ function getCorsOrigins(): string[] {
   // Default origins (includes legacy .vercel.app domains during transition)
   return isProduction()
     ? [
-        'https://app.geometrixlabs.com',
-        'https://geometrixlabs.com',
-        'https://geometrix-client.vercel.app', // Legacy — remove after transition
+        'https://app.revbrain.com',
+        'https://revbrain.com',
+        'https://revbrain-client.vercel.app', // Legacy — remove after transition
       ]
     : [
-        'https://stg.geometrixlabs.com',
-        'https://app.geometrixlabs.com',
-        'https://geometrixlabs.com',
-        'https://geometrix-client.vercel.app', // Legacy — remove after transition
-        'https://geometrix-client-staging.vercel.app', // Legacy — remove after transition
+        'https://stg.revbrain.com',
+        'https://app.revbrain.com',
+        'https://revbrain.com',
+        'https://revbrain-client.vercel.app', // Legacy — remove after transition
+        'https://revbrain-client-staging.vercel.app', // Legacy — remove after transition
         'http://localhost:5173',
         'http://localhost:5174',
         'http://localhost:5175',
@@ -244,7 +244,7 @@ app.route('/api/v1', v1Router);
 // Root endpoint
 app.get('/api', (c) => {
   return c.json({
-    name: 'Geometrix API',
+    name: 'RevBrain API',
     version: '1.0.0',
     status: 'operational',
   });
@@ -256,7 +256,7 @@ const openApiConfig = {
   openapi: '3.0.0' as const,
   info: {
     version: '1.0.0',
-    title: 'Geometrix API',
+    title: 'RevBrain API',
   },
 };
 app.doc('/api/doc', openApiConfig);

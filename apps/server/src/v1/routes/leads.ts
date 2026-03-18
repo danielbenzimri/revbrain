@@ -7,7 +7,7 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { rateLimiter } from 'hono-rate-limiter';
 import { LeadService } from '../../services/lead.service.ts';
-import { AppError, ErrorCodes } from '@geometrix/contract';
+import { AppError, ErrorCodes } from '@revbrain/contract';
 import type { AppEnv } from '../../types/index.ts';
 import { getClientIp } from '../../lib/request-ip.ts';
 

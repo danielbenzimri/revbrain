@@ -1,4 +1,4 @@
-# Geometrix Performance Speedup — Phased Implementation Tasks
+# RevBrain Performance Speedup — Phased Implementation Tasks
 
 **Created:** 2026-03-15
 **Revised:** 2026-03-15 (final version — two rounds of external senior auditor review)
@@ -9,7 +9,7 @@
 
 ## Why This Exists
 
-Geometrix and Procure share the same architecture (React 19 + Vite + Hono + Supabase + Zustand + TanStack Query). Procure was equally slow until a systematic optimization pass made it feel instant. A side-by-side analysis revealed **16 optimization techniques** Procure applies that Geometrix does not. This document breaks those into small, testable, committable tasks — each with validation criteria and expected impact.
+RevBrain and Procure share the same architecture (React 19 + Vite + Hono + Supabase + Zustand + TanStack Query). Procure was equally slow until a systematic optimization pass made it feel instant. A side-by-side analysis revealed **16 optimization techniques** Procure applies that RevBrain does not. This document breaks those into small, testable, committable tasks — each with validation criteria and expected impact.
 
 **Expected outcome:** 4-8x perceived speed improvement across the application.
 
@@ -305,7 +305,7 @@ pnpm exec playwright test e2e/smoke.spec.ts # App still works end-to-end
 
 **What:** Add a guard before `createRoot()` in `main.tsx` that neutralizes the React DevTools global hook in production builds.
 
-**Why this matters:** React DevTools injects instrumentation into every component's render cycle. In production, this serves no purpose but still runs. Procure disables this; Geometrix does not.
+**Why this matters:** React DevTools injects instrumentation into every component's render cycle. In production, this serves no purpose but still runs. Procure disables this; RevBrain does not.
 
 **Risk note:** This only affects users who have React DevTools installed. The win is < 2% for typical users, up to 10% for developers testing in production. Still worth doing — zero cost, measurable upside.
 
@@ -385,7 +385,7 @@ pnpm exec playwright test e2e/smoke.spec.ts  # Login/logout still works
 
 **What:** Add `<link rel="dns-prefetch">` and `<link rel="preconnect">` for CDN domains already used in `index.html`.
 
-**Why this matters:** Geometrix loads Leaflet from `unpkg.com` and Proj4 from `cdnjs.cloudflare.com` as external scripts in `index.html`. Without preconnect/dns-prefetch, the browser doesn't start DNS resolution and TCP/TLS handshake until it encounters the `<script>` tags — by which time it's already blocking. Adding hints in `<head>` allows parallel resolution, saving 100-300ms on first load.
+**Why this matters:** RevBrain loads Leaflet from `unpkg.com` and Proj4 from `cdnjs.cloudflare.com` as external scripts in `index.html`. Without preconnect/dns-prefetch, the browser doesn't start DNS resolution and TCP/TLS handshake until it encounters the `<script>` tags — by which time it's already blocking. Adding hints in `<head>` allows parallel resolution, saving 100-300ms on first load.
 
 **Files to modify:**
 
@@ -833,7 +833,7 @@ FNV-1a is chosen because it's non-cryptographic (fast) and produces good distrib
 **Validation:**
 
 ```bash
-pnpm --filter @geometrix/server test -- --run src/middleware/etag.test.ts
+pnpm --filter @revbrain/server test -- --run src/middleware/etag.test.ts
 # All 7 tests pass
 ```
 
@@ -862,7 +862,7 @@ app.use('/v1/*', etagMiddleware);
 **Validation:**
 
 ```bash
-pnpm --filter @geometrix/server test -- --run  # All server tests pass
+pnpm --filter @revbrain/server test -- --run  # All server tests pass
 curl -v http://localhost:3000/v1/health  # Observe ETag header
 curl -v -H 'If-None-Match: W/"<hash>"' http://localhost:3000/v1/health  # Observe 304
 
@@ -899,7 +899,7 @@ pnpm perf:test
 **Validation:**
 
 ```bash
-pnpm --filter @geometrix/server test -- --run  # Existing + new cache preset tests pass
+pnpm --filter @revbrain/server test -- --run  # Existing + new cache preset tests pass
 pnpm perf:test
 # Test group 7 — different routes should now show different cache-control values
 ```
@@ -1034,7 +1034,7 @@ pnpm perf:test
 
 ## Phase 4: Advanced Optimizations
 
-> **Why:** These 5 tasks address deeper architectural bottlenecks. Infinite scroll eliminates the "load everything upfront" anti-pattern. Deferred initialization moves non-critical work out of the critical rendering path. Lazy module views prevent loading 19,000-line components until actually needed. Web Workers unblock the main thread during heavy DXF/CAD file processing — a Geometrix-specific bottleneck. CSS `content-visibility` eliminates rendering work for offscreen content. `useTransition` improves perceived responsiveness during heavy state changes like module switching.
+> **Why:** These 5 tasks address deeper architectural bottlenecks. Infinite scroll eliminates the "load everything upfront" anti-pattern. Deferred initialization moves non-critical work out of the critical rendering path. Lazy module views prevent loading 19,000-line components until actually needed. Web Workers unblock the main thread during heavy DXF/CAD file processing — a RevBrain-specific bottleneck. CSS `content-visibility` eliminates rendering work for offscreen content. `useTransition` improves perceived responsiveness during heavy state changes like module switching.
 
 ### Task 4.1 — Create useInfiniteScroll hook
 
@@ -1199,7 +1199,7 @@ pnpm perf:test
 
 **What:** Create a Web Worker that offloads DXF file parsing from the main thread.
 
-**Why this matters (Geometrix-specific):** This is a bottleneck Procure doesn't have. Geometrix processes CAD/DXF files for engineering drawings. The `dxf-parser` library parses these files synchronously on the main thread, freezing the UI for 1-5 seconds on large files. Vite natively supports `?worker` imports.
+**Why this matters (RevBrain-specific):** This is a bottleneck Procure doesn't have. RevBrain processes CAD/DXF files for engineering drawings. The `dxf-parser` library parses these files synchronously on the main thread, freezing the UI for 1-5 seconds on large files. Vite natively supports `?worker` imports.
 
 **Structured message protocol:**
 
@@ -1324,9 +1324,9 @@ pnpm perf:test
 
 **What:** Install `web-vitals` package, create `apps/client/src/lib/web-vitals.ts`, collect LCP/FID/CLS/TTFB/INP on every page load.
 
-**Why this matters:** Core Web Vitals are the industry standard for measuring real user performance. **INP (Interaction to Next Paint)** replaced FID as a Core Web Vital in March 2024 — it measures latency of ALL interactions, not just the first one. For Geometrix, this captures responsiveness of form interactions in module views.
+**Why this matters:** Core Web Vitals are the industry standard for measuring real user performance. **INP (Interaction to Next Paint)** replaced FID as a Core Web Vital in March 2024 — it measures latency of ALL interactions, not just the first one. For RevBrain, this captures responsiveness of form interactions in module views.
 
-**Also add custom vitals for Geometrix-specific flows:**
+**Also add custom vitals for RevBrain-specific flows:**
 
 ```typescript
 // Time from clicking a module tab to content visible
@@ -1576,7 +1576,7 @@ pnpm --filter client build  # Build succeeds
 
 **What we changed:**
 
-1. Added `geometrix_user` localStorage cache in `auth-store.ts`
+1. Added `revbrain_user` localStorage cache in `auth-store.ts`
 2. On `initialize()`: read cached user first → set it immediately (no spinner) → validate session in background
 3. Fixed `getCurrentUser()` in `RemoteAuthAdapter` to prefer the session's cached user (no `getUser()` network call)
 4. Cache is cleared on logout, `SIGNED_OUT` event, or validation failure
@@ -1601,7 +1601,7 @@ pnpm --filter client test  # All tests pass
 
 **What:** Create `apps/client/src/components/ui/skeleton.tsx` with composable skeleton primitives and page-specific compositions as Suspense fallbacks.
 
-**Why this matters:** Geometrix had a single generic `PageSkeleton` (4 grey boxes + content block) for all routes. Procure has composable skeletons (Kpi, Table, Chart, Card) that match each page's actual layout. When the skeleton looks like the real page, users perceive the page as loading faster — the content "fills in" rather than "appearing from nothing."
+**Why this matters:** RevBrain had a single generic `PageSkeleton` (4 grey boxes + content block) for all routes. Procure has composable skeletons (Kpi, Table, Chart, Card) that match each page's actual layout. When the skeleton looks like the real page, users perceive the page as loading faster — the content "fills in" rather than "appearing from nothing."
 
 **Components created:**
 
@@ -1730,7 +1730,7 @@ If conditional GET (304 Not Modified) is needed in the future, **do not hash res
 
 **Nightly staging runs:** After Phase 0 is complete, set up a nightly CI job that runs `pnpm perf:test` against the staging environment and posts results to Slack (or your team's notification channel). This catches performance regressions from non-performance PRs — someone adds a heavy import, a new unoptimized list, or an N+1 query, and you know within 24 hours instead of discovering it weeks later.
 
-**Vite chunk splitting — already done:** Geometrix already has 7 manual chunks configured in `apps/client/vite.config.ts` (react-vendor, query-vendor, ui-vendor, chart-vendor, geo-vendor, form-vendor, i18n-vendor) plus gzip+brotli compression and a rollup visualizer. This was identified as "Geometrix ahead" in the [speedup_roadmap.md](./speedup_roadmap.md) analysis. No additional chunk splitting task is needed — Task 5.2's `size-limit` budgets should reference these existing chunks.
+**Vite chunk splitting — already done:** RevBrain already has 7 manual chunks configured in `apps/client/vite.config.ts` (react-vendor, query-vendor, ui-vendor, chart-vendor, geo-vendor, form-vendor, i18n-vendor) plus gzip+brotli compression and a rollup visualizer. This was identified as "RevBrain ahead" in the [speedup_roadmap.md](./speedup_roadmap.md) analysis. No additional chunk splitting task is needed — Task 5.2's `size-limit` budgets should reference these existing chunks.
 
 ---
 

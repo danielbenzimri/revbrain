@@ -1,4 +1,4 @@
-# Geometrix Authentication System Specification
+# RevBrain Authentication System Specification
 
 ## Multi-Tenant Invite-Only Hybrid Architecture
 
@@ -10,7 +10,7 @@
 
 ## 1. Executive Summary
 
-Geometrix uses an **invite-only, multi-tenant authentication system** with a hybrid architecture:
+RevBrain uses an **invite-only, multi-tenant authentication system** with a hybrid architecture:
 
 - **Supabase Auth**: Handles credentials, password hashing, JWT generation, email delivery
 - **Local PostgreSQL**: Stores business data (organizations, roles, permissions) via Drizzle ORM
@@ -25,7 +25,7 @@ Geometrix uses an **invite-only, multi-tenant authentication system** with a hyb
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                          GEOMETRIX PLATFORM                                  │
+│                          REVBRAIN PLATFORM                                  │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
 │  ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐       │
@@ -92,7 +92,7 @@ Geometrix uses an **invite-only, multi-tenant authentication system** with a hyb
 │                                 │  • GET  /v1/org/users                      │
 └─────────────────────────────────┴─────────────────────────────────────────────┘
         │
-        │ Drizzle ORM (@geometrix/database)
+        │ Drizzle ORM (@revbrain/database)
         ▼
 ┌───────────────────────────────────────────────────────────────────────────────┐
 │                         LOCAL POSTGRESQL DATABASE                             │
@@ -662,11 +662,11 @@ VITE_API_URL=http://localhost:54321/functions/v1/api
 ### Dashboard Settings
 
 1. **Authentication → URL Configuration**
-   - Site URL: `http://localhost:5173` (dev) / `https://app.geometrix.io` (prod)
+   - Site URL: `http://localhost:5173` (dev) / `https://app.revbrain.io` (prod)
    - Redirect URLs: Add `/set-password` path
 
 2. **Authentication → Email Templates → Invite User**
-   - Customize with Geometrix branding
+   - Customize with RevBrain branding
    - Include organization name in email
 
 3. **Authentication → Settings**
@@ -676,7 +676,7 @@ VITE_API_URL=http://localhost:54321/functions/v1/api
 ### Email Template (Invite)
 
 ```html
-<h2>Welcome to Geometrix!</h2>
+<h2>Welcome to RevBrain!</h2>
 <p>You've been invited to join <strong>{{ .Data.organization_name }}</strong>.</p>
 <p>Click below to set up your account:</p>
 <a href="{{ .ConfirmationURL }}" style="...">Accept Invitation</a>

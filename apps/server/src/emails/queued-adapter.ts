@@ -4,7 +4,7 @@
  * Email adapter that enqueues emails for async processing instead of sending immediately.
  * The actual sending is handled by the job queue worker.
  */
-import type { EmailPort, SendEmailOptions, EmailResult } from '@geometrix/contract';
+import type { EmailPort, SendEmailOptions, EmailResult } from '@revbrain/contract';
 import { JobQueueService, type JobPayload } from '../services/job-queue.service.ts';
 
 export class QueuedEmailAdapter implements EmailPort {

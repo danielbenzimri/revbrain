@@ -44,7 +44,7 @@ export function renderLeadConfirmationEmail(data: LeadConfirmationEmailData): st
         In the meantime, here's what to expect:
       </h3>
       <ul style="margin:0;padding:0 0 0 20px;color:#64748b;font-size:14px;line-height:1.8;">
-        <li>A personalized walkthrough of Geometrix tailored to your needs</li>
+        <li>A personalized walkthrough of RevBrain tailored to your needs</li>
         <li>Discussion of enterprise pricing and volume discounts</li>
         <li>Answers to any technical or integration questions</li>
         <li>Custom onboarding plan for your organization</li>
@@ -57,14 +57,14 @@ export function renderLeadConfirmationEmail(data: LeadConfirmationEmailData): st
 
     <p style="margin:0 0 8px;font-size:15px;color:#64748b;line-height:1.5;">
       Best regards,<br/>
-      <strong style="color:#0f172a;">The Geometrix Team</strong>
+      <strong style="color:#0f172a;">The RevBrain Team</strong>
     </p>
 
     <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;" />
 
     <p style="margin:0;font-size:12px;color:#94a3b8;line-height:1.5;">
-      You're receiving this email because you submitted a contact request on geometrixlabs.com.
+      You're receiving this email because you submitted a contact request on revbrain.com.
     </p>`;
 
-  return wrapInLayout(content, 'Thanks for contacting Geometrix!');
+  return wrapInLayout(content, 'Thanks for contacting RevBrain!');
 }

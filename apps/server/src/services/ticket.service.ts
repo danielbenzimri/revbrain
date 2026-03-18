@@ -14,7 +14,7 @@ import {
   sql,
   or,
   ilike,
-} from '@geometrix/database';
+} from '@revbrain/database';
 import { logger } from '../lib/logger.ts';
 
 export interface CreateTicketInput {

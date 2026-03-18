@@ -8,7 +8,7 @@
  * - File uploads: 10MB (configurable per route)
  */
 import { bodyLimit } from 'hono/body-limit';
-import { AppError, ErrorCodes } from '@geometrix/contract';
+import { AppError, ErrorCodes } from '@revbrain/contract';
 
 // Size constants (in bytes)
 const KB = 1024;

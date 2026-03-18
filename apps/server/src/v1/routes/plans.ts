@@ -1,10 +1,10 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { zValidator } from '@hono/zod-validator';
-import { db, plans, eq } from '@geometrix/database';
+import { db, plans, eq } from '@revbrain/database';
 import { authMiddleware } from '../../middleware/auth.ts';
 import { requireRole } from '../../middleware/rbac.ts';
 import { validateUuidParam } from '../../middleware/validate-uuid.ts';
-import { AppError, ErrorCodes, planSchema } from '@geometrix/contract';
+import { AppError, ErrorCodes, planSchema } from '@revbrain/contract';
 import { logger } from '../../lib/logger.ts';
 import { getStripe, isStripeConfigured } from '../../lib/stripe.ts';
 

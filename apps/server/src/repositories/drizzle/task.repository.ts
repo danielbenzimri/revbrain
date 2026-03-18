@@ -1,4 +1,4 @@
-import { db as defaultDb, tasks, eq, desc, asc, and, sql } from '@geometrix/database';
+import { db as defaultDb, tasks, eq, desc, asc, and, sql } from '@revbrain/database';
 import type {
   TaskRepository,
   TaskEntity,
@@ -8,7 +8,7 @@ import type {
   PaginatedResult,
   TaskStatus,
   TaskPriority,
-} from '@geometrix/contract';
+} from '@revbrain/contract';
 import type { DrizzleDB } from './index.ts';
 
 /**

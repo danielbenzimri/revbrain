@@ -89,7 +89,7 @@ export const useServiceConfigStore = create<ServiceConfigState>()(
         }),
     }),
     {
-      name: 'geometrix-service-config',
+      name: 'revbrain-service-config',
       version: 3, // Bump version to force reset and use correct targets
       migrate: () => {
         // Always return fresh defaults based on current MODE

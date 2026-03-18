@@ -1,7 +1,7 @@
 import { createMiddleware } from 'hono/factory';
 import { decode, verify } from 'hono/jwt';
-import { db, users, organizations, eq } from '@geometrix/database';
-import { AppError, ErrorCodes } from '@geometrix/contract';
+import { db, users, organizations, eq } from '@revbrain/database';
+import { AppError, ErrorCodes } from '@revbrain/contract';
 import type { SupabaseJWTPayload } from '../types/index.ts';
 import { getEnv } from '../lib/env.ts';
 import { getSupabaseAdmin } from '../lib/supabase.ts';
@@ -157,7 +157,7 @@ export const authMiddleware = createMiddleware<AppEnv>(async (c, next) => {
 
     // 1. Try to find user in DB (by ID or Email to prevent collisions)
     // FIX: Use full userId for email to prevent collisions between mock users that share the same prefix
-    const mockEmail = `mock.${userId}@geometrix.io`;
+    const mockEmail = `mock.${userId}@revbrain.io`;
 
     let localUser = await db.query.users.findFirst({
       where: (u, { or, eq }) => or(eq(u.id, userId), eq(u.email, mockEmail)),

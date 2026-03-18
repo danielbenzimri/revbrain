@@ -1,10 +1,10 @@
-# Geometrix Homepage Context
+# RevBrain Homepage Context
 
-> Marketing positioning and target audience documentation for the Geometrix platform.
+> Marketing positioning and target audience documentation for the RevBrain platform.
 
 ## Platform Overview
 
-**Geometrix** is a construction project management and quantity surveying platform designed specifically for the Israeli infrastructure and construction market. The platform digitizes the traditionally manual, error-prone process of quantity calculations, bill verification, and project execution tracking.
+**RevBrain** is a construction project management and quantity surveying platform designed specifically for the Israeli infrastructure and construction market. The platform digitizes the traditionally manual, error-prone process of quantity calculations, bill verification, and project execution tracking.
 
 ### Core Value Proposition
 
@@ -31,7 +31,7 @@
 - Version control nightmares when plans change
 - Difficult to defend calculations during disputes
 
-**What they need from Geometrix:**
+**What they need from RevBrain:**
 
 - **20 Calculation Modules** covering all infrastructure disciplines:
   - Earthworks (עבודות עפר) - cut/fill calculations
@@ -49,7 +49,7 @@
 
 **Key message:**
 
-> "מחשבים כמויות? עברו מאקסל ל-Geometrix. חישובים מדויקים, מעקב שינויים, ודוחות מוכנים להגשה."
+> "מחשבים כמויות? עברו מאקסל ל-RevBrain. חישובים מדויקים, מעקב שינויים, ודוחות מוכנים להגשה."
 
 ---
 
@@ -70,7 +70,7 @@
 - No visibility into calculation methodology
 - Disputes take months to resolve
 
-**What they need from Geometrix:**
+**What they need from RevBrain:**
 
 - **Read-only access** to contractor calculations
 - **Visual verification** - see calculations overlaid on drawings
@@ -82,7 +82,7 @@
 
 **Key message:**
 
-> "קיבלתם חשבון ביצוע? בדקו אותו ב-Geometrix. כל הנתונים, התמונות והחישובים - במקום אחד."
+> "קיבלתם חשבון ביצוע? בדקו אותו ב-RevBrain. כל הנתונים, התמונות והחישובים - במקום אחד."
 
 ---
 
@@ -103,7 +103,7 @@
 - No benchmarks for unit costs
 - Risk of significant under/over estimation
 
-**What they need from Geometrix:**
+**What they need from RevBrain:**
 
 - **Quick estimation mode** - rough quantities from preliminary drawings
 - **Historical comparisons** - similar past projects as benchmarks
@@ -114,7 +114,7 @@
 **Use case:**
 
 1. Receive tender documents
-2. Upload preliminary drawings to Geometrix
+2. Upload preliminary drawings to RevBrain
 3. Get rough quantities within 1-2 days
 4. Apply unit costs and margins
 5. Submit competitive bid with confidence
@@ -142,7 +142,7 @@
 - Communication gaps with external consultants
 - No visibility into work progress
 
-**What Geometrix offers:**
+**What RevBrain offers:**
 
 - **Full outsourced service** - we do the calculations for you
 - **Platform transparency** - see progress in real-time on the system
@@ -317,13 +317,13 @@
 ### Social Proof
 
 - Logos of customers/partners
-- "X פרויקטים חושבו ב-Geometrix"
+- "X פרויקטים חושבו ב-RevBrain"
 - Testimonials from each persona type
 
 ### Feature Highlights
 
 - Interactive demo of a calculation module
-- Before/After comparison (Excel vs. Geometrix)
+- Before/After comparison (Excel vs. RevBrain)
 - Video walkthrough (2-3 minutes)
 
 ### Use Cases Section

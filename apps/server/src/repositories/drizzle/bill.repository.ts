@@ -1,4 +1,4 @@
-import { db as defaultDb, bills, eq, desc, asc, sql } from '@geometrix/database';
+import { db as defaultDb, bills, eq, desc, asc, sql } from '@revbrain/database';
 import type {
   BillRepository,
   BillEntity,
@@ -8,7 +8,7 @@ import type {
   FindManyOptions,
   PaginatedResult,
   BillStatus,
-} from '@geometrix/contract';
+} from '@revbrain/contract';
 import type { DrizzleDB } from './index.ts';
 
 /**

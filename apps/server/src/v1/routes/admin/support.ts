@@ -8,7 +8,7 @@ import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { authMiddleware } from '../../../middleware/auth.ts';
 import { requireRole } from '../../../middleware/rbac.ts';
 import { listLimiter } from '../../../middleware/rate-limit.ts';
-import { AppError, ErrorCodes } from '@geometrix/contract';
+import { AppError, ErrorCodes } from '@revbrain/contract';
 import { TicketService } from '../../../services/ticket.service.ts';
 import type { AppEnv } from '../../../types/index.ts';
 

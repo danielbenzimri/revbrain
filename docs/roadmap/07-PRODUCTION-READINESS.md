@@ -31,7 +31,7 @@ Prepare the application for production deployment with Redis integration, stagin
 **Install Dependencies:**
 
 ```bash
-pnpm add @upstash/redis --filter @geometrix/server
+pnpm add @upstash/redis --filter @revbrain/server
 ```
 
 **Redis Client:** `apps/server/src/lib/redis.ts`
@@ -100,7 +100,7 @@ export async function invalidateCache(pattern: string): Promise<void> {
 ```typescript
 import { createMiddleware } from 'hono/factory';
 import { getRedis } from '../lib/redis';
-import { AppError, ErrorCodes } from '@geometrix/contract';
+import { AppError, ErrorCodes } from '@revbrain/contract';
 
 export interface RedisRateLimitOptions {
   windowMs: number;
@@ -252,9 +252,9 @@ function hashToken(token: string): string {
 
 **Supabase Projects:**
 
-- `geometrix-prod` - Production
-- `geometrix-staging` - Staging (mirrors prod)
-- `geometrix-dev` - Development (optional, local Supabase preferred)
+- `revbrain-prod` - Production
+- `revbrain-staging` - Staging (mirrors prod)
+- `revbrain-dev` - Development (optional, local Supabase preferred)
 
 **Environment Configuration:** `.env.staging`
 
@@ -526,7 +526,7 @@ jobs:
         uses: ./.github/actions/setup
 
       - name: Build Backend
-        run: pnpm --filter @geometrix/server build
+        run: pnpm --filter @revbrain/server build
 
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v1
@@ -580,9 +580,9 @@ jobs:
         run: |
           ENV=${{ needs.prepare.outputs.environment }}
           if [ "$ENV" == "production" ]; then
-            URL="https://api.geometrix.io/v1/health"
+            URL="https://api.revbrain.io/v1/health"
           else
-            URL="https://api-staging.geometrix.io/v1/health"
+            URL="https://api-staging.revbrain.io/v1/health"
           fi
 
           for i in {1..5}; do
@@ -801,7 +801,7 @@ SENTRY_DSN=https://xxx@xxx.ingest.sentry.io/xxx
 LOG_LEVEL=info
 
 # Frontend
-VITE_API_URL=https://api.geometrix.io
+VITE_API_URL=https://api.revbrain.io
 VITE_SENTRY_DSN=xxx
 ```
 

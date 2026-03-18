@@ -3,7 +3,7 @@ import { Hono } from 'hono';
 import { plansRouter } from './plans';
 import { adminRouter } from './admin';
 import { orgRouter } from './org';
-import { AppError } from '@geometrix/contract';
+import { AppError } from '@revbrain/contract';
 
 // --- Mocks ---
 

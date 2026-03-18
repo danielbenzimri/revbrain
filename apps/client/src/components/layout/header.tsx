@@ -45,7 +45,7 @@ export function Header() {
 
       {/* Logo (Mobile) */}
       <div className="flex-1 md:hidden">
-        <span className="font-bold text-emerald-400">GEOMETRIX</span>
+        <span className="font-bold text-emerald-400">REVBRAIN</span>
       </div>
 
       {/* Spacer (Desktop) */}

@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Geometrix Supabase Cloud Initialization Script
+# RevBrain Supabase Cloud Initialization Script
 # 🚀Rocketship Mode
 
 set -e
 
-echo "🚀 Starting Geometrix Supabase Cloud Setup..."
+echo "🚀 Starting RevBrain Supabase Cloud Setup..."
 
 # Helper function to update env
 # Usage: update_env "apps/client/.env" "KEY" "VALUE"
@@ -63,8 +63,8 @@ if [ "$ORG_ID" == "new" ]; then
 fi
 
 echo "👉 We will create 2 environments: DEV and PROD."
-read -p "👉 Enter Base Project Name (will become <name>-dev and <name>-prod) [default: geometrix]: " BASE_NAME
-BASE_NAME=${BASE_NAME:-geometrix}
+read -p "👉 Enter Base Project Name (will become <name>-dev and <name>-prod) [default: revbrain]: " BASE_NAME
+BASE_NAME=${BASE_NAME:-revbrain}
 
 read -p "👉 Enter a Database Password (min 8 chars, used for BOTH): " DB_PASSWORD
 read -p "👉 Enter Region (e.g. eu-central-1, us-east-1) [default: eu-central-1]: " REGION

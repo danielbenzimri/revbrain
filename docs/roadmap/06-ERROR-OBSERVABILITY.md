@@ -20,10 +20,10 @@ Implement comprehensive error tracking, structured logging, and monitoring to en
 
 ```bash
 # Backend
-pnpm add @sentry/node --filter @geometrix/server
+pnpm add @sentry/node --filter @revbrain/server
 
 # Frontend
-pnpm add @sentry/react --filter @geometrix/client
+pnpm add @sentry/react --filter @revbrain/client
 ```
 
 **Backend Sentry Setup:** `apps/server/src/lib/sentry.ts`

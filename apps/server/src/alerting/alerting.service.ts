@@ -18,7 +18,7 @@ import type {
   AlertCategory,
   SendAlertOptions,
   ThrottleConfig,
-} from '@geometrix/contract';
+} from '@revbrain/contract';
 import { randomUUID } from 'node:crypto';
 import { logger } from '../lib/logger.ts';
 

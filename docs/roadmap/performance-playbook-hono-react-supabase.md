@@ -2,7 +2,7 @@
 
 **Created:** 2026-03-16
 **Stack:** Hono (server) + React (client) + Supabase (auth/database) + Vite (bundler) + TanStack Query (data) + Zustand (state)
-**Derived from:** Geometrix and Procure production optimizations
+**Derived from:** RevBrain and Procure production optimizations
 
 This is a generic, reusable playbook for optimizing applications built on the Hono + React + Supabase stack. It captures hard-won lessons from two production codebases — what works, what doesn't, and what causes regressions.
 

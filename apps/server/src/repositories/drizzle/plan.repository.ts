@@ -1,11 +1,11 @@
-import { db as defaultDb, plans, eq, desc, asc, sql, and } from '@geometrix/database';
+import { db as defaultDb, plans, eq, desc, asc, sql, and } from '@revbrain/database';
 import type {
   PlanRepository,
   PlanEntity,
   CreatePlanInput,
   UpdatePlanInput,
   FindManyOptions,
-} from '@geometrix/contract';
+} from '@revbrain/contract';
 import type { DrizzleDB } from './index.ts';
 
 /**

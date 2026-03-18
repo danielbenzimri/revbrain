@@ -5,7 +5,7 @@ import { test, expect } from './auth';
  * Performance measurement helpers for E2E tests.
  *
  * These fixtures provide consistent, reusable functions for collecting
- * performance metrics across the Geometrix application. Used by
+ * performance metrics across the RevBrain application. Used by
  * e2e/performance.spec.ts to establish baselines and detect regressions.
  *
  * @see docs/roadmap/speedup_tasks.md — Task 0.1

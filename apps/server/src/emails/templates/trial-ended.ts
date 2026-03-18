@@ -79,7 +79,7 @@ export function renderTrialEndedEmail(data: TrialEndedEmailData): string {
 
     <p style="margin:0 0 24px;font-size:15px;color:#64748b;line-height:1.5;">
       We hope you enjoyed exploring everything ${escapeHtml(previousPlanName)} has to offer.
-      Your account has been switched to our Free plan, so you can still access Geometrix
+      Your account has been switched to our Free plan, so you can still access RevBrain
       with limited features.
     </p>
 
@@ -109,7 +109,7 @@ export function renderTrialEndedEmail(data: TrialEndedEmailData): string {
     </table>
 
     <p style="margin:24px 0 0;font-size:12px;color:#94a3b8;line-height:1.5;">
-      Questions? Reply to this email — we're here to help you get the most out of Geometrix.
+      Questions? Reply to this email — we're here to help you get the most out of RevBrain.
     </p>`;
 
   return wrapInLayout(content, `Your ${previousPlanName} trial has ended`);

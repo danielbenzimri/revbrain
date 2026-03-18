@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { db, users, eq, sql } from '@geometrix/database';
+import { db, users, eq, sql } from '@revbrain/database';
 import { logger } from '../lib/logger.ts';
 
 /**

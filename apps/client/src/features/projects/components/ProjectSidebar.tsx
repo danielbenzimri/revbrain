@@ -191,7 +191,7 @@ export function ProjectSidebar({
           <div className={`flex items-center gap-3 ${isCollapsed && 'justify-center'}`}>
             <div
               className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-lg flex items-center justify-center font-bold text-lg overflow-hidden shadow-lg shrink-0"
-              title={isCollapsed ? `GEOMETRIX - ${project.name}` : undefined}
+              title={isCollapsed ? `REVBRAIN - ${project.name}` : undefined}
             >
               <Pyramid size={24} />
             </div>
@@ -199,7 +199,7 @@ export function ProjectSidebar({
               <>
                 <div className="flex-1">
                   <span className="font-black text-xl tracking-tight block leading-none">
-                    GEOMETRIX
+                    REVBRAIN
                   </span>
                   <span
                     className="text-[10px] font-bold truncate block max-w-[140px]"

@@ -5,7 +5,7 @@
  * Supports multiple job types, retries with exponential backoff,
  * and distributed locking for concurrent workers.
  */
-import { db, jobQueue, eq, and, lte, or, isNull, sql, desc } from '@geometrix/database';
+import { db, jobQueue, eq, and, lte, or, isNull, sql, desc } from '@revbrain/database';
 import { logger } from '../lib/logger.ts';
 import { randomUUID } from 'node:crypto';
 

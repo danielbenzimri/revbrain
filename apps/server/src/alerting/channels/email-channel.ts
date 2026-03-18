@@ -4,8 +4,8 @@
  * Sends alerts via email using the existing email infrastructure.
  * Supports customizable recipients based on alert severity.
  */
-import type { Alert, AlertChannel, AlertResult, SendAlertOptions } from '@geometrix/contract';
-import type { EmailPort } from '@geometrix/contract';
+import type { Alert, AlertChannel, AlertResult, SendAlertOptions } from '@revbrain/contract';
+import type { EmailPort } from '@revbrain/contract';
 import { getEnv } from '../../lib/env.ts';
 import { logger } from '../../lib/logger.ts';
 
@@ -46,7 +46,7 @@ export class EmailChannel implements AlertChannel {
     this.emailService = config.emailService;
     this.defaultRecipients = config.defaultRecipients ?? [];
     this.criticalRecipients = config.criticalRecipients ?? config.defaultRecipients ?? [];
-    this.appName = config.appName ?? 'Geometrix';
+    this.appName = config.appName ?? 'RevBrain';
   }
 
   isConfigured(): boolean {

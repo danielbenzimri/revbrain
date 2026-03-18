@@ -1,11 +1,11 @@
-import { db as defaultDb, users, eq, desc, asc, sql } from '@geometrix/database';
+import { db as defaultDb, users, eq, desc, asc, sql } from '@revbrain/database';
 import type {
   UserRepository,
   UserEntity,
   CreateUserInput,
   UpdateUserInput,
   FindManyOptions,
-} from '@geometrix/contract';
+} from '@revbrain/contract';
 import type { DrizzleDB } from './index.ts';
 
 /**

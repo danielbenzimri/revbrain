@@ -1,5 +1,5 @@
 {
-  "name": "geometrix",
+  "name": "revbrain",
   "version": "1.0.0",
   "private": true,
   "description": "Hexagonal architecture monorepo with vendor-agnostic design",
@@ -18,8 +18,8 @@
     "test:integration": "turbo run test:integration",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "db:generate": "pnpm --filter @geometrix/database db:generate",
-    "db:migrate": "pnpm --filter @geometrix/database db:migrate",
+    "db:generate": "pnpm --filter @revbrain/database db:generate",
+    "db:migrate": "pnpm --filter @revbrain/database db:migrate",
     "clean": "turbo run clean && rm -rf node_modules",
     "setup:cloud": "./scripts/init-supabase-cloud.sh",
     "perf:test": "playwright test --project=performance",

@@ -7,7 +7,7 @@
  * This bridges the alerting service with Sentry, allowing
  * business alerts to appear alongside technical errors.
  */
-import type { Alert, AlertChannel, AlertResult, SendAlertOptions } from '@geometrix/contract';
+import type { Alert, AlertChannel, AlertResult, SendAlertOptions } from '@revbrain/contract';
 import { captureException, captureMessage, isSentryInitialized } from '../../lib/sentry.ts';
 import { logger } from '../../lib/logger.ts';
 

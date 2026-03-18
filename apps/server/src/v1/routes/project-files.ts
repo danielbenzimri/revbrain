@@ -11,9 +11,9 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import type { AppEnv } from '../../types/index.ts';
 import { logger } from '../../lib/logger.ts';
-import { AppError, ErrorCodes } from '@geometrix/contract';
+import { AppError, ErrorCodes } from '@revbrain/contract';
 import { getSupabaseAdmin } from '../../lib/supabase.ts';
-import { db, projectFiles } from '@geometrix/database';
+import { db, projectFiles } from '@revbrain/database';
 import { eq } from 'drizzle-orm';
 
 const projectFilesRouter = new OpenAPIHono<AppEnv>();

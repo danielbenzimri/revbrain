@@ -10,7 +10,7 @@
  * 3. Add webhook to a channel
  * 4. Set SLACK_ALERT_WEBHOOK_URL environment variable
  */
-import type { Alert, AlertChannel, AlertResult, SendAlertOptions } from '@geometrix/contract';
+import type { Alert, AlertChannel, AlertResult, SendAlertOptions } from '@revbrain/contract';
 import { getEnv } from '../../lib/env.ts';
 import { logger } from '../../lib/logger.ts';
 
@@ -47,7 +47,7 @@ export class SlackChannel implements AlertChannel {
   constructor(config?: SlackChannelConfig) {
     this.webhookUrl = config?.webhookUrl ?? getEnv('SLACK_ALERT_WEBHOOK_URL');
     this.channel = config?.channel;
-    this.username = config?.username ?? 'Geometrix Alerts';
+    this.username = config?.username ?? 'RevBrain Alerts';
     this.iconEmoji = config?.iconEmoji ?? ':bell:';
   }
 

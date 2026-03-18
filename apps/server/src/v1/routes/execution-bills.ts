@@ -8,7 +8,7 @@ import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import type { AppEnv } from '../../types/index.ts';
 import { ExecutionBillService } from '../../services/execution-bill.service.ts';
 import { logger } from '../../lib/logger.ts';
-import { AppError, ErrorCodes } from '@geometrix/contract';
+import { AppError, ErrorCodes } from '@revbrain/contract';
 
 const executionBills = new OpenAPIHono<AppEnv>();
 

@@ -16,7 +16,7 @@ import {
   lte,
   ilike,
   sql,
-} from '@geometrix/database';
+} from '@revbrain/database';
 import { getEmailService } from '../emails/index.ts';
 import {
   renderLeadNotificationEmail,
@@ -116,7 +116,7 @@ export class LeadService {
    * Send notification email to sales team.
    */
   private async sendNotificationEmail(lead: typeof leads.$inferSelect) {
-    const salesEmail = getEnv('SALES_NOTIFICATION_EMAIL') || 'sales@geometrixlabs.com';
+    const salesEmail = getEnv('SALES_NOTIFICATION_EMAIL') || 'sales@revbrain.com';
     const emailService = getEmailService();
 
     try {
@@ -128,7 +128,7 @@ export class LeadService {
         companySize: lead.companySize || 'Not provided',
         message: lead.message || 'No message',
         source: lead.source || 'website',
-        dashboardUrl: `${getEnv('APP_URL') || 'https://app.geometrixlabs.com'}/admin/leads/${lead.id}`,
+        dashboardUrl: `${getEnv('APP_URL') || 'https://app.revbrain.com'}/admin/leads/${lead.id}`,
       });
 
       await emailService.send({
@@ -158,7 +158,7 @@ export class LeadService {
 
       await emailService.send({
         to: lead.contactEmail,
-        subject: 'Thanks for contacting Geometrix!',
+        subject: 'Thanks for contacting RevBrain!',
         html,
       });
 

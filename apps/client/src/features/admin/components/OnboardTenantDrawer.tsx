@@ -4,7 +4,7 @@ import { User, Loader2, Check, X, Upload, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { useAllPlans, useOnboardTenant } from '../hooks';
-import type { Plan } from '@geometrix/contract';
+import type { Plan } from '@revbrain/contract';
 
 interface OnboardTenantDrawerProps {
   open: boolean;

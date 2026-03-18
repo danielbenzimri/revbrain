@@ -36,7 +36,7 @@ This phase covers the "plumbing" that makes a SaaS reliable and scalable: backgr
 import { Inngest } from 'inngest';
 
 export const inngest = new Inngest({
-  id: 'geometrix',
+  id: 'revbrain',
   eventKey: process.env.INNGEST_EVENT_KEY,
 });
 

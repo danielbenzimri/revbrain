@@ -1,6 +1,6 @@
 -- ============================================================================
 -- SEED PRICING PLANS
--- Production-ready pricing tiers for Geometrix SaaS
+-- Production-ready pricing tiers for RevBrain SaaS
 -- ============================================================================
 
 -- First, remove any existing test/debug plans

@@ -20,7 +20,7 @@ const { mockFindFirst, mockFindMany, mockInsert, mockUpdate, mockDelete, mockSel
  * Mock the database module
  * This allows us to test repository logic without a real database connection
  */
-vi.mock('@geometrix/database', () => ({
+vi.mock('@revbrain/database', () => ({
   db: {
     query: {
       plans: {

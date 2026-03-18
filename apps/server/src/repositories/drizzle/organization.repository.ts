@@ -1,4 +1,4 @@
-import { db as defaultDb, organizations, eq, desc, asc, sql } from '@geometrix/database';
+import { db as defaultDb, organizations, eq, desc, asc, sql } from '@revbrain/database';
 import type {
   OrganizationRepository,
   OrganizationEntity,
@@ -6,7 +6,7 @@ import type {
   CreateOrganizationInput,
   UpdateOrganizationInput,
   FindManyOptions,
-} from '@geometrix/contract';
+} from '@revbrain/contract';
 import type { DrizzleDB } from './index.ts';
 
 /**

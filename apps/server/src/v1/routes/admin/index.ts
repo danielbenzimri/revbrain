@@ -1,5 +1,5 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
-import { AppError } from '@geometrix/contract';
+import { AppError } from '@revbrain/contract';
 import { logger } from '../../../lib/logger.ts';
 import { onboardingRouter } from './onboarding.ts';
 import { adminUsersRouter } from './users.ts';

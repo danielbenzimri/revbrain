@@ -17,9 +17,9 @@ const mockEmailService = vi.hoisted(() => ({
 }));
 
 /**
- * Mock database - all from @geometrix/database (including schema + drizzle utilities)
+ * Mock database - all from @revbrain/database (including schema + drizzle utilities)
  */
-vi.mock('@geometrix/database', () => ({
+vi.mock('@revbrain/database', () => ({
   db: {
     query: {
       leads: {

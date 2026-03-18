@@ -36,7 +36,7 @@ describe('Service Layer Verification (Matrix Test)', () => {
     });
 
     it('should successfully login mock user', async () => {
-      const result = await authAdapter.login('admin@geometrix.io');
+      const result = await authAdapter.login('admin@revbrain.io');
       expect(result.user).toBeDefined();
       expect(result.session).toBeDefined();
       expect(result.user.role).toBe('system_admin');
@@ -49,7 +49,7 @@ describe('Service Layer Verification (Matrix Test)', () => {
     });
 
     it('should persist session', async () => {
-      await authAdapter.login('admin@geometrix.com');
+      await authAdapter.login('admin@revbrain.com');
       const session = await authAdapter.getSession();
       expect(session).not.toBeNull();
     });

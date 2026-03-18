@@ -7,13 +7,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AuthService } from './auth.service.ts';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-// Mock @geometrix/database
+// Mock @revbrain/database
 const mockSelect = vi.hoisted(() => vi.fn());
 const mockFrom = vi.hoisted(() => vi.fn());
 const mockWhere = vi.hoisted(() => vi.fn());
 const mockLimit = vi.hoisted(() => vi.fn());
 
-vi.mock('@geometrix/database', () => ({
+vi.mock('@revbrain/database', () => ({
   db: {
     select: mockSelect,
   },

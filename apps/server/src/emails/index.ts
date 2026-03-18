@@ -6,7 +6,7 @@
  * - RESEND_API_KEY set → ResendEmailAdapter (sync, immediate)
  * - RESEND_API_KEY missing → ConsoleEmailAdapter (dev/test)
  */
-import type { EmailPort } from '@geometrix/contract';
+import type { EmailPort } from '@revbrain/contract';
 import { getEnv } from '../lib/env.ts';
 import { ResendEmailAdapter } from './resend-adapter.ts';
 import { ConsoleEmailAdapter } from './console-adapter.ts';
@@ -17,7 +17,7 @@ import { QueuedEmailAdapter, registerEmailJobHandler } from './queued-adapter.ts
  */
 export function createDirectEmailAdapter(): EmailPort {
   const apiKey = getEnv('RESEND_API_KEY');
-  const from = getEnv('EMAIL_FROM') || 'Geometrix <onboarding@resend.dev>';
+  const from = getEnv('EMAIL_FROM') || 'RevBrain <onboarding@resend.dev>';
 
   if (apiKey) {
     return new ResendEmailAdapter(apiKey, from);
@@ -39,7 +39,7 @@ export function createEmailService(): EmailPort {
   }
 
   if (apiKey) {
-    const from = getEnv('EMAIL_FROM') || 'Geometrix <onboarding@resend.dev>';
+    const from = getEnv('EMAIL_FROM') || 'RevBrain <onboarding@resend.dev>';
     console.log('[Email] Using sync Resend adapter');
     return new ResendEmailAdapter(apiKey, from);
   }

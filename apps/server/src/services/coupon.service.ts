@@ -14,7 +14,7 @@ import {
   and,
   sql,
   inArray,
-} from '@geometrix/database';
+} from '@revbrain/database';
 import { getStripe, isStripeConfigured } from '../lib/stripe.ts';
 import { logger } from '../lib/logger.ts';
 import type Stripe from 'stripe';

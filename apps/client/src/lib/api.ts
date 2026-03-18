@@ -1,5 +1,5 @@
 import { hc } from 'hono/client';
-import type { AppType } from '@geometrix/server';
+import type { AppType } from '@revbrain/server';
 
 // Use environment variable for API URL or default to local
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';

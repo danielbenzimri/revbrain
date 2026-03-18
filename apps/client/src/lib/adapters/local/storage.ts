@@ -1,6 +1,6 @@
 import type { StorageAdapter, StorageFile } from '@/types/services';
 
-const STORAGE_PREFIX = 'geometrix_files_';
+const STORAGE_PREFIX = 'revbrain_files_';
 
 /**
  * Local Storage Adapter

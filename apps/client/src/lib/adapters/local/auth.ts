@@ -2,7 +2,7 @@ import type { AuthAdapter, AuthResult, Session, AuthUser } from '@/types/service
 import { MOCK_USERS } from '@/lib/mock-data';
 import type { UserRole } from '@/types/auth';
 
-const SESSION_KEY = 'geometrix_session';
+const SESSION_KEY = 'revbrain_session';
 const SIMULATED_DELAY = 300;
 
 /**

@@ -279,7 +279,7 @@ describe('OrganizationService', () => {
     it('should return existing platform org', async () => {
       const platformOrg = {
         id: 'platform-org-id',
-        name: 'Geometrix Platform',
+        name: 'RevBrain Platform',
         slug: 'platform',
       };
       mockOrgsFindBySlug.mockResolvedValue(platformOrg);
@@ -294,7 +294,7 @@ describe('OrganizationService', () => {
       mockOrgsFindBySlug.mockResolvedValue(null);
       const newPlatformOrg = {
         id: 'new-platform-id',
-        name: 'Geometrix Platform',
+        name: 'RevBrain Platform',
         slug: 'platform',
       };
       mockOrgsCreate.mockResolvedValue(newPlatformOrg);
@@ -303,7 +303,7 @@ describe('OrganizationService', () => {
 
       expect(result).toEqual(newPlatformOrg);
       expect(mockOrgsCreate).toHaveBeenCalledWith({
-        name: 'Geometrix Platform',
+        name: 'RevBrain Platform',
         slug: 'platform',
         type: 'contractor',
         seatLimit: 999,

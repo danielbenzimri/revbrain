@@ -7,7 +7,7 @@ Supabase provides database, authentication, and edge function hosting.
 1. Go to [supabase.com](https://supabase.com) and sign in
 2. Click **New Project**
 3. Fill in:
-   - **Name**: e.g., `geometrix-dev` or `geometrix-prod`
+   - **Name**: e.g., `revbrain-dev` or `revbrain-prod`
    - **Database Password**: Save this securely
    - **Region**: Choose closest to your users (e.g., `eu-central-1`)
 4. Click **Create new project**
@@ -98,7 +98,7 @@ npx supabase secrets set STRIPE_WEBHOOK_SECRET=[webhook-secret] --project-ref [p
 
 # Email (see 03-resend.md)
 npx supabase secrets set RESEND_API_KEY=[resend-key] --project-ref [project-ref]
-npx supabase secrets set EMAIL_FROM="Geometrix <hello@yourdomain.com>" --project-ref [project-ref]
+npx supabase secrets set EMAIL_FROM="RevBrain <hello@yourdomain.com>" --project-ref [project-ref]
 
 # App URL (for email links)
 npx supabase secrets set APP_URL=https://your-domain.com --project-ref [project-ref]

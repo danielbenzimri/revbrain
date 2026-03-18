@@ -4,7 +4,7 @@
  * Production email adapter using Resend's REST API via fetch.
  * No SDK dependency — works in both Node.js and Deno runtimes.
  */
-import type { EmailPort, SendEmailOptions, EmailResult } from '@geometrix/contract';
+import type { EmailPort, SendEmailOptions, EmailResult } from '@revbrain/contract';
 
 const RESEND_API_URL = 'https://api.resend.com/emails';
 

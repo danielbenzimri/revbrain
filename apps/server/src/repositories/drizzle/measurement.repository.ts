@@ -1,11 +1,11 @@
-import { db as defaultDb, measurements, billItems, eq, sql } from '@geometrix/database';
+import { db as defaultDb, measurements, billItems, eq, sql } from '@revbrain/database';
 import type {
   MeasurementRepository,
   MeasurementEntity,
   CreateMeasurementInput,
   UpdateMeasurementInput,
   FindManyOptions,
-} from '@geometrix/contract';
+} from '@revbrain/contract';
 import type { DrizzleDB } from './index.ts';
 
 /**

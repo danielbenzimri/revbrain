@@ -252,7 +252,7 @@ Add to `.github/workflows/ci.yml`:
 ## Files Changed/Created
 
 ```
-geometrix/
+revbrain/
 ├── .editorconfig           (new)
 ├── .prettierrc             (new)
 ├── .prettierignore         (new)

@@ -5,7 +5,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { BOQService } from './boq.service.ts';
-import type { BOQRepository, ProjectRepository, BOQItemEntity } from '@geometrix/contract';
+import type { BOQRepository, ProjectRepository, BOQItemEntity } from '@revbrain/contract';
 
 // Mock dependencies
 vi.mock('../lib/logger.ts', () => ({

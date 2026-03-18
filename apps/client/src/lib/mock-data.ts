@@ -5,7 +5,7 @@ export const MOCK_USERS: Record<UserRole, User> = {
   system_admin: {
     id: '00000000-0000-4000-a000-000000000001',
     name: 'מנהל מערכת',
-    email: 'admin@geometrix.io',
+    email: 'admin@revbrain.io',
     role: 'system_admin',
     avatar: undefined,
   },

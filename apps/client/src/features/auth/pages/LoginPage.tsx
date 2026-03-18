@@ -74,7 +74,7 @@ export default function LoginPage() {
             <div className="h-12 w-12 bg-emerald-500 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
               G
             </div>
-            <span className="text-2xl font-bold">Geometrix</span>
+            <span className="text-2xl font-bold">RevBrain</span>
           </div>
         </div>
 
@@ -102,7 +102,7 @@ export default function LoginPage() {
           <p className="text-slate-400 text-lg max-w-md">{t('auth.brandingSubtitle')}</p>
         </div>
 
-        <div className="text-slate-500 text-sm">© 2024 Geometrix. {t('auth.rightsReserved')}</div>
+        <div className="text-slate-500 text-sm">© 2024 RevBrain. {t('auth.rightsReserved')}</div>
       </div>
 
       {/* Right Panel - Login Form */}

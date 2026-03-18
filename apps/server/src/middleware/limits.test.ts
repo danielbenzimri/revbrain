@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Hono } from 'hono';
-import { AppError } from '@geometrix/contract';
+import { AppError } from '@revbrain/contract';
 import {
   requireUserCapacity,
   requireProjectCapacity,

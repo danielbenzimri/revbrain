@@ -183,13 +183,13 @@ export type UpdateOrgInput = z.infer<typeof updateOrgSchema>;
 // apps/server/src/repositories/drizzle/user.repository.ts
 import { eq, and, desc, asc, sql } from 'drizzle-orm';
 import type { DrizzleDB } from '../../lib/db';
-import { users } from '@geometrix/database';
+import { users } from '@revbrain/database';
 import type {
   UserRepository,
   FindManyOptions,
   CreateUserInput,
   UpdateUserInput,
-} from '@geometrix/contract';
+} from '@revbrain/contract';
 
 export class DrizzleUserRepository implements UserRepository {
   constructor(private db: DrizzleDB) {}
@@ -286,7 +286,7 @@ export class DrizzleUserRepository implements UserRepository {
 ```typescript
 // apps/server/src/repositories/drizzle/index.ts
 import type { DrizzleDB } from '../../lib/db';
-import type { Repositories } from '@geometrix/contract';
+import type { Repositories } from '@revbrain/contract';
 import { DrizzleUserRepository } from './user.repository';
 import { DrizzleOrganizationRepository } from './organization.repository';
 import { DrizzlePlanRepository } from './plan.repository';
@@ -316,7 +316,7 @@ import type {
   FindManyOptions,
   CreateUserInput,
   UpdateUserInput,
-} from '@geometrix/contract';
+} from '@revbrain/contract';
 
 export class SupabaseUserRepository implements UserRepository {
   constructor(private client: SupabaseClient) {}
@@ -468,7 +468,7 @@ export class SupabaseUserRepository implements UserRepository {
 ```typescript
 // apps/server/src/repositories/supabase/index.ts
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Repositories } from '@geometrix/contract';
+import type { Repositories } from '@revbrain/contract';
 import { SupabaseUserRepository } from './user.repository';
 import { SupabaseOrganizationRepository } from './organization.repository';
 import { SupabasePlanRepository } from './plan.repository';
@@ -492,7 +492,7 @@ export function createSupabaseRepositories(client: SupabaseClient): Repositories
 
 ```typescript
 import { createMiddleware } from 'hono/factory';
-import type { Repositories } from '@geometrix/contract';
+import type { Repositories } from '@revbrain/contract';
 import { createDrizzleRepositories } from '../repositories/drizzle';
 import { createSupabaseRepositories } from '../repositories/supabase';
 import { db } from '../lib/db';
@@ -597,7 +597,7 @@ export default app;
 
 ```typescript
 // apps/server/src/repositories/hybrid/index.ts
-import type { Repositories } from '@geometrix/contract';
+import type { Repositories } from '@revbrain/contract';
 import type { DrizzleDB } from '../../lib/db';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createDrizzleRepositories } from '../drizzle';
@@ -712,7 +712,7 @@ describe('Repository Integration', () => {
 ```typescript
 // Old code - coupled to Drizzle
 import { db } from '../lib/db';
-import { users } from '@geometrix/database';
+import { users } from '@revbrain/database';
 import { eq } from 'drizzle-orm';
 
 app.get('/users/:id', async (c) => {
@@ -773,7 +773,7 @@ apps/
 
 ## Acceptance Criteria
 
-- [ ] All repository interfaces defined in `@geometrix/contract`
+- [ ] All repository interfaces defined in `@revbrain/contract`
 - [ ] Drizzle engine implements all interfaces
 - [ ] Supabase engine implements all interfaces
 - [ ] Middleware correctly selects engine based on environment

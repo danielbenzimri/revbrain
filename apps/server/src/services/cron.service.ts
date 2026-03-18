@@ -21,7 +21,7 @@ import {
   isNull,
   inArray,
   sql,
-} from '@geometrix/database';
+} from '@revbrain/database';
 import { getEmailService } from '../emails/index.ts';
 import { renderTrialEndingEmail, renderTrialEndedEmail } from '../emails/templates/index.ts';
 import { getEnv } from '../lib/env.ts';

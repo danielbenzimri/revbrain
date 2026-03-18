@@ -5,13 +5,13 @@
  * Requires authentication - users can only access their own org's billing.
  */
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import { db, organizations, eq } from '@geometrix/database';
+import { db, organizations, eq } from '@revbrain/database';
 import { authMiddleware } from '../../middleware/auth.ts';
 import { requireActiveSubscription } from '../../middleware/limits.ts';
 import { BillingService } from '../../services/billing.service.ts';
 import { CouponService } from '../../services/coupon.service.ts';
 import { isStripeConfigured } from '../../lib/stripe.ts';
-import { AppError, ErrorCodes } from '@geometrix/contract';
+import { AppError, ErrorCodes } from '@revbrain/contract';
 import type { AppEnv } from '../../types/index.ts';
 
 const billingRouter = new OpenAPIHono<AppEnv>();

@@ -7,7 +7,7 @@ import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { authMiddleware } from '../../../middleware/auth.ts';
 import { requireRole } from '../../../middleware/rbac.ts';
 import { adminLimiter } from '../../../middleware/rate-limit.ts';
-import { AppError, ErrorCodes } from '@geometrix/contract';
+import { AppError, ErrorCodes } from '@revbrain/contract';
 import { BillingService } from '../../../services/billing.service.ts';
 import { formatAmount } from '../../../lib/stripe.ts';
 import type { AppEnv } from '../../../types/index.ts';

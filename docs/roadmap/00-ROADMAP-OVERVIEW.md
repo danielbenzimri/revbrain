@@ -1,4 +1,4 @@
-# Geometrix Foundation Roadmap
+# RevBrain Foundation Roadmap
 
 ## Vision
 

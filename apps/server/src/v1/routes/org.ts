@@ -9,7 +9,7 @@ import { authMiddleware } from '../../middleware/auth.ts';
 import { requireRole } from '../../middleware/rbac.ts';
 import { requireUserCapacity } from '../../middleware/limits.ts';
 import { inviteLimiter, listLimiter } from '../../middleware/rate-limit.ts';
-import { AppError, ErrorCodes } from '@geometrix/contract';
+import { AppError, ErrorCodes } from '@revbrain/contract';
 import type { AppEnv } from '../../types/index.ts';
 import type { RequestContext } from '../../services/types.ts';
 import { getClientIpOrNull } from '../../lib/request-ip.ts';

@@ -14,9 +14,9 @@ import type {
   OrganizationWithPlan,
   PlanLimits,
   PlanFeatures,
-} from '@geometrix/contract';
-import { AppError, ErrorCodes } from '@geometrix/contract';
-import { db, subscriptions, eq } from '@geometrix/database';
+} from '@revbrain/contract';
+import { AppError, ErrorCodes } from '@revbrain/contract';
+import { db, subscriptions, eq } from '@revbrain/database';
 import { logger } from '../lib/logger.ts';
 
 // ============================================================================

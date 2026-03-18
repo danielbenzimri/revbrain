@@ -1,7 +1,7 @@
 /**
  * Project Overview/Dashboard Page
  *
- * Matches the original DashboardView layout from GEOMETRIX-1.
+ * Matches the original DashboardView layout from REVBRAIN-1.
  * Data is loaded from the backend via useBillingData + useBOQItems.
  * Charts use pure CSS (no Recharts) for reliable rendering.
  */

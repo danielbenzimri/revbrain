@@ -11,7 +11,7 @@
  * Default timeout: 30 seconds (configurable per route)
  */
 import { createMiddleware } from 'hono/factory';
-import { AppError, ErrorCodes } from '@geometrix/contract';
+import { AppError, ErrorCodes } from '@revbrain/contract';
 
 // Default timeout in milliseconds
 const DEFAULT_TIMEOUT_MS = 30_000; // 30 seconds

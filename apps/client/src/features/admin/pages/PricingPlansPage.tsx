@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Check, Plus, Pencil, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PlanEditorDrawer } from '../components/PlanEditorDrawer';
-import type { Plan } from '@geometrix/contract';
+import type { Plan } from '@revbrain/contract';
 import { usePlans, useCreatePlan, useUpdatePlan, useDeletePlan } from '../hooks';
 
 export default function PricingPlansPage() {

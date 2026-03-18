@@ -133,7 +133,7 @@ describe('Security Headers Middleware', () => {
       // Request with production-looking Host header
       const res = await app.request('/test', {
         headers: {
-          Host: 'api.geometrix.com', // Looks like production
+          Host: 'api.revbrain.com', // Looks like production
         },
       });
 

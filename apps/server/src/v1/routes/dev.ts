@@ -13,7 +13,7 @@ import {
   renderWelcomeEmail,
   initializeEmailJobHandler,
 } from '../../emails/index.ts';
-import { getDB, coupons, leads, users, like, sql, inArray } from '@geometrix/database';
+import { getDB, coupons, leads, users, like, sql, inArray } from '@revbrain/database';
 import { CronService } from '../../services/cron.service.ts';
 import { JobQueueService } from '../../services/job-queue.service.ts';
 import { getSupabaseAdmin } from '../../lib/supabase.ts';
@@ -67,7 +67,7 @@ if (!isProduction()) {
           orgName: body.data.orgName || 'Test Org',
           loginUrl: body.data.loginUrl || 'http://localhost:3000/login',
         });
-        subject = 'Welcome to Geometrix!';
+        subject = 'Welcome to RevBrain!';
         break;
       default:
         return c.json({ success: false, error: `Unknown template: ${body.template}` }, 400);

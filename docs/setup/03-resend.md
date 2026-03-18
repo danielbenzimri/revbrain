@@ -13,7 +13,7 @@ Resend handles transactional emails (welcome emails, billing notifications).
 
 1. Go to **API Keys** in sidebar
 2. Click **Create API Key**
-3. Name it (e.g., `geometrix-dev`)
+3. Name it (e.g., `revbrain-dev`)
 4. Select permissions: **Sending access** (Full access not needed)
 5. Copy the key (starts with `re_`)
 
@@ -30,7 +30,7 @@ npx supabase secrets set RESEND_API_KEY=re_xxx --project-ref [project-ref]
 For testing, use Resend's shared domain:
 
 ```
-EMAIL_FROM=Geometrix <onboarding@resend.dev>
+EMAIL_FROM=RevBrain <onboarding@resend.dev>
 ```
 
 This works immediately but emails go to spam and have "via resend.dev" label.
@@ -38,7 +38,7 @@ This works immediately but emails go to spam and have "via resend.dev" label.
 ### Production (Verified Domain)
 
 1. Go to **Domains** → **Add domain**
-2. Enter your domain (e.g., `geometrix.io`)
+2. Enter your domain (e.g., `revbrain.io`)
 3. Add the DNS records Resend provides:
    - SPF record
    - DKIM records (usually 2-3)
@@ -46,7 +46,7 @@ This works immediately but emails go to spam and have "via resend.dev" label.
 4. Click **Verify**
 5. Once verified, use your domain:
    ```
-   EMAIL_FROM=Geometrix <hello@geometrix.io>
+   EMAIL_FROM=RevBrain <hello@revbrain.io>
    ```
 
 ### DNS Records Example
@@ -63,7 +63,7 @@ This works immediately but emails go to spam and have "via resend.dev" label.
 ```bash
 # Backend (Supabase secrets)
 npx supabase secrets set RESEND_API_KEY=re_xxx --project-ref [project-ref]
-npx supabase secrets set EMAIL_FROM="Geometrix <hello@geometrix.io>" --project-ref [project-ref]
+npx supabase secrets set EMAIL_FROM="RevBrain <hello@revbrain.io>" --project-ref [project-ref]
 ```
 
 ## 5. Email Templates

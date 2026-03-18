@@ -17,7 +17,7 @@ Enterprise customers have different needs: security (SSO), branding (white-label
 **How SAML Works**:
 
 ```
-1. User visits app.geometrix.io
+1. User visits app.revbrain.io
 2. App detects user's domain is configured for SSO
 3. App redirects to corporate IdP (Okta, Azure AD, etc.)
 4. User authenticates with corporate credentials
@@ -277,7 +277,7 @@ export function SSOPage() {
 
 **How It Works**:
 
-1. Customer adds CNAME: `app.acme.com` → `custom.geometrix.io`
+1. Customer adds CNAME: `app.acme.com` → `custom.revbrain.io`
 2. We provision SSL cert (via Let's Encrypt/Cloudflare)
 3. App detects custom domain and applies org's branding
 
@@ -317,13 +317,13 @@ org.post('/custom-domain', async (c) => {
   return c.json({
     verificationRecord: {
       type: 'TXT',
-      name: `_geometrix-verification.${domain}`,
+      name: `_revbrain-verification.${domain}`,
       value: verificationToken,
     },
     cnameRecord: {
       type: 'CNAME',
       name: domain,
-      value: 'custom.geometrix.io',
+      value: 'custom.revbrain.io',
     },
   });
 });
@@ -344,7 +344,7 @@ org.post('/custom-domain/verify', async (c) => {
   }
 
   // Check DNS records
-  const txtRecords = await dns.resolveTxt(`_geometrix-verification.${org.customDomain}`);
+  const txtRecords = await dns.resolveTxt(`_revbrain-verification.${org.customDomain}`);
   const expectedToken = org.metadata?.domainVerificationToken;
 
   const verified = txtRecords.flat().includes(expectedToken);
@@ -374,7 +374,7 @@ org.post('/custom-domain/verify', async (c) => {
 # Handle custom domains
 server {
     listen 443 ssl;
-    server_name *.custom.geometrix.io;
+    server_name *.custom.revbrain.io;
 
     # Dynamic SSL from Cloudflare or Let's Encrypt
     ssl_certificate /etc/certs/$host/cert.pem;
@@ -445,7 +445,7 @@ interface Branding {
 const defaultBranding: Branding = {
   logoUrl: '/logo.svg',
   primaryColor: '#10b981',
-  appName: 'Geometrix',
+  appName: 'RevBrain',
 };
 
 export const BrandingContext = createContext<Branding>(defaultBranding);
@@ -457,7 +457,7 @@ export function BrandingProvider({ children }) {
     // Detect custom domain or org-specific branding
     const customDomain = window.location.hostname;
 
-    if (customDomain !== 'app.geometrix.io') {
+    if (customDomain !== 'app.revbrain.io') {
       // Fetch branding for custom domain
       api.get(`/branding?domain=${customDomain}`)
         .then(setBranding)
@@ -781,7 +781,7 @@ interface SLAMetrics {
   incidents: Incident[];
 }
 
-// Public status page: status.geometrix.io
+// Public status page: status.revbrain.io
 // Consider using: Statuspage.io, Instatus, or self-hosted
 ```
 

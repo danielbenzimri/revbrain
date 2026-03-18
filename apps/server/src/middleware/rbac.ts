@@ -1,6 +1,6 @@
 import { createMiddleware } from 'hono/factory';
-import type { UserRole } from '@geometrix/contract';
-import { AppError, ErrorCodes, getOrgTypeForRole } from '@geometrix/contract';
+import type { UserRole } from '@revbrain/contract';
+import { AppError, ErrorCodes, getOrgTypeForRole } from '@revbrain/contract';
 
 /**
  * Role-Based Access Control Middleware

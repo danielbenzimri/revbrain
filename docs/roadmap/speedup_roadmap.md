@@ -1,4 +1,4 @@
-# Geometrix Performance Speedup Roadmap
+# RevBrain Performance Speedup Roadmap
 
 **Date:** 2026-03-15
 **Benchmark:** Procure project (same architecture, 10x faster after optimizations)
@@ -8,25 +8,25 @@
 
 ## Executive Summary
 
-Geometrix has a **solid foundation** (route-level code splitting, React Query, server compression, database indexes) but is missing **critical runtime optimizations** that make Procure feel instant. The biggest gaps are: no list virtualization, no Zustand shallow equality, monolithic components blocking lazy loading, no route chunk prefetching, no ETag support, and no idle-time initialization.
+RevBrain has a **solid foundation** (route-level code splitting, React Query, server compression, database indexes) but is missing **critical runtime optimizations** that make Procure feel instant. The biggest gaps are: no list virtualization, no Zustand shallow equality, monolithic components blocking lazy loading, no route chunk prefetching, no ETag support, and no idle-time initialization.
 
 **Estimated overall improvement: 3-5x perceived speed** when all items are implemented.
 
 ---
 
-## Analysis: Procure vs Geometrix
+## Analysis: Procure vs RevBrain
 
-### What Geometrix Already Has (No Action Needed)
+### What RevBrain Already Has (No Action Needed)
 
-| Optimization                   | Geometrix                    | Procure                      | Status              |
+| Optimization                   | RevBrain                    | Procure                      | Status              |
 | ------------------------------ | ---------------------------- | ---------------------------- | ------------------- |
-| Vite vendor chunk splitting    | 7 chunks                     | 5 chunks                     | **Geometrix ahead** |
+| Vite vendor chunk splitting    | 7 chunks                     | 5 chunks                     | **RevBrain ahead** |
 | Route-level React.lazy         | 25+ pages                    | 35+ pages                    | **On par**          |
 | React Query config             | staleTime 2min, gcTime 10min | staleTime 5min, gcTime 30min | **On par**          |
 | Server gzip/brotli compression | Hono compress()              | Hono compress()              | **On par**          |
 | HTTP cache headers             | 60s + stale-while-revalidate | Tiered (15s to 24h)          | **Partial**         |
-| Database indexes               | 15+ indexes                  | 11 indexes                   | **Geometrix ahead** |
-| Connection pooling             | max: 10, idle: 20s           | max: 5, idle: 20s            | **Geometrix ahead** |
+| Database indexes               | 15+ indexes                  | 11 indexes                   | **RevBrain ahead** |
+| Connection pooling             | max: 10, idle: 20s           | max: 5, idle: 20s            | **RevBrain ahead** |
 | Rate limiting                  | 8 limiters                   | 9 limiters                   | **On par**          |
 | useMemo/useCallback            | 97/134 files                 | 85+ files                    | **On par**          |
 | Debouncing                     | 19 files                     | useDebouncedValue hook       | **On par**          |
@@ -36,9 +36,9 @@ Geometrix has a **solid foundation** (route-level code splitting, React Query, s
 | Sentry deferred                | Dynamic import               | requestIdleCallback          | **Partial**         |
 | Tailwind purging               | v4 auto-purge                | v4 content-based             | **On par**          |
 
-### What Geometrix Is Missing (Action Required)
+### What RevBrain Is Missing (Action Required)
 
-| Optimization                   | Procure                                   | Geometrix                     | Impact                                   |
+| Optimization                   | Procure                                   | RevBrain                     | Impact                                   |
 | ------------------------------ | ----------------------------------------- | ----------------------------- | ---------------------------------------- |
 | List virtualization            | Custom useVirtualization + useVirtualGrid | **None**                      | **Critical**                             |
 | Zustand useShallow             | All selectors                             | **None**                      | **High**                                 |
@@ -56,7 +56,7 @@ Geometrix has a **solid foundation** (route-level code splitting, React Query, s
 | DNS-prefetch                   | Supabase domain                           | **None**                      | **Low**                                  |
 | Dev-only Zod validation        | Skip in prod                              | Always validates              | **Low**                                  |
 | Lazy tab pattern               | Default tab eager, rest lazy              | All tabs loaded               | **Medium**                               |
-| Web Workers                    | Not in Procure either                     | **None**                      | **Medium** (Geometrix-specific: DXF, 3D) |
+| Web Workers                    | Not in Procure either                     | **None**                      | **Medium** (RevBrain-specific: DXF, 3D) |
 
 ---
 
@@ -68,7 +68,7 @@ Geometrix has a **solid foundation** (route-level code splitting, React Query, s
 
 **Impact:** High | **Effort:** 30 min | **Perceived speedup:** 20-30%
 
-**Problem:** Every component consuming Zustand re-renders on ANY state change, even unrelated fields. Geometrix has auth-store, sidebar-store, and service-config-store — all missing shallow equality.
+**Problem:** Every component consuming Zustand re-renders on ANY state change, even unrelated fields. RevBrain has auth-store, sidebar-store, and service-config-store — all missing shallow equality.
 
 **What Procure does:** Every selector uses `useShallow` from `zustand/shallow`:
 
@@ -77,10 +77,10 @@ Geometrix has a **solid foundation** (route-level code splitting, React Query, s
 const { isCollapsed } = useSidebarStore(useShallow((s) => ({ isCollapsed: s.isCollapsed })));
 ```
 
-**What Geometrix does:** Direct selectors without shallow comparison:
+**What RevBrain does:** Direct selectors without shallow comparison:
 
 ```typescript
-// Current Geometrix pattern — re-renders on ANY store change
+// Current RevBrain pattern — re-renders on ANY store change
 const isCollapsed = useSidebarStore((s) => s.isCollapsed);
 ```
 
@@ -137,7 +137,7 @@ export function invalidateAuthCache() {
 
 **Impact:** Low | **Effort:** 10 min | **Perceived speedup:** 100-300ms on first load
 
-**Problem:** Geometrix only preconnects to Google Fonts. Missing DNS prefetch for API/Supabase domains.
+**Problem:** RevBrain only preconnects to Google Fonts. Missing DNS prefetch for API/Supabase domains.
 
 **What Procure does:**
 
@@ -174,7 +174,7 @@ export function invalidateAuthCache() {
 - ResizeObserver for container measurements
 - Companion `useVirtualGrid` for 2D layouts
 
-**Target components in Geometrix:**
+**Target components in RevBrain:**
 
 1. **TaskListView** — task list in project workspace
 2. **BOQ item lists** — bill of quantities rows
@@ -336,7 +336,7 @@ app.use('*', async (c, next) => {
 
 **Impact:** Medium | **Effort:** 2 hours | **Perceived speedup:** Faster repeat visits
 
-**Problem:** Geometrix has a single 60s cache policy for all GET requests. Different data has different volatility.
+**Problem:** RevBrain has a single 60s cache policy for all GET requests. Different data has different volatility.
 
 **What Procure does:** 7 cache presets applied per-route:
 
@@ -453,7 +453,7 @@ const tabs = [
 
 **Impact:** Medium | **Effort:** 2 days | **Perceived speedup:** Unblocked UI during processing
 
-**Problem (Geometrix-specific):** Geometrix handles heavy engineering data that Procure doesn't:
+**Problem (RevBrain-specific):** RevBrain handles heavy engineering data that Procure doesn't:
 
 - DXF file parsing (CAD drawings)
 - 3D mesh generation (Three.js)
@@ -505,7 +505,7 @@ deferInit(() => {
 
 **Impact:** Medium | **Effort:** 4 hours | **Perceived speedup:** Smarter caching per data type
 
-**Problem:** Geometrix uses a single staleTime (2 min) for all queries. But different data has different freshness needs.
+**Problem:** RevBrain uses a single staleTime (2 min) for all queries. But different data has different freshness needs.
 
 **What Procure does:** Per-query staleTime tuning:
 | Data Type | staleTime | Rationale |
@@ -621,7 +621,7 @@ LOW EFFORT ─────────────────┼─────
 | **Phase 5** | Measurement & polish                                      | 1-2 days | Prevents regression       |
 
 **Total estimated effort: 8-15 days**
-**Expected result: Geometrix performance on par with Procure**
+**Expected result: RevBrain performance on par with Procure**
 
 ---
 

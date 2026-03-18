@@ -1,6 +1,6 @@
 import type { DBAdapter, QueryOptions } from '@/types/services';
 
-const STORAGE_PREFIX = 'geometrix_db_';
+const STORAGE_PREFIX = 'revbrain_db_';
 const SIMULATED_DELAY = 100;
 
 /**

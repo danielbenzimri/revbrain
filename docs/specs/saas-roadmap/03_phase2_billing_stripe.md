@@ -144,7 +144,7 @@ CREATE INDEX idx_billing_events_type ON billing_events(event_type);
 1. **Install Stripe SDK**
 
    ```bash
-   pnpm add stripe -w --filter @geometrix/server
+   pnpm add stripe -w --filter @revbrain/server
    ```
 
 2. **Stripe Client Configuration**
@@ -180,8 +180,8 @@ CREATE INDEX idx_billing_events_type ON billing_events(event_type);
    STRIPE_WEBHOOK_SECRET=whsec_xxx
 
    # App URLs for Stripe redirects
-   STRIPE_SUCCESS_URL=https://app.geometrix.io/billing/success
-   STRIPE_CANCEL_URL=https://app.geometrix.io/billing/cancel
+   STRIPE_SUCCESS_URL=https://app.revbrain.io/billing/success
+   STRIPE_CANCEL_URL=https://app.revbrain.io/billing/cancel
    ```
 
 ---
@@ -193,8 +193,8 @@ CREATE INDEX idx_billing_events_type ON billing_events(event_type);
 ```typescript
 // apps/server/src/services/billing.service.ts
 import { stripe } from '../lib/stripe';
-import { db } from '@geometrix/database';
-import { plans } from '@geometrix/database/schema';
+import { db } from '@revbrain/database';
+import { plans } from '@revbrain/database/schema';
 
 export class BillingService {
   /**
@@ -711,7 +711,7 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
   // Send receipt email
   await emailService.send({
     to: invoice.customer_email!,
-    subject: 'Payment Receipt - Geometrix',
+    subject: 'Payment Receipt - RevBrain',
     template: 'payment-receipt',
     data: {
       amount: formatAmount(invoice.amount_paid, invoice.currency),
@@ -932,7 +932,7 @@ Dashboard → Settings → Billing → Customer portal
 
 ```
 Dashboard → Developers → Webhooks
-Endpoint URL: https://api.geometrix.io/webhooks/stripe
+Endpoint URL: https://api.revbrain.io/webhooks/stripe
 Events to send:
 - checkout.session.completed
 - customer.subscription.created

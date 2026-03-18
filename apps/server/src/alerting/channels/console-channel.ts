@@ -4,7 +4,7 @@
  * Development/test channel that logs alerts to console.
  * Always configured (used as fallback when no other channels are set up).
  */
-import type { Alert, AlertChannel, AlertResult, SendAlertOptions } from '@geometrix/contract';
+import type { Alert, AlertChannel, AlertResult, SendAlertOptions } from '@revbrain/contract';
 import { logger } from '../../lib/logger.ts';
 
 const SEVERITY_ICONS: Record<string, string> = {

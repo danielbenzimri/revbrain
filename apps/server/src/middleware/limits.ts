@@ -6,7 +6,7 @@
  */
 import { createMiddleware } from 'hono/factory';
 import type { AppEnv } from '../types/index.ts';
-import { AppError, ErrorCodes } from '@geometrix/contract';
+import { AppError, ErrorCodes } from '@revbrain/contract';
 
 // ============================================================================
 // USER CAPACITY

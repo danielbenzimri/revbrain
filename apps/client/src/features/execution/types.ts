@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /**
- * Billing module types — ported from the original GEOMETRIX-1 monolith.
+ * Billing module types — ported from the original REVBRAIN-1 monolith.
  * These types are used by BillingView and ClientBillingView components.
  */
 

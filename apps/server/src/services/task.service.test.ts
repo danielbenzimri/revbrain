@@ -10,7 +10,7 @@ import type {
   TaskAuditLogRepository,
   ProjectRepository,
   TaskEntity,
-} from '@geometrix/contract';
+} from '@revbrain/contract';
 
 // Mock logger
 vi.mock('../lib/logger.ts', () => ({

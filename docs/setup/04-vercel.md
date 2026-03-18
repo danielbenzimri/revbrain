@@ -59,7 +59,7 @@ pnpm install
 ## 5. Custom Domain
 
 1. Go to **Project Settings → Domains**
-2. Add your domain (e.g., `app.geometrix.io`)
+2. Add your domain (e.g., `app.revbrain.io`)
 3. Configure DNS:
    - **CNAME**: Point to `cname.vercel-dns.com`
    - Or use Vercel nameservers for full control
@@ -67,9 +67,9 @@ pnpm install
 ### Recommended Setup
 
 ```
-app.geometrix.io    → Vercel (main app)
-www.geometrix.io    → Marketing site or redirect
-geometrix.io        → Redirect to app or marketing
+app.revbrain.io    → Vercel (main app)
+www.revbrain.io    → Marketing site or redirect
+revbrain.io        → Redirect to app or marketing
 ```
 
 ## 6. Deployment

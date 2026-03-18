@@ -69,8 +69,8 @@ const mockEmailService = vi.hoisted(() => ({
   send: vi.fn().mockResolvedValue({ success: true }),
 }));
 
-// Mock dependencies - all from @geometrix/database (including schema + drizzle utilities)
-vi.mock('@geometrix/database', () => ({
+// Mock dependencies - all from @revbrain/database (including schema + drizzle utilities)
+vi.mock('@revbrain/database', () => ({
   db: {
     query: {
       plans: {

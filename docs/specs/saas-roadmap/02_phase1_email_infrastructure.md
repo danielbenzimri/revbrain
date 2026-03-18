@@ -38,7 +38,7 @@ Email is the backbone of SaaS communication. Before implementing billing (which 
 1. **Install Dependencies**
 
    ```bash
-   pnpm add resend @react-email/components -w --filter @geometrix/server
+   pnpm add resend @react-email/components -w --filter @revbrain/server
    ```
 
 2. **Environment Configuration**
@@ -46,8 +46,8 @@ Email is the backbone of SaaS communication. Before implementing billing (which 
    ```env
    # .env
    RESEND_API_KEY=re_xxxxx
-   EMAIL_FROM=Geometrix <hello@geometrix.io>
-   EMAIL_REPLY_TO=support@geometrix.io
+   EMAIL_FROM=RevBrain <hello@revbrain.io>
+   EMAIL_REPLY_TO=support@revbrain.io
    ```
 
 3. **Email Service Interface** (Hexagonal Pattern)
@@ -90,7 +90,7 @@ Email is the backbone of SaaS communication. Before implementing billing (which 
    ```typescript
    // apps/server/src/adapters/resend-email.adapter.ts
    import { Resend } from 'resend';
-   import type { EmailPort, SendEmailOptions, EmailResult } from '@geometrix/contract';
+   import type { EmailPort, SendEmailOptions, EmailResult } from '@revbrain/contract';
 
    export class ResendEmailAdapter implements EmailPort {
      private client: Resend;
@@ -171,7 +171,7 @@ Email is the backbone of SaaS communication. Before implementing billing (which 
 1. **Install React Email**
 
    ```bash
-   pnpm add @react-email/components react-email -w --filter @geometrix/server
+   pnpm add @react-email/components react-email -w --filter @revbrain/server
    ```
 
 2. **Template Structure**
@@ -216,7 +216,7 @@ Email is the backbone of SaaS communication. Before implementing billing (which 
            <Container style={containerStyle}>
              {/* Header with Logo */}
              <Section style={headerStyle}>
-               <Img src="https://geometrix.io/logo.png" width="150" alt="Geometrix" />
+               <Img src="https://revbrain.io/logo.png" width="150" alt="RevBrain" />
              </Section>
 
              {/* Content */}
@@ -224,7 +224,7 @@ Email is the backbone of SaaS communication. Before implementing billing (which 
 
              {/* Footer */}
              <Section style={footerStyle}>
-               <Text style={footerTextStyle}>Geometrix Inc. | 123 Main St, City</Text>
+               <Text style={footerTextStyle}>RevBrain Inc. | 123 Main St, City</Text>
                <Link href="{{unsubscribe_url}}" style={linkStyle}>
                  Unsubscribe
                </Link>
@@ -264,8 +264,8 @@ Email is the backbone of SaaS communication. Before implementing billing (which 
 
    export function Welcome({ userName, orgName, loginUrl }: WelcomeEmailProps) {
      return (
-       <Layout previewText={`Welcome to Geometrix, ${userName}!`}>
-         <Text style={headingStyle}>Welcome to Geometrix! 🎉</Text>
+       <Layout previewText={`Welcome to RevBrain, ${userName}!`}>
+         <Text style={headingStyle}>Welcome to RevBrain! 🎉</Text>
 
          <Text style={textStyle}>Hi {userName},</Text>
 
@@ -284,7 +284,7 @@ Email is the backbone of SaaS communication. Before implementing billing (which 
            If you have any questions, just reply to this email - we're here to help.
          </Text>
 
-         <Text style={signatureStyle}>— The Geometrix Team</Text>
+         <Text style={signatureStyle}>— The RevBrain Team</Text>
        </Layout>
      );
    }
@@ -345,7 +345,7 @@ Email is the backbone of SaaS communication. Before implementing billing (which 
 
    export function PasswordReset({ resetUrl, expiresIn }: PasswordResetProps) {
      return (
-       <Layout previewText="Reset your Geometrix password">
+       <Layout previewText="Reset your RevBrain password">
          <Text style={headingStyle}>Reset your password</Text>
 
          <Text style={textStyle}>
@@ -480,7 +480,7 @@ Email is the backbone of SaaS communication. Before implementing billing (which 
    async function onUserVerified(user: User, org: Organization) {
      await emailService.send({
        to: user.email,
-       subject: 'Welcome to Geometrix!',
+       subject: 'Welcome to RevBrain!',
        template: 'welcome',
        data: {
          userName: user.fullName,
@@ -581,18 +581,18 @@ Email is the backbone of SaaS communication. Before implementing billing (which 
 
    Type: TXT
    Name: _dmarc
-   Value: v=DMARC1; p=none; rua=mailto:dmarc@geometrix.io
+   Value: v=DMARC1; p=none; rua=mailto:dmarc@revbrain.io
    ```
 
 3. **Environment Variables**
 
    ```env
    # Production
-   EMAIL_FROM=Geometrix <hello@geometrix.io>
-   EMAIL_REPLY_TO=support@geometrix.io
+   EMAIL_FROM=RevBrain <hello@revbrain.io>
+   EMAIL_REPLY_TO=support@revbrain.io
 
    # Development (use Resend's test domain)
-   EMAIL_FROM=Geometrix <onboarding@resend.dev>
+   EMAIL_FROM=RevBrain <onboarding@resend.dev>
    ```
 
 ---

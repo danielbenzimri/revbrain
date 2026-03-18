@@ -15,7 +15,7 @@ export function renderWelcomeEmail(data: WelcomeEmailData): string {
 
   const content = `
     <h1 style="margin:0 0 8px;font-size:24px;font-weight:700;color:#0f172a;">
-      Welcome to Geometrix!
+      Welcome to RevBrain!
     </h1>
     <p style="margin:0 0 16px;font-size:15px;color:#64748b;line-height:1.5;">
       Hi ${escapeHtml(userName)},
@@ -34,8 +34,8 @@ export function renderWelcomeEmail(data: WelcomeEmailData): string {
     <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;" />
 
     <p style="margin:0;font-size:12px;color:#94a3b8;line-height:1.5;">
-      You received this email because an account was created for you on Geometrix.
+      You received this email because an account was created for you on RevBrain.
     </p>`;
 
-  return wrapInLayout(content, `Welcome to Geometrix, ${userName}!`);
+  return wrapInLayout(content, `Welcome to RevBrain, ${userName}!`);
 }

@@ -7,7 +7,7 @@
 
 import { getSupabaseAdmin } from '../lib/supabase.ts';
 import { logger } from '../lib/logger.ts';
-import { AppError, ErrorCodes } from '@geometrix/contract';
+import { AppError, ErrorCodes } from '@revbrain/contract';
 
 /** Decode base64 string to Uint8Array using web-standard APIs (works in Node.js + Deno) */
 function base64ToUint8Array(base64: string): Uint8Array {

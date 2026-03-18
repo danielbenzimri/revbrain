@@ -1,7 +1,7 @@
 Frontend Architectural Specification
-Project Geometrix: apps/client
+Project RevBrain: apps/client
 Field Value
-Project Geometrix Frontend
+Project RevBrain Frontend
 Version FINAL (2.0)
 Status APPROVED FOR BUILD
 Framework React 19 + Vite
@@ -180,7 +180,7 @@ TypeScript
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { client } from '@/lib/api';
 import { projectKeys } from '../api/keys';
-import type { Project, CreateProjectInput } from '@geometrix/contract';
+import type { Project, CreateProjectInput } from '@revbrain/contract';
 
 export const useCreateProject = () => {
 const queryClient = useQueryClient();
@@ -253,7 +253,7 @@ TypeScript
 // features/auth/store/auth.slice.ts
 import { StateCreator } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { User } from '@geometrix/contract';
+import type { User } from '@revbrain/contract';
 
 export interface AuthSlice {
 user: User | null;
@@ -279,7 +279,7 @@ AuthSlice,
 
 }),
 {
-name: 'geometrix-auth',
+name: 'revbrain-auth',
 partialize: (state) => ({ token: state.token }), // Only persist token
 }
 );
@@ -300,7 +300,7 @@ devtools(
 ...createUISlice(...a),
 ...createAuthSlice(...a),
 }),
-{ name: 'GeometrixStore' }
+{ name: 'RevBrainStore' }
 )
 );
 
@@ -312,7 +312,7 @@ TypeScript
 
 // lib/api.ts
 import { hc } from 'hono/client';
-import type { AppType } from '@geometrix/server';
+import type { AppType } from '@revbrain/server';
 import { useStore } from '@/stores';
 
 const getAuthHeader = () => {

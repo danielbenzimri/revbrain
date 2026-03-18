@@ -2,7 +2,7 @@ import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { authMiddleware } from '../../../middleware/auth.ts';
 import { requireRole } from '../../../middleware/rbac.ts';
 import { adminLimiter } from '../../../middleware/rate-limit.ts';
-import { AppError, ErrorCodes, onboardOrganizationSchema } from '@geometrix/contract';
+import { AppError, ErrorCodes, onboardOrganizationSchema } from '@revbrain/contract';
 import type { AppEnv } from '../../../types/index.ts';
 import type { RequestContext } from '../../../services/types.ts';
 import { getClientIpOrNull } from '../../../lib/request-ip.ts';

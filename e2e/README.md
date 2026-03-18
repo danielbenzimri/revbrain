@@ -1,6 +1,6 @@
 # E2E Tests
 
-End-to-end tests for Geometrix using Playwright.
+End-to-end tests for RevBrain using Playwright.
 
 ## Prerequisites
 
@@ -44,7 +44,7 @@ export TEST_USER_PASSWORD=your-user-password
 
 **Default credentials** (if environment variables not set):
 
-- Admin: `admin@geometrix.io` / `test123456`
+- Admin: `admin@revbrain.io` / `test123456`
 - User: `user@test.com` / `test123456`
 
 ## Running Tests

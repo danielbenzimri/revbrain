@@ -32,9 +32,9 @@ describe('LocalAuthAdapter', () => {
 
   describe('login', () => {
     it('should login system_admin by email', async () => {
-      const result = await adapter.login('admin@geometrix.io');
+      const result = await adapter.login('admin@revbrain.io');
       expect(result.user.role).toBe('system_admin');
-      expect(result.user.email).toBe('admin@geometrix.io');
+      expect(result.user.email).toBe('admin@revbrain.io');
       expect(result.session.accessToken).toContain('mock_token_');
       expect(result.session.expiresAt).toBeGreaterThan(Date.now());
     });
@@ -55,12 +55,12 @@ describe('LocalAuthAdapter', () => {
     });
 
     it('should persist session to localStorage', async () => {
-      await adapter.login('admin@geometrix.io');
-      expect(localStorage.setItem).toHaveBeenCalledWith('geometrix_session', expect.any(String));
+      await adapter.login('admin@revbrain.io');
+      expect(localStorage.setItem).toHaveBeenCalledWith('revbrain_session', expect.any(String));
     });
 
     it('should generate a 24-hour session', async () => {
-      const result = await adapter.login('admin@geometrix.io');
+      const result = await adapter.login('admin@revbrain.io');
       const expectedExpiry = Date.now() + 24 * 60 * 60 * 1000;
       // Allow 5 second tolerance for test execution time
       expect(result.session.expiresAt).toBeGreaterThan(expectedExpiry - 5000);
@@ -70,15 +70,15 @@ describe('LocalAuthAdapter', () => {
 
   describe('logout', () => {
     it('should clear session from localStorage', async () => {
-      await adapter.login('admin@geometrix.io');
+      await adapter.login('admin@revbrain.io');
       await adapter.logout();
-      expect(localStorage.removeItem).toHaveBeenCalledWith('geometrix_session');
+      expect(localStorage.removeItem).toHaveBeenCalledWith('revbrain_session');
     });
   });
 
   describe('getSession', () => {
     it('should return session after login', async () => {
-      await adapter.login('admin@geometrix.io');
+      await adapter.login('admin@revbrain.io');
       const session = await adapter.getSession();
       expect(session).not.toBeNull();
       expect(session?.accessToken).toBeDefined();
@@ -92,7 +92,7 @@ describe('LocalAuthAdapter', () => {
 
   describe('refreshSession', () => {
     it('should refresh and extend session expiry', async () => {
-      const loginResult = await adapter.login('admin@geometrix.io');
+      const loginResult = await adapter.login('admin@revbrain.io');
       const originalExpiry = loginResult.session.expiresAt;
 
       // Wait a bit then refresh
@@ -109,10 +109,10 @@ describe('LocalAuthAdapter', () => {
 
   describe('getCurrentUser', () => {
     it('should return user after login', async () => {
-      await adapter.login('admin@geometrix.io');
+      await adapter.login('admin@revbrain.io');
       const user = await adapter.getCurrentUser();
       expect(user).not.toBeNull();
-      expect(user?.email).toBe('admin@geometrix.io');
+      expect(user?.email).toBe('admin@revbrain.io');
     });
 
     it('should return null when not logged in', async () => {
@@ -123,7 +123,7 @@ describe('LocalAuthAdapter', () => {
 
   describe('updateUser', () => {
     it('should update user fields', async () => {
-      await adapter.login('admin@geometrix.io');
+      await adapter.login('admin@revbrain.io');
       const updated = await adapter.updateUser({ name: 'Updated Name' });
       expect(updated.name).toBe('Updated Name');
     });
@@ -138,7 +138,7 @@ describe('LocalAuthAdapter', () => {
       const callback = vi.fn();
       adapter.onAuthStateChange(callback);
 
-      await adapter.login('admin@geometrix.io');
+      await adapter.login('admin@revbrain.io');
       expect(callback).toHaveBeenCalledWith('SIGNED_IN', expect.any(Object));
     });
 
@@ -146,7 +146,7 @@ describe('LocalAuthAdapter', () => {
       const callback = vi.fn();
       adapter.onAuthStateChange(callback);
 
-      await adapter.login('admin@geometrix.io');
+      await adapter.login('admin@revbrain.io');
       await adapter.logout();
       expect(callback).toHaveBeenCalledWith('SIGNED_OUT', null);
     });
@@ -156,7 +156,7 @@ describe('LocalAuthAdapter', () => {
       const unsubscribe = adapter.onAuthStateChange(callback);
 
       unsubscribe();
-      await adapter.login('admin@geometrix.io');
+      await adapter.login('admin@revbrain.io');
       // Should NOT be called after unsubscribe
       expect(callback).not.toHaveBeenCalled();
     });

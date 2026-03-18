@@ -1,4 +1,4 @@
-// Auth types for Geometrix
+// Auth types for RevBrain
 
 // User Groups
 export type UserGroup = 'contractor' | 'client';
