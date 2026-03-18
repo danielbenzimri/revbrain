@@ -1,6 +1,14 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
 import { type ContentfulStatusCode } from 'hono/utils/http-status';
 
+// Mock mode safety guard — must run before any middleware
+import { validateMockModeConfig, isMockMode } from './lib/mock-mode-guard.ts';
+validateMockModeConfig(process.env);
+if (isMockMode(process.env)) {
+  console.log('[MOCK MODE] Running with in-memory data. No database connected.');
+  console.log('[MOCK MODE] Auth: mock tokens (no JWT verification)');
+}
+
 import { cors } from 'hono/cors';
 import { compress } from 'hono/compress';
 import { AppError } from '@revbrain/contract';
