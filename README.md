@@ -35,32 +35,43 @@ revbrain/
 └── docs/                # Project documentation
 ```
 
-## Quick Start
+## Quick Start (Mock Mode)
 
-### Prerequisites
-
-- Node.js >= 18
-- pnpm >= 8
-- Supabase CLI
-- Docker (for local Supabase)
-
-### Setup
+Default local development runs with **in-memory mock data** — no database or external services needed.
 
 ```bash
 pnpm install
-cp .env.example .env
-supabase start
-pnpm db:generate
-pnpm db:migrate
-pnpm dev
+pnpm dev        # Starts in mock mode automatically
 ```
+
+Open http://localhost:5173 — auto-logged in as org_owner with 4 sample projects.
+
+### Switch Roles
+
+Use the role switcher on the login page (dev mode) to test as: system_admin, org_owner, admin, operator, reviewer.
+
+### Reset Mock Data
+
+```bash
+curl -X POST http://localhost:3000/v1/dev/reset-mock-data
+```
+
+### Real Mode (requires Supabase)
+
+```bash
+cp .env.example .env
+# Fill in DATABASE_URL, SUPABASE_URL, etc.
+pnpm dev:real
+```
+
+> **Hot reload note**: tsx watch resets mock data when the mock module is invalidated. Changes to unrelated files may preserve in-memory state. Use the reset endpoint for deterministic resets.
 
 ### Testing
 
 ```bash
-pnpm test                    # All tests
-pnpm --filter @revbrain/server test   # Server only (364 tests)
-pnpm --filter client test             # Client only (159 tests)
+pnpm test                              # All tests
+pnpm --filter @revbrain/server test    # Server tests
+pnpm --filter client test              # Client tests
 ```
 
 ### Linting
