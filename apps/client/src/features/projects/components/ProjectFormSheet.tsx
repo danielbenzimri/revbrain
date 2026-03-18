@@ -10,18 +10,7 @@
  */
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Loader2,
-  X,
-  Trash2,
-  AlertTriangle,
-  Calendar,
-  Building2,
-  User,
-  FileText,
-  MapPin,
-  Percent,
-} from 'lucide-react';
+import { Loader2, X, Trash2, AlertTriangle, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import type {
@@ -41,19 +30,9 @@ interface ProjectFormSheetProps {
 const DEFAULT_PROJECT: CreateProjectInput = {
   name: '',
   description: null,
-  location: null,
   notes: null,
-  contractNumber: null,
-  contractDate: null,
   startDate: null,
   endDate: null,
-  contractorName: null,
-  contractorId: null,
-  clientName: null,
-  clientId: null,
-  contractValueCents: 0,
-  globalDiscountPercent: 0,
-  chapterDiscounts: {},
 };
 
 export function ProjectFormSheet({
@@ -77,38 +56,15 @@ export function ProjectFormSheet({
 
   const deleteConfirmRef = useRef<HTMLDivElement>(null);
 
-  // Helper to select all text on focus
-  const handleInputFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const target = e.target;
-    if (target instanceof HTMLInputElement) {
-      target.select();
-      setTimeout(() => target.select(), 0);
-    }
-  };
-
-  const handleInputMouseUp = (e: React.MouseEvent<HTMLInputElement>) => {
-    e.preventDefault();
-  };
-
   useEffect(() => {
     if (open) {
       if (project) {
         setFormData({
           name: project.name,
           description: project.description,
-          location: project.location,
           notes: project.notes,
-          contractNumber: project.contractNumber,
-          contractDate: project.contractDate?.split('T')[0] || null,
           startDate: project.startDate?.split('T')[0] || null,
           endDate: project.endDate?.split('T')[0] || null,
-          contractorName: project.contractorName,
-          contractorId: project.contractorId,
-          clientName: project.clientName,
-          clientId: project.clientId,
-          contractValueCents: project.contractValueCents,
-          globalDiscountPercent: project.globalDiscountPercent,
-          chapterDiscounts: project.chapterDiscounts || {},
         });
         setStatus(project.status);
       } else {
@@ -140,21 +96,10 @@ export function ProjectFormSheet({
       errors.name = t('projects.validation.nameMinLength');
     }
 
-    if (
-      formData.globalDiscountPercent !== undefined &&
-      (formData.globalDiscountPercent < 0 || formData.globalDiscountPercent > 100)
-    ) {
-      errors.globalDiscount = t('projects.validation.invalidDiscount');
-    }
-
     if (formData.startDate && formData.endDate) {
       if (new Date(formData.endDate) < new Date(formData.startDate)) {
         errors.endDate = t('projects.validation.endDateBeforeStart');
       }
-    }
-
-    if (formData.contractValueCents !== undefined && formData.contractValueCents < 0) {
-      errors.contractValue = t('projects.validation.contractValuePositive');
     }
 
     setValidationErrors(errors);
@@ -175,7 +120,6 @@ export function ProjectFormSheet({
       if (onSave) {
         const apiData: CreateProjectInput | UpdateProjectInput = {
           ...formData,
-          contractDate: formData.contractDate || null,
           startDate: formData.startDate || null,
           endDate: formData.endDate || null,
         };
@@ -310,21 +254,6 @@ export function ProjectFormSheet({
                   />
                 </div>
 
-                {/* Location */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                    <MapPin className="h-4 w-4 inline me-1" />
-                    {t('projects.form.location')}
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.location || ''}
-                    onChange={(e) => updateField('location', e.target.value || null)}
-                    placeholder={t('projects.form.locationPlaceholder')}
-                    className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm"
-                  />
-                </div>
-
                 {/* Notes */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">
@@ -341,47 +270,19 @@ export function ProjectFormSheet({
               </div>
             </section>
 
-            {/* Section 2: Contract Details */}
+            {/* Section 2: Dates */}
             <section className="space-y-4">
               <div className="flex items-center gap-2">
                 <div className="h-7 w-7 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm font-bold">
                   2
                 </div>
                 <h3 className="font-semibold text-slate-900">
-                  <FileText className="h-4 w-4 inline me-1" />
-                  {t('projects.form.contractDetails')}
+                  <Calendar className="h-4 w-4 inline me-1" />
+                  {t('projects.form.dates', 'Dates')}
                 </h3>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Contract Number */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                    {t('projects.form.contractNumber')}
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.contractNumber || ''}
-                    onChange={(e) => updateField('contractNumber', e.target.value || null)}
-                    placeholder={t('projects.form.contractNumberPlaceholder')}
-                    className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm"
-                  />
-                </div>
-
-                {/* Contract Date */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                    <Calendar className="h-4 w-4 inline me-1" />
-                    {t('projects.form.contractDate')}
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.contractDate || ''}
-                    onChange={(e) => updateField('contractDate', e.target.value || null)}
-                    className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm"
-                  />
-                </div>
-
                 {/* Start Date */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">
@@ -417,157 +318,12 @@ export function ProjectFormSheet({
               </div>
             </section>
 
-            {/* Section 3: Contract Parties */}
-            <section className="space-y-4">
-              <div className="flex items-center gap-2">
-                <div className="h-7 w-7 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm font-bold">
-                  3
-                </div>
-                <h3 className="font-semibold text-slate-900">{t('projects.form.parties')}</h3>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Contractor Name */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                    <Building2 className="h-4 w-4 inline me-1" />
-                    {t('projects.form.contractorName')}
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.contractorName || ''}
-                    onChange={(e) => updateField('contractorName', e.target.value || null)}
-                    placeholder={t('projects.form.contractorNamePlaceholder')}
-                    className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm"
-                  />
-                </div>
-
-                {/* Contractor ID */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                    {t('projects.form.contractorId')}
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.contractorId || ''}
-                    onChange={(e) => updateField('contractorId', e.target.value || null)}
-                    placeholder={t('projects.form.contractorIdPlaceholder')}
-                    className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm"
-                  />
-                </div>
-
-                {/* Client Name */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                    <User className="h-4 w-4 inline me-1" />
-                    {t('projects.form.clientName')}
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.clientName || ''}
-                    onChange={(e) => updateField('clientName', e.target.value || null)}
-                    placeholder={t('projects.form.clientNamePlaceholder')}
-                    className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm"
-                  />
-                </div>
-
-                {/* Client ID */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                    {t('projects.form.clientId')}
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.clientId || ''}
-                    onChange={(e) => updateField('clientId', e.target.value || null)}
-                    placeholder={t('projects.form.clientIdPlaceholder')}
-                    className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm"
-                  />
-                </div>
-              </div>
-            </section>
-
-            {/* Section 4: Financial Details */}
-            <section className="space-y-4">
-              <div className="flex items-center gap-2">
-                <div className="h-7 w-7 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm font-bold">
-                  4
-                </div>
-                <h3 className="font-semibold text-slate-900">{t('projects.form.financials')}</h3>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Contract Value */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                    {t('projects.form.contractValue')}
-                  </label>
-                  <div className="relative">
-                    <span className="absolute start-3 top-1/2 -translate-y-1/2 text-slate-400">
-                      ₪
-                    </span>
-                    <input
-                      type="number"
-                      value={(formData.contractValueCents || 0) / 100}
-                      onChange={(e) =>
-                        updateField(
-                          'contractValueCents',
-                          Math.round((parseFloat(e.target.value) || 0) * 100)
-                        )
-                      }
-                      onFocus={handleInputFocus}
-                      onMouseUp={handleInputMouseUp}
-                      min={0}
-                      step="0.01"
-                      placeholder={t('projects.form.contractValuePlaceholder')}
-                      className={`w-full ps-8 pe-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm ${
-                        validationErrors.contractValue ? 'border-red-300' : 'border-slate-300'
-                      }`}
-                    />
-                  </div>
-                  {validationErrors.contractValue && (
-                    <p className="text-xs text-red-500 mt-1">{validationErrors.contractValue}</p>
-                  )}
-                </div>
-
-                {/* Global Discount */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                    <Percent className="h-4 w-4 inline me-1" />
-                    {t('projects.form.globalDiscount')}
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      value={formData.globalDiscountPercent || 0}
-                      onChange={(e) =>
-                        updateField('globalDiscountPercent', parseFloat(e.target.value) || 0)
-                      }
-                      onFocus={handleInputFocus}
-                      onMouseUp={handleInputMouseUp}
-                      min={0}
-                      max={100}
-                      step="0.01"
-                      placeholder={t('projects.form.globalDiscountPlaceholder')}
-                      className={`w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm ${
-                        validationErrors.globalDiscount ? 'border-red-300' : 'border-slate-300'
-                      }`}
-                    />
-                    <Percent className="absolute end-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                  </div>
-                  {validationErrors.globalDiscount && (
-                    <p className="text-xs text-red-500 mt-1">{validationErrors.globalDiscount}</p>
-                  )}
-                </div>
-              </div>
-            </section>
-
-            {/* Section 5: Status (Edit mode only) */}
+            {/* Section 3: Status (Edit mode only) */}
             {isEditMode && (
               <section className="space-y-4">
                 <div className="flex items-center gap-2">
                   <div className="h-7 w-7 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm font-bold">
-                    5
+                    3
                   </div>
                   <h3 className="font-semibold text-slate-900">
                     {t('projects.form.statusSection')}

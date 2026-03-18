@@ -12,15 +12,6 @@ import type {
 import { usePrefetchProject, usePrefetchProjectWorkspace } from '@/hooks/use-prefetch';
 import { ProjectFormSheet } from '../components/ProjectFormSheet';
 
-function formatCurrency(cents: number): string {
-  return new Intl.NumberFormat('he-IL', {
-    style: 'currency',
-    currency: 'ILS',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(cents / 100);
-}
-
 function getStatusColor(status: string): string {
   switch (status) {
     case 'active':
@@ -58,10 +49,7 @@ const ProjectRow = memo(function ProjectRow({
           {t(`projects.status.${project.status}`)}
         </span>
       </td>
-      <td className="p-4 text-sm text-slate-600">{project.contractorName || '-'}</td>
-      <td className="p-4 text-end font-mono text-sm">
-        {formatCurrency(project.contractValueCents)}
-      </td>
+      <td className="p-4 text-sm text-slate-600">{project.description || '-'}</td>
     </tr>
   );
 });
@@ -192,10 +180,7 @@ export default function ProjectsPage() {
                     {t('projects.colStatus')}
                   </th>
                   <th className="text-start p-4 text-sm font-medium text-slate-500">
-                    {t('projects.colContractor')}
-                  </th>
-                  <th className="text-end p-4 text-sm font-medium text-slate-500">
-                    {t('projects.form.contractValue')}
+                    {t('projects.form.description', 'Description')}
                   </th>
                 </tr>
               </thead>

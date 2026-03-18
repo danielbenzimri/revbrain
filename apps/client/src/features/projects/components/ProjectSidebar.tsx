@@ -6,11 +6,9 @@
  */
 import {
   LayoutDashboard,
-  Receipt,
   FileText,
   Settings,
   Pyramid,
-  ClipboardCheck,
   X,
   ArrowRight,
   FolderKanban,
@@ -35,15 +33,7 @@ interface ProjectSidebarProps {
   onClose?: () => void;
 }
 
-type MainView =
-  | 'dashboard'
-  | 'tasks'
-  | 'execution'
-  | 'billing'
-  | 'logs'
-  | 'docs'
-  | 'users'
-  | 'settings';
+type MainView = 'dashboard' | 'docs' | 'users' | 'settings';
 
 export function ProjectSidebar({
   project,
@@ -77,10 +67,6 @@ export function ProjectSidebar({
   // Map routes to view IDs
   const pathToView: Record<string, MainView> = {
     '': 'dashboard',
-    tasks: 'tasks',
-    boq: 'execution',
-    execution: 'billing',
-    worklogs: 'logs',
     docs: 'docs',
     users: 'users',
     settings: 'settings',
@@ -100,17 +86,6 @@ export function ProjectSidebar({
       path: '',
       badge: 0,
     },
-    { id: 'tasks', labelKey: 'projects.tabs.tasks', icon: ClipboardCheck, path: 'tasks', badge: 0 },
-    {
-      id: 'billing',
-      labelKey: 'projects.tabs.execution',
-      icon: Receipt,
-      path: 'execution',
-      badge: 0,
-    },
-    // TODO: Work Logs hidden for MVP - may restore in future
-    // TODO: Payments (דרישות לתשלום) hidden for MVP - financial module not needed
-    // { id: 'logs', labelKey: 'projects.tabs.worklogs', icon: BookOpen, path: 'worklogs', badge: 0 },
     { id: 'docs', labelKey: 'projects.tabs.docs', icon: FileText, path: 'docs', badge: 0 },
     {
       id: 'users',

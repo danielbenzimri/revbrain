@@ -8,6 +8,7 @@ import {
   integer,
   bigint,
   jsonb,
+  decimal,
 } from 'drizzle-orm/pg-core';
 
 // ============================================================================
@@ -201,33 +202,15 @@ export const projects = pgTable('projects', {
     .references(() => organizations.id, { onDelete: 'cascade' })
     .notNull(),
 
-  // Contract metadata
-  contractNumber: varchar('contract_number', { length: 50 }),
-  contractDate: timestamp('contract_date', { mode: 'date' }),
+  // Dates
   startDate: timestamp('start_date', { mode: 'date' }),
   endDate: timestamp('end_date', { mode: 'date' }),
-
-  // Contract parties
-  contractorName: varchar('contractor_name', { length: 255 }),
-  contractorId: varchar('contractor_id', { length: 50 }), // Business ID / Tax ID
-  clientName: varchar('client_name', { length: 255 }),
-  clientId: varchar('client_id', { length: 50 }), // Business ID / Tax ID
-
-  // Contract value (in cents)
-  contractValueCents: bigint('contract_value_cents', { mode: 'number' }).default(0),
-
-  // Discount configuration
-  globalDiscountPercent: decimal('global_discount_percent', { precision: 5, scale: 2 }).default(
-    '0'
-  ),
-  chapterDiscounts: jsonb('chapter_discounts').$type<Record<string, number>>().default({}),
 
   // Status workflow
   status: varchar('status', { length: 20 }).default('active'),
   // Statuses: draft, active, on_hold, completed, cancelled
 
   // Additional metadata
-  location: text('location'),
   notes: text('notes'),
   metadata: jsonb('metadata').default({}),
 
@@ -240,6 +223,31 @@ export const projects = pgTable('projects', {
 
 export type Project = typeof projects.$inferSelect;
 export type NewProject = typeof projects.$inferInsert;
+
+// ============================================================================
+// PROJECT MEMBERS TABLE (Project-scoped role assignments)
+// ============================================================================
+/**
+ * Project Members
+ *
+ * Maps users to projects with a project-scoped role.
+ * Used for operator and reviewer roles that are assigned per-project.
+ * org_owner and admin roles have org-wide access and don't need entries here.
+ */
+export const projectMembers = pgTable('project_members', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  projectId: uuid('project_id')
+    .references(() => projects.id, { onDelete: 'cascade' })
+    .notNull(),
+  userId: uuid('user_id')
+    .references(() => users.id, { onDelete: 'cascade' })
+    .notNull(),
+  role: varchar('role', { length: 20 }).notNull(), // 'operator' | 'reviewer'
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+export type ProjectMember = typeof projectMembers.$inferSelect;
+export type NewProjectMember = typeof projectMembers.$inferInsert;
 
 // ============================================================================
 // SUBSCRIPTIONS TABLE
@@ -506,10 +514,6 @@ export const projectsRelations = relations(projects, ({ one, many }) => ({
     references: [organizations.id],
   }),
   // Domain table relations
-  boqItems: many(boqItems),
-  bills: many(bills),
-  workLogs: many(workLogs),
-  tasks: many(tasks),
   chatGroups: many(chatGroups),
   projectFiles: many(projectFiles),
 }));
@@ -802,326 +806,6 @@ export const jobQueueRelations = relations(jobQueue, ({ one }) => ({
 }));
 
 // ============================================================================
-// DOMAIN TABLES (Legacy Migration)
-// ============================================================================
-
-import { decimal } from 'drizzle-orm/pg-core';
-
-// ============================================================================
-// BOQ ITEMS TABLE (Bill of Quantities)
-// ============================================================================
-export const boqItems = pgTable('boq_items', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  organizationId: uuid('organization_id')
-    .references(() => organizations.id, { onDelete: 'cascade' })
-    .notNull(),
-  projectId: uuid('project_id')
-    .references(() => projects.id, { onDelete: 'cascade' })
-    .notNull(),
-  parentId: uuid('parent_id').references((): any => boqItems.id, { onDelete: 'cascade' }),
-  code: varchar('code', { length: 50 }).notNull(),
-  description: text('description').notNull(),
-  unit: varchar('unit', { length: 20 }),
-  contractQuantity: decimal('contract_quantity', { precision: 15, scale: 4 }),
-  unitPriceCents: bigint('unit_price_cents', { mode: 'number' }),
-  level: integer('level').notNull().default(0),
-  sortOrder: integer('sort_order').notNull().default(0),
-  isActive: boolean('is_active').notNull().default(true),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
-});
-
-export type BOQItem = typeof boqItems.$inferSelect;
-export type NewBOQItem = typeof boqItems.$inferInsert;
-
-// ============================================================================
-// BILLS TABLE (Contractor Submissions)
-// ============================================================================
-export const bills = pgTable('bills', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  organizationId: uuid('organization_id')
-    .references(() => organizations.id, { onDelete: 'cascade' })
-    .notNull(),
-  projectId: uuid('project_id')
-    .references(() => projects.id, { onDelete: 'cascade' })
-    .notNull(),
-  billNumber: integer('bill_number').notNull(),
-  periodStart: timestamp('period_start', { mode: 'date' }),
-  periodEnd: timestamp('period_end', { mode: 'date' }),
-  status: varchar('status', { length: 20 }).notNull().default('draft'),
-  // Status: draft, submitted, under_review, approved, rejected
-
-  // Contractor signature
-  contractorSignatureUrl: text('contractor_signature_url'),
-  contractorSignedAt: timestamp('contractor_signed_at', { withTimezone: true }),
-  contractorSignedBy: uuid('contractor_signed_by').references(() => users.id),
-
-  // Inspector signature
-  inspectorSignatureUrl: text('inspector_signature_url'),
-  inspectorSignedAt: timestamp('inspector_signed_at', { withTimezone: true }),
-  inspectorSignedBy: uuid('inspector_signed_by').references(() => users.id),
-
-  // Amounts
-  subtotalCents: bigint('subtotal_cents', { mode: 'number' }).notNull().default(0),
-  discountCents: bigint('discount_cents', { mode: 'number' }).notNull().default(0),
-  totalCents: bigint('total_cents', { mode: 'number' }).notNull().default(0),
-
-  // Metadata
-  remarks: text('remarks'),
-  rejectionReason: text('rejection_reason'),
-  createdBy: uuid('created_by')
-    .references(() => users.id)
-    .notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
-  submittedAt: timestamp('submitted_at', { withTimezone: true }),
-  approvedAt: timestamp('approved_at', { withTimezone: true }),
-  rejectedAt: timestamp('rejected_at', { withTimezone: true }),
-});
-
-export type Bill = typeof bills.$inferSelect;
-export type NewBill = typeof bills.$inferInsert;
-
-// ============================================================================
-// BILL ITEMS TABLE
-// ============================================================================
-export const billItems = pgTable('bill_items', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  billId: uuid('bill_id')
-    .references(() => bills.id, { onDelete: 'cascade' })
-    .notNull(),
-  boqItemId: uuid('boq_item_id').references(() => boqItems.id, { onDelete: 'set null' }),
-  boqCode: varchar('boq_code', { length: 50 }).notNull(),
-  description: text('description').notNull(),
-  unit: varchar('unit', { length: 20 }),
-
-  // Quantities
-  previousQuantity: decimal('previous_quantity', { precision: 15, scale: 4 })
-    .notNull()
-    .default('0'),
-  currentQuantity: decimal('current_quantity', { precision: 15, scale: 4 }).notNull().default('0'),
-  cumulativeQuantity: decimal('cumulative_quantity', { precision: 15, scale: 4 })
-    .notNull()
-    .default('0'),
-  contractQuantity: decimal('contract_quantity', { precision: 15, scale: 4 }),
-
-  // Pricing
-  unitPriceCents: bigint('unit_price_cents', { mode: 'number' }).notNull().default(0),
-  discountPercent: decimal('discount_percent', { precision: 5, scale: 2 }).notNull().default('0'),
-  amountCents: bigint('amount_cents', { mode: 'number' }).notNull().default(0),
-
-  // Flags
-  isException: boolean('is_exception').notNull().default(false),
-  exceptionReason: text('exception_reason'),
-  remarks: text('remarks'),
-
-  sortOrder: integer('sort_order').notNull().default(0),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
-});
-
-export type BillItem = typeof billItems.$inferSelect;
-export type NewBillItem = typeof billItems.$inferInsert;
-
-// ============================================================================
-// MEASUREMENTS TABLE
-// ============================================================================
-export const measurements = pgTable('measurements', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  billItemId: uuid('bill_item_id')
-    .references(() => billItems.id, { onDelete: 'cascade' })
-    .notNull(),
-  location: text('location'),
-  quantity: decimal('quantity', { precision: 15, scale: 4 }).notNull(),
-  measuredAt: timestamp('measured_at', { withTimezone: true }).defaultNow().notNull(),
-  measuredBy: uuid('measured_by')
-    .references(() => users.id)
-    .notNull(),
-  approvalSignatureUrl: text('approval_signature_url'),
-  approvedBy: uuid('approved_by').references(() => users.id),
-  approvedAt: timestamp('approved_at', { withTimezone: true }),
-  remarks: text('remarks'),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-});
-
-export type Measurement = typeof measurements.$inferSelect;
-export type NewMeasurement = typeof measurements.$inferInsert;
-
-// ============================================================================
-// WORK LOGS TABLE
-// ============================================================================
-export const workLogs = pgTable('work_logs', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  organizationId: uuid('organization_id')
-    .references(() => organizations.id, { onDelete: 'cascade' })
-    .notNull(),
-  projectId: uuid('project_id')
-    .references(() => projects.id, { onDelete: 'cascade' })
-    .notNull(),
-  logDate: timestamp('log_date', { mode: 'date' }).notNull(),
-
-  // Status & Log Number (added in migration 0030)
-  status: varchar('status', { length: 20 }).notNull().default('draft'),
-  logNumber: integer('log_number'),
-
-  // Weather
-  weatherType: varchar('weather_type', { length: 20 }),
-  weatherTempCelsius: integer('weather_temp_celsius'),
-
-  // Legacy Resources (JSONB) - kept for backwards compatibility
-  resources: jsonb('resources')
-    .$type<Array<{ trade: string; count: number; hours: number }>>()
-    .notNull()
-    .default([]),
-  equipment: jsonb('equipment')
-    .$type<Array<{ name: string; count: number; hours: number }>>()
-    .notNull()
-    .default([]),
-
-  // Enhanced Resources (added in migration 0030)
-  contractorResources: jsonb('contractor_resources')
-    .$type<Array<{ id?: string; type: string; contractorCount: number; supervisorCount: number }>>()
-    .notNull()
-    .default([]),
-  externalResources: jsonb('external_resources')
-    .$type<Array<{ id?: string; type: string; contractorCount: number; supervisorCount: number }>>()
-    .notNull()
-    .default([]),
-
-  // Legacy Activities
-  activities: text('activities'),
-  issues: text('issues'),
-  safetyNotes: text('safety_notes'),
-
-  // Enhanced Description fields (added in migration 0030)
-  contractorWorkDescription: text('contractor_work_description'),
-  supervisorWorkDescription: text('supervisor_work_description'),
-  contractorNotes: text('contractor_notes'),
-  supervisorNotes: text('supervisor_notes'),
-  trafficControllersInfo: text('traffic_controllers_info'),
-  exactAddress: text('exact_address'),
-
-  // Attachments & Audit Log (added in migration 0030)
-  attachments: jsonb('attachments')
-    .$type<Array<{ id: string; name: string; type: string; url: string; uploadedAt: string }>>()
-    .notNull()
-    .default([]),
-  auditLog: jsonb('audit_log')
-    .$type<
-      Array<{
-        id: string;
-        userName: string;
-        company: string;
-        role: string;
-        action: string;
-        timestamp: string;
-      }>
-    >()
-    .notNull()
-    .default([]),
-
-  // Contractor signature
-  contractorSignatureUrl: text('contractor_signature_url'),
-  contractorSignedAt: timestamp('contractor_signed_at', { withTimezone: true }),
-  contractorSignedBy: uuid('contractor_signed_by').references(() => users.id),
-
-  // Inspector signature
-  inspectorSignatureUrl: text('inspector_signature_url'),
-  inspectorSignedAt: timestamp('inspector_signed_at', { withTimezone: true }),
-  inspectorSignedBy: uuid('inspector_signed_by').references(() => users.id),
-
-  // Metadata
-  createdBy: uuid('created_by')
-    .references(() => users.id)
-    .notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
-});
-
-export type WorkLog = typeof workLogs.$inferSelect;
-export type NewWorkLog = typeof workLogs.$inferInsert;
-
-// ============================================================================
-// TASKS TABLE (Kanban)
-// ============================================================================
-export const tasks = pgTable('tasks', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  organizationId: uuid('organization_id')
-    .references(() => organizations.id, { onDelete: 'cascade' })
-    .notNull(),
-  projectId: uuid('project_id')
-    .references(() => projects.id, { onDelete: 'cascade' })
-    .notNull(),
-  title: varchar('title', { length: 255 }).notNull(),
-  description: text('description'),
-
-  // Status & Priority
-  status: varchar('status', { length: 20 }).notNull().default('todo'),
-  priority: varchar('priority', { length: 10 }).notNull().default('medium'),
-
-  // Assignment
-  assigneeId: uuid('assignee_id').references(() => users.id, { onDelete: 'set null' }),
-  dueDate: timestamp('due_date', { mode: 'date' }),
-
-  // Organization
-  tags: jsonb('tags').$type<string[]>().notNull().default([]),
-  sortOrder: integer('sort_order').notNull().default(0),
-
-  // Auto-incremented per project
-  taskNumber: integer('task_number'),
-
-  // Metadata
-  createdBy: uuid('created_by')
-    .references(() => users.id)
-    .notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
-  completedAt: timestamp('completed_at', { withTimezone: true }),
-});
-
-export type Task = typeof tasks.$inferSelect;
-export type NewTask = typeof tasks.$inferInsert;
-
-// ============================================================================
-// TASK AUDIT LOG TABLE
-// ============================================================================
-export const taskAuditLog = pgTable('task_audit_log', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  organizationId: uuid('organization_id')
-    .references(() => organizations.id, { onDelete: 'cascade' })
-    .notNull(),
-  projectId: uuid('project_id')
-    .references(() => projects.id, { onDelete: 'cascade' })
-    .notNull(),
-
-  // Task reference (nullable for deleted tasks)
-  taskId: uuid('task_id').references(() => tasks.id, { onDelete: 'set null' }),
-  taskTitle: varchar('task_title', { length: 255 }).notNull(),
-
-  // Action details
-  action: varchar('action', { length: 50 }).notNull(),
-  userId: uuid('user_id')
-    .references(() => users.id)
-    .notNull(),
-  userName: varchar('user_name', { length: 255 }).notNull(),
-
-  // Change details
-  details: text('details'),
-  reason: text('reason'),
-  signatureUrl: text('signature_url'),
-
-  // Status change tracking
-  previousStatus: varchar('previous_status', { length: 20 }),
-  newStatus: varchar('new_status', { length: 20 }),
-
-  // Timestamp
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-});
-
-export type TaskAuditLog = typeof taskAuditLog.$inferSelect;
-export type NewTaskAuditLog = typeof taskAuditLog.$inferInsert;
-
-// ============================================================================
 // CHAT GROUPS TABLE
 // ============================================================================
 export const chatGroups = pgTable('chat_groups', {
@@ -1240,127 +924,6 @@ export type NewProjectFile = typeof projectFiles.$inferInsert;
 // ============================================================================
 // DOMAIN TABLE RELATIONS
 // ============================================================================
-
-export const boqItemsRelations = relations(boqItems, ({ one, many }) => ({
-  organization: one(organizations, {
-    fields: [boqItems.organizationId],
-    references: [organizations.id],
-  }),
-  project: one(projects, {
-    fields: [boqItems.projectId],
-    references: [projects.id],
-  }),
-  parent: one(boqItems, {
-    fields: [boqItems.parentId],
-    references: [boqItems.id],
-    relationName: 'boqParent',
-  }),
-  children: many(boqItems, { relationName: 'boqParent' }),
-  billItems: many(billItems),
-}));
-
-export const billsRelations = relations(bills, ({ one, many }) => ({
-  organization: one(organizations, {
-    fields: [bills.organizationId],
-    references: [organizations.id],
-  }),
-  project: one(projects, {
-    fields: [bills.projectId],
-    references: [projects.id],
-  }),
-  createdByUser: one(users, {
-    fields: [bills.createdBy],
-    references: [users.id],
-    relationName: 'billCreator',
-  }),
-  contractorSigner: one(users, {
-    fields: [bills.contractorSignedBy],
-    references: [users.id],
-    relationName: 'billContractorSigner',
-  }),
-  inspectorSigner: one(users, {
-    fields: [bills.inspectorSignedBy],
-    references: [users.id],
-    relationName: 'billInspectorSigner',
-  }),
-  items: many(billItems),
-}));
-
-export const billItemsRelations = relations(billItems, ({ one, many }) => ({
-  bill: one(bills, {
-    fields: [billItems.billId],
-    references: [bills.id],
-  }),
-  boqItem: one(boqItems, {
-    fields: [billItems.boqItemId],
-    references: [boqItems.id],
-  }),
-  measurements: many(measurements),
-}));
-
-export const measurementsRelations = relations(measurements, ({ one }) => ({
-  billItem: one(billItems, {
-    fields: [measurements.billItemId],
-    references: [billItems.id],
-  }),
-  measuredByUser: one(users, {
-    fields: [measurements.measuredBy],
-    references: [users.id],
-    relationName: 'measurementMeasurer',
-  }),
-  approvedByUser: one(users, {
-    fields: [measurements.approvedBy],
-    references: [users.id],
-    relationName: 'measurementApprover',
-  }),
-}));
-
-export const workLogsRelations = relations(workLogs, ({ one }) => ({
-  organization: one(organizations, {
-    fields: [workLogs.organizationId],
-    references: [organizations.id],
-  }),
-  project: one(projects, {
-    fields: [workLogs.projectId],
-    references: [projects.id],
-  }),
-  createdByUser: one(users, {
-    fields: [workLogs.createdBy],
-    references: [users.id],
-    relationName: 'workLogCreator',
-  }),
-  contractorSigner: one(users, {
-    fields: [workLogs.contractorSignedBy],
-    references: [users.id],
-    relationName: 'workLogContractorSigner',
-  }),
-  inspectorSigner: one(users, {
-    fields: [workLogs.inspectorSignedBy],
-    references: [users.id],
-    relationName: 'workLogInspectorSigner',
-  }),
-}));
-
-export const tasksRelations = relations(tasks, ({ one }) => ({
-  organization: one(organizations, {
-    fields: [tasks.organizationId],
-    references: [organizations.id],
-  }),
-  project: one(projects, {
-    fields: [tasks.projectId],
-    references: [projects.id],
-  }),
-  assignee: one(users, {
-    fields: [tasks.assigneeId],
-    references: [users.id],
-    relationName: 'taskAssignee',
-  }),
-  createdByUser: one(users, {
-    fields: [tasks.createdBy],
-    references: [users.id],
-    relationName: 'taskCreator',
-  }),
-}));
 
 export const chatGroupsRelations = relations(chatGroups, ({ one, many }) => ({
   organization: one(organizations, {

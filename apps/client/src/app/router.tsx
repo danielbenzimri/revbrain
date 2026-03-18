@@ -39,10 +39,6 @@ const CouponListPage = lazy(routeLazyImports['/admin/coupons']);
 
 // Project Workspace Pages
 const OverviewPage = lazy(routeLazyImports['/project/overview']);
-const BOQPage = lazy(routeLazyImports['/project/boq']);
-const TasksPage = lazy(routeLazyImports['/project/tasks']);
-const ExecutionPage = lazy(routeLazyImports['/project/execution']);
-const WorkLogsPage = lazy(routeLazyImports['/project/worklogs']);
 const DocsPage = lazy(routeLazyImports['/project/docs']);
 const UsersPage = lazy(routeLazyImports['/project/users']);
 const ProjectSettingsPage = lazy(routeLazyImports['/project/settings']);
@@ -274,38 +270,6 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<WorkspaceSkeleton />}>
             <OverviewPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: 'boq',
-        element: (
-          <Suspense fallback={<WorkspaceSkeleton />}>
-            <BOQPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: 'tasks',
-        element: (
-          <Suspense fallback={<WorkspaceSkeleton />}>
-            <TasksPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: 'execution',
-        element: (
-          <Suspense fallback={<WorkspaceSkeleton />}>
-            <ExecutionPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: 'worklogs',
-        element: (
-          <Suspense fallback={<WorkspaceSkeleton />}>
-            <WorkLogsPage />
           </Suspense>
         ),
       },

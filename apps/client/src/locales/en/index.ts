@@ -8,11 +8,6 @@ import settings from './settings.json';
 import help from './help.json';
 import users from './users.json';
 import admin from './admin.json';
-// Legacy migration namespaces
-import boq from './boq.json';
-import execution from './execution.json';
-import workLogs from './workLogs.json';
-import tasks from './tasks.json';
 import files from './files.json';
 import docs from './docs.json';
 
@@ -27,11 +22,6 @@ export default {
   help,
   users,
   admin,
-  // Legacy migration namespaces
-  boq,
-  execution,
-  workLogs,
-  tasks,
   files,
   docs,
 };

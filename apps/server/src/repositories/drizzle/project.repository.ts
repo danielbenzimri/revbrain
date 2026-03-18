@@ -43,22 +43,8 @@ export class DrizzleProjectRepository implements ProjectRepository {
         organizationId: data.organizationId,
         ownerId: data.ownerId,
         description: data.description ?? null,
-        // Contract metadata
-        contractNumber: data.contractNumber ?? null,
-        contractDate: data.contractDate ?? null,
         startDate: data.startDate ?? null,
         endDate: data.endDate ?? null,
-        // Contract parties
-        contractorName: data.contractorName ?? null,
-        contractorId: data.contractorId ?? null,
-        clientName: data.clientName ?? null,
-        clientId: data.clientId ?? null,
-        // Contract value and discounts
-        contractValueCents: data.contractValueCents ?? 0,
-        globalDiscountPercent: data.globalDiscountPercent?.toString() ?? '0',
-        chapterDiscounts: data.chapterDiscounts ?? {},
-        // Other
-        location: data.location ?? null,
         notes: data.notes ?? null,
         metadata: data.metadata ?? {},
       })
@@ -74,26 +60,8 @@ export class DrizzleProjectRepository implements ProjectRepository {
     // Basic fields
     if (data.name !== undefined) updateData.name = data.name;
     if (data.description !== undefined) updateData.description = data.description;
-
-    // Contract metadata
-    if (data.contractNumber !== undefined) updateData.contractNumber = data.contractNumber;
-    if (data.contractDate !== undefined) updateData.contractDate = data.contractDate;
     if (data.startDate !== undefined) updateData.startDate = data.startDate;
     if (data.endDate !== undefined) updateData.endDate = data.endDate;
-
-    // Contract parties
-    if (data.contractorName !== undefined) updateData.contractorName = data.contractorName;
-    if (data.contractorId !== undefined) updateData.contractorId = data.contractorId;
-    if (data.clientName !== undefined) updateData.clientName = data.clientName;
-    if (data.clientId !== undefined) updateData.clientId = data.clientId;
-
-    // Contract value and discounts
-    if (data.contractValueCents !== undefined)
-      updateData.contractValueCents = data.contractValueCents;
-    if (data.globalDiscountPercent !== undefined) {
-      updateData.globalDiscountPercent = data.globalDiscountPercent.toString();
-    }
-    if (data.chapterDiscounts !== undefined) updateData.chapterDiscounts = data.chapterDiscounts;
 
     // Status workflow
     if (data.status !== undefined) {
@@ -107,7 +75,6 @@ export class DrizzleProjectRepository implements ProjectRepository {
     }
 
     // Other
-    if (data.location !== undefined) updateData.location = data.location;
     if (data.notes !== undefined) updateData.notes = data.notes;
     if (data.metadata !== undefined) updateData.metadata = data.metadata;
 
@@ -199,24 +166,10 @@ export class DrizzleProjectRepository implements ProjectRepository {
       description: row.description,
       ownerId: row.ownerId,
       organizationId: row.organizationId,
-      // Contract metadata
-      contractNumber: row.contractNumber,
-      contractDate: row.contractDate,
       startDate: row.startDate,
       endDate: row.endDate,
-      // Contract parties
-      contractorName: row.contractorName,
-      contractorId: row.contractorId,
-      clientName: row.clientName,
-      clientId: row.clientId,
-      // Contract value and discounts
-      contractValueCents: row.contractValueCents ?? 0,
-      globalDiscountPercent: parseFloat(row.globalDiscountPercent ?? '0'),
-      chapterDiscounts: (row.chapterDiscounts as Record<string, number>) ?? {},
       // Status workflow
       status: (row.status as ProjectStatus) ?? 'active',
-      // Other
-      location: row.location,
       notes: row.notes,
       metadata: (row.metadata as Record<string, unknown>) ?? {},
       // Timestamps

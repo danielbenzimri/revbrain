@@ -10,11 +10,7 @@ import { leadsRouter } from './leads.ts';
 import { supportRouter } from './support.ts';
 import { webhooksRouter } from './webhooks.ts';
 import { devRouter } from './dev.ts';
-import boqRouter from './boq.ts';
 import { projectsRouter } from './projects.ts';
-import { executionBills } from './execution-bills.ts';
-import { workLogs } from './work-logs.ts';
-import { tasks } from './tasks.ts';
 import { storageRouter } from './storage.ts';
 import { type AppEnv } from '../../types/index.ts';
 
@@ -56,18 +52,6 @@ v1Router.route('/support', supportRouter);
 
 // Projects routes (project management)
 v1Router.route('/projects', projectsRouter);
-
-// BOQ routes (Bill of Quantities)
-v1Router.route('/boq', boqRouter);
-
-// Execution Bills routes (contractor billing/work bills)
-v1Router.route('/execution/bills', executionBills);
-
-// Work Logs routes (daily site reports)
-v1Router.route('/work-logs', workLogs);
-
-// Tasks routes (Kanban task management)
-v1Router.route('/tasks', tasks);
 
 // Storage routes (file uploads)
 v1Router.route('/storage', storageRouter);

@@ -1,8 +1,8 @@
 {
-  "underConstruction": "Module under development...",
+  "underDevelopment": "Module under development...",
   "user": "User",
   "pendingSetup": "Pending Setup",
-  "systemSubtitle": "Calculation System",
+  "systemSubtitle": "Revenue Operations Platform",
   "loading": "Loading...",
   "error": "Error",
   "save": "Save",

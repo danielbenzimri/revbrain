@@ -18,19 +18,9 @@ export interface ProjectEntity {
   description: string | null;
   ownerId: string;
   organizationId: string;
-  contractNumber: string | null;
-  contractDate: string | null;
   startDate: string | null;
   endDate: string | null;
-  contractorName: string | null;
-  contractorId: string | null;
-  clientName: string | null;
-  clientId: string | null;
-  contractValueCents: number;
-  globalDiscountPercent: number;
-  chapterDiscounts: Record<string, number>;
   status: 'active' | 'on_hold' | 'completed' | 'cancelled';
-  location: string | null;
   notes: string | null;
   metadata: Record<string, unknown>;
   createdAt: string;
@@ -42,18 +32,8 @@ export interface ProjectEntity {
 export interface CreateProjectInput {
   name: string;
   description?: string | null;
-  contractNumber?: string | null;
-  contractDate?: string | null;
   startDate?: string | null;
   endDate?: string | null;
-  contractorName?: string | null;
-  contractorId?: string | null;
-  clientName?: string | null;
-  clientId?: string | null;
-  contractValueCents?: number;
-  globalDiscountPercent?: number;
-  chapterDiscounts?: Record<string, number>;
-  location?: string | null;
   notes?: string | null;
   metadata?: Record<string, unknown>;
 }

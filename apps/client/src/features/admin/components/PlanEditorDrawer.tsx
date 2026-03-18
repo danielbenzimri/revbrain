@@ -6,21 +6,13 @@ import { Sheet, SheetContent } from '@/components/ui/sheet';
 import type { Plan } from '@revbrain/contract';
 
 export const WORK_MODULES = [
-  'earthworks',
-  'concrete',
-  'waterproofing',
-  'electrical',
-  'steel',
-  'piles',
-  'anchors',
-  'landscaping',
-  'gardening',
-  'demolition',
-  'paving',
-  'traffic',
-  'wetSystems',
-  'reggie',
-  'exceptions',
+  'cpq_migration',
+  'data_validation',
+  'advanced_reporting',
+  'api_access',
+  'bulk_operations',
+  'audit_trail',
+  'webhook_support',
 ] as const;
 
 export type WorkModule = (typeof WORK_MODULES)[number];
