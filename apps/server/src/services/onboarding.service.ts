@@ -5,7 +5,7 @@ import type { OrganizationService } from './organization.service.ts';
 import type { RequestContext } from './types.ts';
 import { getEnv } from '../lib/env.ts';
 import { logger } from '../lib/logger.ts';
-import { withTransaction } from '../repositories/drizzle/index.ts';
+import { withTransaction } from '../repositories/with-transaction.ts';
 
 export interface OnboardOrganizationInput {
   organization: {

@@ -383,4 +383,4 @@ export interface Repositories {
 // ENGINE TYPE
 // ============================================================
 
-export type RepositoryEngine = 'drizzle' | 'supabase';
+export type RepositoryEngine = 'drizzle' | 'supabase' | 'mock';

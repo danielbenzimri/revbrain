@@ -34,7 +34,7 @@ vi.mock('../emails/index.ts', () => ({
 }));
 
 // Mock transaction wrapper
-vi.mock('../repositories/drizzle/index.ts', () => ({
+vi.mock('../repositories/with-transaction.ts', () => ({
   withTransaction: vi.fn(async (callback: (repos: Repositories) => Promise<unknown>) => {
     // Create mock repos for transaction
     const txRepos = {

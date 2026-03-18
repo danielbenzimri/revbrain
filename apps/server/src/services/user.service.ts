@@ -13,7 +13,7 @@ import { canInviteRole } from '../middleware/rbac.ts';
 import { getEnv } from '../lib/env.ts';
 import { renderWelcomeEmail } from '../emails/index.ts';
 import { logger } from '../lib/logger.ts';
-import { withTransaction } from '../repositories/drizzle/index.ts';
+import { withTransaction } from '../repositories/with-transaction.ts';
 import { clearUserCache } from '../middleware/auth.ts';
 
 export interface InviteUserInput {

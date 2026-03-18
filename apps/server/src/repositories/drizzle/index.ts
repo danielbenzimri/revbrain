@@ -46,7 +46,11 @@ export function createDrizzleRepositories(dbOrTx?: DrizzleDB): Repositories {
  * All operations inside the callback share the same transaction.
  * If the callback throws, the transaction is rolled back automatically.
  */
-export async function withTransaction<T>(
+/**
+ * Drizzle-specific transaction implementation.
+ * Called by repositories/with-transaction.ts in real mode.
+ */
+export async function drizzleWithTransaction<T>(
   callback: (repos: Repositories) => Promise<T>
 ): Promise<T> {
   return defaultDb.transaction(async (tx) => {
@@ -54,3 +58,6 @@ export async function withTransaction<T>(
     return callback(txRepos);
   });
 }
+
+// Backward-compatible alias — prefer importing from repositories/with-transaction.ts
+export const withTransaction = drizzleWithTransaction;
