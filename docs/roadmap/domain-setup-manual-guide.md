@@ -166,8 +166,8 @@ curl -I https://stg.revbrain.com
 3. Click **Add**
 4. Resend will show you **3 DNS records** you need to add. They look like:
 
-| Type  | Name                                  | Value                                                               |
-| ----- | ------------------------------------- | ------------------------------------------------------------------- |
+| Type  | Name                             | Value                                                               |
+| ----- | -------------------------------- | ------------------------------------------------------------------- |
 | MX    | `revbrain.com`                   | _(something like `feedback-smtp.us-east-1.amazonses.com`)_          |
 | TXT   | `revbrain.com`                   | _(SPF record — something like `v=spf1 include:amazonses.com ~all`)_ |
 | CNAME | `resend._domainkey.revbrain.com` | _(long DKIM key)_                                                   |
@@ -216,12 +216,12 @@ Add the records Resend gave you:
 
 ### Record 10: DMARC policy
 
-| Field | Value                                                        |
-| ----- | ------------------------------------------------------------ |
-| Type  | **TXT Record**                                               |
-| Host  | `_dmarc`                                                     |
+| Field | Value                                                   |
+| ----- | ------------------------------------------------------- |
+| Type  | **TXT Record**                                          |
+| Host  | `_dmarc`                                                |
 | Value | `v=DMARC1; p=quarantine; rua=mailto:dmarc@revbrain.com` |
-| TTL   | Automatic                                                    |
+| TTL   | Automatic                                               |
 
 ### Record 11: DMARC report acceptance
 
@@ -303,8 +303,8 @@ Add the records Resend gave you:
 | Port         | `465`                                                       |
 | Username     | `resend`                                                    |
 | Password     | _(your **production** Resend API key — starts with `re_`)\_ |
-| Sender email | `noreply@revbrain.com`                                 |
-| Sender name  | `RevBrain`                                                 |
+| Sender email | `noreply@revbrain.com`                                      |
+| Sender name  | `RevBrain`                                                  |
 
 **Where to find your Resend API key:** Resend Dashboard → **API Keys** (left sidebar). Use the production key.
 
@@ -322,8 +322,8 @@ Click **Save**.
 | Port         | `465`                                                                    |
 | Username     | `resend`                                                                 |
 | Password     | _(your Resend API key — can use the same key or a staging-specific one)_ |
-| Sender email | `noreply+staging@revbrain.com`                                      |
-| Sender name  | `RevBrain (Staging)`                                                    |
+| Sender email | `noreply+staging@revbrain.com`                                           |
+| Sender name  | `RevBrain (Staging)`                                                     |
 
 Click **Save**.
 
@@ -335,11 +335,11 @@ Click **Save**.
 
 Update these secrets:
 
-| Secret         | New Value                                                 |
-| -------------- | --------------------------------------------------------- |
-| `APP_URL`      | `https://app.revbrain.com`                           |
-| `FRONTEND_URL` | `https://app.revbrain.com`                           |
-| `EMAIL_FROM`   | `RevBrain <noreply@revbrain.com>`                   |
+| Secret         | New Value                                       |
+| -------------- | ----------------------------------------------- |
+| `APP_URL`      | `https://app.revbrain.com`                      |
+| `FRONTEND_URL` | `https://app.revbrain.com`                      |
+| `EMAIL_FROM`   | `RevBrain <noreply@revbrain.com>`               |
 | `CORS_ORIGINS` | `https://app.revbrain.com,https://revbrain.com` |
 
 > If a secret already exists, update its value. If it doesn't exist, create it.
@@ -350,10 +350,10 @@ Update these secrets:
 
 **Where:** Supabase Dashboard → **DEV/STAGING** project → Edge Functions → Secrets
 
-| Secret         | New Value                                                                       |
-| -------------- | ------------------------------------------------------------------------------- |
-| `APP_URL`      | `https://stg.revbrain.com`                                                 |
-| `FRONTEND_URL` | `https://stg.revbrain.com`                                                 |
+| Secret         | New Value                                                             |
+| -------------- | --------------------------------------------------------------------- |
+| `APP_URL`      | `https://stg.revbrain.com`                                            |
+| `FRONTEND_URL` | `https://stg.revbrain.com`                                            |
 | `CORS_ORIGINS` | `https://stg.revbrain.com,https://revbrain.com,http://localhost:5173` |
 
 ---
@@ -364,8 +364,8 @@ Update these secrets:
 
 Update or add these variables (scope: **Production**):
 
-| Variable       | Value                           | Scope      |
-| -------------- | ------------------------------- | ---------- |
+| Variable       | Value                      | Scope      |
+| -------------- | -------------------------- | ---------- |
 | `APP_URL`      | `https://app.revbrain.com` | Production |
 | `FRONTEND_URL` | `https://app.revbrain.com` | Production |
 
@@ -377,8 +377,8 @@ Update or add these variables (scope: **Production**):
 
 **Where:** Vercel Dashboard → **staging** project → **Settings** → **Environment Variables**
 
-| Variable       | Value                           | Scope                 |
-| -------------- | ------------------------------- | --------------------- |
+| Variable       | Value                      | Scope                 |
+| -------------- | -------------------------- | --------------------- |
 | `APP_URL`      | `https://stg.revbrain.com` | Preview + Development |
 | `FRONTEND_URL` | `https://stg.revbrain.com` | Preview + Development |
 

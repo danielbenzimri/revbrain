@@ -57,12 +57,7 @@ export default function LoginPage() {
   };
 
   // Roles grouped by category
-  const contractorRoles: UserRole[] = [
-    'org_owner',
-    'admin',
-    'operator',
-    'operator',
-  ];
+  const contractorRoles: UserRole[] = ['org_owner', 'admin', 'operator', 'operator'];
   const clientRoles: UserRole[] = ['org_owner', 'admin', 'reviewer'];
 
   return (

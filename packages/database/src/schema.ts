@@ -1408,4 +1408,3 @@ export const projectFilesRelations = relations(projectFiles, ({ one }) => ({
     references: [users.id],
   }),
 }));
-

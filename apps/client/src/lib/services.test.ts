@@ -45,7 +45,7 @@ describe('Service Layer Verification (Matrix Test)', () => {
 
     it('should fallback to default user for unknown email', async () => {
       const result = await authAdapter.login('unknown@test.com');
-      expect(result.user.role).toBe('admin'); // Default fallback
+      expect(result.user.role).toBe('operator'); // Default fallback
     });
 
     it('should persist session', async () => {

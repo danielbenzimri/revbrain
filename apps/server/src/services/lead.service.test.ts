@@ -311,11 +311,7 @@ describe('LeadService', () => {
         }),
       });
 
-      const result = await service.convertLead(
-        mockLead.id,
-        { planId: 'plan-123' },
-        'user-123'
-      );
+      const result = await service.convertLead(mockLead.id, { planId: 'plan-123' }, 'user-123');
 
       expect(result).toBeDefined();
     });
@@ -324,11 +320,7 @@ describe('LeadService', () => {
       mockFindFirst.mockResolvedValueOnce(null);
 
       await expect(
-        service.convertLead(
-          'non-existent',
-          { planId: 'plan-123' },
-          'user-123'
-        )
+        service.convertLead('non-existent', { planId: 'plan-123' }, 'user-123')
       ).rejects.toThrow('Lead not found');
     });
 

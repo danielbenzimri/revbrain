@@ -44,7 +44,7 @@ export class DrizzleOrganizationRepository implements OrganizationRepository {
       .values({
         name: data.name,
         slug: data.slug,
-        type: data.type,
+        type: 'organization', // Legacy column — org type distinction removed
         seatLimit: data.seatLimit ?? 5,
         seatUsed: 0,
         planId: data.planId ?? null,

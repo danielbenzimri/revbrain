@@ -135,7 +135,6 @@ export class OrganizationService {
     return this.repos.organizations.create({
       name: 'RevBrain Platform',
       slug: PLATFORM_ORG_SLUG,
-      type: 'contractor',
       seatLimit: 999,
       createdBy,
     });

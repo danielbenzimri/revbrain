@@ -25,16 +25,16 @@ vi.mock('@/lib/services', () => ({
 
 vi.mock('@/lib/mock-data', () => ({
   MOCK_USERS: {
-    operator: {
-      id: 'mock-pm',
-      name: 'Mock PM',
-      email: 'pm@mock.com',
+    admin: {
+      id: 'mock-admin',
+      name: 'Mock Admin',
+      email: 'admin@mock.com',
       role: 'admin',
     },
-    inspector: {
-      id: 'mock-inspector',
-      name: 'Mock Inspector',
-      email: 'inspector@mock.com',
+    reviewer: {
+      id: 'mock-reviewer',
+      name: 'Mock Reviewer',
+      email: 'reviewer@mock.com',
       role: 'reviewer',
     },
   },
@@ -156,9 +156,9 @@ describe('useAuthStore', () => {
       });
 
       expect(result.current.user).toEqual({
-        id: 'mock-pm',
-        name: 'Mock PM',
-        email: 'pm@mock.com',
+        id: 'mock-admin',
+        name: 'Mock Admin',
+        email: 'admin@mock.com',
         role: 'admin',
       });
     });

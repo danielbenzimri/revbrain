@@ -159,7 +159,6 @@ export interface OrganizationRepository {
 export interface CreateOrganizationInput {
   name: string;
   slug: string;
-  type: 'contractor' | 'client';
   seatLimit?: number;
   planId?: string | null;
   createdBy?: string | null;

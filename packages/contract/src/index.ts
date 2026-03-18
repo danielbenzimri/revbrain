@@ -69,13 +69,7 @@ export const ErrorCodes = {
  * - operator: Does migration work on assigned projects
  * - reviewer: View-only + remarks on assigned projects
  */
-export const ALL_ROLES = [
-  'system_admin',
-  'org_owner',
-  'admin',
-  'operator',
-  'reviewer',
-] as const;
+export const ALL_ROLES = ['system_admin', 'org_owner', 'admin', 'operator', 'reviewer'] as const;
 
 export type UserRole = (typeof ALL_ROLES)[number];
 

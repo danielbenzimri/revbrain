@@ -161,12 +161,7 @@ describe('UserService', () => {
         providerUserId: 'provider-123',
       });
 
-      const result = await userService.inviteUser(
-        inviteInput,
-        'org_owner',
-        mockOrg,
-        mockContext
-      );
+      const result = await userService.inviteUser(inviteInput, 'org_owner', mockOrg, mockContext);
 
       expect(result.user).toBeDefined();
       expect(result.seatsRemaining).toBe(4);

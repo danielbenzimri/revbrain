@@ -14,7 +14,7 @@ RevBrain is a construction management SaaS deployed across three services:
 
 | Service            | Technology                               | Current URL                                                                                                            |
 | ------------------ | ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| **Frontend (App)** | React + Vite, hosted on Vercel           | `revbrain-client-staging.vercel.app` (staging) / `revbrain-client.vercel.app` (prod)                                 |
+| **Frontend (App)** | React + Vite, hosted on Vercel           | `revbrain-client-staging.vercel.app` (staging) / `revbrain-client.vercel.app` (prod)                                   |
 | **API Server**     | Hono, deployed as Supabase Edge Function | `zhotzdemwwyfzevtygob.supabase.co/functions/v1/api` (dev) / `jnuzixzgzwsodxejhvxt.supabase.co/functions/v1/api` (prod) |
 | **Database**       | PostgreSQL, managed by Supabase          | Direct connection via PgBouncer pooler                                                                                 |
 
@@ -103,8 +103,8 @@ stg.revbrain.com       → Staging application (for QA/testing)
 
 These records point the domain and subdomains to Vercel:
 
-| Type      | Host  | Value                  | TTL       | Purpose                                            |
-| --------- | ----- | ---------------------- | --------- | -------------------------------------------------- |
+| Type      | Host  | Value                  | TTL       | Purpose                                       |
+| --------- | ----- | ---------------------- | --------- | --------------------------------------------- |
 | **A**     | `@`   | `76.76.21.21`          | Automatic | Points apex domain (`revbrain.com`) to Vercel |
 | **CNAME** | `www` | `cname.vercel-dns.com` | Automatic | Points `www.revbrain.com` to Vercel           |
 | **CNAME** | `app` | `cname.vercel-dns.com` | Automatic | Points `app.revbrain.com` to Vercel           |
@@ -133,11 +133,11 @@ These records point the domain and subdomains to Vercel:
 
 These records enable sending email from `@revbrain.com` with proper authentication:
 
-| Type      | Host                | Value                                                        | TTL       | Purpose                                                                   |
-| --------- | ------------------- | ------------------------------------------------------------ | --------- | ------------------------------------------------------------------------- |
-| **MX**    | `@`                 | _(provided by Resend after domain verification)_             | Automatic | Routes inbound email (optional — only needed if receiving email)          |
-| **TXT**   | `@`                 | `v=spf1 include:resend.com ~all`                             | Automatic | **SPF** — tells receivers that Resend is authorized to send on our behalf |
-| **CNAME** | `resend._domainkey` | _(provided by Resend dashboard)_                             | Automatic | **DKIM** — cryptographic signature proving emails are authentic           |
+| Type      | Host                | Value                                                   | TTL       | Purpose                                                                   |
+| --------- | ------------------- | ------------------------------------------------------- | --------- | ------------------------------------------------------------------------- |
+| **MX**    | `@`                 | _(provided by Resend after domain verification)_        | Automatic | Routes inbound email (optional — only needed if receiving email)          |
+| **TXT**   | `@`                 | `v=spf1 include:resend.com ~all`                        | Automatic | **SPF** — tells receivers that Resend is authorized to send on our behalf |
+| **CNAME** | `resend._domainkey` | _(provided by Resend dashboard)_                        | Automatic | **DKIM** — cryptographic signature proving emails are authentic           |
 | **TXT**   | `_dmarc`            | `v=DMARC1; p=quarantine; rua=mailto:dmarc@revbrain.com` | Automatic | **DMARC** — policy for handling unauthenticated emails                    |
 
 **Why SPF + DKIM + DMARC:** Without these, emails from `@revbrain.com` will likely land in spam. Gmail, Outlook, and Yahoo require all three for reliable delivery. SPF authorizes the sending server, DKIM cryptographically signs the email, and DMARC tells receivers what to do with failures.
@@ -232,23 +232,23 @@ Supabase Auth sends emails (invitations, password resets, magic links) containin
 
 **Location:** Supabase Dashboard → Authentication → URL Configuration
 
-| Setting           | Value                                                               |
-| ----------------- | ------------------------------------------------------------------- |
-| **Site URL**      | `https://app.revbrain.com`                                     |
-| **Redirect URLs** | `https://app.revbrain.com/**`                                  |
+| Setting           | Value                                                              |
+| ----------------- | ------------------------------------------------------------------ |
+| **Site URL**      | `https://app.revbrain.com`                                         |
+| **Redirect URLs** | `https://app.revbrain.com/**`                                      |
 |                   | `https://revbrain-client.vercel.app/**` _(keep during transition)_ |
 
 **Why wildcard:** Using `/**` instead of explicit paths (`/set-password`, `/reset-password`, `/login`) means we don't need to update Supabase every time we add a new auth-related route. The tradeoff is a slightly wider open-redirect attack surface — acceptable given all redirects go to our own domain.
 
 ### 5b. Dev/Staging Supabase Project
 
-| Setting           | Value                                                                       |
-| ----------------- | --------------------------------------------------------------------------- |
-| **Site URL**      | `https://stg.revbrain.com`                                             |
-| **Redirect URLs** | `https://stg.revbrain.com/set-password`                                |
-|                   | `https://stg.revbrain.com/reset-password`                              |
-|                   | `https://stg.revbrain.com/login`                                       |
-|                   | `http://localhost:5173/**` _(keep for local dev)_                           |
+| Setting           | Value                                                                      |
+| ----------------- | -------------------------------------------------------------------------- |
+| **Site URL**      | `https://stg.revbrain.com`                                                 |
+| **Redirect URLs** | `https://stg.revbrain.com/set-password`                                    |
+|                   | `https://stg.revbrain.com/reset-password`                                  |
+|                   | `https://stg.revbrain.com/login`                                           |
+|                   | `http://localhost:5173/**` _(keep for local dev)_                          |
 |                   | `https://revbrain-client-staging.vercel.app/**` _(keep during transition)_ |
 
 ### 5c. Local Supabase Config
@@ -263,14 +263,14 @@ Add new domain redirect URLs to the `additional_redirect_urls` array. The existi
 
 **Location:** Supabase Dashboard → Project Settings → Authentication → SMTP Settings
 
-| Setting          | Production                  | Staging                             |
-| ---------------- | --------------------------- | ----------------------------------- |
-| **Host**         | `smtp.resend.com`           | `smtp.resend.com`                   |
-| **Port**         | `465` (SSL)                 | `465` (SSL)                         |
-| **Username**     | `resend`                    | `resend`                            |
-| **Password**     | Production Resend API key   | Staging Resend API key              |
-| **Sender email** | `noreply@revbrain.com` | `noreply+staging@revbrain.com` |
-| **Sender name**  | `RevBrain`                 | `RevBrain (Staging)`               |
+| Setting          | Production                | Staging                        |
+| ---------------- | ------------------------- | ------------------------------ |
+| **Host**         | `smtp.resend.com`         | `smtp.resend.com`              |
+| **Port**         | `465` (SSL)               | `465` (SSL)                    |
+| **Username**     | `resend`                  | `resend`                       |
+| **Password**     | Production Resend API key | Staging Resend API key         |
+| **Sender email** | `noreply@revbrain.com`    | `noreply+staging@revbrain.com` |
+| **Sender name**  | `RevBrain`                | `RevBrain (Staging)`           |
 
 **Which emails go where:**
 
@@ -332,8 +332,8 @@ The server must accept requests from the new domains. Currently hardcoded to `.v
 
 Several files reference `revbrain.io` as a fallback domain. These must be updated:
 
-| File                                       | Line | Current Value               | New Value                       |
-| ------------------------------------------ | ---- | --------------------------- | ------------------------------- |
+| File                                       | Line | Current Value              | New Value                  |
+| ------------------------------------------ | ---- | -------------------------- | -------------------------- |
 | `apps/server/src/lib/validated-config.ts`  | 55   | `noreply@revbrain.io`      | `noreply@revbrain.com`     |
 | `apps/server/src/lib/validated-config.ts`  | 248  | `noreply@revbrain.io`      | `noreply@revbrain.com`     |
 | `apps/server/src/services/user.service.ts` | 431  | `https://revbrain.io`      | `https://app.revbrain.com` |
@@ -351,19 +351,19 @@ Several files reference `revbrain.io` as a fallback domain. These must be update
 
 ### 8a. Production (Vercel + Supabase Edge Function)
 
-| Variable       | Value                                                     | Where to set                                             |
-| -------------- | --------------------------------------------------------- | -------------------------------------------------------- |
-| `APP_URL`      | `https://app.revbrain.com`                           | Vercel project env vars + Supabase Edge Function secrets |
-| `FRONTEND_URL` | `https://app.revbrain.com`                           | Vercel project env vars + Supabase Edge Function secrets |
-| `EMAIL_FROM`   | `RevBrain <noreply@revbrain.com>`                   | Vercel project env vars + Supabase Edge Function secrets |
+| Variable       | Value                                           | Where to set                                             |
+| -------------- | ----------------------------------------------- | -------------------------------------------------------- |
+| `APP_URL`      | `https://app.revbrain.com`                      | Vercel project env vars + Supabase Edge Function secrets |
+| `FRONTEND_URL` | `https://app.revbrain.com`                      | Vercel project env vars + Supabase Edge Function secrets |
+| `EMAIL_FROM`   | `RevBrain <noreply@revbrain.com>`               | Vercel project env vars + Supabase Edge Function secrets |
 | `CORS_ORIGINS` | `https://app.revbrain.com,https://revbrain.com` | Supabase Edge Function secrets                           |
 
 ### 8b. Staging (Vercel + Supabase Edge Function)
 
-| Variable       | Value                                                                           | Where to set                                             |
-| -------------- | ------------------------------------------------------------------------------- | -------------------------------------------------------- |
-| `APP_URL`      | `https://stg.revbrain.com`                                                 | Vercel project env vars + Supabase Edge Function secrets |
-| `FRONTEND_URL` | `https://stg.revbrain.com`                                                 | Vercel project env vars + Supabase Edge Function secrets |
+| Variable       | Value                                                                 | Where to set                                             |
+| -------------- | --------------------------------------------------------------------- | -------------------------------------------------------- |
+| `APP_URL`      | `https://stg.revbrain.com`                                            | Vercel project env vars + Supabase Edge Function secrets |
+| `FRONTEND_URL` | `https://stg.revbrain.com`                                            | Vercel project env vars + Supabase Edge Function secrets |
 | `CORS_ORIGINS` | `https://stg.revbrain.com,https://revbrain.com,http://localhost:5173` | Supabase Edge Function secrets                           |
 
 ### 8c. Client-Side (No Changes Needed)
@@ -556,26 +556,26 @@ Each phase is independently reversible:
 | **C (Auth)**          | Old redirect URLs are kept in Supabase throughout Phase F, so reverting DNS is sufficient                          | Instant                                 |
 | **C (Email)**         | Revert `EMAIL_FROM` env var to old value. Resend domain stays verified (no harm). Revert Supabase SMTP to default. | ~1 min (env var redeploy)               |
 | **D (Stripe/Sentry)** | Revert Stripe dashboard URLs. Remove new Sentry domains.                                                           | Instant                                 |
-| **E (Homepage)**      | Remove `revbrain.com` domain from homepage Vercel project → apex shows Vercel default page (harmless)         | Instant                                 |
+| **E (Homepage)**      | Remove `revbrain.com` domain from homepage Vercel project → apex shows Vercel default page (harmless)              | Instant                                 |
 
 ---
 
 ## 15. Gotchas & Common Mistakes
 
-| Gotcha                                  | Why It Matters                                                                                                    | Prevention                                                                                     |
-| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| **CORS before domain pointing**         | If you point the domain before updating CORS, the first request from `app.revbrain.com` gets blocked by CORS | Deploy CORS changes first (Phase B before Phase A completes)                                   |
-| **Missing Supabase redirect URL**       | Auth flows (invite, reset, magic link) silently fail — user clicks link and gets a generic error                  | Add ALL redirect paths to the allow-list, test each flow                                       |
-| **Supabase SMTP not configured**        | Password reset and invite emails still come from Supabase's default sender, not `@revbrain.com`              | Configure custom SMTP in both prod and staging Supabase projects (Section 5d)                  |
-| **Email SPF/DKIM not set**              | Emails land in spam, invite flow appears broken to users                                                          | Add DNS records before switching `EMAIL_FROM`, test with mail-tester.com                       |
-| **DNS propagation delay**               | Records can take up to 48h to propagate globally                                                                  | Don't panic. Use `dig` to check. Lower TTLs before migration.                                  |
-| **Stripe webhook URL confusion**        | Stripe webhooks go to the API (Supabase), not the frontend domain                                                 | Don't change webhook URLs — they're already correct                                            |
-| **Old bookmarks/sessions**              | Users with bookmarks to `.vercel.app` URLs must still be able to access the app                                   | Keep old domains active for 2+ weeks, don't remove from CORS                                   |
-| **Preview deployments break**           | Removing `.vercel.app` from staging CORS/auth kills all PR preview deployments                                    | Phase F cleanup only applies to **production** — keep `.vercel.app` in staging/dev permanently |
-| **Cookie leaking across subdomains**    | If cookies are set on `.revbrain.com` (with leading dot), homepage/staging/app share cookies                 | Verify cookies are scoped to exact host after deployment (Phase B step 13)                     |
-| **Scattered `revbrain.io` references** | Multiple files reference the old domain as fallback                                                               | Run `grep -r "revbrain\.io\|revbrain\.com"` to find all references                           |
-| **Vercel env var scope**                | Env vars can be scoped to Production, Preview, or Development                                                     | Ensure `APP_URL` is set correctly for the Production scope                                     |
-| **Domain expiry**                       | If domain lapses, everything goes down instantly                                                                  | Verify auto-renewal + payment method on Namecheap before migration                             |
+| Gotcha                                 | Why It Matters                                                                                               | Prevention                                                                                     |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
+| **CORS before domain pointing**        | If you point the domain before updating CORS, the first request from `app.revbrain.com` gets blocked by CORS | Deploy CORS changes first (Phase B before Phase A completes)                                   |
+| **Missing Supabase redirect URL**      | Auth flows (invite, reset, magic link) silently fail — user clicks link and gets a generic error             | Add ALL redirect paths to the allow-list, test each flow                                       |
+| **Supabase SMTP not configured**       | Password reset and invite emails still come from Supabase's default sender, not `@revbrain.com`              | Configure custom SMTP in both prod and staging Supabase projects (Section 5d)                  |
+| **Email SPF/DKIM not set**             | Emails land in spam, invite flow appears broken to users                                                     | Add DNS records before switching `EMAIL_FROM`, test with mail-tester.com                       |
+| **DNS propagation delay**              | Records can take up to 48h to propagate globally                                                             | Don't panic. Use `dig` to check. Lower TTLs before migration.                                  |
+| **Stripe webhook URL confusion**       | Stripe webhooks go to the API (Supabase), not the frontend domain                                            | Don't change webhook URLs — they're already correct                                            |
+| **Old bookmarks/sessions**             | Users with bookmarks to `.vercel.app` URLs must still be able to access the app                              | Keep old domains active for 2+ weeks, don't remove from CORS                                   |
+| **Preview deployments break**          | Removing `.vercel.app` from staging CORS/auth kills all PR preview deployments                               | Phase F cleanup only applies to **production** — keep `.vercel.app` in staging/dev permanently |
+| **Cookie leaking across subdomains**   | If cookies are set on `.revbrain.com` (with leading dot), homepage/staging/app share cookies                 | Verify cookies are scoped to exact host after deployment (Phase B step 13)                     |
+| **Scattered `revbrain.io` references** | Multiple files reference the old domain as fallback                                                          | Run `grep -r "revbrain\.io\|revbrain\.com"` to find all references                             |
+| **Vercel env var scope**               | Env vars can be scoped to Production, Preview, or Development                                                | Ensure `APP_URL` is set correctly for the Production scope                                     |
+| **Domain expiry**                      | If domain lapses, everything goes down instantly                                                             | Verify auto-renewal + payment method on Namecheap before migration                             |
 
 ---
 
@@ -583,25 +583,25 @@ Each phase is independently reversible:
 
 After all phases complete:
 
-| #   | Test                                                      | Expected Result                                                                 |
-| --- | --------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| 1   | `curl -I https://revbrain.com`                       | 200 OK (homepage)                                                               |
-| 2   | `curl -I https://www.revbrain.com`                   | 301 → `https://revbrain.com`                                               |
-| 3   | `curl -I https://app.revbrain.com`                   | 200 OK (app HTML)                                                               |
-| 4   | `curl -I https://stg.revbrain.com`                   | 200 OK (staging HTML)                                                           |
-| 5   | Login on `app.revbrain.com`                          | Auth works, no CORS errors in DevTools                                          |
-| 6   | Password reset flow                                       | Email from `@revbrain.com`, link to `app.revbrain.com/reset-password` |
-| 7   | User invitation flow                                      | Email from `@revbrain.com`, link to `app.revbrain.com/set-password`   |
-| 8   | Stripe checkout flow                                      | Success URL is `app.revbrain.com/billing`                                  |
-| 9   | `dig revbrain.com TXT`                               | Shows SPF record                                                                |
-| 10  | `dig resend._domainkey.revbrain.com CNAME`           | Shows DKIM record                                                               |
-| 11  | `dig revbrain.com CAA`                               | Shows `letsencrypt.org`                                                         |
-| 12  | mail-tester.com                                           | Score 9+/10                                                                     |
-| 13  | Inspect cookies on `app.revbrain.com`                | Auth cookies scoped to `app.revbrain.com`, not `.revbrain.com`        |
-| 14  | Security headers: `curl -I https://app.revbrain.com` | Shows `Strict-Transport-Security`, `X-Content-Type-Options`, `X-Frame-Options`  |
-| 15  | `curl https://app.revbrain.com/robots.txt`           | Shows `Disallow: /`                                                             |
-| 16  | `curl https://revbrain.com/robots.txt`               | Shows `Allow: /`                                                                |
-| 17  | `curl https://revbrain.com/sitemap.xml`              | Returns valid sitemap                                                           |
-| 18  | Old URL still works: `revbrain-client.vercel.app`        | Loads the app (kept as fallback)                                                |
-| 19  | Vercel preview deployment (open any PR)                   | Loads on `*.vercel.app`, auth works                                             |
-| 20  | Uptime monitor active                                     | Alerts configured for `app.revbrain.com` and `revbrain.com`           |
+| #   | Test                                                 | Expected Result                                                                |
+| --- | ---------------------------------------------------- | ------------------------------------------------------------------------------ |
+| 1   | `curl -I https://revbrain.com`                       | 200 OK (homepage)                                                              |
+| 2   | `curl -I https://www.revbrain.com`                   | 301 → `https://revbrain.com`                                                   |
+| 3   | `curl -I https://app.revbrain.com`                   | 200 OK (app HTML)                                                              |
+| 4   | `curl -I https://stg.revbrain.com`                   | 200 OK (staging HTML)                                                          |
+| 5   | Login on `app.revbrain.com`                          | Auth works, no CORS errors in DevTools                                         |
+| 6   | Password reset flow                                  | Email from `@revbrain.com`, link to `app.revbrain.com/reset-password`          |
+| 7   | User invitation flow                                 | Email from `@revbrain.com`, link to `app.revbrain.com/set-password`            |
+| 8   | Stripe checkout flow                                 | Success URL is `app.revbrain.com/billing`                                      |
+| 9   | `dig revbrain.com TXT`                               | Shows SPF record                                                               |
+| 10  | `dig resend._domainkey.revbrain.com CNAME`           | Shows DKIM record                                                              |
+| 11  | `dig revbrain.com CAA`                               | Shows `letsencrypt.org`                                                        |
+| 12  | mail-tester.com                                      | Score 9+/10                                                                    |
+| 13  | Inspect cookies on `app.revbrain.com`                | Auth cookies scoped to `app.revbrain.com`, not `.revbrain.com`                 |
+| 14  | Security headers: `curl -I https://app.revbrain.com` | Shows `Strict-Transport-Security`, `X-Content-Type-Options`, `X-Frame-Options` |
+| 15  | `curl https://app.revbrain.com/robots.txt`           | Shows `Disallow: /`                                                            |
+| 16  | `curl https://revbrain.com/robots.txt`               | Shows `Allow: /`                                                               |
+| 17  | `curl https://revbrain.com/sitemap.xml`              | Returns valid sitemap                                                          |
+| 18  | Old URL still works: `revbrain-client.vercel.app`    | Loads the app (kept as fallback)                                               |
+| 19  | Vercel preview deployment (open any PR)              | Loads on `*.vercel.app`, auth works                                            |
+| 20  | Uptime monitor active                                | Alerts configured for `app.revbrain.com` and `revbrain.com`                    |

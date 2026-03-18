@@ -305,7 +305,6 @@ describe('OrganizationService', () => {
       expect(mockOrgsCreate).toHaveBeenCalledWith({
         name: 'RevBrain Platform',
         slug: 'platform',
-        type: 'contractor',
         seatLimit: 999,
         createdBy: 'first-admin',
       });

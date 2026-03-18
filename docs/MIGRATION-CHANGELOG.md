@@ -8,6 +8,7 @@ This file serves as a reference for pending database migrations and completed wo
 ## [2026-03-18] Initial Fork & Cleanup
 
 ### Removed — Engineering Calculation Modules
+
 - Deleted 22 legacy calculation modules from `apps/client/src/features/modules/legacy/`
 - Removed `apps/dxf-parser/` (DXF file parsing app)
 - Removed server routes: `calculations.ts`, `dxf.ts`
@@ -19,6 +20,7 @@ This file serves as a reference for pending database migrations and completed wo
 - Removed engineering locale files (`engineering.json`)
 
 ### Removed — Engineering Database Tables (code only, not yet migrated)
+
 - `walls` table definition
 - `paving_areas` table definition
 - `earthwork_calculations` table definition
@@ -27,6 +29,7 @@ This file serves as a reference for pending database migrations and completed wo
 - Related Drizzle relations removed from schema
 
 ### Removed — Engineering Contract Types
+
 - `ModuleType` union type (32 module types)
 - `CalculationResultRepository` interface
 - `ModuleSpreadsheetRepository` interface
@@ -34,6 +37,7 @@ This file serves as a reference for pending database migrations and completed wo
 - Removed `calculationResults` and `moduleSpreadsheets` from `Repositories` interface
 
 ### Removed — Heavy Client Dependencies
+
 - `three`, `@react-three/drei`, `@react-three/fiber` (3D rendering)
 - `konva`, `react-konva` (Canvas drawing)
 - `leaflet`, `@types/leaflet` (Maps)
@@ -46,17 +50,20 @@ This file serves as a reference for pending database migrations and completed wo
 - `react-is`, `@types/three` (Unused)
 
 ### Removed — Tests & CI/CD
+
 - 5 e2e test specs (drainage, gravity-walls, paving, modules-migration)
 - DXF parser deploy job from GitHub Actions
 - Removed `.github/` directory entirely (CI/CD to be added later)
 
 ### Removed — Build Artifacts
+
 - `.turbo/` cache directories
 - `coverage/` directories
 - `dist/` directories
 - `.vercel/` project configs
 
 ### Updated — Billing Hook
+
 - `use-billing-data.ts`: Removed dependency on calculations API, now uses local state only
 - TODO: Wire to dedicated billing persistence API
 
@@ -65,23 +72,27 @@ This file serves as a reference for pending database migrations and completed wo
 ## [2026-03-18] Rename Geometrix → RevBrain
 
 ### Package Names
+
 - `@geometrix/contract` → `@revbrain/contract`
 - `@geometrix/database` → `@revbrain/database`
 - `@geometrix/server` → `@revbrain/server`
 - Root package: `geometrix` → `revbrain`
 
 ### Branding
+
 - All UI text: `GEOMETRIX` / `Geometrix` → `REVBRAIN` / `RevBrain`
 - Storage keys: `geometrix_*` → `revbrain_*`
 - IndexedDB names: `geometrix-*` → `revbrain-*`
 
 ### Domains & Emails
+
 - `geometrixlabs.com` → `revbrain.com`
 - `geometrix.io` → `revbrain.io`
 - `noreply@geometrixlabs.com` → `noreply@revbrain.com`
 - `sales@geometrixlabs.com` → `sales@revbrain.com`
 
 ### Config
+
 - `.env.example` updated
 - `supabase/config.toml` updated
 - `supabase/functions/import_map.json` updated
@@ -93,30 +104,33 @@ This file serves as a reference for pending database migrations and completed wo
 ## [2026-03-18] Role System Overhaul
 
 ### Old Roles (Geometrix — Construction)
-| Role | Type | Description |
-|------|------|-------------|
-| `system_admin` | System | Platform super admin |
-| `contractor_ceo` | Contractor | CEO / org admin |
-| `contractor_pm` | Contractor | Project Manager |
-| `execution_engineer` | Contractor | Execution Engineer |
-| `quantity_surveyor` | Contractor | Quantity Surveyor |
-| `quality_controller` | Contractor | Quality Controller |
-| `client_owner` | Client | Project Owner / org admin |
-| `client_pm` | Client | Project Manager (Client) |
-| `inspector` | Client | Inspector |
-| `quality_assurance` | Client | Quality Assurance |
-| `accounts_controller` | Client | Accounts Controller |
+
+| Role                  | Type       | Description               |
+| --------------------- | ---------- | ------------------------- |
+| `system_admin`        | System     | Platform super admin      |
+| `contractor_ceo`      | Contractor | CEO / org admin           |
+| `contractor_pm`       | Contractor | Project Manager           |
+| `execution_engineer`  | Contractor | Execution Engineer        |
+| `quantity_surveyor`   | Contractor | Quantity Surveyor         |
+| `quality_controller`  | Contractor | Quality Controller        |
+| `client_owner`        | Client     | Project Owner / org admin |
+| `client_pm`           | Client     | Project Manager (Client)  |
+| `inspector`           | Client     | Inspector                 |
+| `quality_assurance`   | Client     | Quality Assurance         |
+| `accounts_controller` | Client     | Accounts Controller       |
 
 ### New Roles (RevBrain — Revenue Operations)
-| Role | Scope | Description |
-|------|-------|-------------|
-| `system_admin` | Global | Platform super admin |
-| `org_owner` | Organization | Tenant owner, billing, full access |
-| `admin` | Organization | Full operational access, all projects |
-| `operator` | Project | Does migration work on assigned projects |
-| `reviewer` | Project | View-only + remarks on assigned projects |
+
+| Role           | Scope        | Description                              |
+| -------------- | ------------ | ---------------------------------------- |
+| `system_admin` | Global       | Platform super admin                     |
+| `org_owner`    | Organization | Tenant owner, billing, full access       |
+| `admin`        | Organization | Full operational access, all projects    |
+| `operator`     | Project      | Does migration work on assigned projects |
+| `reviewer`     | Project      | View-only + remarks on assigned projects |
 
 ### Changes Made (Code)
+
 - Updated contract types: role constants, schemas, helper functions
 - Removed `OrganizationType` (`contractor` / `client`) distinction
 - Removed `UserGroup` type and `getRoleGroup()` function
@@ -126,6 +140,7 @@ This file serves as a reference for pending database migrations and completed wo
 - Updated auth store default role fallback
 
 ### Pending — Database Migration
+
 When connecting to Supabase, the following SQL migration is needed:
 
 ```sql
@@ -144,6 +159,7 @@ UPDATE users SET role = 'reviewer' WHERE role IN ('quality_controller', 'quality
 ```
 
 ### Pending — Project Membership Table
+
 The `operator` and `reviewer` roles are project-scoped. A new table is needed:
 
 ```sql

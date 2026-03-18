@@ -18,7 +18,10 @@ export const ROLE_DESCRIPTIONS: Record<UserRole, { he: string; en: string }> = {
   org_owner: { he: 'בעלות על הארגון, חיוב וגישה מלאה', en: 'Org ownership, billing & full access' },
   admin: { he: 'גישה מלאה לכל הפרויקטים', en: 'Full access to all projects' },
   operator: { he: 'עבודת מיגרציה בפרויקטים מוקצים', en: 'Migration work on assigned projects' },
-  reviewer: { he: 'צפייה בלבד + הערות בפרויקטים מוקצים', en: 'View-only + remarks on assigned projects' },
+  reviewer: {
+    he: 'צפייה בלבד + הערות בפרויקטים מוקצים',
+    en: 'View-only + remarks on assigned projects',
+  },
 };
 
 // User interface

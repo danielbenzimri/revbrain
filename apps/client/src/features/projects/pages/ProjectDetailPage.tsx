@@ -47,7 +47,6 @@ import { WorkLogsView } from '@/features/worklogs/components';
 import { TasksView } from '@/features/tasks/components';
 import { useTeamMembers } from '@/features/org/hooks';
 
-
 function formatCurrency(cents: number): string {
   return new Intl.NumberFormat('he-IL', {
     style: 'currency',
@@ -409,7 +408,6 @@ export default function ProjectDetailPage() {
             }}
           />
         </TabsContent>
-
       </Tabs>
 
       {/* Edit Form */}

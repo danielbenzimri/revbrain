@@ -48,9 +48,7 @@ export default function InviteUserPage() {
 
   // Check access - must be org admin or system admin
   const canInvite =
-    user?.role === 'org_owner' ||
-    user?.role === 'admin' ||
-    user?.role === 'system_admin';
+    user?.role === 'org_owner' || user?.role === 'admin' || user?.role === 'system_admin';
 
   if (!canInvite) {
     return (

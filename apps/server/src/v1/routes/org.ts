@@ -143,11 +143,7 @@ orgRouter.openapi(
     tags: ['Organization'],
     summary: 'Resend Invitation',
     description: 'Resends invitation email to a user who has not yet activated their account.',
-    middleware: [
-      authMiddleware,
-      requireRole('org_owner', 'org_owner'),
-      inviteLimiter,
-    ] as any,
+    middleware: [authMiddleware, requireRole('org_owner', 'org_owner'), inviteLimiter] as any,
     request: {
       body: {
         content: {

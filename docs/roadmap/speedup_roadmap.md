@@ -18,44 +18,44 @@ RevBrain has a **solid foundation** (route-level code splitting, React Query, se
 
 ### What RevBrain Already Has (No Action Needed)
 
-| Optimization                   | RevBrain                    | Procure                      | Status              |
-| ------------------------------ | ---------------------------- | ---------------------------- | ------------------- |
+| Optimization                   | RevBrain                     | Procure                      | Status             |
+| ------------------------------ | ---------------------------- | ---------------------------- | ------------------ |
 | Vite vendor chunk splitting    | 7 chunks                     | 5 chunks                     | **RevBrain ahead** |
-| Route-level React.lazy         | 25+ pages                    | 35+ pages                    | **On par**          |
-| React Query config             | staleTime 2min, gcTime 10min | staleTime 5min, gcTime 30min | **On par**          |
-| Server gzip/brotli compression | Hono compress()              | Hono compress()              | **On par**          |
-| HTTP cache headers             | 60s + stale-while-revalidate | Tiered (15s to 24h)          | **Partial**         |
+| Route-level React.lazy         | 25+ pages                    | 35+ pages                    | **On par**         |
+| React Query config             | staleTime 2min, gcTime 10min | staleTime 5min, gcTime 30min | **On par**         |
+| Server gzip/brotli compression | Hono compress()              | Hono compress()              | **On par**         |
+| HTTP cache headers             | 60s + stale-while-revalidate | Tiered (15s to 24h)          | **Partial**        |
 | Database indexes               | 15+ indexes                  | 11 indexes                   | **RevBrain ahead** |
 | Connection pooling             | max: 10, idle: 20s           | max: 5, idle: 20s            | **RevBrain ahead** |
-| Rate limiting                  | 8 limiters                   | 9 limiters                   | **On par**          |
-| useMemo/useCallback            | 97/134 files                 | 85+ files                    | **On par**          |
-| Debouncing                     | 19 files                     | useDebouncedValue hook       | **On par**          |
-| TypeScript incremental         | tsc -b + .tsbuildinfo        | tsc -b                       | **On par**          |
-| Turbo build caching            | Configured                   | Configured                   | **On par**          |
-| Font preconnect                | Google Fonts                 | Google Fonts + CDNs          | **Partial**         |
-| Sentry deferred                | Dynamic import               | requestIdleCallback          | **Partial**         |
-| Tailwind purging               | v4 auto-purge                | v4 content-based             | **On par**          |
+| Rate limiting                  | 8 limiters                   | 9 limiters                   | **On par**         |
+| useMemo/useCallback            | 97/134 files                 | 85+ files                    | **On par**         |
+| Debouncing                     | 19 files                     | useDebouncedValue hook       | **On par**         |
+| TypeScript incremental         | tsc -b + .tsbuildinfo        | tsc -b                       | **On par**         |
+| Turbo build caching            | Configured                   | Configured                   | **On par**         |
+| Font preconnect                | Google Fonts                 | Google Fonts + CDNs          | **Partial**        |
+| Sentry deferred                | Dynamic import               | requestIdleCallback          | **Partial**        |
+| Tailwind purging               | v4 auto-purge                | v4 content-based             | **On par**         |
 
 ### What RevBrain Is Missing (Action Required)
 
-| Optimization                   | Procure                                   | RevBrain                     | Impact                                   |
-| ------------------------------ | ----------------------------------------- | ----------------------------- | ---------------------------------------- |
-| List virtualization            | Custom useVirtualization + useVirtualGrid | **None**                      | **Critical**                             |
-| Zustand useShallow             | All selectors                             | **None**                      | **High**                                 |
-| Route chunk prefetching        | Full prefetch system (6 routes)           | **None**                      | **High**                                 |
-| Background data preloading     | startBackgroundDataPreload()              | Hover-only prefetch           | **High**                                 |
-| ETag middleware                | FNV-1a hash, 304 responses                | **None**                      | **Medium**                               |
-| Tiered cache headers           | 7 presets (15s to immutable)              | Single 60s policy             | **Medium**                               |
-| requestIdleCallback            | Sentry, analytics, chunk loading          | **None**                      | **Medium**                               |
-| React.memo coverage            | Broad                                     | 9 files only                  | **Medium**                               |
-| Component code splitting       | Lazy tabs, lazy sub-views                 | Monolithic views (19K+ lines) | **Critical**                             |
-| Infinite scroll                | useInfiniteScroll + IntersectionObserver  | **None**                      | **Medium**                               |
-| useShallow selectors           | All Zustand consumers                     | **None**                      | **High**                                 |
-| Disable React DevTools in prod | window.**REACT_DEVTOOLS_GLOBAL_HOOK**     | **None**                      | **Low**                                  |
-| In-memory auth token cache     | \_cachedToken avoids localStorage         | **None**                      | **Low**                                  |
-| DNS-prefetch                   | Supabase domain                           | **None**                      | **Low**                                  |
-| Dev-only Zod validation        | Skip in prod                              | Always validates              | **Low**                                  |
-| Lazy tab pattern               | Default tab eager, rest lazy              | All tabs loaded               | **Medium**                               |
+| Optimization                   | Procure                                   | RevBrain                      | Impact                                  |
+| ------------------------------ | ----------------------------------------- | ----------------------------- | --------------------------------------- |
+| List virtualization            | Custom useVirtualization + useVirtualGrid | **None**                      | **Critical**                            |
+| Zustand useShallow             | All selectors                             | **None**                      | **High**                                |
+| Route chunk prefetching        | Full prefetch system (6 routes)           | **None**                      | **High**                                |
+| Background data preloading     | startBackgroundDataPreload()              | Hover-only prefetch           | **High**                                |
+| ETag middleware                | FNV-1a hash, 304 responses                | **None**                      | **Medium**                              |
+| Tiered cache headers           | 7 presets (15s to immutable)              | Single 60s policy             | **Medium**                              |
+| requestIdleCallback            | Sentry, analytics, chunk loading          | **None**                      | **Medium**                              |
+| React.memo coverage            | Broad                                     | 9 files only                  | **Medium**                              |
+| Component code splitting       | Lazy tabs, lazy sub-views                 | Monolithic views (19K+ lines) | **Critical**                            |
+| Infinite scroll                | useInfiniteScroll + IntersectionObserver  | **None**                      | **Medium**                              |
+| useShallow selectors           | All Zustand consumers                     | **None**                      | **High**                                |
+| Disable React DevTools in prod | window.**REACT_DEVTOOLS_GLOBAL_HOOK**     | **None**                      | **Low**                                 |
+| In-memory auth token cache     | \_cachedToken avoids localStorage         | **None**                      | **Low**                                 |
+| DNS-prefetch                   | Supabase domain                           | **None**                      | **Low**                                 |
+| Dev-only Zod validation        | Skip in prod                              | Always validates              | **Low**                                 |
+| Lazy tab pattern               | Default tab eager, rest lazy              | All tabs loaded               | **Medium**                              |
 | Web Workers                    | Not in Procure either                     | **None**                      | **Medium** (RevBrain-specific: DXF, 3D) |
 
 ---

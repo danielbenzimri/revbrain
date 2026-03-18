@@ -5,7 +5,7 @@
  * Uses React Query for project data with prefetch support.
  */
 import { useState } from 'react';
-import { Outlet, useParams, useLocation } from 'react-router-dom';
+import { Outlet, useParams } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Header } from '@/components/layout/header';
@@ -17,7 +17,6 @@ import { useProject } from '../hooks/use-project-api';
 
 export function ProjectLayout() {
   const { id } = useParams<{ id: string }>();
-  const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { isCollapsed } = useSidebarStore();
   const { i18n } = useTranslation();
@@ -26,9 +25,6 @@ export function ProjectLayout() {
   // Fetch project data via React Query (benefits from prefetch on hover)
   const { data: project, isLoading, error } = useProject(id);
 
-  // Determine if current view needs full-screen rendering (workspace, modules)
-  const pathParts = location.pathname.split('/');
-  const lastPart = pathParts[pathParts.length - 1];
   const isWorkspaceView = false;
 
   // Only show spinner on initial load (no cached/placeholder data yet)

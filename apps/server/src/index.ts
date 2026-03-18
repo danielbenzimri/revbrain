@@ -141,11 +141,7 @@ app.use('/v1/boq/*/import', fileUploadBodyLimit);
 app.use('/api/*', async (c, next) => {
   const path = c.req.path;
   // Skip file upload and webhook paths - they have their own limits
-  if (
-    path.includes('/files') ||
-    path.includes('/webhooks') ||
-    path.includes('/import')
-  ) {
+  if (path.includes('/files') || path.includes('/webhooks') || path.includes('/import')) {
     return next();
   }
   return apiBodyLimit(c, next);
@@ -153,11 +149,7 @@ app.use('/api/*', async (c, next) => {
 app.use('/v1/*', async (c, next) => {
   const path = c.req.path;
   // Skip file upload and webhook paths - they have their own limits
-  if (
-    path.includes('/files') ||
-    path.includes('/webhooks') ||
-    path.includes('/import')
-  ) {
+  if (path.includes('/files') || path.includes('/webhooks') || path.includes('/import')) {
     return next();
   }
   return apiBodyLimit(c, next);

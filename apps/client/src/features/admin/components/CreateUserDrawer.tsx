@@ -246,12 +246,8 @@ export function CreateUserDrawer({ open, onOpenChange, orgId, orgName }: CreateU
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-white"
                   >
                     <option value="">{t('common.select')}</option>
-                    <option value="org_owner">
-                      {t('admin.users.roles.org_owner.label')}
-                    </option>
-                    <option value="org_owner">
-                      {t('admin.users.roles.org_owner.label')}
-                    </option>
+                    <option value="org_owner">{t('admin.users.roles.org_owner.label')}</option>
+                    <option value="org_owner">{t('admin.users.roles.org_owner.label')}</option>
                     {/* TODO: Add more roles as needed */}
                   </select>
                 </div>

@@ -250,9 +250,7 @@ export default function UsersPage() {
           </p>
         </div>
         <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <p className="text-sm text-slate-500">
-            {lang === 'he' ? 'הנהלה' : 'Management'}
-          </p>
+          <p className="text-sm text-slate-500">{lang === 'he' ? 'הנהלה' : 'Management'}</p>
           <p className="text-2xl font-bold text-blue-600">{groupedUsers.management?.length || 0}</p>
         </div>
         <div className="bg-white rounded-lg border border-slate-200 p-4">

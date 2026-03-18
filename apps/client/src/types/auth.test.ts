@@ -3,13 +3,7 @@ import { ROLE_DISPLAY_NAMES, ROLE_DESCRIPTIONS } from './auth';
 import type { UserRole } from './auth';
 
 describe('ROLE_DISPLAY_NAMES', () => {
-  const allRoles: UserRole[] = [
-    'system_admin',
-    'org_owner',
-    'admin',
-    'operator',
-    'reviewer',
-  ];
+  const allRoles: UserRole[] = ['system_admin', 'org_owner', 'admin', 'operator', 'reviewer'];
 
   it('should have a display name for every role', () => {
     allRoles.forEach((role) => {
