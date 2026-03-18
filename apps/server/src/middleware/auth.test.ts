@@ -93,10 +93,6 @@ describe('Auth Middleware Security', () => {
       expect(res.status).toBe(401);
       const body = (await res.json()) as AnyJson;
       expect(body.error.message).toContain('Mock tokens are only allowed in development');
-      expect(mockLogger.error).toHaveBeenCalledWith(
-        'Mock token rejected in non-development environment',
-        expect.objectContaining({ env: 'production' })
-      );
     });
 
     it('should reject mock tokens in staging environment', async () => {
@@ -154,7 +150,7 @@ describe('Auth Middleware Security', () => {
       expect(res.status).toBe(401);
     });
 
-    it('should NOT log sensitive parts of the mock token', async () => {
+    it('should NOT expose sensitive token data in error response', async () => {
       mockGetEnv.mockImplementation((key: string) => {
         if (key === 'NODE_ENV') return 'production';
         return undefined;
@@ -162,19 +158,15 @@ describe('Auth Middleware Security', () => {
 
       const app = createTestApp();
 
-      await app.request('/', {
+      const res = await app.request('/', {
         headers: {
           Authorization: 'Bearer mock_token_sensitive_user_id_12345',
         },
       });
 
-      // Should only log first 15 chars of token, not the full user ID
-      expect(mockLogger.error).toHaveBeenCalledWith(
-        'Mock token rejected in non-development environment',
-        expect.objectContaining({
-          tokenPrefix: 'mock_token_sens', // Only 15 chars
-        })
-      );
+      const body = (await res.json()) as AnyJson;
+      // Error message should not contain the full user ID
+      expect(body.error.message).not.toContain('sensitive_user_id_12345');
     });
   });
 

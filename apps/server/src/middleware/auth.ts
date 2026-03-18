@@ -2,6 +2,8 @@ import { createMiddleware } from 'hono/factory';
 import { decode, verify } from 'hono/jwt';
 import { db, users, organizations, eq } from '@revbrain/database';
 import { AppError, ErrorCodes } from '@revbrain/contract';
+import type { UserEntity } from '@revbrain/contract';
+import { MOCK_IDS } from '../mocks/constants.ts';
 import type { SupabaseJWTPayload } from '../types/index.ts';
 import { getEnv } from '../lib/env.ts';
 import { getSupabaseAdmin } from '../lib/supabase.ts';
@@ -111,6 +113,22 @@ async function verifyTokenRemotely(token: string): Promise<SupabaseJWTPayload> {
 }
 
 /**
+ * Create a mock JWT payload for development auth.
+ */
+function createMockJwtPayload(user: UserEntity | CachedUser): SupabaseJWTPayload {
+  return {
+    sub: user.supabaseUserId,
+    exp: Math.floor(Date.now() / 1000) + 3600,
+    iat: Math.floor(Date.now() / 1000),
+    aud: 'authenticated',
+    role: 'authenticated',
+    email: user.email,
+    user_metadata: { full_name: user.fullName, role: user.role },
+    app_metadata: { provider: 'email' },
+  };
+}
+
+/**
  * Standard JWT Authentication Middleware
  *
  * Use this for ALL protected endpoints EXCEPT /auth/activate.
@@ -126,25 +144,60 @@ async function verifyTokenRemotely(token: string): Promise<SupabaseJWTPayload> {
 // Standard auth - rejects inactive users
 export const authMiddleware = createMiddleware<AppEnv>(async (c, next) => {
   const authHeader = c.req.header('Authorization');
+  const authMode = getEnv('AUTH_MODE') || 'jwt';
 
+  // ========================================================================
+  // MOCK AUTH MODE (AUTH_MODE=mock)
+  // Uses mock repos — no database needed
+  // ========================================================================
+  if (authMode === 'mock') {
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+
+    // No auth header → default to Acme org_owner for local convenience
+    if (!token) {
+      const defaultUser = await c.var.repos.users.findById(MOCK_IDS.USER_ACME_OWNER);
+      if (defaultUser) {
+        c.set('user', defaultUser);
+        c.set('jwtPayload', createMockJwtPayload(defaultUser));
+        await next();
+        return;
+      }
+    }
+
+    // Parse mock_token_{userId}
+    if (token && token.startsWith('mock_token_')) {
+      const userId = token.replace('mock_token_', '');
+      const user = await c.var.repos.users.findById(userId);
+      if (!user) {
+        throw new AppError(ErrorCodes.UNAUTHORIZED, 'Mock user not found', 401);
+      }
+      c.set('user', user);
+      c.set('jwtPayload', createMockJwtPayload(user));
+      await next();
+      return;
+    }
+
+    // Auth header present but not a valid mock token
+    throw new AppError(ErrorCodes.INVALID_TOKEN, 'Invalid mock token format', 401);
+  }
+
+  // ========================================================================
+  // STANDARD AUTH (AUTH_MODE=jwt)
+  // ========================================================================
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     throw new AppError(ErrorCodes.UNAUTHORIZED, 'Missing or invalid Authorization header', 401);
   }
 
   const token = authHeader.slice(7);
 
-  // MOCK MODE FOR LOCAL DEV ONLY
-  // SECURITY: Only allow in explicit development mode, NEVER in production/staging
-  const nodeEnv = getEnv('NODE_ENV');
+  // ========================================================================
+  // LEGACY MOCK TOKEN (development fallback, requires DB)
+  // ========================================================================
   const isMockToken = token.startsWith('mock_token_');
 
   if (isMockToken) {
-    // CRITICAL: Reject mock tokens in any non-development environment
+    const nodeEnv = getEnv('NODE_ENV');
     if (nodeEnv !== 'development') {
-      logger.error('Mock token rejected in non-development environment', {
-        env: nodeEnv,
-        tokenPrefix: token.slice(0, 15),
-      });
       throw new AppError(
         ErrorCodes.INVALID_TOKEN,
         'Mock tokens are only allowed in development mode',
@@ -153,21 +206,23 @@ export const authMiddleware = createMiddleware<AppEnv>(async (c, next) => {
     }
 
     const userId = token.replace('mock_token_', '');
-    logger.warn('⚠️ MOCK AUTH ENABLED - DEVELOPMENT ONLY', { userId });
+    // Try mock repos first (if available), then fall back to DB
+    const mockUser = await c.var.repos.users.findById(userId);
+    if (mockUser) {
+      c.set('user', mockUser);
+      c.set('jwtPayload', createMockJwtPayload(mockUser));
+      await next();
+      return;
+    }
 
-    // 1. Try to find user in DB (by ID or Email to prevent collisions)
-    // FIX: Use full userId for email to prevent collisions between mock users that share the same prefix
+    // DB fallback for legacy mock token behavior
     const mockEmail = `mock.${userId}@revbrain.io`;
-
     let localUser = await db.query.users.findFirst({
-      where: (u, { or, eq }) => or(eq(u.id, userId), eq(u.email, mockEmail)),
+      where: (u, { or, eq: eqFn }) => or(eqFn(u.id, userId), eqFn(u.email, mockEmail)),
     });
 
-    // 2. If missing, auto-provision (for developer experience)
     if (!localUser) {
-      // Ensure we have a mock organization using UPSERT to prevent race conditions
       const mockOrgId = '00000000-0000-0000-0000-000000000000';
-
       await db
         .insert(organizations)
         .values({
@@ -178,9 +233,6 @@ export const authMiddleware = createMiddleware<AppEnv>(async (c, next) => {
           seatLimit: 999,
         })
         .onConflictDoNothing({ target: organizations.id });
-
-      // Use UPSERT pattern to prevent race conditions between concurrent requests
-      // NOTE: Creating as admin (not system_admin) to minimize blast radius
       const [upsertedUser] = await db
         .insert(users)
         .values({
@@ -188,45 +240,26 @@ export const authMiddleware = createMiddleware<AppEnv>(async (c, next) => {
           supabaseUserId: userId,
           email: mockEmail,
           fullName: 'Mock Developer',
-          role: 'admin', // Safe default role, not admin
+          role: 'admin',
           isActive: true,
           isOrgAdmin: true,
           organizationId: mockOrgId,
         })
         .onConflictDoNothing({ target: users.id })
         .returning();
-
-      if (upsertedUser) {
-        localUser = upsertedUser;
-      } else {
-        // User already existed (concurrent request won), fetch it
-        localUser = await db.query.users.findFirst({
-          where: (u, { or, eq }) => or(eq(u.id, userId), eq(u.email, mockEmail)),
-        });
-      }
-
-      if (!localUser) {
-        throw new AppError(ErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to provision mock user', 500);
-      }
+      localUser =
+        upsertedUser ??
+        (await db.query.users.findFirst({
+          where: (u, { or, eq: eqFn }) => or(eqFn(u.id, userId), eqFn(u.email, mockEmail)),
+        }));
     }
 
-    // Mock Payload
-    const payload: SupabaseJWTPayload = {
-      sub: localUser.supabaseUserId,
-      exp: Math.floor(Date.now() / 1000) + 3600,
-      iat: Math.floor(Date.now() / 1000),
-      aud: 'authenticated',
-      role: 'authenticated',
-      email: localUser.email,
-      user_metadata: {
-        full_name: localUser.fullName,
-        role: localUser.role,
-      },
-      app_metadata: { provider: 'email' },
-    };
+    if (!localUser) {
+      throw new AppError(ErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to provision mock user', 500);
+    }
 
     c.set('user', localUser);
-    c.set('jwtPayload', payload);
+    c.set('jwtPayload', createMockJwtPayload(localUser));
     await next();
     return;
   }
