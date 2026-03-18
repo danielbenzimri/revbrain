@@ -57,7 +57,7 @@ export default function LoginPage() {
   };
 
   // Roles grouped by category
-  const contractorRoles: UserRole[] = ['org_owner', 'admin', 'operator', 'operator'];
+  const orgRoles: UserRole[] = ['org_owner', 'admin', 'operator', 'operator'];
   const clientRoles: UserRole[] = ['org_owner', 'admin', 'reviewer'];
 
   return (
@@ -195,7 +195,7 @@ export default function LoginPage() {
               </div>
 
               <div className="grid grid-cols-2 gap-2">
-                {contractorRoles.map((role) => (
+                {orgRoles.map((role) => (
                   <button
                     key={role}
                     onClick={() => handleRoleSimulation(role)}

@@ -167,7 +167,7 @@ export interface CreateOrganizationInput {
 export interface UpdateOrganizationInput {
   name?: string;
   slug?: string;
-  type?: 'contractor' | 'client';
+  type?: string;
   seatLimit?: number;
   planId?: string | null;
   isActive?: boolean;

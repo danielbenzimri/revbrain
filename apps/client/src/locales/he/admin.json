@@ -10,7 +10,7 @@
       "growth": "צמיחה"
     },
     "recentOnboardings": "צירופים אחרונים",
-    "contractorPlan": "תוכנית קבלן",
+    "starterPlan": "תוכנית התחלתית",
     "ago": "לפני",
     "systemHealth": "בריאות המערכת",
     "allOperational": "כל המערכות פעילות",
@@ -22,8 +22,8 @@
     "onboardTenant": "צירוף ארגון",
     "searchPlaceholder": "חיפוש ארגונים...",
     "allTypes": "כל הסוגים",
-    "contractor": "קבלן",
-    "client": "לקוח",
+    "business": "עסקי",
+    "individual": "פרטי",
     "allStatus": "כל הסטטוסים",
     "active": "פעיל",
     "pending": "ממתין",
@@ -157,7 +157,7 @@
     "plans": {
       "starter": {
         "name": "התחלתי",
-        "description": "לקבלנים קטנים שמתחילים"
+        "description": "לצוותים קטנים שמתחילים"
       },
       "pro": {
         "name": "מקצועי",
@@ -219,7 +219,7 @@
       "customBranding": "מיתוג מותאם",
       "sso": "SSO (התחברות אחידה)",
       "workModules": "מודולי עבודה",
-      "workModulesHint": "בחר אילו מודולי בנייה כלולים",
+      "workModulesHint": "בחר אילו מודולי עבודה כלולים",
       "selectAll": "בחר הכל",
       "deselectAll": "בטל בחירה",
       "modules": {
@@ -316,12 +316,12 @@
     "step2": "בחירת חבילה",
     "step3": "מנהל ראשון",
     "orgName": "שם הארגון",
-    "orgNamePlaceholder": "לדוגמה: חברת בניה בע\"מ",
+    "orgNamePlaceholder": "לדוגמה: חברה בע\"מ",
     "orgType": "סוג הארגון",
-    "contractor": "קבלן",
-    "contractorDesc": "חברות בנייה וקבלנים",
-    "client": "לקוח",
-    "clientDesc": "בעלי פרויקטים ולקוחות",
+    "business": "עסקי",
+    "businessDesc": "חברות וארגונים",
+    "individual": "פרטי",
+    "individualDesc": "משתמשים עצמאיים ופרילנסרים",
     "phone": "מספר טלפון",
     "phonePlaceholder": "050-1234567",
     "address": "כתובת",
@@ -346,8 +346,7 @@
     "successMessage": "{{orgName}} נוצר ומייל הזמנה נשלח ל-{{email}}.",
     "onboardAnother": "צירוף ארגון נוסף",
     "close": "סגור",
-    "contractorCeo": "מנכ\"ל הקבלן",
-    "clientOwner": "בעל הלקוח",
+    "orgOwner": "בעל הארגון",
     "accessDenied": "הגישה נדחתה",
     "accessDeniedDesc": "רק מנהלי מערכת יכולים לגשת לדף זה.",
     "goToDashboard": "חזרה ללוח הבקרה",

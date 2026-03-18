@@ -174,7 +174,7 @@ export const authMiddleware = createMiddleware<AppEnv>(async (c, next) => {
           id: mockOrgId,
           name: 'Mock Organization',
           slug: 'mock-org',
-          type: 'contractor',
+          type: 'business',
           seatLimit: 999,
         })
         .onConflictDoNothing({ target: organizations.id });

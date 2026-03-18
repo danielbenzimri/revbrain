@@ -4,7 +4,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 /**
  * Query cache configuration optimized for data freshness vs network load:
  * - Static data (plans, org structure): 30 minutes
- * - User-generated data (tasks, BOQ): 2 minutes
+ * - User-generated data (tasks, records): 2 minutes
  * - Real-time data: 10 seconds (configured per-hook)
  *
  * Default staleTime is 2 minutes for user-generated content.

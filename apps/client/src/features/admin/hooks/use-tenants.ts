@@ -23,7 +23,7 @@ export interface Tenant {
 export interface TenantForEdit {
   id: string;
   name: string;
-  type: 'contractor' | 'client';
+  type: string;
   planId: string | null;
   seatLimit: number;
   isActive: boolean;

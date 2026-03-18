@@ -108,7 +108,7 @@ function createMockRepos() {
         Promise.resolve({
           id: 'o1',
           name: 'Test Org',
-          type: 'contractor',
+          type: 'business',
           seatLimit: 10,
           seatUsed: 1,
         })
@@ -256,7 +256,7 @@ describe('CRUD API Unit Tests', () => {
         limits: { maxUsers: 10, maxProjects: 5, storageGB: 50 },
         features: {
           aiLevel: 'basic',
-          modules: ['earthworks'],
+          modules: ['cpq_migration'],
           customBranding: true,
           sso: false,
         },
@@ -313,7 +313,7 @@ describe('CRUD API Unit Tests', () => {
           }),
         },
         body: JSON.stringify({
-          organization: { name: 'New Corp', type: 'contractor', seatLimit: 10 },
+          organization: { name: 'New Corp', seatLimit: 10 },
           admin: { email: 'a@te.com', fullName: 'Admin', role: 'org_owner' },
         }),
       });

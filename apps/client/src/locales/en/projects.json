@@ -15,8 +15,6 @@
   "colName": "Project Name",
   "colStatus": "Status",
   "colBudget": "Budget",
-  "colContractor": "Contractor",
-  "colClient": "Client",
   "colStartDate": "Start Date",
   "colEndDate": "End Date",
 
@@ -40,33 +38,8 @@
     "notes": "Notes",
     "notesPlaceholder": "Additional notes about the project",
 
-    "contractDetails": "Contract Details",
-    "contractNumber": "Contract Number",
-    "contractNumberPlaceholder": "e.g., CNT-2026-001",
-    "contractDate": "Contract Date",
     "startDate": "Start Date",
     "endDate": "End Date",
-
-    "parties": "Contract Parties",
-    "contractorName": "Contractor Name",
-    "contractorNamePlaceholder": "Enter contractor company name",
-    "contractorId": "Contractor ID",
-    "contractorIdPlaceholder": "Company registration number",
-    "clientName": "Client Name",
-    "clientNamePlaceholder": "Enter client company name",
-    "clientId": "Client ID",
-    "clientIdPlaceholder": "Company registration number",
-
-    "financials": "Financial Details",
-    "contractValue": "Contract Value",
-    "contractValuePlaceholder": "Total contract value",
-    "globalDiscount": "Global Discount (%)",
-    "globalDiscountPlaceholder": "Default discount for all BOQ items",
-    "chapterDiscounts": "Chapter Discounts",
-    "chapterDiscountsHelp": "Override discount per chapter",
-    "addChapterDiscount": "Add Chapter Discount",
-    "chapterCode": "Chapter Code",
-    "discountPercent": "Discount %",
 
     "statusSection": "Status",
     "changeStatus": "Change Status",
@@ -76,9 +49,7 @@
   "validation": {
     "nameRequired": "Project name is required",
     "nameMinLength": "Project name must be at least 3 characters",
-    "invalidDiscount": "Discount must be between 0 and 100",
-    "endDateBeforeStart": "End date cannot be before start date",
-    "contractValuePositive": "Contract value must be a positive number"
+    "endDateBeforeStart": "End date cannot be before start date"
   },
 
   "actions": {
@@ -116,12 +87,7 @@
 
   "details": {
     "overview": "Overview",
-    "contract": "Contract",
     "timeline": "Timeline",
-    "financial": "Financial",
-    "noContractNumber": "No contract number",
-    "noContractor": "No contractor assigned",
-    "noClient": "No client assigned",
     "createdAt": "Created",
     "updatedAt": "Last Updated",
     "completedAt": "Completed",
@@ -131,8 +97,6 @@
   "filters": {
     "all": "All Projects",
     "byStatus": "Filter by Status",
-    "byContractor": "Filter by Contractor",
-    "byClient": "Filter by Client",
     "dateRange": "Date Range",
     "clearFilters": "Clear Filters"
   },

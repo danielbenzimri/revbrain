@@ -177,7 +177,7 @@ describe('OrganizationService', () => {
       const existing = {
         id: 'org-1',
         name: 'Old Name',
-        type: 'contractor',
+        type: 'business',
         seatLimit: 10,
         isActive: true,
         planId: 'plan-1',
@@ -235,7 +235,7 @@ describe('OrganizationService', () => {
       mockOrgsFindById.mockResolvedValue({
         id: 'org-1',
         name: 'Deactivate Me',
-        type: 'contractor',
+        type: 'business',
         seatUsed: 3,
       });
       mockOrgsDelete.mockResolvedValue(undefined);
@@ -249,7 +249,7 @@ describe('OrganizationService', () => {
           action: 'tenant.deactivated',
           metadata: expect.objectContaining({
             tenantName: 'Deactivate Me',
-            tenantType: 'contractor',
+            tenantType: 'business',
           }),
         })
       );

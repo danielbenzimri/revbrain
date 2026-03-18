@@ -92,7 +92,7 @@ describe('UserService', () => {
   const mockOrg = {
     id: 'org-123',
     name: 'Test Org',
-    type: 'contractor',
+    type: 'business',
     seatLimit: 10,
     seatUsed: 5,
   };

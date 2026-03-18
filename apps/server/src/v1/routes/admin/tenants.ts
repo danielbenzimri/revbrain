@@ -104,7 +104,7 @@ adminTenantsRouter.openapi(
           'application/json': {
             schema: z.object({
               name: z.string().optional(),
-              type: z.enum(['contractor', 'client']).optional(),
+              type: z.string().optional(),
               seatLimit: z.number().optional(),
               isActive: z.boolean().optional(),
               planId: z.string().uuid('Invalid plan ID format').nullable().optional(),

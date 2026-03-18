@@ -17,7 +17,7 @@
   "deleteConfirm": "האם אתה בטוח שברצונך למחוק קובץ זה?",
 
   "folders": {
-    "contractorContract": "חוזה קבלן",
+    "contracts": "חוזים",
     "technicalSpecs": "מפרטים טכניים",
     "generalSpec": "המפרט הכללי",
     "catalogs": "קטלוגים",

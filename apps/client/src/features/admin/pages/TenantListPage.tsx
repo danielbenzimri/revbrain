@@ -29,7 +29,7 @@ export default function TenantListPage() {
     setSelectedTenant({
       id: tenant.id,
       name: tenant.name,
-      type: tenant.type as 'contractor' | 'client',
+      type: tenant.type as string,
       planId: tenant.plan?.id || null,
       seatLimit: tenant.seatLimit,
       isActive: tenant.isActive,

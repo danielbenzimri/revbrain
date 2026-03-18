@@ -64,7 +64,7 @@ describe('LimitsService', () => {
     ({
       id: 'org-123',
       name: 'Test Org',
-      type: 'contractor',
+      type: 'business',
       slug: 'test-org',
       seatUsed: overrides.seatUsed ?? 5,
       seatLimit: overrides.seatLimit ?? 10,

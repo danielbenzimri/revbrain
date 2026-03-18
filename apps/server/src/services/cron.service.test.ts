@@ -480,7 +480,7 @@ describe('CronService', () => {
           email: 'regular@example.com',
           fullName: 'Regular User',
           organizationId: 'org-1',
-          role: 'contractor_member',
+          role: 'operator',
         });
 
       await cronService.processTrialEndingWarnings();

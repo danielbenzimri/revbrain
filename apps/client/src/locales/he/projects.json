@@ -15,8 +15,6 @@
   "colName": "שם הפרויקט",
   "colStatus": "סטטוס",
   "colBudget": "תקציב",
-  "colContractor": "קבלן",
-  "colClient": "מזמין",
   "colStartDate": "תאריך התחלה",
   "colEndDate": "תאריך סיום",
 
@@ -40,33 +38,8 @@
     "notes": "הערות",
     "notesPlaceholder": "הערות נוספות על הפרויקט",
 
-    "contractDetails": "פרטי החוזה",
-    "contractNumber": "מספר חוזה",
-    "contractNumberPlaceholder": "לדוגמה: CNT-2026-001",
-    "contractDate": "תאריך חוזה",
     "startDate": "תאריך התחלה",
     "endDate": "תאריך סיום",
-
-    "parties": "צדדים לחוזה",
-    "contractorName": "שם הקבלן",
-    "contractorNamePlaceholder": "הזן שם חברת הקבלן",
-    "contractorId": "ח.פ. קבלן",
-    "contractorIdPlaceholder": "מספר רישום החברה",
-    "clientName": "שם המזמין",
-    "clientNamePlaceholder": "הזן שם חברת המזמין",
-    "clientId": "ח.פ. מזמין",
-    "clientIdPlaceholder": "מספר רישום החברה",
-
-    "financials": "פרטים כספיים",
-    "contractValue": "ערך החוזה",
-    "contractValuePlaceholder": "סכום החוזה הכולל",
-    "globalDiscount": "הנחה גלובלית (%)",
-    "globalDiscountPlaceholder": "הנחה ברירת מחדל לכל פריטי הכתב כמויות",
-    "chapterDiscounts": "הנחות לפי פרק",
-    "chapterDiscountsHelp": "דריסת הנחה לפי פרק",
-    "addChapterDiscount": "הוסף הנחת פרק",
-    "chapterCode": "קוד פרק",
-    "discountPercent": "אחוז הנחה",
 
     "statusSection": "סטטוס",
     "changeStatus": "שינוי סטטוס",
@@ -76,9 +49,7 @@
   "validation": {
     "nameRequired": "שם הפרויקט נדרש",
     "nameMinLength": "שם הפרויקט חייב להכיל לפחות 3 תווים",
-    "invalidDiscount": "ההנחה חייבת להיות בין 0 ל-100",
-    "endDateBeforeStart": "תאריך הסיום לא יכול להיות לפני תאריך ההתחלה",
-    "contractValuePositive": "ערך החוזה חייב להיות מספר חיובי"
+    "endDateBeforeStart": "תאריך הסיום לא יכול להיות לפני תאריך ההתחלה"
   },
 
   "actions": {
@@ -116,12 +87,7 @@
 
   "details": {
     "overview": "סקירה",
-    "contract": "חוזה",
     "timeline": "ציר זמן",
-    "financial": "כספי",
-    "noContractNumber": "אין מספר חוזה",
-    "noContractor": "לא הוקצה קבלן",
-    "noClient": "לא הוקצה מזמין",
     "createdAt": "נוצר",
     "updatedAt": "עודכן לאחרונה",
     "completedAt": "הושלם",
@@ -131,8 +97,6 @@
   "filters": {
     "all": "כל הפרויקטים",
     "byStatus": "סינון לפי סטטוס",
-    "byContractor": "סינון לפי קבלן",
-    "byClient": "סינון לפי מזמין",
     "dateRange": "טווח תאריכים",
     "clearFilters": "נקה מסננים"
   },

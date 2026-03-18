@@ -53,7 +53,7 @@ export type NewPlan = typeof plans.$inferInsert;
 /**
  * Organizations (Multi-tenant)
  *
- * Each organization represents a customer account (contractor firm or client company).
+ * Each organization represents a customer account.
  * Organizations have seat limits and can invite users up to that limit.
  */
 export const organizations = pgTable('organizations', {
@@ -64,7 +64,7 @@ export const organizations = pgTable('organizations', {
   slug: varchar('slug', { length: 100 }).notNull().unique(),
 
   // Type determines which roles are available
-  type: varchar('type', { length: 50 }).notNull(), // 'contractor' | 'client'
+  type: varchar('type', { length: 50 }).notNull(), // 'business' | 'individual'
 
   // Seat management
   seatLimit: integer('seat_limit').notNull().default(5),
@@ -188,8 +188,8 @@ export type NewAuditLog = typeof auditLogs.$inferInsert;
 /**
  * Projects
  *
- * Construction projects with contract management, BOQ, and billing features.
- * Each project belongs to an organization and has an owner.
+ * Projects for migration work. Each project belongs to an organization
+ * and has an owner.
  */
 export const projects = pgTable('projects', {
   id: uuid('id').primaryKey().defaultRandom(),

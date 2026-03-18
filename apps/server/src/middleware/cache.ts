@@ -4,8 +4,8 @@ import { createMiddleware } from 'hono/factory';
  * Tiered Cache-Control Presets
  *
  * Each preset matches data volatility to cache duration:
- * - short:   fast-changing data (tasks, work logs)
- * - default: moderate data (project lists, BOQ, bills)
+ * - short:   fast-changing data (tasks, activity logs)
+ * - default: moderate data (project lists, records)
  * - long:    slow-changing data (org settings, user profiles)
  * - static:  rarely changing (plans, enums, health)
  * - noCache: sensitive endpoints (auth)
@@ -48,7 +48,7 @@ function createCachePresetMiddleware(presetName: keyof typeof PRESETS) {
 /** Tasks, work logs — fast-changing data (15s cache) */
 export const cacheShort = createCachePresetMiddleware('short');
 
-/** Project lists, BOQ, bills — moderate data (60s cache, backward-compatible default) */
+/** Project lists, records — moderate data (60s cache, backward-compatible default) */
 export const cacheMiddleware = createCachePresetMiddleware('default');
 
 /** Org settings, user profiles — slow-changing data (1h cache) */

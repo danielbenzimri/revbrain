@@ -163,7 +163,7 @@ describe('useAuthStore', () => {
       });
     });
 
-    it('should set user to inspector mock', () => {
+    it('should set user to reviewer mock', () => {
       const { result } = renderHook(() => useAuthStore());
 
       act(() => {

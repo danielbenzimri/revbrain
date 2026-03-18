@@ -92,7 +92,7 @@ export default function AdminDashboardPage() {
                   </div>
                   <div>
                     <p className="font-medium text-slate-900">Tenant {i} Ltd</p>
-                    <p className="text-sm text-slate-500">{t('admin.dashboard.contractorPlan')}</p>
+                    <p className="text-sm text-slate-500">{t('admin.dashboard.starterPlan')}</p>
                   </div>
                 </div>
                 <span className="text-xs text-slate-400">2h {t('admin.dashboard.ago')}</span>

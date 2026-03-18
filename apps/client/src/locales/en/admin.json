@@ -10,7 +10,7 @@
       "growth": "Growth"
     },
     "recentOnboardings": "Recent Onboardings",
-    "contractorPlan": "Contractor Plan",
+    "starterPlan": "Starter Plan",
     "ago": "ago",
     "systemHealth": "System Health",
     "allOperational": "All Systems Operational",
@@ -22,8 +22,8 @@
     "onboardTenant": "Onboard Tenant",
     "searchPlaceholder": "Search tenants...",
     "allTypes": "All Types",
-    "contractor": "Contractor",
-    "client": "Client",
+    "business": "Business",
+    "individual": "Individual",
     "allStatus": "All Status",
     "active": "Active",
     "pending": "Pending",
@@ -157,7 +157,7 @@
     "plans": {
       "starter": {
         "name": "Starter",
-        "description": "For small contractors just getting started"
+        "description": "For small teams just getting started"
       },
       "pro": {
         "name": "Pro",
@@ -219,7 +219,7 @@
       "customBranding": "Custom Branding",
       "sso": "SSO (Single Sign-On)",
       "workModules": "Work Modules",
-      "workModulesHint": "Select which construction modules are included",
+      "workModulesHint": "Select which work modules are included",
       "selectAll": "Select All",
       "deselectAll": "Deselect All",
       "modules": {
@@ -316,12 +316,12 @@
     "step2": "Select Plan",
     "step3": "First Admin",
     "orgName": "Organization Name",
-    "orgNamePlaceholder": "e.g. Acme Construction Ltd",
+    "orgNamePlaceholder": "e.g. Acme Ltd",
     "orgType": "Organization Type",
-    "contractor": "Contractor",
-    "contractorDesc": "Construction companies and contractors",
-    "client": "Client",
-    "clientDesc": "Project owners and clients",
+    "business": "Business",
+    "businessDesc": "Companies and organizations",
+    "individual": "Individual",
+    "individualDesc": "Independent users and freelancers",
     "phone": "Phone Number",
     "phonePlaceholder": "+1 (555) 123-4567",
     "address": "Address",

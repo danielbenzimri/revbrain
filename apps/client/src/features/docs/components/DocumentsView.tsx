@@ -54,7 +54,7 @@ interface FolderNode {
 
 // Predefined folder structure matching legacy "אסמכתאות"
 const FOLDER_STRUCTURE: FolderNode[] = [
-  { id: 'contractor_contract', nameKey: 'contractorContract' },
+  { id: 'contracts', nameKey: 'contracts' },
   { id: 'technical_specs', nameKey: 'technicalSpecs' },
   { id: 'general_spec', nameKey: 'generalSpec' },
   { id: 'catalogs', nameKey: 'catalogs' },
