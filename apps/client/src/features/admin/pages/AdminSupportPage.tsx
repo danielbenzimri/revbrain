@@ -55,11 +55,11 @@ export default function AdminSupportPage() {
       case 'open':
         return 'bg-red-50 text-red-600 border-red-200';
       case 'in_progress':
-        return 'bg-blue-50 text-blue-600 border-blue-200';
+        return 'bg-violet-50 text-violet-600 border-violet-200';
       case 'waiting_customer':
         return 'bg-amber-50 text-amber-600 border-amber-200';
       case 'resolved':
-        return 'bg-emerald-50 text-emerald-600 border-emerald-200';
+        return 'bg-violet-50 text-violet-600 border-violet-200';
       case 'closed':
         return 'bg-slate-100 text-slate-500 border-slate-200';
       default:
@@ -121,7 +121,7 @@ export default function AdminSupportPage() {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <StatCard
-          icon={<MessageSquare className="h-5 w-5 text-blue-500" />}
+          icon={<MessageSquare className="h-5 w-5 text-violet-500" />}
           label={t('admin.support.stats.open')}
           value={stats?.open ?? 0}
           sublabel={t('admin.support.stats.needsAttention')}
@@ -143,7 +143,7 @@ export default function AdminSupportPage() {
           highlight={stats?.highPriority ? stats.highPriority > 0 : false}
         />
         <StatCard
-          icon={<CheckCircle2 className="h-5 w-5 text-emerald-500" />}
+          icon={<CheckCircle2 className="h-5 w-5 text-violet-500" />}
           label={t('admin.support.stats.resolved')}
           value={stats?.resolved ?? 0}
           sublabel={t('admin.support.stats.thisWeek')}

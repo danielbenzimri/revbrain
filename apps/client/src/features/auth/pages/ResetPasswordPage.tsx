@@ -123,7 +123,7 @@ export default function ResetPasswordPage() {
         dir={isHebrew ? 'rtl' : 'ltr'}
       >
         <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-emerald-500 mx-auto" />
+          <Loader2 className="h-8 w-8 animate-spin text-violet-500 mx-auto" />
           <p className="mt-4 text-slate-600">{t('common.loading')}</p>
         </div>
       </div>
@@ -145,7 +145,7 @@ export default function ResetPasswordPage() {
           <p className="text-slate-500 text-sm">{t('auth.linkExpiredDescription')}</p>
           <Button
             onClick={() => navigate('/forgot-password')}
-            className="bg-emerald-500 hover:bg-emerald-600 text-white"
+            className="bg-violet-500 hover:bg-violet-600 text-white"
           >
             {t('auth.requestNewLink')}
           </Button>
@@ -162,8 +162,8 @@ export default function ResetPasswordPage() {
         dir={isHebrew ? 'rtl' : 'ltr'}
       >
         <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-8 text-center space-y-4">
-          <div className="mx-auto w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
-            <Check className="h-6 w-6 text-emerald-600" />
+          <div className="mx-auto w-12 h-12 bg-violet-100 rounded-full flex items-center justify-center">
+            <Check className="h-6 w-6 text-violet-600" />
           </div>
           <h1 className="text-2xl font-bold text-slate-900">{t('auth.passwordUpdated')}</h1>
           <p className="text-slate-500">{t('auth.redirectingLogin')}</p>
@@ -194,7 +194,7 @@ export default function ResetPasswordPage() {
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none pe-10"
+                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 outline-none pe-10"
                 autoComplete="new-password"
                 required
               />
@@ -216,7 +216,7 @@ export default function ResetPasswordPage() {
                 {passwordStrength.map((rule) => (
                   <div
                     key={rule.id}
-                    className={`flex items-center gap-2 text-xs ${rule.passed ? 'text-emerald-600' : 'text-slate-400'}`}
+                    className={`flex items-center gap-2 text-xs ${rule.passed ? 'text-violet-600' : 'text-slate-400'}`}
                   >
                     {rule.passed ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
                     {t(rule.labelKey)}
@@ -235,11 +235,11 @@ export default function ResetPasswordPage() {
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none transition-all ${
+              className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-violet-500 outline-none transition-all ${
                 confirmPassword && !passwordsMatch
                   ? 'border-red-300 bg-red-50'
                   : confirmPassword && passwordsMatch
-                    ? 'border-emerald-300 bg-emerald-50'
+                    ? 'border-violet-300 bg-violet-50'
                     : 'border-slate-300'
               }`}
               autoComplete="new-password"
@@ -252,7 +252,7 @@ export default function ResetPasswordPage() {
 
           <Button
             type="submit"
-            className="w-full bg-emerald-500 hover:bg-emerald-600 text-white"
+            className="w-full bg-violet-500 hover:bg-violet-600 text-white"
             disabled={loading || !allRulesPassed || !passwordsMatch}
           >
             {loading ? (

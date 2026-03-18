@@ -84,7 +84,7 @@ export function ProjectHeader({ project, onBackToProjects }: ProjectHeaderProps)
           <p className="text-sm font-medium">{userName}</p>
           {userRole && <p className="text-xs text-slate-500">{userRole}</p>}
         </div>
-        <div className="bg-emerald-100 text-emerald-700 rounded-full h-8 w-8 flex items-center justify-center text-sm font-medium">
+        <div className="bg-violet-100 text-violet-700 rounded-full h-8 w-8 flex items-center justify-center text-sm font-medium">
           {userInitials}
         </div>
       </div>

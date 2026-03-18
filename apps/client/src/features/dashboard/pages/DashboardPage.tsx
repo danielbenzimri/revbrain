@@ -32,7 +32,7 @@ export default function DashboardPage() {
           </div>
         </div>
         <div className="bg-white rounded shadow-sm p-4 flex items-center gap-4">
-          <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+          <div className="h-10 w-10 rounded-full bg-violet-100 flex items-center justify-center">
             ✅
           </div>
           <div>

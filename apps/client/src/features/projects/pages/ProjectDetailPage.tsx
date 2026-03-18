@@ -31,7 +31,7 @@ function getStatusColor(status: string): string {
     case 'on_hold':
       return 'bg-amber-100 text-amber-800';
     case 'completed':
-      return 'bg-blue-100 text-blue-800';
+      return 'bg-violet-100 text-violet-800';
     case 'cancelled':
       return 'bg-red-100 text-red-800';
     default:
@@ -66,7 +66,7 @@ export default function ProjectDetailPage() {
   if (isLoading) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-violet-500" />
       </div>
     );
   }

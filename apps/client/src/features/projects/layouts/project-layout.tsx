@@ -32,7 +32,7 @@ export function ProjectLayout() {
   if (isLoading && !project) {
     return (
       <div className="flex h-screen items-center justify-center bg-slate-100">
-        <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-violet-500" />
       </div>
     );
   }

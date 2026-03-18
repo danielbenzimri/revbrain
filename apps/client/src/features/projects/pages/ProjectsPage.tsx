@@ -19,7 +19,7 @@ function getStatusColor(status: string): string {
     case 'on_hold':
       return 'bg-amber-100 text-amber-700';
     case 'completed':
-      return 'bg-blue-100 text-blue-700';
+      return 'bg-violet-100 text-violet-700';
     case 'cancelled':
       return 'bg-red-100 text-red-700';
     default:
@@ -84,7 +84,7 @@ export default function ProjectsPage() {
   if (isLoading) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-violet-500" />
       </div>
     );
   }
@@ -109,7 +109,7 @@ export default function ProjectsPage() {
           <p className="text-neutral-500 text-sm">{t('projects.subtitle')}</p>
         </div>
         {hasProjects && (
-          <Button onClick={() => setFormOpen(true)} className="bg-emerald-500 hover:bg-emerald-600">
+          <Button onClick={() => setFormOpen(true)} className="bg-violet-500 hover:bg-violet-600">
             <Plus className="h-4 w-4 me-1" />
             {t('projects.create')}
           </Button>
@@ -136,7 +136,7 @@ export default function ProjectsPage() {
           </div>
         </div>
         <div className="bg-white rounded shadow-sm p-4 flex items-center gap-4">
-          <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-xl">
+          <div className="h-10 w-10 rounded-full bg-violet-100 flex items-center justify-center text-xl">
             ✅
           </div>
           <div>
@@ -162,7 +162,7 @@ export default function ProjectsPage() {
           </div>
           <h3 className="font-semibold text-lg mb-2">{t('projects.empty')}</h3>
           <p className="text-neutral-500 text-sm mb-4">{t('projects.emptyDescription')}</p>
-          <Button onClick={() => setFormOpen(true)} className="bg-emerald-500 hover:bg-emerald-600">
+          <Button onClick={() => setFormOpen(true)} className="bg-violet-500 hover:bg-violet-600">
             <Plus className="h-4 w-4 me-1" />
             {t('projects.create')}
           </Button>

@@ -108,12 +108,12 @@ export function OnboardTenantDrawer({ open, onOpenChange }: OnboardTenantDrawerP
         hideCloseButton
       >
         {/* Modern Header */}
-        <div className="bg-gradient-to-r from-emerald-500 to-teal-500 px-6 py-5 text-white">
+        <div className="bg-gradient-to-r from-violet-500 to-teal-500 px-6 py-5 text-white">
           <div className="flex items-center justify-between">
             <div className="flex-1" />
             <div className="text-center">
               <h2 className="text-xl font-bold">{t('admin.onboard.title')}</h2>
-              <p className="text-emerald-100 text-sm mt-0.5">{t('admin.onboard.subtitle')}</p>
+              <p className="text-violet-100 text-sm mt-0.5">{t('admin.onboard.subtitle')}</p>
             </div>
             <div className="flex-1 flex justify-end">
               <button
@@ -129,8 +129,8 @@ export function OnboardTenantDrawer({ open, onOpenChange }: OnboardTenantDrawerP
         {success ? (
           // Success State
           <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
-            <div className="h-20 w-20 bg-emerald-100 rounded-full flex items-center justify-center mb-6">
-              <Check className="h-10 w-10 text-emerald-600" />
+            <div className="h-20 w-20 bg-violet-100 rounded-full flex items-center justify-center mb-6">
+              <Check className="h-10 w-10 text-violet-600" />
             </div>
             <h2 className="text-2xl font-bold text-slate-900 mb-2">
               {t('admin.onboard.successTitle')}
@@ -142,7 +142,7 @@ export function OnboardTenantDrawer({ open, onOpenChange }: OnboardTenantDrawerP
               <Button variant="outline" onClick={resetForm}>
                 {t('admin.onboard.onboardAnother')}
               </Button>
-              <Button onClick={handleClose} className="bg-emerald-500 hover:bg-emerald-600">
+              <Button onClick={handleClose} className="bg-violet-500 hover:bg-violet-600">
                 {t('admin.onboard.close')}
               </Button>
             </div>
@@ -160,7 +160,7 @@ export function OnboardTenantDrawer({ open, onOpenChange }: OnboardTenantDrawerP
               {/* Section 1: Company Details */}
               <section className="space-y-5">
                 <div className="flex items-center gap-2">
-                  <div className="h-7 w-7 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm font-bold">
+                  <div className="h-7 w-7 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center text-sm font-bold">
                     1
                   </div>
                   <h3 className="font-semibold text-slate-900">{t('admin.onboard.step1')}</h3>
@@ -178,7 +178,7 @@ export function OnboardTenantDrawer({ open, onOpenChange }: OnboardTenantDrawerP
                       onChange={(e) => setOrgName(e.target.value)}
                       placeholder={t('admin.onboard.orgNamePlaceholder')}
                       required
-                      className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm"
+                      className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none text-sm"
                     />
                   </div>
 
@@ -192,7 +192,7 @@ export function OnboardTenantDrawer({ open, onOpenChange }: OnboardTenantDrawerP
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder={t('admin.onboard.phonePlaceholder')}
-                      className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm"
+                      className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none text-sm"
                     />
                   </div>
 
@@ -206,7 +206,7 @@ export function OnboardTenantDrawer({ open, onOpenChange }: OnboardTenantDrawerP
                       value={address}
                       onChange={(e) => setAddress(e.target.value)}
                       placeholder={t('admin.onboard.addressPlaceholder')}
-                      className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm"
+                      className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none text-sm"
                     />
                   </div>
 
@@ -220,7 +220,7 @@ export function OnboardTenantDrawer({ open, onOpenChange }: OnboardTenantDrawerP
                       onChange={(e) => setDescription(e.target.value)}
                       placeholder={t('admin.onboard.descriptionPlaceholder')}
                       rows={2}
-                      className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm resize-none"
+                      className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none text-sm resize-none"
                     />
                   </div>
 
@@ -240,7 +240,7 @@ export function OnboardTenantDrawer({ open, onOpenChange }: OnboardTenantDrawerP
               {/* Section 2: Select Plan */}
               <section className="space-y-5">
                 <div className="flex items-center gap-2">
-                  <div className="h-7 w-7 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm font-bold">
+                  <div className="h-7 w-7 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center text-sm font-bold">
                     2
                   </div>
                   <h3 className="font-semibold text-slate-900">{t('admin.onboard.step2')}</h3>
@@ -261,7 +261,7 @@ export function OnboardTenantDrawer({ open, onOpenChange }: OnboardTenantDrawerP
                         onClick={() => setSelectedPlanId(plan.id!)}
                         className={`relative p-4 border-2 rounded-xl text-center transition-all ${
                           selectedPlanId === plan.id
-                            ? 'border-emerald-500 bg-emerald-50 ring-1 ring-emerald-500'
+                            ? 'border-violet-500 bg-violet-50 ring-1 ring-violet-500'
                             : plan.isPublic
                               ? 'border-purple-200 hover:border-purple-300'
                               : 'border-slate-200 hover:border-slate-300'
@@ -279,7 +279,7 @@ export function OnboardTenantDrawer({ open, onOpenChange }: OnboardTenantDrawerP
                         <p className="text-lg font-bold text-slate-900 mt-1">{formatPrice(plan)}</p>
                         {selectedPlanId === plan.id && (
                           <div className="absolute top-2 end-2">
-                            <div className="h-5 w-5 bg-emerald-500 rounded-full flex items-center justify-center">
+                            <div className="h-5 w-5 bg-violet-500 rounded-full flex items-center justify-center">
                               <Check className="h-3 w-3 text-white" />
                             </div>
                           </div>
@@ -293,7 +293,7 @@ export function OnboardTenantDrawer({ open, onOpenChange }: OnboardTenantDrawerP
               {/* Section 3: First Admin */}
               <section className="space-y-5">
                 <div className="flex items-center gap-2">
-                  <div className="h-7 w-7 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm font-bold">
+                  <div className="h-7 w-7 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center text-sm font-bold">
                     3
                   </div>
                   <h3 className="font-semibold text-slate-900">{t('admin.onboard.step3')}</h3>
@@ -315,7 +315,7 @@ export function OnboardTenantDrawer({ open, onOpenChange }: OnboardTenantDrawerP
                       onChange={(e) => setAdminEmail(e.target.value)}
                       placeholder={t('admin.onboard.adminEmailPlaceholder')}
                       required
-                      className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm"
+                      className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none text-sm"
                     />
                   </div>
                   <div>
@@ -328,7 +328,7 @@ export function OnboardTenantDrawer({ open, onOpenChange }: OnboardTenantDrawerP
                       onChange={(e) => setAdminName(e.target.value)}
                       placeholder={t('admin.onboard.adminNamePlaceholder')}
                       required
-                      className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm"
+                      className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none text-sm"
                     />
                   </div>
                 </div>
@@ -349,7 +349,7 @@ export function OnboardTenantDrawer({ open, onOpenChange }: OnboardTenantDrawerP
                   !adminName ||
                   !selectedPlanId
                 }
-                className="flex-1 bg-emerald-500 hover:bg-emerald-600"
+                className="flex-1 bg-violet-500 hover:bg-violet-600"
               >
                 {onboardMutation.isPending ? (
                   <>

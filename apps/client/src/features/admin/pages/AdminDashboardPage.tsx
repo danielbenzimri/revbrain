@@ -15,14 +15,14 @@ export default function AdminDashboardPage() {
       value: '42',
       change: '+12%',
       icon: Building2,
-      color: 'text-blue-500 bg-blue-50',
+      color: 'text-violet-500 bg-violet-50',
     },
     {
       labelKey: 'admin.dashboard.stats.activeUsers',
       value: '1,234',
       change: '+5%',
       icon: Users,
-      color: 'text-emerald-500 bg-emerald-50',
+      color: 'text-violet-500 bg-violet-50',
     },
     {
       labelKey: 'admin.dashboard.stats.mrr',
@@ -49,7 +49,7 @@ export default function AdminDashboardPage() {
         </div>
         <Button
           onClick={() => setShowOnboardDrawer(true)}
-          className="bg-emerald-500 hover:bg-emerald-600"
+          className="bg-violet-500 hover:bg-violet-600"
         >
           <Plus className="h-4 w-4 me-2" />
           {t('admin.dashboard.onboardTenant')}
@@ -67,7 +67,7 @@ export default function AdminDashboardPage() {
               <div className={`p-3 rounded-lg ${stat.color}`}>
                 <stat.icon className="h-6 w-6" />
               </div>
-              <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
+              <span className="text-xs font-medium text-violet-600 bg-violet-50 px-2 py-1 rounded-full">
                 {stat.change}
               </span>
             </div>
@@ -102,7 +102,7 @@ export default function AdminDashboardPage() {
         </div>
         <div className="bg-white p-6 rounded shadow-sm border-slate-200 shadow-sm min-h-[300px]">
           <h3 className="font-bold text-slate-800 mb-4">{t('admin.dashboard.systemHealth')}</h3>
-          <div className="flex items-center gap-2 text-emerald-600 bg-emerald-50 p-4 rounded-lg mb-4">
+          <div className="flex items-center gap-2 text-violet-600 bg-violet-50 p-4 rounded-lg mb-4">
             <CheckCircle2 className="h-5 w-5" />
             <span className="font-medium">{t('admin.dashboard.allOperational')}</span>
           </div>
@@ -112,7 +112,7 @@ export default function AdminDashboardPage() {
               <span className="font-medium text-slate-900">45ms</span>
             </div>
             <div className="w-full bg-slate-100 rounded-full h-2">
-              <div className="bg-emerald-500 h-2 rounded-full" style={{ width: '15%' }}></div>
+              <div className="bg-violet-500 h-2 rounded-full" style={{ width: '15%' }}></div>
             </div>
           </div>
         </div>

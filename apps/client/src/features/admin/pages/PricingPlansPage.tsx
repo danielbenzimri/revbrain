@@ -99,7 +99,7 @@ export default function PricingPlansPage() {
           <h1 className="text-2xl font-bold text-slate-900">{t('admin.pricing.title')}</h1>
           <p className="text-slate-500">{t('admin.pricing.subtitle')}</p>
         </div>
-        <Button onClick={handleNewPlan} className="bg-emerald-500 hover:bg-emerald-600">
+        <Button onClick={handleNewPlan} className="bg-violet-500 hover:bg-violet-600">
           <Plus className="h-4 w-4 me-2" />
           {t('admin.pricing.newPlan')}
         </Button>
@@ -116,12 +116,12 @@ export default function PricingPlansPage() {
               key={plan.id}
               className={`relative bg-white rounded shadow-sm p-6 flex flex-col ${
                 plan.isPublic
-                  ? 'border-emerald-500 ring-1 ring-emerald-500 shadow-md'
+                  ? 'border-violet-500 ring-1 ring-violet-500 shadow-md'
                   : 'border-slate-200'
               }`}
             >
               {plan.isPublic && (
-                <span className="absolute top-0 end-0 -translate-y-1/2 translate-x-1/2 bg-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+                <span className="absolute top-0 end-0 -translate-y-1/2 translate-x-1/2 bg-violet-500 text-white text-xs font-bold px-3 py-1 rounded-full">
                   {t('admin.pricing.planVisibility.public')}
                 </span>
               )}
@@ -145,7 +145,7 @@ export default function PricingPlansPage() {
               <ul className="space-y-3 mb-8 flex-1">
                 {getFeatures(plan).map((feature, idx) => (
                   <li key={idx} className="flex items-start gap-3 text-sm text-slate-600">
-                    <Check className="h-4 w-4 text-emerald-500 relative top-0.5" />
+                    <Check className="h-4 w-4 text-violet-500 relative top-0.5" />
                     {feature}
                   </li>
                 ))}
@@ -154,7 +154,7 @@ export default function PricingPlansPage() {
               <Button
                 onClick={() => handleEditPlan(plan)}
                 variant={plan.isPublic ? 'default' : 'outline'}
-                className={plan.isPublic ? 'bg-emerald-500 hover:bg-emerald-600' : ''}
+                className={plan.isPublic ? 'bg-violet-500 hover:bg-violet-600' : ''}
               >
                 <Pencil className="h-4 w-4 me-2" />
                 {t('admin.pricing.editPlan')}

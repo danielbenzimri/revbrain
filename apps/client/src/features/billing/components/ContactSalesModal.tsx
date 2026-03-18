@@ -96,7 +96,7 @@ export function ContactSalesModal({ isOpen, onClose }: ContactSalesModalProps) {
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
         <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
           {/* Header */}
-          <div className="bg-gradient-to-r from-emerald-500 to-teal-500 px-6 py-5 text-white relative">
+          <div className="bg-gradient-to-r from-violet-500 to-teal-500 px-6 py-5 text-white relative">
             <button
               onClick={handleClose}
               className="absolute top-4 end-4 p-1.5 rounded-full hover:bg-white/20 transition-colors"
@@ -121,9 +121,9 @@ export function ContactSalesModal({ isOpen, onClose }: ContactSalesModalProps) {
             </p>
 
             {success.calendlyUrl && (
-              <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 mb-6">
-                <Calendar className="h-8 w-8 text-emerald-600 mx-auto mb-2" />
-                <p className="text-sm text-emerald-700 mb-3">
+              <div className="bg-violet-50 border border-violet-200 rounded-lg p-4 mb-6">
+                <Calendar className="h-8 w-8 text-violet-600 mx-auto mb-2" />
+                <p className="text-sm text-violet-700 mb-3">
                   {t(
                     'billing.contactSales.calendlyPrompt',
                     'Want to skip the wait? Schedule a demo directly!'
@@ -131,7 +131,7 @@ export function ContactSalesModal({ isOpen, onClose }: ContactSalesModalProps) {
                 </p>
                 <Button
                   onClick={() => window.open(success.calendlyUrl!, '_blank')}
-                  className="bg-emerald-500 hover:bg-emerald-600"
+                  className="bg-violet-500 hover:bg-violet-600"
                 >
                   <Calendar className="h-4 w-4 me-2" />
                   {t('billing.contactSales.scheduleDemo', 'Schedule a Demo')}
@@ -292,7 +292,7 @@ export function ContactSalesModal({ isOpen, onClose }: ContactSalesModalProps) {
                 t('billing.contactSales.feature4', 'Priority support with SLA'),
               ].map((feature, i) => (
                 <li key={i} className="flex items-center gap-2 text-sm text-slate-600">
-                  <CheckCircle className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                  <CheckCircle className="h-4 w-4 text-violet-500 flex-shrink-0" />
                   {feature}
                 </li>
               ))}

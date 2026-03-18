@@ -60,7 +60,7 @@ function ServiceTargetToggle({
           onClick={() => onToggle('remote')}
           className={`px-2 py-1 text-xs rounded transition-colors ${
             target === 'remote'
-              ? 'bg-blue-500 text-white'
+              ? 'bg-violet-500 text-white'
               : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
           }`}
         >
@@ -106,14 +106,14 @@ export function ServicePanel() {
         className={`fixed bottom-4 end-4 z-50 p-3 rounded-full shadow-lg transition-colors ${
           mode === 'offline'
             ? 'bg-slate-600 text-white hover:bg-slate-500'
-            : 'bg-emerald-600 text-white hover:bg-emerald-500'
+            : 'bg-violet-600 text-white hover:bg-violet-500'
         }`}
         title="Service Config"
       >
         <div className="relative">
           {mode === 'offline' ? <WifiOff className="h-5 w-5" /> : <Wifi className="h-5 w-5" />}
           {isOnline && remoteCount > 0 && (
-            <span className="absolute -top-1 -end-1 bg-blue-500 text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center">
+            <span className="absolute -top-1 -end-1 bg-violet-500 text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center">
               {remoteCount}
             </span>
           )}
@@ -150,7 +150,7 @@ export function ServicePanel() {
                 variant={mode === 'online' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setMode('online')}
-                className={`flex-1 gap-2 ${mode === 'online' ? 'bg-emerald-500 hover:bg-emerald-600' : ''}`}
+                className={`flex-1 gap-2 ${mode === 'online' ? 'bg-violet-500 hover:bg-violet-600' : ''}`}
               >
                 <Server className="h-4 w-4" />
                 {isHebrew ? 'שרת' : 'Server'}

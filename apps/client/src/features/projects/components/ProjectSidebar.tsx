@@ -8,7 +8,7 @@ import {
   LayoutDashboard,
   FileText,
   Settings,
-  Pyramid,
+  ArrowRightLeft,
   X,
   ArrowRight,
   FolderKanban,
@@ -165,10 +165,10 @@ export function ProjectSidebar({
           {/* LOGO SECTION with Toggle */}
           <div className={`flex items-center gap-3 ${isCollapsed && 'justify-center'}`}>
             <div
-              className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-lg flex items-center justify-center font-bold text-lg overflow-hidden shadow-lg shrink-0"
+              className="w-10 h-10 bg-gradient-to-br from-violet-600 to-purple-700 rounded-lg flex items-center justify-center font-bold text-lg overflow-hidden shadow-lg shrink-0"
               title={isCollapsed ? `REVBRAIN - ${project.name}` : undefined}
             >
-              <Pyramid size={24} />
+              <ArrowRightLeft size={20} className="text-white" />
             </div>
             {!isCollapsed && (
               <>
@@ -176,10 +176,7 @@ export function ProjectSidebar({
                   <span className="font-black text-xl tracking-tight block leading-none">
                     REVBRAIN
                   </span>
-                  <span
-                    className="text-[10px] font-bold truncate block max-w-[140px]"
-                    style={{ color: '#d4af37' }}
-                  >
+                  <span className="text-[10px] font-bold truncate block max-w-[140px] text-violet-400">
                     {project.name}
                   </span>
                 </div>
@@ -200,7 +197,7 @@ export function ProjectSidebar({
             {isCollapsed && (
               <button
                 onClick={toggleSidebar}
-                className={`hidden md:flex absolute top-3 ${isRTL ? 'right-3' : 'left-3'} items-center justify-center w-10 h-10 bg-slate-700 text-white hover:bg-blue-600 rounded-lg transition-all shadow-lg`}
+                className={`hidden md:flex absolute top-3 ${isRTL ? 'right-3' : 'left-3'} items-center justify-center w-10 h-10 bg-slate-700 text-white hover:bg-violet-600 rounded-lg transition-all shadow-lg`}
                 title={t('nav.expand')}
               >
                 {isRTL ? <ChevronLeft className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
@@ -228,7 +225,7 @@ export function ProjectSidebar({
                   isCollapsed ? 'justify-center p-3' : 'px-4 py-3'
                 } ${
                   isActive
-                    ? 'bg-blue-600 text-white shadow-lg'
+                    ? 'bg-violet-600 text-white shadow-lg'
                     : 'text-slate-400 hover:bg-slate-800 hover:text-white'
                 }`}
                 title={isCollapsed ? t(item.labelKey) : undefined}
@@ -242,7 +239,7 @@ export function ProjectSidebar({
                     {item.badge > 0 && (
                       <span
                         className={`min-w-[20px] h-5 flex items-center justify-center text-xs font-bold rounded-full ${
-                          isActive ? 'bg-white text-blue-600' : 'bg-red-500 text-white'
+                          isActive ? 'bg-white text-violet-600' : 'bg-red-500 text-white'
                         }`}
                       >
                         {item.badge > 99 ? '99+' : item.badge}
@@ -260,7 +257,7 @@ export function ProjectSidebar({
           {isCollapsed ? (
             <div className="flex flex-col items-center gap-3">
               <div
-                className="w-10 h-10 rounded-full border-2 border-slate-700 bg-emerald-100 text-emerald-700 flex items-center justify-center text-sm font-medium"
+                className="w-10 h-10 rounded-full border-2 border-slate-700 bg-violet-100 text-violet-700 flex items-center justify-center text-sm font-medium"
                 title={user?.name ? `${user.name} - ${getRoleLabel()}` : t('common.pendingSetup')}
               >
                 {user?.name
@@ -280,7 +277,7 @@ export function ProjectSidebar({
           ) : (
             <>
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full border-2 border-slate-700 bg-emerald-100 text-emerald-700 flex items-center justify-center text-sm font-medium">
+                <div className="w-10 h-10 rounded-full border-2 border-slate-700 bg-violet-100 text-violet-700 flex items-center justify-center text-sm font-medium">
                   {user?.name
                     ?.split(' ')
                     .map((n) => n[0])

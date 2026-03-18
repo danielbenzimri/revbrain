@@ -112,7 +112,7 @@ export function CreateUserDrawer({ open, onOpenChange, orgId, orgName }: CreateU
         <div className="flex-1 overflow-y-auto">
           {success ? (
             <div className="flex flex-col items-center justify-center h-full p-6 text-center">
-              <div className="h-16 w-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-4">
+              <div className="h-16 w-16 bg-violet-100 text-violet-600 rounded-full flex items-center justify-center mb-4">
                 <User className="h-8 w-8" />
               </div>
               <h3 className="text-xl font-bold text-slate-900 mb-2">
@@ -123,7 +123,7 @@ export function CreateUserDrawer({ open, onOpenChange, orgId, orgName }: CreateU
               </p>
               <Button
                 onClick={handleClose}
-                className="bg-emerald-600 hover:bg-emerald-700 w-full max-w-xs"
+                className="bg-violet-600 hover:bg-violet-700 w-full max-w-xs"
               >
                 {t('common.done')}
               </Button>
@@ -144,7 +144,7 @@ export function CreateUserDrawer({ open, onOpenChange, orgId, orgName }: CreateU
                     onClick={() => setUserType('org_member')}
                     className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
                       userType === 'org_member'
-                        ? 'bg-white text-emerald-600 shadow-sm'
+                        ? 'bg-white text-violet-600 shadow-sm'
                         : 'text-slate-500 hover:text-slate-700'
                     }`}
                   >
@@ -192,7 +192,7 @@ export function CreateUserDrawer({ open, onOpenChange, orgId, orgName }: CreateU
                         value={targetOrgId}
                         onChange={(e) => setTargetOrgId(e.target.value)}
                         required
-                        className="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-white"
+                        className="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 outline-none text-sm bg-white"
                       >
                         <option value="">{t('common.select')}</option>
                         {tenants.map((tenant) => (
@@ -215,7 +215,7 @@ export function CreateUserDrawer({ open, onOpenChange, orgId, orgName }: CreateU
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   required
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 outline-none text-sm"
                   placeholder={t('admin.users.fullNamePlaceholder')}
                 />
               </div>
@@ -229,7 +229,7 @@ export function CreateUserDrawer({ open, onOpenChange, orgId, orgName }: CreateU
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 outline-none text-sm"
                   placeholder={t('admin.users.emailPlaceholder')}
                 />
               </div>
@@ -243,7 +243,7 @@ export function CreateUserDrawer({ open, onOpenChange, orgId, orgName }: CreateU
                     value={role}
                     onChange={(e) => setRole(e.target.value)}
                     required
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-white"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 outline-none text-sm bg-white"
                   >
                     <option value="">{t('common.select')}</option>
                     <option value="org_owner">{t('admin.users.roles.org_owner.label')}</option>
@@ -260,7 +260,7 @@ export function CreateUserDrawer({ open, onOpenChange, orgId, orgName }: CreateU
                     createUserMutation.isPending ||
                     (userType === 'org_member' && (!targetOrgId || !role))
                   }
-                  className={`w-full ${userType === 'platform_admin' ? 'bg-purple-600 hover:bg-purple-700' : 'bg-emerald-600 hover:bg-emerald-700'}`}
+                  className={`w-full ${userType === 'platform_admin' ? 'bg-purple-600 hover:bg-purple-700' : 'bg-violet-600 hover:bg-violet-700'}`}
                 >
                   {createUserMutation.isPending ? (
                     <>

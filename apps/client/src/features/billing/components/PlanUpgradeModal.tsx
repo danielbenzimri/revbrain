@@ -188,20 +188,20 @@ export function PlanUpgradeModal({
 
     if (isRecommended) {
       return {
-        card: 'bg-gradient-to-br from-emerald-50 via-white to-teal-50 border-2 border-emerald-400 shadow-xl shadow-emerald-500/20 scale-[1.02] z-10',
-        badge: 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white',
-        icon: 'bg-emerald-100 text-emerald-600',
+        card: 'bg-gradient-to-br from-violet-50 via-white to-teal-50 border-2 border-violet-400 shadow-xl shadow-violet-500/20 scale-[1.02] z-10',
+        badge: 'bg-gradient-to-r from-violet-500 to-teal-500 text-white',
+        icon: 'bg-violet-100 text-violet-600',
         button:
-          'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-lg shadow-emerald-500/30',
-        price: 'text-emerald-700',
+          'bg-gradient-to-r from-violet-500 to-teal-500 hover:from-violet-600 hover:to-teal-600 text-white shadow-lg shadow-violet-500/30',
+        price: 'text-violet-700',
       };
     }
 
     if (planType === 'upgrade') {
       return {
-        card: 'bg-white border border-slate-200 hover:border-emerald-300 hover:shadow-lg transition-all duration-300',
-        badge: 'bg-emerald-100 text-emerald-700',
-        icon: 'bg-emerald-50 text-emerald-500',
+        card: 'bg-white border border-slate-200 hover:border-violet-300 hover:shadow-lg transition-all duration-300',
+        badge: 'bg-violet-100 text-violet-700',
+        icon: 'bg-violet-50 text-violet-500',
         button: 'bg-slate-900 hover:bg-slate-800 text-white',
         price: 'text-slate-900',
       };
@@ -242,13 +242,13 @@ export function PlanUpgradeModal({
         <div className="relative px-8 py-8 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 overflow-hidden">
           {/* Decorative elements */}
           <div className="absolute inset-0 opacity-30">
-            <div className="absolute top-0 left-1/4 w-96 h-96 bg-emerald-500 rounded-full blur-3xl -translate-y-1/2" />
+            <div className="absolute top-0 left-1/4 w-96 h-96 bg-violet-500 rounded-full blur-3xl -translate-y-1/2" />
             <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-teal-500 rounded-full blur-3xl translate-y-1/2" />
           </div>
 
           <div className="relative flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/30">
+              <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-violet-400 to-teal-500 flex items-center justify-center shadow-lg shadow-violet-500/30">
                 <Sparkles className="h-7 w-7 text-white" />
               </div>
               <div>
@@ -279,7 +279,7 @@ export function PlanUpgradeModal({
           {isLoading ? (
             <div className="flex items-center justify-center py-20">
               <div className="text-center">
-                <Loader2 className="h-10 w-10 animate-spin text-emerald-500 mx-auto" />
+                <Loader2 className="h-10 w-10 animate-spin text-violet-500 mx-auto" />
                 <p className="text-slate-500 mt-4">{t('billing.plans.loading')}</p>
               </div>
             </div>
@@ -332,7 +332,7 @@ export function PlanUpgradeModal({
                           <h3 className="text-lg font-bold text-slate-900">{plan.name}</h3>
                           {/* Show yearly discount badge if viewing yearly and plan has discount */}
                           {interval === 'year' && plan.yearlyDiscountPercent > 0 && (
-                            <p className="text-xs text-emerald-600 font-medium">
+                            <p className="text-xs text-violet-600 font-medium">
                               {t('billing.interval.savePercent', {
                                 percent: plan.yearlyDiscountPercent,
                               })}
@@ -357,7 +357,7 @@ export function PlanUpgradeModal({
                           </span>
                         </div>
                         {monthlyEquivalent && (
-                          <p className="text-sm text-emerald-600 mt-1 font-medium">
+                          <p className="text-sm text-violet-600 mt-1 font-medium">
                             {monthlyEquivalent}/{t('billing.perMonth')}{' '}
                             {t('billing.interval.billedAnnually')}
                           </p>
@@ -373,7 +373,7 @@ export function PlanUpgradeModal({
                                 planType === 'current'
                                   ? 'bg-slate-200'
                                   : isRecommended
-                                    ? 'bg-emerald-100'
+                                    ? 'bg-violet-100'
                                     : 'bg-slate-100'
                               }`}
                             >
@@ -382,7 +382,7 @@ export function PlanUpgradeModal({
                                   planType === 'current'
                                     ? 'text-slate-500'
                                     : isRecommended
-                                      ? 'text-emerald-600'
+                                      ? 'text-violet-600'
                                       : 'text-slate-600'
                                 }`}
                               />
@@ -424,15 +424,15 @@ export function PlanUpgradeModal({
               <div className="mt-10 pt-8 border-t border-slate-200">
                 <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-slate-500">
                   <div className="flex items-center gap-2">
-                    <Shield className="h-4 w-4 text-emerald-500" />
+                    <Shield className="h-4 w-4 text-violet-500" />
                     <span>{t('billing.plans.cancelAnytime')}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Zap className="h-4 w-4 text-emerald-500" />
+                    <Zap className="h-4 w-4 text-violet-500" />
                     <span>{t('billing.plans.instantAccess')}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-emerald-500" />
+                    <Check className="h-4 w-4 text-violet-500" />
                     <span>{t('billing.plans.securePayment')}</span>
                   </div>
                 </div>

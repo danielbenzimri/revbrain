@@ -30,7 +30,7 @@ function UsageItem({
   const isWarning = !isUnlimited && percentage >= 80;
   const isCritical = !isUnlimited && percentage >= 95;
 
-  const progressColor = isCritical ? 'bg-red-500' : isWarning ? 'bg-amber-500' : 'bg-emerald-500';
+  const progressColor = isCritical ? 'bg-red-500' : isWarning ? 'bg-amber-500' : 'bg-violet-500';
 
   return (
     <div className="flex-1 min-w-[200px]">
@@ -59,7 +59,7 @@ function UsageItem({
       )}
 
       {isUnlimited && (
-        <div className="h-2 bg-gradient-to-r from-emerald-100 to-emerald-200 rounded-full" />
+        <div className="h-2 bg-gradient-to-r from-violet-100 to-violet-200 rounded-full" />
       )}
     </div>
   );

@@ -68,7 +68,7 @@ export class ErrorBoundary extends Component<Props, State> {
               {this.state.error.message}
             </pre>
           )}
-          <Button onClick={this.handleRetry} className="bg-emerald-600 hover:bg-emerald-700">
+          <Button onClick={this.handleRetry} className="bg-violet-600 hover:bg-violet-700">
             <RefreshCw className="h-4 w-4 mr-2" />
             Try Again
           </Button>
@@ -130,7 +130,7 @@ export class PageErrorBoundary extends Component<Props, State> {
             <Button variant="outline" onClick={this.handleGoHome}>
               Go to Home
             </Button>
-            <Button onClick={this.handleRetry} className="bg-emerald-600 hover:bg-emerald-700">
+            <Button onClick={this.handleRetry} className="bg-violet-600 hover:bg-violet-700">
               <RefreshCw className="h-4 w-4 mr-2" />
               Retry
             </Button>

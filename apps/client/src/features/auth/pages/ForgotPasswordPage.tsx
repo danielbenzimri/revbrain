@@ -36,14 +36,14 @@ export default function ForgotPasswordPage() {
         dir={isHebrew ? 'rtl' : 'ltr'}
       >
         <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-8 text-center space-y-4">
-          <div className="mx-auto w-14 h-14 bg-emerald-100 rounded-full flex items-center justify-center">
-            <CheckCircle2 className="h-7 w-7 text-emerald-600" />
+          <div className="mx-auto w-14 h-14 bg-violet-100 rounded-full flex items-center justify-center">
+            <CheckCircle2 className="h-7 w-7 text-violet-600" />
           </div>
           <h1 className="text-2xl font-bold text-slate-900">{t('auth.checkEmail')}</h1>
           <p className="text-slate-500 text-sm">{t('auth.resetEmailSent', { email })}</p>
           <a
             href="/login"
-            className="inline-flex items-center gap-1 text-sm text-emerald-600 hover:text-emerald-700 font-medium mt-4"
+            className="inline-flex items-center gap-1 text-sm text-violet-600 hover:text-violet-700 font-medium mt-4"
           >
             <ArrowLeft className="h-4 w-4" />
             {t('auth.backToSignIn')}
@@ -83,14 +83,14 @@ export default function ForgotPasswordPage() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="name@company.com"
               required
-              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+              className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition-all"
             />
           </div>
 
           <Button
             type="submit"
             disabled={loading || !email}
-            className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-2.5"
+            className="w-full bg-violet-500 hover:bg-violet-600 text-white py-2.5"
           >
             {loading ? (
               <>

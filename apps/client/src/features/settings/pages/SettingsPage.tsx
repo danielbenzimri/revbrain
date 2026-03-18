@@ -34,7 +34,7 @@ export default function SettingsPage() {
               className={({ isActive }) =>
                 `flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
                   isActive
-                    ? 'border-emerald-500 text-emerald-600'
+                    ? 'border-violet-500 text-violet-600'
                     : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
                 }`
               }

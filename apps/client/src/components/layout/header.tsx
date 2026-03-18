@@ -45,7 +45,7 @@ export function Header() {
 
       {/* Logo (Mobile) */}
       <div className="flex-1 md:hidden">
-        <span className="font-bold text-emerald-400">REVBRAIN</span>
+        <span className="font-bold text-violet-400">REVBRAIN</span>
       </div>
 
       {/* Spacer (Desktop) */}
@@ -68,7 +68,7 @@ export function Header() {
           <p className="text-sm font-medium text-white">{userName}</p>
           {userRole && <p className="text-xs text-slate-400">{userRole}</p>}
         </div>
-        <div className="bg-emerald-500 text-white rounded-full h-8 w-8 flex items-center justify-center text-sm font-medium">
+        <div className="bg-violet-500 text-white rounded-full h-8 w-8 flex items-center justify-center text-sm font-medium">
           {userInitials}
         </div>
       </div>

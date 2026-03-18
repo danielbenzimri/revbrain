@@ -230,15 +230,15 @@ export function CouponEditorDrawer({
               <div
                 className={`flex items-center justify-between p-3 rounded-lg ${
                   coupon.stripeCouponId
-                    ? 'bg-emerald-50 border border-emerald-200'
+                    ? 'bg-violet-50 border border-violet-200'
                     : 'bg-yellow-50 border border-yellow-200'
                 }`}
               >
                 <div className="flex items-center gap-2">
                   {coupon.stripeCouponId ? (
                     <>
-                      <div className="h-2 w-2 rounded-full bg-emerald-500" />
-                      <span className="text-sm text-emerald-700">
+                      <div className="h-2 w-2 rounded-full bg-violet-500" />
+                      <span className="text-sm text-violet-700">
                         {t('admin.coupons.editor.syncedToStripe', 'Synced to Stripe')}
                       </span>
                     </>

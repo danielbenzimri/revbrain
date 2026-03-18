@@ -57,7 +57,7 @@ export default function TenantListPage() {
         </div>
         <Button
           onClick={() => setShowOnboardDrawer(true)}
-          className="bg-emerald-500 hover:bg-emerald-600"
+          className="bg-violet-500 hover:bg-violet-600"
         >
           <Plus className="h-4 w-4 me-2" />
           {t('admin.tenants.onboardTenant')}
@@ -73,7 +73,7 @@ export default function TenantListPage() {
             placeholder={t('admin.tenants.searchPlaceholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full ps-10 pe-4 py-2 border border-slate-200 rounded-lg outline-none focus:border-emerald-500"
+            className="w-full ps-10 pe-4 py-2 border border-slate-200 rounded-lg outline-none focus:border-violet-500"
           />
         </div>
       </div>
@@ -135,9 +135,7 @@ export default function TenantListPage() {
                   <td className="px-6 py-4 text-start">
                     <span
                       className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        tenant.isActive
-                          ? 'bg-emerald-50 text-emerald-600'
-                          : 'bg-red-50 text-red-600'
+                        tenant.isActive ? 'bg-violet-50 text-violet-600' : 'bg-red-50 text-red-600'
                       }`}
                     >
                       {tenant.isActive ? t('admin.tenants.active') : t('admin.tenants.inactive')}

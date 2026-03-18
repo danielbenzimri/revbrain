@@ -87,7 +87,7 @@ export default function CouponListPage() {
 
     if (now < validFrom) {
       return (
-        <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-700">
+        <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-violet-100 text-violet-700">
           {t('admin.coupons.statusScheduled', 'Scheduled')}
         </span>
       );
@@ -110,7 +110,7 @@ export default function CouponListPage() {
     }
 
     return (
-      <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-emerald-100 text-emerald-700">
+      <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-violet-100 text-violet-700">
         {t('admin.coupons.statusActive', 'Active')}
       </span>
     );

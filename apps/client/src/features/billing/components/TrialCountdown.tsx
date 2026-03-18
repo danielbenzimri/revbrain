@@ -25,7 +25,7 @@ export function TrialCountdown({ trialEndDate, className = '' }: TrialCountdownP
       ? 'bg-red-100 text-red-800 border-red-200'
       : daysRemaining <= 3
         ? 'bg-amber-100 text-amber-800 border-amber-200'
-        : 'bg-blue-100 text-blue-800 border-blue-200';
+        : 'bg-violet-100 text-blue-800 border-violet-200';
 
   if (daysRemaining === 0) {
     return (

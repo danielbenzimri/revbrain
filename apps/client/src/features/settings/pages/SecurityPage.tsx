@@ -83,7 +83,7 @@ export default function SecurityPage() {
 
         <form onSubmit={handleChangePassword} className="space-y-4">
           {passwordSuccess && (
-            <div className="flex items-center gap-2 bg-emerald-50 text-emerald-700 px-4 py-3 rounded-lg text-sm">
+            <div className="flex items-center gap-2 bg-violet-50 text-violet-700 px-4 py-3 rounded-lg text-sm">
               <CheckCircle2 className="h-4 w-4" />
               {t('settings.security.passwordChanged')}
             </div>
@@ -105,7 +105,7 @@ export default function SecurityPage() {
                 type={showPassword ? 'text' : 'password'}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm pe-10"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 outline-none text-sm pe-10"
                 autoComplete="new-password"
               />
               <button
@@ -126,7 +126,7 @@ export default function SecurityPage() {
                 {passwordStrength.map((rule) => (
                   <div
                     key={rule.id}
-                    className={`flex items-center gap-2 text-xs ${rule.passed ? 'text-emerald-600' : 'text-slate-400'}`}
+                    className={`flex items-center gap-2 text-xs ${rule.passed ? 'text-violet-600' : 'text-slate-400'}`}
                   >
                     {rule.passed ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
                     {t(rule.labelKey)}
@@ -145,11 +145,11 @@ export default function SecurityPage() {
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm transition-all ${
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-violet-500 outline-none text-sm transition-all ${
                 confirmPassword && !passwordsMatch
                   ? 'border-red-300 bg-red-50'
                   : confirmPassword && passwordsMatch
-                    ? 'border-emerald-300 bg-emerald-50'
+                    ? 'border-violet-300 bg-violet-50'
                     : 'border-slate-300'
               }`}
               autoComplete="new-password"
@@ -162,7 +162,7 @@ export default function SecurityPage() {
           <Button
             type="submit"
             disabled={changePassword.isPending || !allRulesPassed || !passwordsMatch}
-            className="bg-emerald-500 hover:bg-emerald-600 text-white"
+            className="bg-violet-500 hover:bg-violet-600 text-white"
           >
             {changePassword.isPending ? (
               <>

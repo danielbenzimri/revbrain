@@ -53,7 +53,7 @@ export function BillingIntervalToggle({
 
       {/* Savings badge - only show if savingsPercent is provided and > 0 */}
       {savingsPercent != null && savingsPercent > 0 && (
-        <span className="inline-flex items-center px-2.5 py-1 text-xs font-semibold text-emerald-700 bg-emerald-100 rounded-full">
+        <span className="inline-flex items-center px-2.5 py-1 text-xs font-semibold text-violet-700 bg-violet-100 rounded-full">
           {t('billing.interval.savePercent', { percent: savingsPercent })}
         </span>
       )}

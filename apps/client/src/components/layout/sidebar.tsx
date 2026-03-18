@@ -1,6 +1,7 @@
 import { cn } from '@/lib/utils';
 import {
   LayoutDashboard,
+  ArrowRightLeft,
   FolderKanban,
   FileText,
   Settings,
@@ -99,8 +100,8 @@ export function Sidebar({ className }: SidebarProps) {
           isCollapsed && 'justify-center'
         )}
       >
-        <div className="h-10 w-10 bg-emerald-500 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg shrink-0">
-          G
+        <div className="h-10 w-10 bg-gradient-to-br from-violet-600 to-purple-700 rounded-xl flex items-center justify-center text-white shadow-lg shrink-0">
+          <ArrowRightLeft size={20} />
         </div>
         {!isCollapsed && (
           <>
@@ -146,7 +147,7 @@ export function Sidebar({ className }: SidebarProps) {
               className={cn(
                 'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
                 isActive
-                  ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30'
+                  ? 'bg-violet-500 text-white shadow-lg shadow-violet-500/30'
                   : 'text-slate-300 hover:bg-slate-700/50 hover:text-white',
                 isCollapsed && 'justify-center'
               )}
@@ -167,7 +168,7 @@ export function Sidebar({ className }: SidebarProps) {
             isCollapsed && 'flex-col gap-2'
           )}
         >
-          <div className="h-9 w-9 bg-emerald-500 rounded-full flex items-center justify-center text-sm font-medium shrink-0">
+          <div className="h-9 w-9 bg-violet-500 rounded-full flex items-center justify-center text-sm font-medium shrink-0">
             {userInitials}
           </div>
           {!isCollapsed && (

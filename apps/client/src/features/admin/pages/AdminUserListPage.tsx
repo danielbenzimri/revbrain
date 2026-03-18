@@ -102,7 +102,7 @@ export default function AdminUserListPage() {
         </div>
         <Button
           onClick={() => setIsCreateDrawerOpen(true)}
-          className="bg-emerald-600 hover:bg-emerald-700 shadow-sm"
+          className="bg-violet-600 hover:bg-violet-700 shadow-sm"
         >
           <Plus className="h-4 w-4 me-2" />
           {t('admin.users.inviteUser')}
@@ -119,7 +119,7 @@ export default function AdminUserListPage() {
               placeholder={t('admin.users.searchPlaceholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="ps-10 border-slate-200 focus-visible:ring-emerald-500"
+              className="ps-10 border-slate-200 focus-visible:ring-violet-500"
             />
           </div>
           <Button
@@ -176,7 +176,7 @@ export default function AdminUserListPage() {
       <div className="bg-white rounded shadow-sm border-slate-200 shadow-sm overflow-hidden min-h-[400px]">
         {isLoading ? (
           <div className="flex h-full items-center justify-center py-20">
-            <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
+            <Loader2 className="h-8 w-8 animate-spin text-violet-500" />
           </div>
         ) : filteredUsers.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center px-4">
@@ -186,7 +186,7 @@ export default function AdminUserListPage() {
             <h3 className="text-lg font-medium text-slate-900 mb-1">{t('admin.users.noUsers')}</h3>
             <p className="text-slate-500 max-w-sm">{t('admin.users.noUsersDesc')}</p>
             {(searchTerm || roleFilter !== 'all' || statusFilter !== 'all') && (
-              <Button variant="link" onClick={clearFilters} className="mt-2 text-emerald-600">
+              <Button variant="link" onClick={clearFilters} className="mt-2 text-violet-600">
                 {t('admin.users.clearFilters')}
               </Button>
             )}
@@ -216,18 +216,18 @@ export default function AdminUserListPage() {
                   <tr
                     key={user.id}
                     onClick={() => handleRowClick(user)}
-                    className="group hover:bg-emerald-50/30 transition-colors cursor-pointer"
+                    className="group hover:bg-violet-50/30 transition-colors cursor-pointer"
                   >
                     <td className="px-6 py-4 text-start">
                       <div className="flex items-center gap-3">
                         <Avatar className="h-10 w-10 border border-slate-200">
                           <AvatarImage src={user.avatarUrl} />
-                          <AvatarFallback className="bg-emerald-100 text-emerald-700 font-bold text-xs">
+                          <AvatarFallback className="bg-violet-100 text-violet-700 font-bold text-xs">
                             {getInitials(user.name)}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex flex-col">
-                          <span className="font-semibold text-slate-900 group-hover:text-emerald-700 transition-colors">
+                          <span className="font-semibold text-slate-900 group-hover:text-violet-700 transition-colors">
                             {user.name}
                           </span>
                           <span className="text-xs text-slate-500">{user.email}</span>
@@ -248,7 +248,7 @@ export default function AdminUserListPage() {
                       <div
                         className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
                           user.status === 'active'
-                            ? 'bg-emerald-100 text-emerald-800'
+                            ? 'bg-violet-100 text-violet-800'
                             : 'bg-amber-100 text-amber-800'
                         }`}
                       >
@@ -261,7 +261,7 @@ export default function AdminUserListPage() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-slate-400 group-hover:text-emerald-600"
+                        className="h-8 w-8 text-slate-400 group-hover:text-violet-600"
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>

@@ -110,8 +110,8 @@ export default function InviteUserPage() {
   if (success) {
     return (
       <div className="max-w-lg mx-auto p-8 text-center">
-        <div className="h-16 w-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
-          <Check className="h-8 w-8 text-emerald-600" />
+        <div className="h-16 w-16 bg-violet-100 rounded-full flex items-center justify-center mx-auto mb-6">
+          <Check className="h-8 w-8 text-violet-600" />
         </div>
         <h1 className="text-2xl font-bold text-slate-900 mb-2">Invitation Sent!</h1>
         <p className="text-slate-600 mb-2">
@@ -135,7 +135,7 @@ export default function InviteUserPage() {
           </Button>
           <Button
             onClick={() => navigate(user?.role === 'system_admin' ? '/admin/users' : '/users')}
-            className="bg-emerald-500 hover:bg-emerald-600"
+            className="bg-violet-500 hover:bg-violet-600"
           >
             View Team
           </Button>
@@ -183,7 +183,7 @@ export default function InviteUserPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="user@company.com"
                 required
-                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none"
               />
             </div>
 
@@ -195,7 +195,7 @@ export default function InviteUserPage() {
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="John Smith"
                 required
-                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none"
               />
             </div>
 
@@ -209,7 +209,7 @@ export default function InviteUserPage() {
                     onClick={() => setRole(r.value as UserRole)}
                     className={`p-3 border rounded shadow-sm text-left transition-all ${
                       role === r.value
-                        ? 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-500'
+                        ? 'border-violet-500 bg-violet-50 ring-2 ring-violet-500'
                         : 'border-slate-200 hover:border-slate-300'
                     }`}
                   >
@@ -230,7 +230,7 @@ export default function InviteUserPage() {
           <Button
             type="submit"
             disabled={isSubmitting || !email || !fullName}
-            className="bg-emerald-500 hover:bg-emerald-600"
+            className="bg-violet-500 hover:bg-violet-600"
           >
             {isSubmitting ? (
               <>

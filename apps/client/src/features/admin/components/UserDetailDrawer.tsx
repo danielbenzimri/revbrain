@@ -176,7 +176,7 @@ export function UserDetailDrawer({
         {/* Header — subtle gradient with accent */}
         <div className="relative">
           {/* Top accent bar */}
-          <div className="h-1 bg-gradient-to-r from-emerald-500 via-emerald-400 to-teal-400" />
+          <div className="h-1 bg-gradient-to-r from-violet-500 via-violet-400 to-teal-400" />
 
           <div className="bg-gradient-to-b from-slate-50 to-white px-6 pt-5 pb-5 border-b border-slate-100">
             {/* Close button */}
@@ -191,7 +191,7 @@ export function UserDetailDrawer({
             <div className="flex flex-col items-center text-center pt-1">
               <Avatar className="h-18 w-18 ring-3 ring-white shadow-md">
                 <AvatarImage src={user.avatarUrl} />
-                <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white text-xl font-bold">
+                <AvatarFallback className="bg-gradient-to-br from-violet-500 to-teal-600 text-white text-xl font-bold">
                   {getInitials(user.name)}
                 </AvatarFallback>
               </Avatar>
@@ -208,13 +208,13 @@ export function UserDetailDrawer({
                 <span
                   className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium shadow-sm ${
                     user.status === 'active'
-                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/80'
+                      ? 'bg-violet-50 text-violet-700 border border-violet-200/80'
                       : 'bg-amber-50 text-amber-700 border border-amber-200/80'
                   }`}
                 >
                   <span
                     className={`h-1.5 w-1.5 rounded-full me-1.5 ${
-                      user.status === 'active' ? 'bg-emerald-500' : 'bg-amber-500'
+                      user.status === 'active' ? 'bg-violet-500' : 'bg-amber-500'
                     }`}
                   />
                   {user.status === 'active'
@@ -429,7 +429,7 @@ export function UserDetailDrawer({
                   size="sm"
                   disabled={isSaving}
                   form="edit-user-form"
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                  className="bg-violet-600 hover:bg-violet-700 text-white"
                 >
                   {isSaving && <Loader2 className="h-3.5 w-3.5 me-1.5 animate-spin" />}
                   {isSaving ? t('common.saving') : t('admin.users.saveChanges')}

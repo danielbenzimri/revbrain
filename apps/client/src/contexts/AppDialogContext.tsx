@@ -137,7 +137,7 @@ export function AppDialogProvider({ children }: { children: React.ReactNode }) {
           {state.type === 'prompt' && (
             <input
               autoFocus
-              className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={(e) => {
@@ -161,7 +161,7 @@ export function AppDialogProvider({ children }: { children: React.ReactNode }) {
               className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                 isDestructive
                   ? 'bg-red-500 text-white hover:bg-red-600'
-                  : 'bg-blue-600 text-white hover:bg-blue-700'
+                  : 'bg-violet-600 text-white hover:bg-violet-700'
               }`}
             >
               {isDestructive ? 'מחק' : 'אישור'}

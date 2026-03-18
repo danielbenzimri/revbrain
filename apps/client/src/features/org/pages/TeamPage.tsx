@@ -86,7 +86,7 @@ export default function TeamPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-violet-500" />
       </div>
     );
   }
@@ -120,7 +120,7 @@ export default function TeamPage() {
         {canInvite && (
           <Button
             onClick={() => navigate('/org/invite')}
-            className="bg-emerald-500 hover:bg-emerald-600"
+            className="bg-violet-500 hover:bg-violet-600"
           >
             <UserPlus className="h-4 w-4 mr-2" />
             Invite User
@@ -143,8 +143,8 @@ export default function TeamPage() {
             {activeMembers.map((member) => (
               <div key={member.id} className="p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 bg-emerald-100 rounded-full flex items-center justify-center">
-                    <span className="text-emerald-600 font-medium">
+                  <div className="h-10 w-10 bg-violet-100 rounded-full flex items-center justify-center">
+                    <span className="text-violet-600 font-medium">
                       {member.fullName?.charAt(0)?.toUpperCase() || '?'}
                     </span>
                   </div>
@@ -201,7 +201,7 @@ export default function TeamPage() {
                     Invited {formatDate(member.createdAt)}
                   </span>
                   {canInvite && (
-                    <Button variant="ghost" size="sm" className="text-emerald-600">
+                    <Button variant="ghost" size="sm" className="text-violet-600">
                       Resend
                     </Button>
                   )}

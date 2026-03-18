@@ -107,7 +107,7 @@ export function EditTenantDrawer({ open, onOpenChange, tenant }: EditTenantDrawe
                   value={formData.name}
                   onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                   required
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 outline-none text-sm"
                 />
               </div>
 
@@ -120,7 +120,7 @@ export function EditTenantDrawer({ open, onOpenChange, tenant }: EditTenantDrawe
                   onChange={(e) =>
                     setFormData((prev) => ({ ...prev, planId: e.target.value || null }))
                   }
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-white"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 outline-none text-sm bg-white"
                 >
                   <option value="">{t('admin.tenants.noPlan', 'No Plan')}</option>
                   {plans.map((p) => (
@@ -146,7 +146,7 @@ export function EditTenantDrawer({ open, onOpenChange, tenant }: EditTenantDrawe
                     setFormData((prev) => ({ ...prev, seatLimit: parseInt(e.target.value) || 0 }))
                   }
                   min={1}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 outline-none text-sm"
                 />
               </div>
 
@@ -158,7 +158,7 @@ export function EditTenantDrawer({ open, onOpenChange, tenant }: EditTenantDrawe
                     onChange={(e) =>
                       setFormData((prev) => ({ ...prev, isActive: e.target.checked }))
                     }
-                    className="w-5 h-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                    className="w-5 h-5 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
                   />
                   <div>
                     <p className="font-medium text-slate-900">
@@ -183,7 +183,7 @@ export function EditTenantDrawer({ open, onOpenChange, tenant }: EditTenantDrawe
             <Button
               type="submit"
               disabled={updateMutation.isPending}
-              className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+              className="flex-1 bg-violet-600 hover:bg-violet-700"
             >
               {updateMutation.isPending ? (
                 <>

@@ -325,7 +325,7 @@ export function PlanEditorDrawer({
                     <Percent className="absolute end-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                   </div>
                   {formData.price > 0 && (formData.yearlyDiscountPercent ?? 0) > 0 && (
-                    <p className="text-xs text-emerald-600 mt-1">
+                    <p className="text-xs text-violet-600 mt-1">
                       {t('admin.pricing.planEditor.yearlyPriceCalc', 'Yearly: ${{price}}/yr', {
                         price: Math.round(
                           formData.price * 12 * (1 - (formData.yearlyDiscountPercent ?? 0) / 100)
@@ -345,11 +345,11 @@ export function PlanEditorDrawer({
                       onChange={(e) =>
                         setFormData((prev) => ({ ...prev, isActive: e.target.checked }))
                       }
-                      className="w-5 h-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                      className="w-5 h-5 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
                     />
                     <div className="flex items-center gap-2 flex-1">
                       <Power
-                        className={`h-4 w-4 ${formData.isActive ? 'text-emerald-500' : 'text-slate-400'}`}
+                        className={`h-4 w-4 ${formData.isActive ? 'text-violet-500' : 'text-slate-400'}`}
                       />
                       <div>
                         <span className="font-medium text-slate-700">

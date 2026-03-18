@@ -35,7 +35,7 @@ const ROLE_CONFIG: Record<
   org_owner: {
     label: 'Organization Owner',
     labelHe: 'בעלי הארגון',
-    color: 'bg-blue-100 text-blue-800',
+    color: 'bg-violet-100 text-blue-800',
     group: 'management',
   },
   admin: {
@@ -175,7 +175,7 @@ export default function UsersPage() {
     return (
       <div className="p-4 md:p-8 h-full">
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-600" />
         </div>
       </div>
     );
@@ -202,7 +202,7 @@ export default function UsersPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <Users className="w-6 h-6 text-blue-600" />
+          <Users className="w-6 h-6 text-violet-600" />
           <h1 className="text-2xl font-bold text-slate-900">
             {lang === 'he' ? 'ניהול משתמשים' : 'User Management'}
           </h1>
@@ -210,7 +210,7 @@ export default function UsersPage() {
 
         {/* TODO: Add invite button for admins */}
         <button
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors disabled:opacity-50"
           disabled
           title={lang === 'he' ? 'בקרוב' : 'Coming soon'}
         >
@@ -232,7 +232,7 @@ export default function UsersPage() {
             }
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
           />
         </div>
       </div>
@@ -251,7 +251,9 @@ export default function UsersPage() {
         </div>
         <div className="bg-white rounded-lg border border-slate-200 p-4">
           <p className="text-sm text-slate-500">{lang === 'he' ? 'הנהלה' : 'Management'}</p>
-          <p className="text-2xl font-bold text-blue-600">{groupedUsers.management?.length || 0}</p>
+          <p className="text-2xl font-bold text-violet-600">
+            {groupedUsers.management?.length || 0}
+          </p>
         </div>
         <div className="bg-white rounded-lg border border-slate-200 p-4">
           <p className="text-sm text-slate-500">{lang === 'he' ? 'חברי צוות' : 'Team Members'}</p>

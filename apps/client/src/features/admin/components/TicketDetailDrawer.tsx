@@ -120,11 +120,11 @@ export function TicketDetailDrawer({
       case 'open':
         return 'bg-red-50 text-red-600 border-red-200';
       case 'in_progress':
-        return 'bg-blue-50 text-blue-600 border-blue-200';
+        return 'bg-violet-50 text-violet-600 border-violet-200';
       case 'waiting_customer':
         return 'bg-amber-50 text-amber-600 border-amber-200';
       case 'resolved':
-        return 'bg-emerald-50 text-emerald-600 border-emerald-200';
+        return 'bg-violet-50 text-violet-600 border-violet-200';
       case 'closed':
         return 'bg-slate-100 text-slate-500 border-slate-200';
       default:
@@ -172,7 +172,7 @@ export function TicketDetailDrawer({
           <>
             {/* Header */}
             <div className="relative">
-              <div className="h-1 bg-gradient-to-r from-blue-500 via-blue-400 to-cyan-400" />
+              <div className="h-1 bg-gradient-to-r from-violet-500 via-violet-400 to-cyan-400" />
               <div className="bg-gradient-to-b from-slate-50 to-white px-6 pt-5 pb-4 border-b border-slate-100">
                 <button
                   onClick={handleClose}
@@ -291,7 +291,7 @@ export function TicketDetailDrawer({
                         message.isInternal
                           ? 'bg-amber-50 border border-amber-200'
                           : message.senderType === 'admin'
-                            ? 'bg-blue-50 border border-blue-100'
+                            ? 'bg-violet-50 border border-violet-100'
                             : message.senderType === 'system'
                               ? 'bg-slate-50 border border-slate-200'
                               : 'bg-white border border-slate-200'
@@ -302,7 +302,7 @@ export function TicketDetailDrawer({
                           <span
                             className={`text-sm font-medium ${
                               message.senderType === 'admin'
-                                ? 'text-blue-700'
+                                ? 'text-violet-700'
                                 : message.senderType === 'system'
                                   ? 'text-slate-500'
                                   : 'text-slate-700'
@@ -319,7 +319,7 @@ export function TicketDetailDrawer({
                           <span
                             className={`text-xs px-1.5 py-0.5 rounded ${
                               message.senderType === 'admin'
-                                ? 'bg-blue-100 text-blue-600'
+                                ? 'bg-violet-100 text-violet-600'
                                 : message.senderType === 'system'
                                   ? 'bg-slate-200 text-slate-500'
                                   : 'bg-slate-100 text-slate-500'

@@ -177,14 +177,14 @@ export function ProjectFormSheet({
         hideCloseButton
       >
         {/* Header - Emerald gradient for projects */}
-        <div className="bg-gradient-to-r from-emerald-500 to-teal-500 px-6 py-5 text-white">
+        <div className="bg-gradient-to-r from-violet-500 to-teal-500 px-6 py-5 text-white">
           <div className="flex items-center justify-between">
             <div className="flex-1" />
             <div className="text-center">
               <h2 className="text-xl font-bold">
                 {isEditMode ? t('projects.edit') : t('projects.create')}
               </h2>
-              <p className="text-emerald-100 text-sm mt-0.5">
+              <p className="text-violet-100 text-sm mt-0.5">
                 {isEditMode
                   ? t('projects.form.editSubtitle', 'Update project details')
                   : t('projects.form.createSubtitle', 'Add a new project')}
@@ -213,7 +213,7 @@ export function ProjectFormSheet({
             {/* Section 1: Basic Information */}
             <section className="space-y-4">
               <div className="flex items-center gap-2">
-                <div className="h-7 w-7 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm font-bold">
+                <div className="h-7 w-7 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center text-sm font-bold">
                   1
                 </div>
                 <h3 className="font-semibold text-slate-900">{t('projects.form.basicInfo')}</h3>
@@ -231,7 +231,7 @@ export function ProjectFormSheet({
                     onChange={(e) => updateField('name', e.target.value)}
                     required
                     placeholder={t('projects.form.namePlaceholder')}
-                    className={`w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm ${
+                    className={`w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none text-sm ${
                       validationErrors.name ? 'border-red-300' : 'border-slate-300'
                     }`}
                   />
@@ -250,7 +250,7 @@ export function ProjectFormSheet({
                     onChange={(e) => updateField('description', e.target.value || null)}
                     rows={3}
                     placeholder={t('projects.form.descriptionPlaceholder')}
-                    className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm resize-none"
+                    className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none text-sm resize-none"
                   />
                 </div>
 
@@ -264,7 +264,7 @@ export function ProjectFormSheet({
                     onChange={(e) => updateField('notes', e.target.value || null)}
                     rows={2}
                     placeholder={t('projects.form.notesPlaceholder')}
-                    className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm resize-none"
+                    className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none text-sm resize-none"
                   />
                 </div>
               </div>
@@ -273,7 +273,7 @@ export function ProjectFormSheet({
             {/* Section 2: Dates */}
             <section className="space-y-4">
               <div className="flex items-center gap-2">
-                <div className="h-7 w-7 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm font-bold">
+                <div className="h-7 w-7 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center text-sm font-bold">
                   2
                 </div>
                 <h3 className="font-semibold text-slate-900">
@@ -293,7 +293,7 @@ export function ProjectFormSheet({
                     type="date"
                     value={formData.startDate || ''}
                     onChange={(e) => updateField('startDate', e.target.value || null)}
-                    className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm"
+                    className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none text-sm"
                   />
                 </div>
 
@@ -307,7 +307,7 @@ export function ProjectFormSheet({
                     type="date"
                     value={formData.endDate || ''}
                     onChange={(e) => updateField('endDate', e.target.value || null)}
-                    className={`w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm ${
+                    className={`w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none text-sm ${
                       validationErrors.endDate ? 'border-red-300' : 'border-slate-300'
                     }`}
                   />
@@ -322,7 +322,7 @@ export function ProjectFormSheet({
             {isEditMode && (
               <section className="space-y-4">
                 <div className="flex items-center gap-2">
-                  <div className="h-7 w-7 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm font-bold">
+                  <div className="h-7 w-7 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center text-sm font-bold">
                     3
                   </div>
                   <h3 className="font-semibold text-slate-900">
@@ -339,7 +339,7 @@ export function ProjectFormSheet({
                     onChange={(e) =>
                       setStatus(e.target.value as 'active' | 'on_hold' | 'completed' | 'cancelled')
                     }
-                    className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm bg-white"
+                    className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none text-sm bg-white"
                   >
                     <option value="active">{t('projects.status.active')}</option>
                     <option value="on_hold">{t('projects.status.on_hold')}</option>
@@ -409,7 +409,7 @@ export function ProjectFormSheet({
               <Button
                 type="submit"
                 disabled={isSubmitting || !formData.name}
-                className="bg-emerald-500 hover:bg-emerald-600"
+                className="bg-violet-500 hover:bg-violet-600"
               >
                 {isSubmitting ? (
                   <>

@@ -60,7 +60,7 @@ export default function ProjectSettingsPage() {
     return (
       <div className="p-4 md:p-8 h-full">
         <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+          <Loader2 className="h-8 w-8 animate-spin text-violet-600" />
         </div>
       </div>
     );
@@ -81,7 +81,7 @@ export default function ProjectSettingsPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <Settings className="w-6 h-6 text-blue-600" />
+          <Settings className="w-6 h-6 text-violet-600" />
           <h1 className="text-2xl font-bold text-slate-900">
             {lang === 'he' ? 'הגדרות פרויקט' : 'Project Settings'}
           </h1>
@@ -92,7 +92,7 @@ export default function ProjectSettingsPage() {
           className={cn(
             'flex items-center gap-2 px-4 py-2 rounded-lg transition-colors',
             hasChanges
-              ? 'bg-blue-600 text-white hover:bg-blue-700'
+              ? 'bg-violet-600 text-white hover:bg-violet-700'
               : 'bg-slate-100 text-slate-400 cursor-not-allowed'
           )}
         >
@@ -130,7 +130,7 @@ export default function ProjectSettingsPage() {
             type="text"
             value={formData.name || ''}
             onChange={(e) => handleChange('name', e.target.value)}
-            className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
           />
         </div>
 
@@ -143,7 +143,7 @@ export default function ProjectSettingsPage() {
             value={formData.description || ''}
             onChange={(e) => handleChange('description', e.target.value)}
             rows={3}
-            className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
           />
         </div>
 
@@ -158,7 +158,7 @@ export default function ProjectSettingsPage() {
               type="date"
               value={formData.startDate || ''}
               onChange={(e) => handleChange('startDate', e.target.value)}
-              className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
             />
           </div>
           <div>
@@ -170,7 +170,7 @@ export default function ProjectSettingsPage() {
               type="date"
               value={formData.endDate || ''}
               onChange={(e) => handleChange('endDate', e.target.value)}
-              className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
             />
           </div>
         </div>
@@ -184,7 +184,7 @@ export default function ProjectSettingsPage() {
             value={formData.notes || ''}
             onChange={(e) => handleChange('notes', e.target.value)}
             rows={3}
-            className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
           />
         </div>
 
@@ -196,7 +196,7 @@ export default function ProjectSettingsPage() {
           <select
             value={formData.status || 'active'}
             onChange={(e) => handleChange('status', e.target.value)}
-            className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
           >
             <option value="active">{lang === 'he' ? 'פעיל' : 'Active'}</option>
             <option value="on_hold">{lang === 'he' ? 'מושהה' : 'On Hold'}</option>

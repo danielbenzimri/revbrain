@@ -63,9 +63,9 @@ export default function BillingPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active':
-        return 'bg-emerald-100 text-emerald-800';
+        return 'bg-violet-100 text-violet-800';
       case 'trialing':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-violet-100 text-blue-800';
       case 'past_due':
         return 'bg-amber-100 text-amber-800';
       case 'canceled':
@@ -90,7 +90,7 @@ export default function BillingPage() {
 
       {/* Success/Cancel Messages */}
       {success && (
-        <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-lg flex items-center gap-3">
+        <div className="bg-violet-50 border border-violet-200 text-violet-800 px-4 py-3 rounded-lg flex items-center gap-3">
           <CheckCircle className="h-5 w-5" />
           <span>{t('billing.subscriptionSuccess')}</span>
         </div>
@@ -151,7 +151,7 @@ export default function BillingPage() {
 
               {/* Trial Warning */}
               {subscription.status === 'trialing' && subscription.trialEnd && (
-                <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg">
+                <div className="bg-violet-50 border border-violet-200 text-blue-800 px-4 py-3 rounded-lg">
                   {t('billing.trialEnds', { date: formatDate(subscription.trialEnd) })}
                 </div>
               )}
@@ -202,7 +202,7 @@ export default function BillingPage() {
                 <Button
                   variant="outline"
                   onClick={() => setIsUpgradeModalOpen(true)}
-                  className="border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                  className="border-violet-300 text-violet-700 hover:bg-violet-50"
                 >
                   <Sparkles className="h-4 w-4 me-2" />
                   {t('billing.upgrade.button')}
@@ -240,12 +240,12 @@ export default function BillingPage() {
                   <div className="flex items-center gap-4">
                     <div
                       className={`h-8 w-8 rounded-full flex items-center justify-center ${
-                        payment.status === 'succeeded' ? 'bg-emerald-100' : 'bg-red-100'
+                        payment.status === 'succeeded' ? 'bg-violet-100' : 'bg-red-100'
                       }`}
                     >
                       <Receipt
                         className={`h-4 w-4 ${
-                          payment.status === 'succeeded' ? 'text-emerald-600' : 'text-red-600'
+                          payment.status === 'succeeded' ? 'text-violet-600' : 'text-red-600'
                         }`}
                       />
                     </div>
@@ -265,7 +265,7 @@ export default function BillingPage() {
                     <span
                       className={`px-2 py-0.5 rounded text-xs font-medium ${
                         payment.status === 'succeeded'
-                          ? 'bg-emerald-100 text-emerald-800'
+                          ? 'bg-violet-100 text-violet-800'
                           : 'bg-red-100 text-red-800'
                       }`}
                     >
@@ -419,7 +419,7 @@ function PlanSelector({ plans, isLoading, onSelectPlan, isCheckoutPending, t }: 
           return (
             <div
               key={plan.id}
-              className="border border-slate-200 rounded-xl p-6 flex flex-col hover:border-emerald-300 hover:shadow-md transition-all"
+              className="border border-slate-200 rounded-xl p-6 flex flex-col hover:border-violet-300 hover:shadow-md transition-all"
             >
               <div className="mb-4">
                 <h3 className="text-lg font-bold text-slate-900">{plan.name}</h3>
@@ -436,7 +436,7 @@ function PlanSelector({ plans, isLoading, onSelectPlan, isCheckoutPending, t }: 
               <ul className="space-y-3 mb-6 flex-1">
                 {features.map((feature, idx) => (
                   <li key={idx} className="flex items-start gap-3 text-sm text-slate-600">
-                    <Check className="h-4 w-4 text-emerald-500 mt-0.5 flex-shrink-0" />
+                    <Check className="h-4 w-4 text-violet-500 mt-0.5 flex-shrink-0" />
                     {feature}
                   </li>
                 ))}
@@ -445,7 +445,7 @@ function PlanSelector({ plans, isLoading, onSelectPlan, isCheckoutPending, t }: 
               <Button
                 onClick={() => onSelectPlan(plan.id)}
                 disabled={isCheckoutPending}
-                className="w-full bg-emerald-600 text-white hover:bg-emerald-700"
+                className="w-full bg-violet-600 text-white hover:bg-violet-700"
               >
                 {isCheckoutPending ? <Loader2 className="h-4 w-4 me-2 animate-spin" /> : null}
                 {t('billing.subscribe')}

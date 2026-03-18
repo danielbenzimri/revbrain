@@ -151,7 +151,7 @@ export function DocumentsView({ projectId }: DocumentsViewProps) {
         return <FileText size={16} className="text-red-500" />;
       case 'doc':
       case 'docx':
-        return <FileText size={16} className="text-blue-500" />;
+        return <FileText size={16} className="text-violet-500" />;
       case 'xls':
       case 'xlsx':
         return <FileText size={16} className="text-green-600" />;
@@ -301,7 +301,7 @@ export function DocumentsView({ projectId }: DocumentsViewProps) {
               e.stopPropagation();
               // TODO: Download file
             }}
-            className="p-1 hover:bg-blue-50 text-slate-400 hover:text-blue-600 rounded transition-all"
+            className="p-1 hover:bg-violet-50 text-slate-400 hover:text-violet-600 rounded transition-all"
             title={t('download')}
           >
             <Download size={12} />
@@ -360,7 +360,7 @@ export function DocumentsView({ projectId }: DocumentsViewProps) {
               e.stopPropagation();
               handleUploadToFolder(folder.id);
             }}
-            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-blue-50 text-blue-500 rounded transition-all"
+            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-violet-50 text-violet-500 rounded transition-all"
             title={t('uploadToFolder')}
           >
             <Upload size={14} />
@@ -390,7 +390,7 @@ export function DocumentsView({ projectId }: DocumentsViewProps) {
   if (isLoading) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-violet-500" />
       </div>
     );
   }
@@ -436,14 +436,14 @@ export function DocumentsView({ projectId }: DocumentsViewProps) {
               placeholder={t('searchFiles')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className={`w-full py-1.5 bg-slate-50 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all ${isRTL ? 'pr-9 pl-3' : 'pl-9 pr-3'}`}
+              className={`w-full py-1.5 bg-slate-50 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all ${isRTL ? 'pr-9 pl-3' : 'pl-9 pr-3'}`}
             />
           </div>
         </div>
 
         {/* File Tree */}
         <div
-          className={`flex-1 overflow-y-auto p-2 ${isDragging ? 'bg-blue-50 border-2 border-dashed border-blue-300' : ''}`}
+          className={`flex-1 overflow-y-auto p-2 ${isDragging ? 'bg-violet-50 border-2 border-dashed border-violet-300' : ''}`}
           onDragEnter={handleDragEnter}
           onDragLeave={handleDragLeave}
           onDragOver={handleDragOver}
@@ -494,7 +494,7 @@ export function DocumentsView({ projectId }: DocumentsViewProps) {
                   // TODO: Move file to folder
                   setContextMenu(null);
                 }}
-                className={`w-full px-3 py-1.5 text-xs hover:bg-blue-50 text-slate-700 flex items-center gap-2 ${isRTL ? 'text-right' : 'text-left'}`}
+                className={`w-full px-3 py-1.5 text-xs hover:bg-violet-50 text-slate-700 flex items-center gap-2 ${isRTL ? 'text-right' : 'text-left'}`}
               >
                 <Folder size={12} className="text-amber-400" />
                 {t(`folders.${folder.nameKey}`)}

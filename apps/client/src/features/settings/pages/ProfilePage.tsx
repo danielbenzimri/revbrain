@@ -42,7 +42,7 @@ function ProfileForm({ profile }: { profile: UserProfile }) {
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Success message */}
         {showSuccess && (
-          <div className="flex items-center gap-2 bg-emerald-50 text-emerald-700 px-4 py-3 rounded-lg text-sm">
+          <div className="flex items-center gap-2 bg-violet-50 text-violet-700 px-4 py-3 rounded-lg text-sm">
             <CheckCircle2 className="h-4 w-4" />
             {t('settings.profile.saved')}
           </div>
@@ -78,7 +78,7 @@ function ProfileForm({ profile }: { profile: UserProfile }) {
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
             required
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm"
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 outline-none text-sm"
           />
         </div>
 
@@ -93,7 +93,7 @@ function ProfileForm({ profile }: { profile: UserProfile }) {
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
               placeholder="+1 (555) 123-4567"
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 outline-none text-sm"
             />
           </div>
           <div>
@@ -105,7 +105,7 @@ function ProfileForm({ profile }: { profile: UserProfile }) {
               value={mobileNumber}
               onChange={(e) => setMobileNumber(e.target.value)}
               placeholder="+1 (555) 987-6543"
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 outline-none text-sm"
             />
           </div>
         </div>
@@ -119,7 +119,7 @@ function ProfileForm({ profile }: { profile: UserProfile }) {
             type="text"
             value={jobTitle}
             onChange={(e) => setJobTitle(e.target.value)}
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm"
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 outline-none text-sm"
           />
         </div>
 
@@ -132,7 +132,7 @@ function ProfileForm({ profile }: { profile: UserProfile }) {
             type="text"
             value={address}
             onChange={(e) => setAddress(e.target.value)}
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm"
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 outline-none text-sm"
           />
         </div>
 
@@ -146,7 +146,7 @@ function ProfileForm({ profile }: { profile: UserProfile }) {
             value={avatarUrl}
             onChange={(e) => setAvatarUrl(e.target.value)}
             placeholder="https://..."
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm"
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 outline-none text-sm"
           />
         </div>
 
@@ -159,7 +159,7 @@ function ProfileForm({ profile }: { profile: UserProfile }) {
             value={bio}
             onChange={(e) => setBio(e.target.value)}
             rows={3}
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm resize-none"
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 outline-none text-sm resize-none"
           />
         </div>
 
@@ -167,7 +167,7 @@ function ProfileForm({ profile }: { profile: UserProfile }) {
           <Button
             type="submit"
             disabled={updateProfile.isPending}
-            className="bg-emerald-500 hover:bg-emerald-600 text-white"
+            className="bg-violet-500 hover:bg-violet-600 text-white"
           >
             {updateProfile.isPending ? (
               <>

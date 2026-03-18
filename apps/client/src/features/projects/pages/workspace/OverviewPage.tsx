@@ -24,7 +24,7 @@ export default function OverviewPage() {
   if (isLoading || !project) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-violet-600" />
       </div>
     );
   }

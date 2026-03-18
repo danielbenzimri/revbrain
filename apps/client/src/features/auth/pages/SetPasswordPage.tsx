@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Eye, EyeOff, Check, X, Loader2, Globe } from 'lucide-react';
+import { Eye, EyeOff, Check, X, Loader2, Globe, ArrowRightLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getAuthAdapter } from '@/lib/services';
 import { supabase } from '@/lib/supabase';
@@ -183,7 +183,7 @@ export default function SetPasswordPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-emerald-500 mx-auto" />
+          <Loader2 className="h-8 w-8 animate-spin text-violet-500 mx-auto" />
           <p className="mt-4 text-slate-600">Setting up your account...</p>
         </div>
       </div>
@@ -202,7 +202,7 @@ export default function SetPasswordPage() {
           <p className="text-slate-600 mb-6">{error}</p>
           <Button
             onClick={() => navigate('/login')}
-            className="bg-emerald-500 hover:bg-emerald-600 text-white"
+            className="bg-violet-500 hover:bg-violet-600 text-white"
           >
             Go to Login
           </Button>
@@ -217,8 +217,8 @@ export default function SetPasswordPage() {
       <div className="hidden lg:flex lg:w-[45%] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white flex-col justify-between p-12">
         <div>
           <div className="flex items-center gap-3">
-            <div className="h-12 w-12 bg-emerald-500 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
-              G
+            <div className="h-12 w-12 bg-gradient-to-br from-violet-600 to-purple-700 rounded-xl flex items-center justify-center text-white shadow-lg">
+              <ArrowRightLeft size={24} />
             </div>
             <span className="text-2xl font-bold">RevBrain</span>
           </div>
@@ -228,14 +228,16 @@ export default function SetPasswordPage() {
           <h1 className="text-4xl font-bold leading-tight">
             Welcome to
             <br />
-            <span className="text-emerald-400">RevBrain</span>
+            <span className="text-violet-400">RevBrain</span>
           </h1>
           <p className="text-slate-400 text-lg max-w-md">
             Set your password to complete your account setup and start using the platform.
           </p>
         </div>
 
-        <div className="text-slate-500 text-sm">© 2024 RevBrain. All rights reserved.</div>
+        <div className="text-slate-500 text-sm">
+          © {new Date().getFullYear()} RevBrain. All rights reserved.
+        </div>
       </div>
 
       {/* Right Panel - Password Form */}
@@ -274,7 +276,7 @@ export default function SetPasswordPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter a strong password"
-                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all pe-10"
+                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition-all pe-10"
                   autoComplete="new-password"
                 />
                 <button
@@ -294,7 +296,7 @@ export default function SetPasswordPage() {
                 {passwordStrength.map((rule) => (
                   <div
                     key={rule.id}
-                    className={`flex items-center gap-2 text-xs ${rule.passed ? 'text-emerald-600' : 'text-slate-400'}`}
+                    className={`flex items-center gap-2 text-xs ${rule.passed ? 'text-violet-600' : 'text-slate-400'}`}
                   >
                     {rule.passed ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
                     {rule.label}
@@ -311,11 +313,11 @@ export default function SetPasswordPage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Confirm your password"
-                className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all ${
+                className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition-all ${
                   confirmPassword && !passwordsMatch
                     ? 'border-red-300 bg-red-50'
                     : confirmPassword && passwordsMatch
-                      ? 'border-emerald-300 bg-emerald-50'
+                      ? 'border-violet-300 bg-violet-50'
                       : 'border-slate-300'
                 }`}
                 autoComplete="new-password"
@@ -327,7 +329,7 @@ export default function SetPasswordPage() {
 
             <Button
               type="submit"
-              className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-2.5"
+              className="w-full bg-violet-500 hover:bg-violet-600 text-white py-2.5"
               disabled={!allRulesPassed || !passwordsMatch || isSubmitting}
             >
               {isSubmitting ? (

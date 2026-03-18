@@ -82,8 +82,8 @@ export default function OnboardOrganizationPage() {
   if (success) {
     return (
       <div className="max-w-lg mx-auto p-8 text-center">
-        <div className="h-16 w-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
-          <Check className="h-8 w-8 text-emerald-600" />
+        <div className="h-16 w-16 bg-violet-100 rounded-full flex items-center justify-center mx-auto mb-6">
+          <Check className="h-8 w-8 text-violet-600" />
         </div>
         <h1 className="text-2xl font-bold text-slate-900 mb-2">
           {t('admin.onboard.successTitle')}
@@ -103,7 +103,7 @@ export default function OnboardOrganizationPage() {
           >
             {t('admin.onboard.onboardAnother')}
           </Button>
-          <Button onClick={() => navigate('/')} className="bg-emerald-500 hover:bg-emerald-600">
+          <Button onClick={() => navigate('/')} className="bg-violet-500 hover:bg-violet-600">
             {t('admin.onboard.goToDashboard')}
           </Button>
         </div>
@@ -151,7 +151,7 @@ export default function OnboardOrganizationPage() {
                 onChange={(e) => setOrgName(e.target.value)}
                 placeholder={t('admin.onboard.orgNamePlaceholder')}
                 required
-                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none"
               />
             </div>
 
@@ -166,7 +166,7 @@ export default function OnboardOrganizationPage() {
                 min={1}
                 max={1000}
                 required
-                className="w-32 px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                className="w-32 px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none"
               />
               <p className="text-xs text-slate-500 mt-1">{t('admin.onboard.seatLimitHint')}</p>
             </div>
@@ -195,7 +195,7 @@ export default function OnboardOrganizationPage() {
                 onChange={(e) => setAdminEmail(e.target.value)}
                 placeholder={t('admin.onboard.adminEmailPlaceholder')}
                 required
-                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none"
               />
             </div>
 
@@ -209,7 +209,7 @@ export default function OnboardOrganizationPage() {
                 onChange={(e) => setAdminName(e.target.value)}
                 placeholder={t('admin.onboard.adminNamePlaceholder')}
                 required
-                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none"
               />
             </div>
           </div>
@@ -223,7 +223,7 @@ export default function OnboardOrganizationPage() {
           <Button
             type="submit"
             disabled={isSubmitting || !orgName || !adminEmail || !adminName}
-            className="bg-emerald-500 hover:bg-emerald-600"
+            className="bg-violet-500 hover:bg-violet-600"
           >
             {isSubmitting ? (
               <>
