@@ -94,3 +94,32 @@ describe('Mock mode integration', () => {
     expect(process.env.DATABASE_URL).toBeUndefined();
   });
 });
+
+describe('Mock mode admin endpoints', () => {
+  it('system_admin sees tenants', async () => {
+    const res = await app.request('/v1/admin/tenants', {
+      headers: mockAuthHeader(MOCK_IDS.USER_SYSTEM_ADMIN),
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as AnyJson;
+    expect(body.success).toBe(true);
+    expect(body.data.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('system_admin sees plans', async () => {
+    const res = await app.request('/v1/plans', {
+      headers: mockAuthHeader(MOCK_IDS.USER_SYSTEM_ADMIN),
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as AnyJson;
+    expect(body.success).toBe(true);
+    expect(body.data.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('non-admin cannot access admin endpoints', async () => {
+    const res = await app.request('/v1/admin/tenants', {
+      headers: mockAuthHeader(MOCK_IDS.USER_ACME_OPERATOR),
+    });
+    expect(res.status).toBe(403);
+  });
+});
