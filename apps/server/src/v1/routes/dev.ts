@@ -696,4 +696,23 @@ if (!isProduction()) {
   });
 }
 
+// ============================================================================
+// MOCK DATA RESET (only in mock + local mode)
+// ============================================================================
+// Excluded from OpenAPI — uses plain post(), not openapi()
+if (
+  process.env.USE_MOCK_DATA === 'true' &&
+  (process.env.APP_ENV === 'local' || !process.env.APP_ENV)
+) {
+  // Dynamic import to avoid loading mock modules in real mode
+  import('../../mocks/index.ts').then(({ resetAllMockData }) => {
+    devRouter.post('/reset-mock-data', async (c) => {
+      resetAllMockData();
+      logger.info('[MOCK MODE] All mock data reset to seed state');
+      return c.json({ success: true, message: 'Mock data reset to seed state' });
+    });
+  });
+  console.log('[MOCK MODE] Reset endpoint: POST /v1/dev/reset-mock-data');
+}
+
 export { devRouter };
