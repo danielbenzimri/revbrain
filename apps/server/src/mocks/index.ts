@@ -17,6 +17,13 @@ import { SEED_ORGANIZATIONS } from './organizations.ts';
 import { SEED_USERS } from './users.ts';
 import { SEED_PROJECTS } from './projects.ts';
 import { SEED_AUDIT_LOGS } from './audit-logs.ts';
+import {
+  SEED_TICKETS,
+  SEED_TICKET_MESSAGES,
+  type SeedTicket,
+  type SeedTicketMessage,
+} from './support-tickets.ts';
+import { SEED_COUPONS, type SeedCoupon } from './coupons.ts';
 
 // Re-export constants and seeds for direct access
 export { MOCK_IDS } from './constants.ts';
@@ -25,6 +32,12 @@ export { SEED_ORGANIZATIONS } from './organizations.ts';
 export { SEED_USERS } from './users.ts';
 export { SEED_PROJECTS } from './projects.ts';
 export { SEED_AUDIT_LOGS } from './audit-logs.ts';
+export { SEED_TICKETS, SEED_TICKET_MESSAGES } from './support-tickets.ts';
+export { SEED_COUPONS } from './coupons.ts';
+
+// Re-export types for repository use
+export type { SeedTicket, SeedTicketMessage } from './support-tickets.ts';
+export type { SeedCoupon } from './coupons.ts';
 
 // Mutable stores — these are what mock repositories read/write
 export let mockPlans: PlanEntity[] = cloneArray(SEED_PLANS);
@@ -32,6 +45,9 @@ export let mockOrganizations: OrganizationEntity[] = cloneArray(SEED_ORGANIZATIO
 export let mockUsers: UserEntity[] = cloneArray(SEED_USERS);
 export let mockProjects: ProjectEntity[] = cloneArray(SEED_PROJECTS);
 export let mockAuditLogs: AuditLogEntity[] = cloneArray(SEED_AUDIT_LOGS);
+export let mockTickets: SeedTicket[] = cloneArray(SEED_TICKETS);
+export let mockTicketMessages: SeedTicketMessage[] = cloneArray(SEED_TICKET_MESSAGES);
+export let mockCoupons: SeedCoupon[] = cloneArray(SEED_COUPONS);
 
 /**
  * Reset all mutable stores to their initial seed state.
@@ -43,4 +59,7 @@ export function resetAllMockData(): void {
   mockUsers = cloneArray(SEED_USERS);
   mockProjects = cloneArray(SEED_PROJECTS);
   mockAuditLogs = cloneArray(SEED_AUDIT_LOGS);
+  mockTickets = cloneArray(SEED_TICKETS);
+  mockTicketMessages = cloneArray(SEED_TICKET_MESSAGES);
+  mockCoupons = cloneArray(SEED_COUPONS);
 }
