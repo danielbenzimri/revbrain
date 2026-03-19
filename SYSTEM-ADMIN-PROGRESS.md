@@ -11,7 +11,7 @@ All 11 bug fixes and security fixes shipped in commit `490bddf`.
 
 ---
 
-## Phase 1: MVP — IN PROGRESS (10 of 14 tasks done)
+## Phase 1: MVP — 10 of 14 tasks done (2 blocked on Supabase)
 
 | Task | Description                            | Status      | Commit    |
 | ---- | -------------------------------------- | ----------- | --------- |
@@ -37,35 +37,43 @@ All 11 bug fixes and security fixes shipped in commit `490bddf`.
 | **1.7**  | Supabase dashboard access to check RLS policies + execute `REVOKE UPDATE, DELETE` on audit_logs table |
 | **1.10** | Supabase Auth MFA API (`supabase.auth.mfa.listFactors()`) to build enrollment check middleware        |
 
-### What's next after Supabase is connected
-
-1. Task 1.7: Run RLS check SQL, set INSERT-only on audit log table
-2. Task 1.10: Build MFA enforcement middleware with staged rollout (log → enforce)
-3. Phase 1 completion verification: all 14 tasks done, full test suite
-
 ---
 
-## Phase 2: Launch — NOT STARTED
+## Phase 2: Launch — IN PROGRESS (2 of 23 tasks done)
 
-| Task     | Description                                | Status  | Depends On |
-| -------- | ------------------------------------------ | ------- | ---------- |
-| 2.0      | Technical spike — JWT + step-up auth       | Pending | —          |
-| 2.1      | Admin permission schema + migration        | Pending | —          |
-| 2.2      | requireAdminPermission middleware          | Pending | 2.1        |
-| 2.3      | Step-up auth middleware                    | Pending | 2.0, 2.2   |
-| 2.4-2.10 | Impersonation (read-only) — 7 sub-tasks    | Pending | 2.2, 2.3   |
-| 2.11     | Audit viewer page                          | Pending | —          |
-| 2.12     | Tenant overrides — table + service         | Pending | —          |
-| 2.13     | Tenant overrides — admin UI                | Pending | 2.12       |
-| 2.14     | Tenant lifecycle states                    | Pending | —          |
-| 2.15     | Support operations [SLIPPABLE]             | Pending | —          |
-| 2.16     | Job queue visibility [SLIPPABLE]           | Pending | —          |
-| 2.17     | Notifications — in-app [SLIPPABLE]         | Pending | —          |
-| 2.18     | Notifications — email [SLIPPABLE]          | Pending | 2.17       |
-| 2.19     | Optimistic concurrency                     | Pending | —          |
-| 2.20     | Cursor-based pagination                    | Pending | —          |
-| 2.21     | Accessibility — axe-core                   | Pending | —          |
-| 2.22     | Customer-visible admin access audit (stub) | Pending | —          |
+| Task     | Description                                | Status   | Commit    | Depends On |
+| -------- | ------------------------------------------ | -------- | --------- | ---------- |
+| 2.0      | Technical spike — JWT + step-up auth       | Pending  | —         | —          |
+| 2.1      | Admin permission schema + migration        | Pending  | —         | —          |
+| 2.2      | requireAdminPermission middleware          | Pending  | —         | 2.1        |
+| 2.3      | Step-up auth middleware                    | Pending  | —         | 2.0, 2.2   |
+| 2.4-2.10 | Impersonation (read-only) — 7 sub-tasks    | Pending  | —         | 2.2, 2.3   |
+| 2.11     | Audit viewer page + CSV export             | **Done** | `7b833e0` | —          |
+| 2.12     | Tenant overrides — table + service         | Pending  | —         | —          |
+| 2.13     | Tenant overrides — admin UI                | Pending  | —         | 2.12       |
+| 2.14     | Tenant lifecycle states                    | Pending  | —         | —          |
+| 2.15     | Support operations [SLIPPABLE]             | Pending  | —         | —          |
+| 2.16     | Job queue visibility [SLIPPABLE]           | Pending  | —         | —          |
+| 2.17     | Notifications — in-app [SLIPPABLE]         | Pending  | —         | —          |
+| 2.18     | Notifications — email [SLIPPABLE]          | Pending  | —         | 2.17       |
+| 2.19     | Optimistic concurrency (409 on conflict)   | **Done** | `dd7c00d` | —          |
+| 2.20     | Cursor-based pagination                    | Pending  | —         | —          |
+| 2.21     | Accessibility — axe-core                   | Pending  | —         | —          |
+| 2.22     | Customer-visible admin access audit (stub) | Pending  | —         | —          |
+
+### What can be done next (no dependencies)
+
+- **2.14** — Tenant lifecycle states + detail page (schema + UI)
+- **2.21** — Accessibility axe-core integration
+- **2.12** — Tenant overrides table + service (schema)
+- **2.15** — Support operations (admin ticket creation, SLA indicators)
+- **2.16** — Job queue visibility
+
+### What's blocked on prior tasks
+
+- **2.0** — Technical spike (research, no code — can start anytime)
+- **2.1** — Admin permission schema (can start, but needs Supabase for real migrations)
+- **2.2 → 2.3 → 2.4-2.10** — Impersonation chain (blocked on 2.1)
 
 ---
 
@@ -81,32 +89,37 @@ All 11 bug fixes and security fixes shipped in commit `490bddf`.
 
 ## Metrics
 
-| Metric                  | Value                          |
-| ----------------------- | ------------------------------ |
-| Total tasks (Phase 0-2) | 59                             |
-| Completed               | 21                             |
-| Blocked (Supabase)      | 2                              |
-| Remaining Phase 1       | 2 (blocked)                    |
-| Not started (Phase 2+)  | 36                             |
-| Test count (last run)   | 714+ (553 server + 161 client) |
-| Lint errors             | 0                              |
-| Tenant isolation audit  | PASS — 0 vulnerabilities found |
-| Audit event coverage    | ~15 action types logged        |
+| Metric                       | Value                                                                 |
+| ---------------------------- | --------------------------------------------------------------------- |
+| Total tasks (Phase 0-2)      | 59                                                                    |
+| Completed                    | 23                                                                    |
+| Blocked (Supabase)           | 2                                                                     |
+| Remaining (can do now)       | 8                                                                     |
+| Remaining (blocked on chain) | 10                                                                    |
+| Not started (Phase 3+)       | 16                                                                    |
+| Test count (last run)        | 714+                                                                  |
+| Lint errors                  | 0                                                                     |
+| Tenant isolation audit       | PASS — 0 vulnerabilities                                              |
+| Audit event coverage         | ~15 action types                                                      |
+| Admin pages with live data   | Dashboard, Tenants, Users, Pricing, Coupons, Support, **Audit (new)** |
 
 ---
 
 ## Commit Log
 
-| Commit    | Description                                          | Phase   |
-| --------- | ---------------------------------------------------- | ------- |
-| `490bddf` | Phase 0: All 11 bug/security fixes + audit/plan docs | Phase 0 |
-| `4f3865b` | Seed data: 6 tickets + 4 coupons                     | Phase 1 |
-| `db36310` | MockTicketRepository + MockCouponRepository          | Phase 1 |
-| `125bc1c` | Tenant list: storage column + seat warning           | Phase 1 |
-| `d34092f` | Custom branding: disabled in plan UI                 | Phase 1 |
-| `118140f` | buildAuditContext utility + tenants.ts refactor      | Phase 1 |
-| `0834040` | Correlation ID middleware (X-Request-Id)             | Phase 1 |
-| `273fa0f` | LocalAPIAdapter reduced to auth-only stub            | Phase 1 |
-| `bdc416d` | Audit logging expanded to ~15 admin actions          | Phase 1 |
-| `95d4c04` | Live admin dashboard with stats endpoint             | Phase 1 |
-| `7552c52` | Tenant isolation audit — 0 vulnerabilities           | Phase 1 |
+| Commit    | Description                                  | Phase/Task |
+| --------- | -------------------------------------------- | ---------- |
+| `490bddf` | Phase 0: All 11 bug/security fixes + docs    | Phase 0    |
+| `4f3865b` | Seed data: 6 tickets + 4 coupons             | 1.1 + 1.2  |
+| `db36310` | MockTicketRepository + MockCouponRepository  | 1.3 + 1.4  |
+| `125bc1c` | Tenant list: storage column + seat warning   | 1.12       |
+| `d34092f` | Custom branding: disabled in plan UI         | 1.14       |
+| `118140f` | buildAuditContext utility                    | 1.8        |
+| `0834040` | Correlation ID middleware (X-Request-Id)     | 1.13       |
+| `273fa0f` | LocalAPIAdapter reduced to auth-only stub    | 1.5        |
+| `bdc416d` | Audit logging expanded to ~15 admin actions  | 1.9        |
+| `95d4c04` | Live admin dashboard with stats endpoint     | 1.11       |
+| `7552c52` | Tenant isolation audit — 0 vulnerabilities   | 1.6        |
+| `1c79ab5` | Progress tracker document                    | —          |
+| `7b833e0` | Audit viewer page + CSV export + sidebar nav | 2.11       |
+| `dd7c00d` | Optimistic concurrency (409 on conflict)     | 2.19       |
