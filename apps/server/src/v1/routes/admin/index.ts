@@ -9,6 +9,7 @@ import { adminSupportRouter } from './support.ts';
 import { adminBillingRouter } from './billing.ts';
 import { adminStatsRouter } from './stats.ts';
 import { adminAuditRouter } from './audit.ts';
+import { adminJobsRouter } from './jobs.ts';
 import type { AppEnv } from '../../../types/index.ts';
 
 const adminRouter = new OpenAPIHono<AppEnv>({
@@ -86,5 +87,6 @@ adminRouter.route('/support', adminSupportRouter);
 adminRouter.route('/billing', adminBillingRouter);
 adminRouter.route('/stats', adminStatsRouter);
 adminRouter.route('/audit', adminAuditRouter);
+adminRouter.route('/jobs', adminJobsRouter);
 
 export { adminRouter };
