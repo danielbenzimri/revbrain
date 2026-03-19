@@ -13,10 +13,12 @@ import { MockAuditLogRepository } from './audit-log.repository.ts';
 import { MockProjectRepository } from './project.repository.ts';
 import { MockTicketRepository } from './ticket.repository.ts';
 import { MockCouponRepository } from './coupon.repository.ts';
+import { MockOverrideRepository } from './override.repository.ts';
 
 export { resetAllMockData as resetMockData } from '../../mocks/index.ts';
 export { MockTicketRepository } from './ticket.repository.ts';
 export { MockCouponRepository } from './coupon.repository.ts';
+export { MockOverrideRepository } from './override.repository.ts';
 
 /**
  * Create all mock repositories.
@@ -41,6 +43,7 @@ export function createMockAdminRepositories() {
   return {
     tickets: new MockTicketRepository(),
     coupons: new MockCouponRepository(),
+    overrides: new MockOverrideRepository(),
   };
 }
 

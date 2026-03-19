@@ -24,6 +24,7 @@ import {
   type SeedTicketMessage,
 } from './support-tickets.ts';
 import { SEED_COUPONS, type SeedCoupon } from './coupons.ts';
+import { SEED_TENANT_OVERRIDES, type SeedTenantOverride } from './tenant-overrides.ts';
 
 // Re-export constants and seeds for direct access
 export { MOCK_IDS } from './constants.ts';
@@ -34,10 +35,12 @@ export { SEED_PROJECTS } from './projects.ts';
 export { SEED_AUDIT_LOGS } from './audit-logs.ts';
 export { SEED_TICKETS, SEED_TICKET_MESSAGES } from './support-tickets.ts';
 export { SEED_COUPONS } from './coupons.ts';
+export { SEED_TENANT_OVERRIDES } from './tenant-overrides.ts';
 
 // Re-export types for repository use
 export type { SeedTicket, SeedTicketMessage } from './support-tickets.ts';
 export type { SeedCoupon } from './coupons.ts';
+export type { SeedTenantOverride } from './tenant-overrides.ts';
 
 // Mutable stores — these are what mock repositories read/write
 export let mockPlans: PlanEntity[] = cloneArray(SEED_PLANS);
@@ -48,6 +51,7 @@ export let mockAuditLogs: AuditLogEntity[] = cloneArray(SEED_AUDIT_LOGS);
 export let mockTickets: SeedTicket[] = cloneArray(SEED_TICKETS);
 export let mockTicketMessages: SeedTicketMessage[] = cloneArray(SEED_TICKET_MESSAGES);
 export let mockCoupons: SeedCoupon[] = cloneArray(SEED_COUPONS);
+export let mockTenantOverrides: SeedTenantOverride[] = cloneArray(SEED_TENANT_OVERRIDES);
 
 /**
  * Reset all mutable stores to their initial seed state.
@@ -62,4 +66,5 @@ export function resetAllMockData(): void {
   mockTickets = cloneArray(SEED_TICKETS);
   mockTicketMessages = cloneArray(SEED_TICKET_MESSAGES);
   mockCoupons = cloneArray(SEED_COUPONS);
+  mockTenantOverrides = cloneArray(SEED_TENANT_OVERRIDES);
 }
