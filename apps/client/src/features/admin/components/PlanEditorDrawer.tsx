@@ -468,15 +468,18 @@ export function PlanEditorDrawer({
                 </div>
 
                 <div className="flex items-center gap-6 mt-2">
-                  <label className="flex items-center gap-3 cursor-pointer">
+                  <label className="flex items-center gap-3 cursor-not-allowed opacity-50">
                     <input
                       type="checkbox"
-                      checked={formData.features.customBranding}
-                      onChange={(e) => updateFeature('customBranding', e.target.checked)}
-                      className="w-5 h-5 rounded border-slate-300 text-purple-600 focus:ring-purple-500"
+                      checked={false}
+                      disabled
+                      className="w-5 h-5 rounded border-slate-300 text-slate-400"
                     />
-                    <span className="text-sm font-medium text-slate-700">
-                      {t('admin.pricing.planEditor.customBranding', 'Custom Branding')}
+                    <span className="text-sm font-medium text-slate-400">
+                      {t('admin.pricing.planEditor.customBranding', 'Custom Branding')}{' '}
+                      <span className="text-xs italic">
+                        ({t('common.comingSoon', 'Coming soon')})
+                      </span>
                     </span>
                   </label>
 

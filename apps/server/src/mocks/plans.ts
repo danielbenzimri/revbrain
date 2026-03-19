@@ -72,7 +72,7 @@ export const SEED_PLANS: readonly PlanEntity[] = [
         'audit_trail',
         'webhook_support',
       ],
-      customBranding: true,
+      customBranding: false, // Not yet implemented — see SYSTEM-ADMIN-AUDIT.md Section 21
       sso: true,
     },
     isActive: true,
