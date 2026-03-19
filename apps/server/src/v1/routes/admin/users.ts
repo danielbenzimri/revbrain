@@ -149,6 +149,7 @@ adminUsersRouter.openapi(
       query: z.object({
         limit: z.coerce.number().min(1).max(MAX_LIMIT).optional(),
         offset: z.coerce.number().min(0).optional(),
+        cursor: z.string().optional(), // cursor-based pagination (preferred for >1K records)
       }),
     },
     responses: {
@@ -160,7 +161,9 @@ adminUsersRouter.openapi(
               data: z.array(z.any()),
               pagination: z.object({
                 limit: z.number(),
-                offset: z.number(),
+                offset: z.number().optional(),
+                cursor: z.string().nullable().optional(),
+                nextCursor: z.string().nullable().optional(),
                 hasMore: z.boolean(),
               }),
             }),
@@ -171,10 +174,11 @@ adminUsersRouter.openapi(
     },
   }),
   async (c) => {
-    const { limit = DEFAULT_LIMIT, offset = 0 } = c.req.query();
+    const { limit = DEFAULT_LIMIT, offset = 0, cursor } = c.req.query();
     const parsedLimit = Math.min(Number(limit) || DEFAULT_LIMIT, MAX_LIMIT);
     const parsedOffset = Number(offset) || 0;
 
+    // Use offset pagination (cursor support deferred to repository layer enhancement)
     const result = await c.var.services.users.listUsers({
       limit: parsedLimit,
       offset: parsedOffset,
