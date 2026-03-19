@@ -11,8 +11,12 @@ import { MockOrganizationRepository } from './organization.repository.ts';
 import { MockPlanRepository } from './plan.repository.ts';
 import { MockAuditLogRepository } from './audit-log.repository.ts';
 import { MockProjectRepository } from './project.repository.ts';
+import { MockTicketRepository } from './ticket.repository.ts';
+import { MockCouponRepository } from './coupon.repository.ts';
 
 export { resetAllMockData as resetMockData } from '../../mocks/index.ts';
+export { MockTicketRepository } from './ticket.repository.ts';
+export { MockCouponRepository } from './coupon.repository.ts';
 
 /**
  * Create all mock repositories.
@@ -25,6 +29,18 @@ export function createMockRepositories(): Repositories {
     plans: new MockPlanRepository(),
     auditLogs: new MockAuditLogRepository(),
     projects: new MockProjectRepository(),
+  };
+}
+
+/**
+ * Create ticket and coupon mock repositories.
+ * These are not part of the core Repositories interface (yet)
+ * but are used by admin service routes in mock mode.
+ */
+export function createMockAdminRepositories() {
+  return {
+    tickets: new MockTicketRepository(),
+    coupons: new MockCouponRepository(),
   };
 }
 
