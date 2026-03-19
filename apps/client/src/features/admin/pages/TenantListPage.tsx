@@ -1,9 +1,20 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Search, MoreHorizontal, Building2, User, Loader2, Edit, Trash2 } from 'lucide-react';
+import {
+  Plus,
+  Search,
+  MoreHorizontal,
+  Building2,
+  User,
+  Loader2,
+  Edit,
+  Trash2,
+  Shield,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { OnboardTenantDrawer } from '../components/OnboardTenantDrawer';
 import { EditTenantDrawer } from '../components/EditTenantDrawer';
+import { TenantOverridesDrawer } from '../components/TenantOverridesDrawer';
 import { useTenants, useDeactivateTenant, type Tenant, type TenantForEdit } from '../hooks';
 import {
   DropdownMenu,
@@ -18,7 +29,11 @@ export default function TenantListPage() {
   const { t } = useTranslation();
   const [showOnboardDrawer, setShowOnboardDrawer] = useState(false);
   const [showEditDrawer, setShowEditDrawer] = useState(false);
+  const [showOverridesDrawer, setShowOverridesDrawer] = useState(false);
   const [selectedTenant, setSelectedTenant] = useState<TenantForEdit | null>(null);
+  const [overridesTenant, setOverridesTenant] = useState<{ orgId: string; orgName: string } | null>(
+    null
+  );
   const [searchTerm, setSearchTerm] = useState('');
 
   // React Query hooks - data cached for 1 minute
@@ -36,6 +51,11 @@ export default function TenantListPage() {
       isActive: tenant.isActive,
     });
     setShowEditDrawer(true);
+  };
+
+  const handleManageOverrides = (tenant: Tenant) => {
+    setOverridesTenant({ orgId: tenant.id, orgName: tenant.name });
+    setShowOverridesDrawer(true);
   };
 
   const handleDeactivate = async (id: string) => {
@@ -167,6 +187,10 @@ export default function TenantListPage() {
                           <Edit className="h-4 w-4 me-2" />
                           {t('common.edit')}
                         </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleManageOverrides(tenant)}>
+                          <Shield className="h-4 w-4 me-2" />
+                          {t('admin.tenants.manageOverrides', 'Manage Overrides')}
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           onClick={() => handleDeactivate(tenant.id)}
@@ -193,6 +217,14 @@ export default function TenantListPage() {
         open={showEditDrawer}
         onOpenChange={setShowEditDrawer}
         tenant={selectedTenant}
+      />
+
+      {/* Overrides Drawer */}
+      <TenantOverridesDrawer
+        open={showOverridesDrawer}
+        onOpenChange={setShowOverridesDrawer}
+        orgId={overridesTenant?.orgId ?? null}
+        orgName={overridesTenant?.orgName ?? ''}
       />
     </div>
   );

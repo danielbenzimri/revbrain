@@ -35,6 +35,10 @@ export {
 } from './use-coupons';
 export type { Coupon, CouponUsage, CouponCreateInput, CouponUpdateInput } from './use-coupons';
 
+// Tenant Overrides
+export { useTenantOverrides, useGrantOverride, useRevokeOverride } from './use-tenant-overrides';
+export type { TenantOverride } from './use-tenant-overrides';
+
 // Audit Logs
 export { useAuditLogs } from './use-audit-logs';
 export type { AuditLogEntry, AuditLogFilters } from './use-audit-logs';

@@ -47,7 +47,25 @@
     "activeHint": "ביטול פעילות יחסום את כל המשתמשים בארגון",
     "deactivateConfirm": "האם אתה בטוח שברצונך להשבית ארגון זה?",
     "noTenants": "לא נמצאו ארגונים.",
-    "deactivate": "השבת"
+    "deactivate": "השבת",
+    "manageOverrides": "ניהול דריסות"
+  },
+  "overrides": {
+    "title": "דריסות תכונות",
+    "subtitle": "הענקה או ביטול גישה לתכונות עבור ארגון זה",
+    "noOverrides": "אין דריסות פעילות",
+    "feature": "תכונה",
+    "value": "ערך",
+    "reason": "סיבה",
+    "expiresAt": "תפוגה",
+    "permanent": "קבוע",
+    "grantedAt": "הוענק",
+    "grant": "הענקת דריסה",
+    "revoke": "ביטול",
+    "revokeConfirm": "האם אתה בטוח שברצונך לבטל דריסה זו?",
+    "reasonRequired": "סיבה היא שדה חובה",
+    "grantSuccess": "הדריסה הוענקה בהצלחה",
+    "revokeSuccess": "הדריסה בוטלה"
   },
   "users": {
     "title": "ניהול משתמשים",

@@ -47,7 +47,25 @@
     "activeHint": "Deactivating will block all users in this organization",
     "deactivateConfirm": "Are you sure you want to deactivate this tenant?",
     "noTenants": "No tenants found.",
-    "deactivate": "Deactivate"
+    "deactivate": "Deactivate",
+    "manageOverrides": "Manage Overrides"
+  },
+  "overrides": {
+    "title": "Feature Overrides",
+    "subtitle": "Grant or revoke feature access for this tenant",
+    "noOverrides": "No active overrides",
+    "feature": "Feature",
+    "value": "Value",
+    "reason": "Reason",
+    "expiresAt": "Expires",
+    "permanent": "Permanent",
+    "grantedAt": "Granted",
+    "grant": "Grant Override",
+    "revoke": "Revoke",
+    "revokeConfirm": "Are you sure you want to revoke this override?",
+    "reasonRequired": "Reason is required",
+    "grantSuccess": "Override granted successfully",
+    "revokeSuccess": "Override revoked"
   },
   "users": {
     "title": "User Management",

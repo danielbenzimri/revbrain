@@ -34,6 +34,9 @@ export const adminKeys = {
   audit: () => [...adminKeys.all, 'audit'] as const,
   auditList: () => [...adminKeys.audit(), 'list'] as const,
 
+  // Overrides
+  overrides: (orgId: string) => [...adminKeys.all, 'overrides', orgId] as const,
+
   // Support Tickets
   support: () => [...adminKeys.all, 'support'] as const,
   supportTickets: () => [...adminKeys.support(), 'tickets'] as const,
