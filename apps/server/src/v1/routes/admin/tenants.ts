@@ -252,4 +252,64 @@ adminTenantsRouter.openapi(
   }
 );
 
+/**
+ * GET /v1/admin/tenants/:id/access-log — Admin access events for a tenant
+ *
+ * STUB for Enterprise customer-visible admin access audit (Task 3.5a).
+ * Returns audit log entries where an admin performed actions on this tenant's data.
+ * In the future, this data will be exposed to tenant org_owners as a trust feature.
+ */
+adminTenantsRouter.openapi(
+  createRoute({
+    method: 'get',
+    path: '/{id}/access-log',
+    tags: ['Admin Tenants'],
+    summary: 'Tenant Admin Access Log',
+    description: 'List admin actions performed on this tenant (stub for customer-visible audit).',
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), listLimiter),
+    request: {
+      params: z.object({ id: z.string().uuid() }),
+      query: z.object({
+        limit: z.coerce.number().min(1).max(100).optional(),
+      }),
+    },
+    responses: {
+      200: {
+        content: {
+          'application/json': {
+            schema: z.object({
+              success: z.boolean(),
+              data: z.array(z.any()),
+            }),
+          },
+        },
+        description: 'Admin access events for this tenant',
+      },
+    },
+  }),
+  async (c) => {
+    const { id } = c.req.param();
+    const { limit } = c.req.query();
+    const parsedLimit = Math.min(Number(limit) || 20, 100);
+
+    // Query audit logs filtered to this organization
+    const entries = await c.var.repos.auditLogs.findByOrganization(id, {
+      limit: parsedLimit,
+      orderBy: { field: 'createdAt', direction: 'desc' },
+    });
+
+    return c.json({
+      success: true,
+      data: entries.map((e) => ({
+        id: e.id,
+        action: e.action,
+        actorId: e.userId,
+        metadata: e.metadata,
+        createdAt: e.createdAt,
+        // Future: include actorName, duration (for impersonation), reason
+      })),
+    });
+  }
+);
+
 export { adminTenantsRouter };
