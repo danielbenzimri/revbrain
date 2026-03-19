@@ -40,6 +40,7 @@ const couponUpdateSchema = z.object({
   applicablePlanIds: z.array(z.string().uuid()).optional(),
   minimumAmountCents: z.number().int().min(0).optional(),
   isActive: z.boolean().optional(),
+  updatedAt: z.string().datetime().optional(),
 });
 
 const adminCouponsRouter = new OpenAPIHono<AppEnv>();
@@ -288,6 +289,22 @@ adminCouponsRouter.openapi(
     const user = c.get('user');
 
     const couponService = new CouponService();
+
+    // Optimistic concurrency check
+    if (input.updatedAt) {
+      const existing = await couponService.getCouponById(id);
+      if (
+        existing &&
+        existing.updatedAt &&
+        new Date(input.updatedAt).getTime() !== new Date(existing.updatedAt).getTime()
+      ) {
+        throw new AppError(
+          ErrorCodes.VALIDATION_ERROR,
+          'Record was modified by another user. Please reload and try again.',
+          409
+        );
+      }
+    }
 
     try {
       const updated = await couponService.updateCoupon(

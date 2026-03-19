@@ -36,6 +36,7 @@ export interface AdminUpdateUserInput {
   address?: string | null;
   age?: number | null;
   bio?: string | null;
+  updatedAt?: string;
 }
 
 export class UserService {

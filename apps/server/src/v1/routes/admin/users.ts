@@ -251,6 +251,7 @@ adminUsersRouter.openapi(
               address: z.string().max(500).nullable().optional(),
               age: z.number().int().min(0).max(150).nullable().optional(),
               bio: z.string().max(500).nullable().optional(),
+              updatedAt: z.string().datetime().optional(),
             }),
           },
         },
@@ -285,6 +286,20 @@ adminUsersRouter.openapi(
     // Fetch current user state for before/after metadata
     const existingUser = await c.var.repos.users.findById(id);
     const beforeRole = existingUser?.role ?? null;
+
+    // Optimistic concurrency check
+    if (
+      input.updatedAt &&
+      existingUser &&
+      existingUser.updatedAt &&
+      new Date(input.updatedAt).getTime() !== new Date(existingUser.updatedAt).getTime()
+    ) {
+      throw new AppError(
+        ErrorCodes.VALIDATION_ERROR,
+        'Record was modified by another user. Please reload and try again.',
+        409
+      );
+    }
 
     const updated = await c.var.services.users.adminUpdateUser(id, input, ctx);
 

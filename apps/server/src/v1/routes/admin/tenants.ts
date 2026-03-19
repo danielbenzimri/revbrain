@@ -111,6 +111,7 @@ adminTenantsRouter.openapi(
               seatLimit: z.number().optional(),
               isActive: z.boolean().optional(),
               planId: z.string().uuid('Invalid plan ID format').nullable().optional(),
+              updatedAt: z.string().datetime().optional(),
             }),
           },
         },
@@ -140,6 +141,22 @@ adminTenantsRouter.openapi(
 
     const auditCtx = buildAuditContext(c);
     const ctx = { ...auditCtx, actorId: user.id, actorEmail: user.email };
+
+    // Optimistic concurrency check
+    if (input.updatedAt) {
+      const existing = await c.var.repos.organizations.findById(id);
+      if (
+        existing &&
+        existing.updatedAt &&
+        new Date(input.updatedAt).getTime() !== new Date(existing.updatedAt).getTime()
+      ) {
+        throw new AppError(
+          ErrorCodes.VALIDATION_ERROR,
+          'Record was modified by another user. Please reload and try again.',
+          409
+        );
+      }
+    }
 
     try {
       const updated = await c.var.services.organizations.updateTenant(

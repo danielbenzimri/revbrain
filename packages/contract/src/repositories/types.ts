@@ -109,6 +109,7 @@ export interface UserEntity {
   preferences: Record<string, unknown> | null;
   metadata: Record<string, unknown> | null;
   createdAt: Date;
+  updatedAt?: Date;
   activatedAt: Date | null;
   lastLoginAt: Date | null;
 }
@@ -184,6 +185,7 @@ export interface OrganizationEntity {
   planId: string | null;
   isActive: boolean;
   createdAt: Date;
+  updatedAt?: Date;
   createdBy: string | null;
 }
 

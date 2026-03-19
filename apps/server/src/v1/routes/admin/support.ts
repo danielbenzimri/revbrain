@@ -296,6 +296,7 @@ adminSupportRouter.openapi(
               priority: z.enum(['low', 'medium', 'high', 'urgent']).optional(),
               category: z.string().optional(),
               assignedTo: z.string().uuid().nullable().optional(),
+              updatedAt: z.string().datetime().optional(),
             }),
           },
         },
@@ -328,6 +329,20 @@ adminSupportRouter.openapi(
     // Fetch current ticket for before/after metadata
     const existingTicket = await ticketService.getTicketById(id, { includeInternal: false });
     const beforeStatus = existingTicket?.status ?? null;
+
+    // Optimistic concurrency check
+    if (
+      input.updatedAt &&
+      existingTicket &&
+      existingTicket.updatedAt &&
+      new Date(input.updatedAt).getTime() !== new Date(existingTicket.updatedAt).getTime()
+    ) {
+      throw new AppError(
+        ErrorCodes.VALIDATION_ERROR,
+        'Record was modified by another user. Please reload and try again.',
+        409
+      );
+    }
 
     const ticket = await ticketService.updateTicket(id, input as UpdateTicketInput, user.id);
 
