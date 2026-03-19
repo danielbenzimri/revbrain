@@ -32,6 +32,7 @@ export default function TenantListPage() {
       type: tenant.type as string,
       planId: tenant.plan?.id || null,
       seatLimit: tenant.seatLimit,
+      seatUsed: tenant.seatUsed,
       isActive: tenant.isActive,
     });
     setShowEditDrawer(true);
@@ -96,6 +97,9 @@ export default function TenantListPage() {
                 <th className="px-6 py-4 text-start">{t('admin.tenants.table.type')}</th>
                 <th className="px-6 py-4 text-start">{t('admin.tenants.table.plan')}</th>
                 <th className="px-6 py-4 text-start">{t('admin.tenants.table.users')}</th>
+                <th className="px-6 py-4 text-start">
+                  {t('admin.tenants.table.storage', 'Storage')}
+                </th>
                 <th className="px-6 py-4 text-start">{t('admin.tenants.table.status')}</th>
                 <th className="px-6 py-4 text-end">{t('admin.tenants.table.actions')}</th>
               </tr>
@@ -131,6 +135,15 @@ export default function TenantListPage() {
                       <User className="h-3.5 w-3.5" />
                       {tenant.seatUsed} / {tenant.seatLimit}
                     </div>
+                  </td>
+                  <td className="px-6 py-4 text-start">
+                    <span className="text-sm text-slate-600">
+                      {tenant.storageUsedBytes
+                        ? tenant.storageUsedBytes >= 1024 * 1024 * 1024
+                          ? `${(tenant.storageUsedBytes / (1024 * 1024 * 1024)).toFixed(1)} GB`
+                          : `${Math.round(tenant.storageUsedBytes / (1024 * 1024))} MB`
+                        : '0 MB'}
+                    </span>
                   </td>
                   <td className="px-6 py-4 text-start">
                     <span

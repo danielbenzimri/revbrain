@@ -17,6 +17,7 @@ export interface Tenant {
   plan?: TenantPlan;
   seatUsed: number;
   seatLimit: number;
+  storageUsedBytes: number;
   isActive: boolean;
 }
 
@@ -26,6 +27,7 @@ export interface TenantForEdit {
   type: string;
   planId: string | null;
   seatLimit: number;
+  seatUsed: number;
   isActive: boolean;
 }
 

@@ -148,6 +148,21 @@ export function EditTenantDrawer({ open, onOpenChange, tenant }: EditTenantDrawe
                   min={1}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 outline-none text-sm"
                 />
+                {formData.seatUsed != null && (
+                  <p className="text-xs text-slate-500 mt-1">
+                    {t('admin.tenants.currentUsage', 'Current usage')}: {formData.seatUsed}{' '}
+                    {t('admin.tenants.seats', 'seats')}
+                  </p>
+                )}
+                {formData.seatUsed != null && formData.seatLimit < formData.seatUsed && (
+                  <p className="text-xs text-amber-600 font-medium mt-1">
+                    {t(
+                      'admin.tenants.seatWarning',
+                      'Warning: current usage ({{count}} seats) exceeds this limit.',
+                      { count: formData.seatUsed }
+                    )}
+                  </p>
+                )}
               </div>
 
               <div className="pt-4 border-t">

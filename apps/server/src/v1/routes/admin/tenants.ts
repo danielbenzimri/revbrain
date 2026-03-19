@@ -66,6 +66,7 @@ adminTenantsRouter.openapi(
         slug: org.slug,
         seatLimit: org.seatLimit,
         seatUsed: org.seatUsed,
+        storageUsedBytes: org.storageUsedBytes,
         isActive: org.isActive,
         createdAt: org.createdAt,
         plan: org.plan
