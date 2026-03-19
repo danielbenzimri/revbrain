@@ -12,6 +12,7 @@ import { AppError, ErrorCodes } from '@revbrain/contract';
 import { BillingService } from '../../../services/billing.service.ts';
 import { formatAmount } from '../../../lib/stripe.ts';
 import type { AppEnv } from '../../../types/index.ts';
+import { buildAuditContext } from './utils/audit-context.ts';
 
 // Validation schemas
 const issueRefundSchema = z.object({
@@ -153,6 +154,28 @@ adminBillingRouter.openapi(
         reason: input.reason,
         actorId: user.id,
       });
+
+      try {
+        const auditCtx = buildAuditContext(c);
+        await c.var.repos.auditLogs.create({
+          userId: auditCtx.actorId,
+          organizationId: payment.organizationId ?? null,
+          action: 'refund.issued',
+          targetUserId: null,
+          metadata: {
+            requestId: auditCtx.requestId,
+            paymentId: input.paymentId,
+            refundId: result.refundId,
+            amountCents: result.amountRefunded,
+            isFullRefund: result.isFullRefund,
+            reason: input.reason,
+          },
+          ipAddress: auditCtx.ipAddress,
+          userAgent: auditCtx.userAgent,
+        });
+      } catch {
+        /* audit failure should not block operation */
+      }
 
       return c.json({
         success: true,

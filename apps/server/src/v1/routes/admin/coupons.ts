@@ -6,6 +6,7 @@ import { routeMiddleware } from '../../../lib/middleware-types.ts';
 import { AppError, ErrorCodes } from '@revbrain/contract';
 import { CouponService } from '../../../services/coupon.service.ts';
 import type { AppEnv } from '../../../types/index.ts';
+import { buildAuditContext } from './utils/audit-context.ts';
 
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 100;
@@ -167,6 +168,21 @@ adminCouponsRouter.openapi(
         createdBy: actor?.id,
       });
 
+      try {
+        const auditCtx = buildAuditContext(c);
+        await c.var.repos.auditLogs.create({
+          userId: auditCtx.actorId,
+          organizationId: null,
+          action: 'coupon.created',
+          targetUserId: null,
+          metadata: { requestId: auditCtx.requestId, couponId: coupon.id, code: input.code },
+          ipAddress: auditCtx.ipAddress,
+          userAgent: auditCtx.userAgent,
+        });
+      } catch {
+        /* audit failure should not block operation */
+      }
+
       return c.json({ success: true, data: coupon }, 201);
     } catch (err) {
       if (err instanceof Error && err.message.includes('already exists')) {
@@ -284,6 +300,21 @@ adminCouponsRouter.openapi(
         user.id
       );
 
+      try {
+        const auditCtx = buildAuditContext(c);
+        await c.var.repos.auditLogs.create({
+          userId: auditCtx.actorId,
+          organizationId: null,
+          action: 'coupon.updated',
+          targetUserId: null,
+          metadata: { requestId: auditCtx.requestId, couponId: id },
+          ipAddress: auditCtx.ipAddress,
+          userAgent: auditCtx.userAgent,
+        });
+      } catch {
+        /* audit failure should not block operation */
+      }
+
       return c.json({ success: true, data: updated });
     } catch (err) {
       if (err instanceof Error && err.message.includes('not found')) {
@@ -333,6 +364,22 @@ adminCouponsRouter.openapi(
 
     try {
       await couponService.deleteCoupon(id, user.id);
+
+      try {
+        const auditCtx = buildAuditContext(c);
+        await c.var.repos.auditLogs.create({
+          userId: auditCtx.actorId,
+          organizationId: null,
+          action: 'coupon.deleted',
+          targetUserId: null,
+          metadata: { requestId: auditCtx.requestId, couponId: id },
+          ipAddress: auditCtx.ipAddress,
+          userAgent: auditCtx.userAgent,
+        });
+      } catch {
+        /* audit failure should not block operation */
+      }
+
       return c.json({
         success: true,
         message: 'Coupon deactivated',
@@ -389,6 +436,22 @@ adminCouponsRouter.openapi(
 
     try {
       await couponService.syncCouponToStripe(id);
+
+      try {
+        const auditCtx = buildAuditContext(c);
+        await c.var.repos.auditLogs.create({
+          userId: auditCtx.actorId,
+          organizationId: null,
+          action: 'coupon.synced',
+          targetUserId: null,
+          metadata: { requestId: auditCtx.requestId, couponId: id },
+          ipAddress: auditCtx.ipAddress,
+          userAgent: auditCtx.userAgent,
+        });
+      } catch {
+        /* audit failure should not block operation */
+      }
+
       return c.json({
         success: true,
         message: 'Coupon synced to Stripe',

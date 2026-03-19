@@ -9,6 +9,7 @@ import type { AdminUpdateUserInput } from '../../../services/user.service.ts';
 import type { AppEnv } from '../../../types/index.ts';
 import type { RequestContext } from '../../../services/types.ts';
 import { getClientIpOrNull } from '../../../lib/request-ip.ts';
+import { buildAuditContext } from './utils/audit-context.ts';
 
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 100;
@@ -101,6 +102,21 @@ adminUsersRouter.openapi(
       org,
       ctx
     );
+
+    try {
+      const auditCtx = buildAuditContext(c);
+      await c.var.repos.auditLogs.create({
+        userId: auditCtx.actorId,
+        organizationId: org.id,
+        action: 'user.created',
+        targetUserId: result.user.id,
+        metadata: { requestId: auditCtx.requestId, email: input.email, role: input.role },
+        ipAddress: auditCtx.ipAddress,
+        userAgent: auditCtx.userAgent,
+      });
+    } catch {
+      /* audit failure should not block operation */
+    }
 
     return c.json(
       {
@@ -266,7 +282,31 @@ adminUsersRouter.openapi(
       userAgent: c.req.header('user-agent') || null,
     };
 
+    // Fetch current user state for before/after metadata
+    const existingUser = await c.var.repos.users.findById(id);
+    const beforeRole = existingUser?.role ?? null;
+
     const updated = await c.var.services.users.adminUpdateUser(id, input, ctx);
+
+    try {
+      const auditCtx = buildAuditContext(c);
+      const metadata: Record<string, unknown> = { requestId: auditCtx.requestId };
+      if (input.role && beforeRole !== input.role) {
+        metadata.before = { role: beforeRole };
+        metadata.after = { role: input.role };
+      }
+      await c.var.repos.auditLogs.create({
+        userId: auditCtx.actorId,
+        organizationId: null,
+        action: 'user.updated',
+        targetUserId: id,
+        metadata,
+        ipAddress: auditCtx.ipAddress,
+        userAgent: auditCtx.userAgent,
+      });
+    } catch {
+      /* audit failure should not block operation */
+    }
 
     return c.json({
       success: true,
@@ -328,6 +368,21 @@ adminUsersRouter.openapi(
     };
 
     await c.var.services.users.deleteUser(id, ctx, { checkOwnedProjects: true });
+
+    try {
+      const auditCtx = buildAuditContext(c);
+      await c.var.repos.auditLogs.create({
+        userId: auditCtx.actorId,
+        organizationId: null,
+        action: 'user.deleted',
+        targetUserId: id,
+        metadata: { requestId: auditCtx.requestId },
+        ipAddress: auditCtx.ipAddress,
+        userAgent: auditCtx.userAgent,
+      });
+    } catch {
+      /* audit failure should not block operation */
+    }
 
     return c.json({
       success: true,

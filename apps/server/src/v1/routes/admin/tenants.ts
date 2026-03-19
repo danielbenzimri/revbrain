@@ -147,6 +147,21 @@ adminTenantsRouter.openapi(
         input as UpdateOrganizationInput,
         ctx
       );
+
+      try {
+        await c.var.repos.auditLogs.create({
+          userId: auditCtx.actorId,
+          organizationId: id,
+          action: 'tenant.updated',
+          targetUserId: null,
+          metadata: { requestId: auditCtx.requestId, changes: input },
+          ipAddress: auditCtx.ipAddress,
+          userAgent: auditCtx.userAgent,
+        });
+      } catch {
+        /* audit failure should not block operation */
+      }
+
       return c.json({ success: true, data: updated });
     } catch (error) {
       if (error instanceof Error && error.message === 'Tenant not found') {
@@ -198,6 +213,20 @@ adminTenantsRouter.openapi(
     const ctx = { ...auditCtx, actorId: user.id, actorEmail: user.email };
 
     await c.var.services.organizations.deactivateTenant(id, ctx);
+
+    try {
+      await c.var.repos.auditLogs.create({
+        userId: auditCtx.actorId,
+        organizationId: id,
+        action: 'tenant.deactivated',
+        targetUserId: null,
+        metadata: { requestId: auditCtx.requestId },
+        ipAddress: auditCtx.ipAddress,
+        userAgent: auditCtx.userAgent,
+      });
+    } catch {
+      /* audit failure should not block operation */
+    }
 
     return c.json({
       success: true,

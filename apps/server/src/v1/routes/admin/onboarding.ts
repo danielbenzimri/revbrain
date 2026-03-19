@@ -7,6 +7,7 @@ import { AppError, ErrorCodes, onboardOrganizationSchema } from '@revbrain/contr
 import type { AppEnv } from '../../../types/index.ts';
 import type { RequestContext } from '../../../services/types.ts';
 import { getClientIpOrNull } from '../../../lib/request-ip.ts';
+import { buildAuditContext } from './utils/audit-context.ts';
 
 const onboardingRouter = new OpenAPIHono<AppEnv>();
 
@@ -64,6 +65,25 @@ onboardingRouter.openapi(
     };
 
     const result = await c.var.services.onboarding.onboardOrganization(input, ctx);
+
+    try {
+      const auditCtx = buildAuditContext(c);
+      await c.var.repos.auditLogs.create({
+        userId: auditCtx.actorId,
+        organizationId: result.organization.id,
+        action: 'tenant.onboarded',
+        targetUserId: result.admin.id,
+        metadata: {
+          requestId: auditCtx.requestId,
+          organizationName: result.organization.name,
+          adminEmail: result.admin.email,
+        },
+        ipAddress: auditCtx.ipAddress,
+        userAgent: auditCtx.userAgent,
+      });
+    } catch {
+      /* audit failure should not block operation */
+    }
 
     return c.json(
       {

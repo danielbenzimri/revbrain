@@ -12,6 +12,7 @@ import { routeMiddleware } from '../../../lib/middleware-types.ts';
 import { AppError, ErrorCodes } from '@revbrain/contract';
 import { TicketService, type UpdateTicketInput } from '../../../services/ticket.service.ts';
 import type { AppEnv } from '../../../types/index.ts';
+import { buildAuditContext } from './utils/audit-context.ts';
 
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 100;
@@ -323,7 +324,32 @@ adminSupportRouter.openapi(
     }
 
     const ticketService = new TicketService();
+
+    // Fetch current ticket for before/after metadata
+    const existingTicket = await ticketService.getTicketById(id, { includeInternal: false });
+    const beforeStatus = existingTicket?.status ?? null;
+
     const ticket = await ticketService.updateTicket(id, input as UpdateTicketInput, user.id);
+
+    try {
+      const auditCtx = buildAuditContext(c);
+      const metadata: Record<string, unknown> = { requestId: auditCtx.requestId, ticketId: id };
+      if (input.status && beforeStatus !== input.status) {
+        metadata.before = { status: beforeStatus };
+        metadata.after = { status: input.status };
+      }
+      await c.var.repos.auditLogs.create({
+        userId: auditCtx.actorId,
+        organizationId: null,
+        action: 'ticket.status_changed',
+        targetUserId: null,
+        metadata,
+        ipAddress: auditCtx.ipAddress,
+        userAgent: auditCtx.userAgent,
+      });
+    } catch {
+      /* audit failure should not block operation */
+    }
 
     return c.json({
       success: true,
@@ -399,6 +425,26 @@ adminSupportRouter.openapi(
       attachments: input.attachments,
     });
 
+    try {
+      const auditCtx = buildAuditContext(c);
+      await c.var.repos.auditLogs.create({
+        userId: auditCtx.actorId,
+        organizationId: null,
+        action: 'ticket.replied',
+        targetUserId: null,
+        metadata: {
+          requestId: auditCtx.requestId,
+          ticketId: id,
+          messageId: message.id,
+          isInternal: input.isInternal || false,
+        },
+        ipAddress: auditCtx.ipAddress,
+        userAgent: auditCtx.userAgent,
+      });
+    } catch {
+      /* audit failure should not block operation */
+    }
+
     return c.json(
       {
         success: true,
@@ -463,6 +509,21 @@ adminSupportRouter.openapi(
 
     const ticketService = new TicketService();
     await ticketService.assignTicket(id, assignedTo, user.id);
+
+    try {
+      const auditCtx = buildAuditContext(c);
+      await c.var.repos.auditLogs.create({
+        userId: auditCtx.actorId,
+        organizationId: null,
+        action: 'ticket.assigned',
+        targetUserId: assignedTo,
+        metadata: { requestId: auditCtx.requestId, ticketId: id, assignedTo },
+        ipAddress: auditCtx.ipAddress,
+        userAgent: auditCtx.userAgent,
+      });
+    } catch {
+      /* audit failure should not block operation */
+    }
 
     return c.json({
       success: true,
