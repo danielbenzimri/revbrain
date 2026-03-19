@@ -13,6 +13,7 @@ import { cors } from 'hono/cors';
 import { compress } from 'hono/compress';
 import { AppError } from '@revbrain/contract';
 import { loggerMiddleware } from './middleware/logger.ts';
+import { correlationIdMiddleware } from './middleware/correlation-id.ts';
 import { securityHeadersMiddleware } from './middleware/security-headers.ts';
 import { authMiddleware } from './middleware/auth.ts';
 import { authLimiter, apiLimiter } from './middleware/rate-limit.ts';
@@ -93,7 +94,8 @@ const app = new OpenAPIHono<AppEnv>();
 // Base path handling - we apply it manually to sub-routes usually, but here we can't set .basePath on OpenAPIHono
 // Instead, we will mount everything under /api
 
-// 1. Observability: Request ID and Structured Logging
+// 1. Observability: Request ID (correlation) and Structured Logging
+app.use('*', correlationIdMiddleware);
 app.use('*', loggerMiddleware);
 
 // 1.5. Performance: Response Compression (gzip/deflate)
