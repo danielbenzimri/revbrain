@@ -1,6 +1,7 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { authMiddleware } from '../../../middleware/auth.ts';
-import { requireRole } from '../../../middleware/rbac.ts';
+import { requireRole, canInviteRole } from '../../../middleware/rbac.ts';
+import type { UserRole } from '@revbrain/contract';
 import { adminLimiter, listLimiter } from '../../../middleware/rate-limit.ts';
 import { routeMiddleware } from '../../../lib/middleware-types.ts';
 import { AppError, ErrorCodes, inviteUserSchema } from '@revbrain/contract';
@@ -75,6 +76,15 @@ adminUsersRouter.openapi(
       if (!org) {
         throw new AppError(ErrorCodes.NOT_FOUND, 'Organization not found', 404);
       }
+    }
+
+    // Enforce role invitation hierarchy
+    if (!canInviteRole(actor.role as UserRole, input.role as UserRole)) {
+      throw new AppError(
+        ErrorCodes.FORBIDDEN,
+        `Role '${actor.role}' cannot invite users with role '${input.role}'`,
+        403
+      );
     }
 
     const result = await c.var.services.users.inviteUser(

@@ -240,9 +240,9 @@ export const authMiddleware = createMiddleware<AppEnv>(async (c, next) => {
           supabaseUserId: userId,
           email: mockEmail,
           fullName: 'Mock Developer',
-          role: 'admin',
+          role: 'reviewer',
           isActive: true,
-          isOrgAdmin: true,
+          isOrgAdmin: false,
           organizationId: mockOrgId,
         })
         .onConflictDoNothing({ target: users.id })
@@ -435,7 +435,7 @@ export const authMiddlewareAllowInactive = createMiddleware<AppEnv>(async (c, ne
             organizationId: meta.organization_id,
             email: email,
             fullName: meta.full_name,
-            role: meta.role || 'admin',
+            role: meta.role || 'reviewer',
             isActive: false,
             invitedBy: meta.invited_by || null,
             isOrgAdmin: false,

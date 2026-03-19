@@ -11,23 +11,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ALL_ROLES } from '@revbrain/contract';
 import { CreateUserDrawer } from '../components/CreateUserDrawer';
 import { UserDetailDrawer } from '../components/UserDetailDrawer';
 import { useAdminUsers, useUpdateAdminUser, useDeleteAdminUser, type AdminUser } from '../hooks';
-
-const ALL_ROLES = [
-  'system_admin',
-  'org_owner',
-  'admin',
-  'operator',
-  'operator',
-  'reviewer',
-  'org_owner',
-  'admin',
-  'reviewer',
-  'reviewer',
-  'reviewer',
-] as const;
 
 export default function AdminUserListPage() {
   const { t } = useTranslation();
@@ -110,7 +97,7 @@ export default function AdminUserListPage() {
       </div>
 
       {/* Filters Bar */}
-      <div className="bg-white p-4 rounded shadow-sm border-slate-200 shadow-sm transition-all hover:shadow-md space-y-4">
+      <div className="bg-white p-4 rounded border border-slate-200 shadow-sm transition-all hover:shadow-md space-y-4">
         <div className="flex items-center gap-3">
           <div className="relative flex-1">
             <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -173,7 +160,7 @@ export default function AdminUserListPage() {
       </div>
 
       {/* Users List */}
-      <div className="bg-white rounded shadow-sm border-slate-200 shadow-sm overflow-hidden min-h-[400px]">
+      <div className="bg-white rounded border border-slate-200 shadow-sm overflow-hidden min-h-[400px]">
         {isLoading ? (
           <div className="flex h-full items-center justify-center py-20">
             <Loader2 className="h-8 w-8 animate-spin text-violet-500" />

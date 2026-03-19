@@ -154,12 +154,12 @@ export default function AdminSupportPage() {
       {/* Filters */}
       <div className="flex flex-wrap gap-3 items-center">
         <div className="relative flex-1 min-w-64 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input
             placeholder={t('admin.support.searchPlaceholder')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-10"
+            className="ps-10"
           />
         </div>
         <div className="flex items-center gap-2">
@@ -195,7 +195,7 @@ export default function AdminSupportPage() {
       </div>
 
       {/* Tickets Table */}
-      <div className="bg-white rounded shadow-sm border-slate-200 overflow-hidden">
+      <div className="bg-white rounded border border-slate-200 shadow-sm overflow-hidden">
         {ticketsLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
@@ -334,7 +334,7 @@ function StatCard({
 }) {
   return (
     <div
-      className={`bg-white p-5 rounded shadow-sm ${highlight ? 'border-red-200 bg-red-50/30' : 'border-slate-200'}`}
+      className={`bg-white p-5 rounded border shadow-sm ${highlight ? 'border-red-200 bg-red-50/30' : 'border-slate-200'}`}
     >
       <div className="flex items-center gap-3 mb-2">
         {icon}

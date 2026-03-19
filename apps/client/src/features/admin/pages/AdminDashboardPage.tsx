@@ -61,7 +61,7 @@ export default function AdminDashboardPage() {
         {stats.map((stat) => (
           <div
             key={stat.labelKey}
-            className="bg-white p-6 rounded shadow-sm border-slate-200 shadow-sm"
+            className="bg-white p-6 rounded border border-slate-200 shadow-sm"
           >
             <div className="flex justify-between items-start mb-4">
               <div className={`p-3 rounded-lg ${stat.color}`}>
@@ -78,8 +78,8 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Quick Actions / Recent Activity Placeholder */}
-      <div className="content-offscreen grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded shadow-sm border-slate-200 shadow-sm min-h-[300px]">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white p-6 rounded border border-slate-200 shadow-sm min-h-[300px]">
           <h3 className="font-bold text-slate-800 mb-4">
             {t('admin.dashboard.recentOnboardings')}
           </h3>
@@ -100,7 +100,7 @@ export default function AdminDashboardPage() {
             ))}
           </div>
         </div>
-        <div className="bg-white p-6 rounded shadow-sm border-slate-200 shadow-sm min-h-[300px]">
+        <div className="bg-white p-6 rounded border border-slate-200 shadow-sm min-h-[300px]">
           <h3 className="font-bold text-slate-800 mb-4">{t('admin.dashboard.systemHealth')}</h3>
           <div className="flex items-center gap-2 text-violet-600 bg-violet-50 p-4 rounded-lg mb-4">
             <CheckCircle2 className="h-5 w-5" />

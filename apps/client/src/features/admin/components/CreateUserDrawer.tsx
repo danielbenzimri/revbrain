@@ -187,12 +187,12 @@ export function CreateUserDrawer({ open, onOpenChange, orgId, orgName }: CreateU
                       {t('admin.users.selectOrg')}
                     </label>
                     <div className="relative">
-                      <Building2 className="absolute top-2.5 left-3 h-4 w-4 text-slate-400" />
+                      <Building2 className="absolute top-2.5 start-3 h-4 w-4 text-slate-400" />
                       <select
                         value={targetOrgId}
                         onChange={(e) => setTargetOrgId(e.target.value)}
                         required
-                        className="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 outline-none text-sm bg-white"
+                        className="w-full ps-9 pe-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 outline-none text-sm bg-white"
                       >
                         <option value="">{t('common.select')}</option>
                         {tenants.map((tenant) => (
@@ -247,8 +247,9 @@ export function CreateUserDrawer({ open, onOpenChange, orgId, orgName }: CreateU
                   >
                     <option value="">{t('common.select')}</option>
                     <option value="org_owner">{t('admin.users.roles.org_owner.label')}</option>
-                    <option value="org_owner">{t('admin.users.roles.org_owner.label')}</option>
-                    {/* TODO: Add more roles as needed */}
+                    <option value="admin">{t('admin.users.roles.admin.label')}</option>
+                    <option value="operator">{t('admin.users.roles.operator.label')}</option>
+                    <option value="reviewer">{t('admin.users.roles.reviewer.label')}</option>
                   </select>
                 </div>
               )}

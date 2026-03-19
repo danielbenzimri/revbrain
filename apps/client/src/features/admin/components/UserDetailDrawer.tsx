@@ -29,21 +29,8 @@ import {
 } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
+import { ALL_ROLES } from '@revbrain/contract';
 import type { AdminUser } from '../hooks/use-admin-users';
-
-const ALL_ROLES = [
-  'system_admin',
-  'org_owner',
-  'admin',
-  'operator',
-  'operator',
-  'reviewer',
-  'org_owner',
-  'admin',
-  'reviewer',
-  'reviewer',
-  'reviewer',
-] as const;
 
 const editUserSchema = z.object({
   fullName: z.string().min(2, 'Name is required'),

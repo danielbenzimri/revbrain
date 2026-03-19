@@ -169,7 +169,7 @@ export default function CouponListPage() {
           </Button>
         </div>
       ) : (
-        <div className="bg-white rounded shadow-sm border-slate-200 overflow-hidden">
+        <div className="bg-white rounded border border-slate-200 shadow-sm overflow-hidden">
           <table className="w-full">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>

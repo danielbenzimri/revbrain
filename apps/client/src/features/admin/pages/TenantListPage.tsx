@@ -65,7 +65,7 @@ export default function TenantListPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-4 bg-white p-4 rounded shadow-sm border-slate-200 shadow-sm">
+      <div className="flex items-center gap-4 bg-white p-4 rounded border border-slate-200 shadow-sm">
         <div className="relative flex-1">
           <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <input
@@ -79,7 +79,7 @@ export default function TenantListPage() {
       </div>
 
       {/* List */}
-      <div className="bg-white rounded shadow-sm border-slate-200 shadow-sm overflow-hidden min-h-[300px]">
+      <div className="bg-white rounded border border-slate-200 shadow-sm overflow-hidden min-h-[300px]">
         {isLoading ? (
           <div className="flex h-full items-center justify-center py-20">
             <Loader2 className="h-8 w-8 animate-spin text-slate-400" />

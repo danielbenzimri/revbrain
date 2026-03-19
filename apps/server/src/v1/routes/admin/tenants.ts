@@ -1,7 +1,7 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { authMiddleware } from '../../../middleware/auth.ts';
 import { requireRole } from '../../../middleware/rbac.ts';
-import { listLimiter } from '../../../middleware/rate-limit.ts';
+import { adminLimiter, listLimiter } from '../../../middleware/rate-limit.ts';
 import { routeMiddleware } from '../../../lib/middleware-types.ts';
 import { AppError, ErrorCodes, type UpdateOrganizationInput } from '@revbrain/contract';
 import type { AppEnv } from '../../../types/index.ts';
@@ -95,7 +95,7 @@ adminTenantsRouter.openapi(
     tags: ['Admin'],
     summary: 'Update Tenant',
     description: 'Update tenant details.',
-    middleware: routeMiddleware(authMiddleware, requireRole('system_admin')),
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), adminLimiter),
     request: {
       params: z.object({
         id: z.string().uuid('Invalid tenant ID format'),
@@ -132,6 +132,9 @@ adminTenantsRouter.openapi(
     const id = c.req.param('id');
     const input = c.req.valid('json');
     const user = c.get('user');
+    if (!user) {
+      throw new AppError(ErrorCodes.UNAUTHORIZED, 'Authentication required', 401);
+    }
 
     const ctx = {
       actorId: user.id,
@@ -169,7 +172,7 @@ adminTenantsRouter.openapi(
     tags: ['Admin'],
     summary: 'Deactivate Tenant',
     description: 'Soft delete/deactivate a tenant.',
-    middleware: routeMiddleware(authMiddleware, requireRole('system_admin')),
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), adminLimiter),
     request: {
       params: z.object({
         id: z.string().uuid('Invalid tenant ID format'),
@@ -192,6 +195,9 @@ adminTenantsRouter.openapi(
   async (c) => {
     const id = c.req.param('id');
     const user = c.get('user');
+    if (!user) {
+      throw new AppError(ErrorCodes.UNAUTHORIZED, 'Authentication required', 401);
+    }
 
     const ctx = {
       actorId: user.id,

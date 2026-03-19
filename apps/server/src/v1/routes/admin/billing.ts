@@ -136,6 +136,16 @@ adminBillingRouter.openapi(
       throw new AppError(ErrorCodes.NOT_FOUND, 'Payment not found', 404);
     }
 
+    // Validate refund amount does not exceed refundable balance
+    const refundableAmountCents = payment.amountCents - (payment.refundedAmountCents || 0);
+    if (input.amountCents && input.amountCents > refundableAmountCents) {
+      throw new AppError(
+        ErrorCodes.VALIDATION_ERROR,
+        `Refund amount (${input.amountCents}) exceeds refundable balance (${refundableAmountCents})`,
+        400
+      );
+    }
+
     try {
       const result = await billingService.issueRefund({
         paymentId: input.paymentId,

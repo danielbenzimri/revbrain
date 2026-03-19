@@ -1,7 +1,7 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { authMiddleware } from '../../../middleware/auth.ts';
 import { requireRole } from '../../../middleware/rbac.ts';
-import { listLimiter } from '../../../middleware/rate-limit.ts';
+import { adminLimiter, listLimiter } from '../../../middleware/rate-limit.ts';
 import { routeMiddleware } from '../../../lib/middleware-types.ts';
 import { AppError, ErrorCodes } from '@revbrain/contract';
 import { CouponService } from '../../../services/coupon.service.ts';
@@ -115,7 +115,7 @@ adminCouponsRouter.openapi(
     tags: ['Admin', 'Coupons'],
     summary: 'Create Coupon',
     description: 'Create a new coupon and sync to Stripe.',
-    middleware: routeMiddleware(authMiddleware, requireRole('system_admin')),
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), adminLimiter),
     request: {
       body: {
         content: {
@@ -187,7 +187,7 @@ adminCouponsRouter.openapi(
     tags: ['Admin', 'Coupons'],
     summary: 'Get Coupon Details',
     description: 'Get coupon details with usage history.',
-    middleware: routeMiddleware(authMiddleware, requireRole('system_admin')),
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), adminLimiter),
     request: {
       params: z.object({
         id: z.string().uuid(),
@@ -239,7 +239,7 @@ adminCouponsRouter.openapi(
     tags: ['Admin', 'Coupons'],
     summary: 'Update Coupon',
     description: 'Update coupon details. Note: code and discount cannot be changed after creation.',
-    middleware: routeMiddleware(authMiddleware, requireRole('system_admin')),
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), adminLimiter),
     request: {
       params: z.object({
         id: z.string().uuid(),
@@ -305,7 +305,7 @@ adminCouponsRouter.openapi(
     summary: 'Deactivate Coupon',
     description:
       'Deactivate a coupon (soft delete). The coupon will also be deactivated in Stripe.',
-    middleware: routeMiddleware(authMiddleware, requireRole('system_admin')),
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), adminLimiter),
     request: {
       params: z.object({
         id: z.string().uuid(),
@@ -356,7 +356,7 @@ adminCouponsRouter.openapi(
     tags: ['Admin', 'Coupons'],
     summary: 'Sync Coupon to Stripe',
     description: 'Force sync coupon to Stripe. Use if initial sync failed.',
-    middleware: routeMiddleware(authMiddleware, requireRole('system_admin')),
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), adminLimiter),
     request: {
       params: z.object({
         id: z.string().uuid(),

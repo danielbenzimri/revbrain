@@ -114,7 +114,7 @@ export default function PricingPlansPage() {
           {plans.map((plan) => (
             <div
               key={plan.id}
-              className={`relative bg-white rounded shadow-sm p-6 flex flex-col ${
+              className={`relative bg-white rounded border shadow-sm p-6 flex flex-col ${
                 plan.isPublic
                   ? 'border-violet-500 ring-1 ring-violet-500 shadow-md'
                   : 'border-slate-200'

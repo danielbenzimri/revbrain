@@ -7,7 +7,7 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { authMiddleware } from '../../../middleware/auth.ts';
 import { requireRole } from '../../../middleware/rbac.ts';
-import { listLimiter } from '../../../middleware/rate-limit.ts';
+import { adminLimiter, listLimiter } from '../../../middleware/rate-limit.ts';
 import { routeMiddleware } from '../../../lib/middleware-types.ts';
 import { AppError, ErrorCodes } from '@revbrain/contract';
 import { TicketService, type UpdateTicketInput } from '../../../services/ticket.service.ts';
@@ -73,6 +73,16 @@ adminSupportRouter.openapi(
     const parsedLimit = Math.min(Number(limit) || DEFAULT_LIMIT, MAX_LIMIT);
     const parsedOffset = Number(offset) || 0;
 
+    // Validate enum filter values
+    const VALID_STATUSES = ['open', 'in_progress', 'waiting_customer', 'resolved', 'closed'];
+    const VALID_PRIORITIES = ['low', 'medium', 'high', 'urgent'];
+    if (status && !VALID_STATUSES.includes(status)) {
+      throw new AppError(ErrorCodes.VALIDATION_ERROR, `Invalid status: ${status}`, 400);
+    }
+    if (priority && !VALID_PRIORITIES.includes(priority)) {
+      throw new AppError(ErrorCodes.VALIDATION_ERROR, `Invalid priority: ${priority}`, 400);
+    }
+
     const ticketService = new TicketService();
     const result = await ticketService.listTickets(
       {
@@ -137,7 +147,7 @@ adminSupportRouter.openapi(
     tags: ['Admin Support'],
     summary: 'Get Ticket Statistics',
     description: 'Get aggregate statistics for support tickets.',
-    middleware: routeMiddleware(authMiddleware, requireRole('system_admin')),
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), adminLimiter),
     responses: {
       200: {
         content: {
@@ -181,7 +191,7 @@ adminSupportRouter.openapi(
     tags: ['Admin Support'],
     summary: 'Get Ticket Details',
     description: 'Get full ticket details including internal notes.',
-    middleware: routeMiddleware(authMiddleware, requireRole('system_admin')),
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), adminLimiter),
     request: {
       params: z.object({
         id: z.string().uuid('Invalid ticket ID'),
@@ -270,7 +280,7 @@ adminSupportRouter.openapi(
     tags: ['Admin Support'],
     summary: 'Update Ticket',
     description: 'Update ticket status, priority, category, or assignment.',
-    middleware: routeMiddleware(authMiddleware, requireRole('system_admin')),
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), adminLimiter),
     request: {
       params: z.object({
         id: z.string().uuid('Invalid ticket ID'),
@@ -308,6 +318,9 @@ adminSupportRouter.openapi(
     const id = c.req.param('id');
     const input = c.req.valid('json');
     const user = c.get('user');
+    if (!user) {
+      throw new AppError(ErrorCodes.UNAUTHORIZED, 'Authentication required', 401);
+    }
 
     const ticketService = new TicketService();
     const ticket = await ticketService.updateTicket(id, input as UpdateTicketInput, user.id);
@@ -337,7 +350,7 @@ adminSupportRouter.openapi(
     tags: ['Admin Support'],
     summary: 'Reply to Ticket',
     description: 'Add a message to a ticket (can be internal note or customer-visible reply).',
-    middleware: routeMiddleware(authMiddleware, requireRole('system_admin')),
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), adminLimiter),
     request: {
       params: z.object({
         id: z.string().uuid('Invalid ticket ID'),
@@ -372,6 +385,9 @@ adminSupportRouter.openapi(
     const id = c.req.param('id');
     const input = c.req.valid('json');
     const user = c.get('user');
+    if (!user) {
+      throw new AppError(ErrorCodes.UNAUTHORIZED, 'Authentication required', 401);
+    }
 
     const ticketService = new TicketService();
     const message = await ticketService.addMessage({
@@ -408,7 +424,7 @@ adminSupportRouter.openapi(
     tags: ['Admin Support'],
     summary: 'Assign Ticket',
     description: 'Assign or unassign a ticket to an admin user.',
-    middleware: routeMiddleware(authMiddleware, requireRole('system_admin')),
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), adminLimiter),
     request: {
       params: z.object({
         id: z.string().uuid('Invalid ticket ID'),
@@ -441,6 +457,9 @@ adminSupportRouter.openapi(
     const id = c.req.param('id');
     const { assignedTo } = c.req.valid('json');
     const user = c.get('user');
+    if (!user) {
+      throw new AppError(ErrorCodes.UNAUTHORIZED, 'Authentication required', 401);
+    }
 
     const ticketService = new TicketService();
     await ticketService.assignTicket(id, assignedTo, user.id);
