@@ -5,6 +5,7 @@ import { adminLimiter, listLimiter } from '../../../middleware/rate-limit.ts';
 import { routeMiddleware } from '../../../lib/middleware-types.ts';
 import { AppError, ErrorCodes, type UpdateOrganizationInput } from '@revbrain/contract';
 import type { AppEnv } from '../../../types/index.ts';
+import { buildAuditContext } from './utils/audit-context.ts';
 
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 100;
@@ -137,15 +138,8 @@ adminTenantsRouter.openapi(
       throw new AppError(ErrorCodes.UNAUTHORIZED, 'Authentication required', 401);
     }
 
-    const ctx = {
-      actorId: user.id,
-      actorEmail: user.email,
-      ipAddress:
-        c.req.header('CF-Connecting-IP') ||
-        c.req.header('X-Forwarded-For')?.split(',')[0].trim() ||
-        null,
-      userAgent: c.req.header('User-Agent') || null,
-    };
+    const auditCtx = buildAuditContext(c);
+    const ctx = { ...auditCtx, actorId: user.id, actorEmail: user.email };
 
     try {
       const updated = await c.var.services.organizations.updateTenant(
@@ -200,15 +194,8 @@ adminTenantsRouter.openapi(
       throw new AppError(ErrorCodes.UNAUTHORIZED, 'Authentication required', 401);
     }
 
-    const ctx = {
-      actorId: user.id,
-      actorEmail: user.email,
-      ipAddress:
-        c.req.header('CF-Connecting-IP') ||
-        c.req.header('X-Forwarded-For')?.split(',')[0].trim() ||
-        null,
-      userAgent: c.req.header('User-Agent') || null,
-    };
+    const auditCtx = buildAuditContext(c);
+    const ctx = { ...auditCtx, actorId: user.id, actorEmail: user.email };
 
     await c.var.services.organizations.deactivateTenant(id, ctx);
 
