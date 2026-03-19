@@ -10,7 +10,8 @@
     "users": "Users",
     "pricing": "Pricing",
     "coupons": "Coupons",
-    "support": "Support"
+    "support": "Support",
+    "audit": "Audit Log"
   },
   "logout": "Logout",
   "collapse": "Collapse",

@@ -356,6 +356,28 @@
     "seatLimit": "מגבלת מושבים",
     "seatLimitHint": "מספר המשתמשים המרבי לארגון זה"
   },
+  "audit": {
+    "title": "יומן ביקורת",
+    "subtitle": "צפייה בכל הפעולות והשינויים",
+    "filters": {
+      "action": "פעולה",
+      "dateFrom": "מתאריך",
+      "dateTo": "עד תאריך",
+      "search": "חיפוש..."
+    },
+    "table": {
+      "time": "זמן",
+      "action": "פעולה",
+      "actor": "מבצע",
+      "target": "יעד",
+      "ip": "כתובת IP",
+      "details": "פרטים"
+    },
+    "noEntries": "לא נמצאו רשומות ביקורת",
+    "export": "ייצוא CSV",
+    "showDetails": "הצג פרטים",
+    "hideDetails": "הסתר פרטים"
+  },
   "coupons": {
     "title": "קופונים והטבות",
     "subtitle": "ניהול קודי הנחה והצעות מבצע",

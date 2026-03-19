@@ -30,6 +30,10 @@ export const adminKeys = {
   // Dashboard Stats
   stats: () => [...adminKeys.all, 'stats'] as const,
 
+  // Audit Logs
+  audit: () => [...adminKeys.all, 'audit'] as const,
+  auditList: () => [...adminKeys.audit(), 'list'] as const,
+
   // Support Tickets
   support: () => [...adminKeys.all, 'support'] as const,
   supportTickets: () => [...adminKeys.support(), 'tickets'] as const,

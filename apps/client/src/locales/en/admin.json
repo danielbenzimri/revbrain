@@ -356,6 +356,28 @@
     "seatLimit": "Seat Limit",
     "seatLimitHint": "Maximum number of users for this organization"
   },
+  "audit": {
+    "title": "Audit Log",
+    "subtitle": "View all admin actions and changes",
+    "filters": {
+      "action": "Action",
+      "dateFrom": "From",
+      "dateTo": "To",
+      "search": "Search..."
+    },
+    "table": {
+      "time": "Time",
+      "action": "Action",
+      "actor": "Actor",
+      "target": "Target",
+      "ip": "IP Address",
+      "details": "Details"
+    },
+    "noEntries": "No audit entries found",
+    "export": "Export CSV",
+    "showDetails": "Show details",
+    "hideDetails": "Hide details"
+  },
   "coupons": {
     "title": "Coupons & Promotions",
     "subtitle": "Manage discount codes and promotional offers",

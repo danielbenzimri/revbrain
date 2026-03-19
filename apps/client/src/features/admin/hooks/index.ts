@@ -35,6 +35,10 @@ export {
 } from './use-coupons';
 export type { Coupon, CouponUsage, CouponCreateInput, CouponUpdateInput } from './use-coupons';
 
+// Audit Logs
+export { useAuditLogs } from './use-audit-logs';
+export type { AuditLogEntry, AuditLogFilters } from './use-audit-logs';
+
 // Support Tickets
 export {
   useTicketStats,

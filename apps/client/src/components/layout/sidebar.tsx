@@ -11,6 +11,7 @@ import {
   Users,
   CreditCard,
   LifeBuoy,
+  ScrollText,
   Tag,
   ChevronLeft,
   ChevronRight,
@@ -55,6 +56,7 @@ export function Sidebar({ className }: SidebarProps) {
     { nameKey: 'nav.admin.pricing', href: '/admin/pricing', icon: CreditCard }, // Pricing Plans
     { nameKey: 'nav.admin.coupons', href: '/admin/coupons', icon: Tag }, // Coupons & Promotions
     { nameKey: 'nav.admin.support', href: '/admin/support', icon: LifeBuoy }, // Support
+    { nameKey: 'nav.admin.audit', href: '/admin/audit', icon: ScrollText }, // Audit Log
     { nameKey: 'nav.settings', href: '/settings', icon: Settings },
   ];
 

@@ -36,6 +36,7 @@ const PricingPlansPage = lazy(routeLazyImports['/admin/pricing']);
 const AdminSupportPage = lazy(routeLazyImports['/admin/support']);
 const AdminUserListPage = lazy(routeLazyImports['/admin/users']);
 const CouponListPage = lazy(routeLazyImports['/admin/coupons']);
+const AuditLogPage = lazy(routeLazyImports['/admin/audit']);
 
 // Project Workspace Pages
 const OverviewPage = lazy(routeLazyImports['/project/overview']);
@@ -208,6 +209,14 @@ const router = createBrowserRouter([
             element: (
               <Suspense fallback={<PageSkeleton />}>
                 <AdminSupportPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: 'audit',
+            element: (
+              <Suspense fallback={<PageSkeleton />}>
+                <AuditLogPage />
               </Suspense>
             ),
           },
