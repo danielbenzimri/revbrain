@@ -127,6 +127,11 @@ adminSupportRouter.openapi(
         createdAt: t.createdAt,
         updatedAt: t.updatedAt,
         firstResponseAt: t.firstResponseAt,
+        // SLA indicator: overdue if open/in_progress and no first response within 4 hours
+        isOverdue:
+          !t.firstResponseAt &&
+          ['open', 'in_progress'].includes(t.status) &&
+          Date.now() - new Date(t.createdAt).getTime() > 4 * 60 * 60 * 1000,
       })),
       pagination: {
         limit: parsedLimit,
@@ -544,6 +549,100 @@ adminSupportRouter.openapi(
       success: true,
       message: assignedTo ? 'Ticket assigned' : 'Ticket unassigned',
     });
+  }
+);
+
+/**
+ * POST /v1/admin/support/tickets — Create ticket on behalf of customer
+ */
+adminSupportRouter.openapi(
+  createRoute({
+    method: 'post',
+    path: '/tickets',
+    tags: ['Admin Support'],
+    summary: 'Create Ticket on Behalf',
+    description:
+      'Admin creates a support ticket on behalf of a customer (e.g., from phone/email report).',
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), adminLimiter),
+    request: {
+      body: {
+        content: {
+          'application/json': {
+            schema: z.object({
+              subject: z.string().min(1).max(200),
+              description: z.string().min(1).max(5000),
+              priority: z.enum(['low', 'medium', 'high', 'urgent']).default('medium'),
+              category: z.string().max(50).optional(),
+              onBehalfOfUserId: z.string().uuid(),
+              organizationId: z.string().uuid(),
+            }),
+          },
+        },
+      },
+    },
+    responses: {
+      201: {
+        content: {
+          'application/json': {
+            schema: z.object({
+              success: z.boolean(),
+              data: z.any(),
+            }),
+          },
+        },
+        description: 'Ticket created',
+      },
+    },
+  }),
+  async (c) => {
+    const input = c.req.valid('json');
+    const user = c.get('user');
+    if (!user) {
+      throw new AppError(ErrorCodes.UNAUTHORIZED, 'Authentication required', 401);
+    }
+
+    const ticketService = new TicketService();
+    const ticket = await ticketService.createTicket({
+      subject: input.subject,
+      description: input.description,
+      priority: input.priority,
+      category: input.category || 'general',
+      userId: input.onBehalfOfUserId,
+      organizationId: input.organizationId,
+    });
+
+    try {
+      const auditCtx = buildAuditContext(c);
+      await c.var.repos.auditLogs.create({
+        userId: auditCtx.actorId,
+        organizationId: input.organizationId,
+        action: 'ticket.created_on_behalf',
+        targetUserId: input.onBehalfOfUserId,
+        metadata: {
+          requestId: auditCtx.requestId,
+          ticketId: ticket.id,
+          subject: input.subject,
+        },
+        ipAddress: auditCtx.ipAddress,
+        userAgent: auditCtx.userAgent,
+      });
+    } catch {
+      /* audit failure should not block operation */
+    }
+
+    return c.json(
+      {
+        success: true,
+        data: {
+          id: ticket.id,
+          ticketNumber: ticket.ticketNumber,
+          subject: ticket.subject,
+          status: ticket.status,
+          priority: ticket.priority,
+        },
+      },
+      201
+    );
   }
 );
 
