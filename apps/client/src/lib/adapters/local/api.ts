@@ -1,76 +1,45 @@
 import type { APIAdapter } from '@/types/services';
 
-// Simulated network delay (ms)
-const SIMULATED_DELAY = 300;
-
-// Mock API responses storage
-const mockResponses: Record<string, unknown> = {};
-
 /**
- * Local API Adapter
- * Returns mock data and simulates network latency for development
+ * Local API Adapter — AUTH-ONLY STUB
+ *
+ * DEPRECATED for data operations. Use `dev:real` (client + mock server) for
+ * realistic admin development. This adapter returns empty/error responses
+ * for data calls to prevent false confidence from fake client-side data.
+ *
+ * Auth operations are handled by LocalAuthAdapter, not this class.
  */
 export class LocalAPIAdapter implements APIAdapter {
-  private async simulateDelay(): Promise<void> {
-    await new Promise((resolve) => setTimeout(resolve, SIMULATED_DELAY));
+  private warn(method: string, path: string): void {
+    console.warn(
+      `[LocalAPI] ${method} ${path} — client-only mode does not serve data. ` +
+        `Run 'pnpm dev:real' for mock server with real data.`
+    );
   }
 
   async get<T>(path: string): Promise<T> {
-    await this.simulateDelay();
-    console.log(`[LocalAPI] GET ${path}`);
-
-    // Return mock response if registered
-    if (mockResponses[path]) {
-      return mockResponses[path] as T;
-    }
-
-    // Return empty array for list endpoints, null for single items
-    return (path.includes('list') ? [] : null) as T;
+    this.warn('GET', path);
+    // Return empty structures so UI shows empty states instead of crashing
+    return { success: true, data: [] } as T;
   }
 
-  async post<T>(path: string, data?: unknown): Promise<T> {
-    await this.simulateDelay();
-    console.log(`[LocalAPI] POST ${path}`, data);
-
-    // Mock Admin Onboarding
-    if (path === '/v1/admin/onboard') {
-      return {
-        organization: {
-          id: crypto.randomUUID(),
-          ...(data as { organization: object }).organization,
-        },
-        firstAdmin: { id: crypto.randomUUID(), ...(data as { firstAdmin: object }).firstAdmin },
-      } as T;
-    }
-
-    // Return the posted data with a generated ID
-    return { id: crypto.randomUUID(), ...(data as object) } as T;
+  async post<T>(path: string, _data?: unknown): Promise<T> {
+    this.warn('POST', path);
+    throw new Error('Data mutations require the mock server. Run: pnpm dev:real');
   }
 
-  async put<T>(path: string, data?: unknown): Promise<T> {
-    await this.simulateDelay();
-    console.log(`[LocalAPI] PUT ${path}`, data);
-    return data as T;
+  async put<T>(path: string, _data?: unknown): Promise<T> {
+    this.warn('PUT', path);
+    throw new Error('Data mutations require the mock server. Run: pnpm dev:real');
   }
 
-  async patch<T>(path: string, data?: unknown): Promise<T> {
-    await this.simulateDelay();
-    console.log(`[LocalAPI] PATCH ${path}`, data);
-    return data as T;
+  async patch<T>(path: string, _data?: unknown): Promise<T> {
+    this.warn('PATCH', path);
+    throw new Error('Data mutations require the mock server. Run: pnpm dev:real');
   }
 
   async delete<T>(path: string): Promise<T> {
-    await this.simulateDelay();
-    console.log(`[LocalAPI] DELETE ${path}`);
-    return { success: true } as T;
+    this.warn('DELETE', path);
+    throw new Error('Data mutations require the mock server. Run: pnpm dev:real');
   }
-}
-
-// Helper to register mock responses for testing
-export function registerMockResponse(path: string, response: unknown): void {
-  mockResponses[path] = response;
-}
-
-export function clearMockResponses(): void {
-  Object.keys(mockResponses).forEach((key) => delete mockResponses[key]);
 }
