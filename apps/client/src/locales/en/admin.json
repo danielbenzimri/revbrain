@@ -7,8 +7,10 @@
       "totalTenants": "Total Tenants",
       "activeUsers": "Active Users",
       "mrr": "MRR",
-      "growth": "Growth"
+      "growth": "Growth",
+      "activeProjects": "Active Projects"
     },
+    "recentActivity": "Recent Activity",
     "recentOnboardings": "Recent Onboardings",
     "starterPlan": "Starter Plan",
     "ago": "ago",

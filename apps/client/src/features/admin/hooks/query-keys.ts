@@ -27,6 +27,9 @@ export const adminKeys = {
   couponsList: () => [...adminKeys.coupons(), 'list'] as const,
   couponDetail: (id: string) => [...adminKeys.coupons(), 'detail', id] as const,
 
+  // Dashboard Stats
+  stats: () => [...adminKeys.all, 'stats'] as const,
+
   // Support Tickets
   support: () => [...adminKeys.all, 'support'] as const,
   supportTickets: () => [...adminKeys.support(), 'tickets'] as const,

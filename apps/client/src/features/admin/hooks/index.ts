@@ -17,6 +17,10 @@ export {
 } from './use-admin-users';
 export type { AdminUser } from './use-admin-users';
 
+// Dashboard Stats
+export { useAdminStats } from './use-admin-stats';
+export type { AdminStats, ActivityEntry } from './use-admin-stats';
+
 // Onboarding
 export { useOnboardTenant } from './use-onboard-tenant';
 

@@ -7,8 +7,10 @@
       "totalTenants": "סה\"כ ארגונים",
       "activeUsers": "משתמשים פעילים",
       "mrr": "הכנסה חודשית",
-      "growth": "צמיחה"
+      "growth": "צמיחה",
+      "activeProjects": "פרויקטים פעילים"
     },
+    "recentActivity": "פעילות אחרונה",
     "recentOnboardings": "צירופים אחרונים",
     "starterPlan": "תוכנית התחלתית",
     "ago": "לפני",
