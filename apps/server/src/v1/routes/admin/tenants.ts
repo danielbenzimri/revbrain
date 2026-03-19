@@ -4,8 +4,11 @@ import { requireRole } from '../../../middleware/rbac.ts';
 import { adminLimiter, listLimiter } from '../../../middleware/rate-limit.ts';
 import { routeMiddleware } from '../../../lib/middleware-types.ts';
 import { AppError, ErrorCodes, type UpdateOrganizationInput } from '@revbrain/contract';
+import { MockOverrideRepository } from '../../../repositories/mock/index.ts';
 import type { AppEnv } from '../../../types/index.ts';
 import { buildAuditContext } from './utils/audit-context.ts';
+
+const overrideRepo = new MockOverrideRepository();
 
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 100;
@@ -69,6 +72,7 @@ adminTenantsRouter.openapi(
         seatUsed: org.seatUsed,
         storageUsedBytes: org.storageUsedBytes,
         isActive: org.isActive,
+        lifecycleState: org.isActive === false ? 'deactivated' : 'active',
         createdAt: org.createdAt,
         plan: org.plan
           ? {
@@ -82,6 +86,103 @@ adminTenantsRouter.openapi(
         limit: parsedLimit,
         offset: parsedOffset,
         hasMore: result.hasMore,
+      },
+    });
+  }
+);
+
+/**
+ * GET /v1/admin/tenants/:id — Tenant detail
+ */
+adminTenantsRouter.openapi(
+  createRoute({
+    method: 'get',
+    path: '/{id}',
+    tags: ['Admin'],
+    summary: 'Get Tenant Detail',
+    description: 'Fetch full tenant details with aggregated data.',
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), listLimiter),
+    request: {
+      params: z.object({
+        id: z.string().uuid('Invalid tenant ID format'),
+      }),
+    },
+    responses: {
+      200: {
+        content: {
+          'application/json': {
+            schema: z.object({
+              success: z.boolean(),
+              data: z.any(),
+            }),
+          },
+        },
+        description: 'Full tenant details',
+      },
+    },
+  }),
+  async (c) => {
+    const id = c.req.param('id');
+
+    const org = await c.var.repos.organizations.findWithPlan(id);
+    if (!org) {
+      throw new AppError(ErrorCodes.NOT_FOUND, 'Tenant not found', 404);
+    }
+
+    // Fetch aggregated data in parallel
+    const [projectCount, userCount, recentActivity, overrides] = await Promise.all([
+      c.var.repos.projects.countByOrganization(id),
+      c.var.repos.users.count({ organizationId: id }),
+      c.var.repos.auditLogs.findByOrganization(id, {
+        limit: 5,
+        orderBy: { field: 'createdAt', direction: 'desc' },
+      }),
+      overrideRepo.findByOrganization(id),
+    ]);
+
+    const lifecycleState = org.isActive === false ? 'deactivated' : 'active';
+
+    return c.json({
+      success: true,
+      data: {
+        id: org.id,
+        name: org.name,
+        slug: org.slug,
+        type: org.type,
+        seatLimit: org.seatLimit,
+        seatUsed: org.seatUsed,
+        storageUsedBytes: org.storageUsedBytes,
+        isActive: org.isActive,
+        lifecycleState,
+        createdAt: org.createdAt,
+        updatedAt: org.updatedAt,
+        plan: org.plan
+          ? {
+              id: org.plan.id,
+              name: org.plan.name,
+              code: org.plan.code,
+              price: org.plan.price,
+              currency: org.plan.currency,
+              limits: org.plan.limits,
+              features: org.plan.features,
+            }
+          : null,
+        projectCount,
+        userCount,
+        recentActivity: recentActivity.map((e) => ({
+          id: e.id,
+          action: e.action,
+          actorId: e.userId,
+          metadata: e.metadata,
+          createdAt: e.createdAt,
+        })),
+        overrides: overrides.map((o) => ({
+          id: o.id,
+          feature: o.feature,
+          value: o.value,
+          reason: o.reason,
+          expiresAt: o.expiresAt,
+        })),
       },
     });
   }

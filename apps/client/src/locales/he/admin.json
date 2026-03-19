@@ -48,7 +48,27 @@
     "deactivateConfirm": "האם אתה בטוח שברצונך להשבית ארגון זה?",
     "noTenants": "לא נמצאו ארגונים.",
     "deactivate": "השבת",
-    "manageOverrides": "ניהול דריסות"
+    "manageOverrides": "ניהול דריסות",
+    "detail": {
+      "title": "פרטי ארגון",
+      "overview": "סקירה כללית",
+      "plan": "מנוי",
+      "usage": "שימוש",
+      "users": "משתמשים",
+      "projects": "פרויקטים",
+      "activity": "פעילות אחרונה",
+      "overrides": "דריסות תכונות",
+      "noActivity": "אין פעילות אחרונה",
+      "viewUsers": "צפייה במשתמשים",
+      "manageOverrides": "ניהול דריסות",
+      "backToList": "חזרה לארגונים"
+    },
+    "lifecycle": {
+      "active": "פעיל",
+      "trial": "ניסיון",
+      "suspended": "מושעה",
+      "deactivated": "מושבת"
+    }
   },
   "overrides": {
     "title": "דריסות תכונות",

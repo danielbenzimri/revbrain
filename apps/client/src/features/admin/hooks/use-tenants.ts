@@ -19,6 +19,7 @@ export interface Tenant {
   seatLimit: number;
   storageUsedBytes: number;
   isActive: boolean;
+  lifecycleState: 'active' | 'trial' | 'suspended' | 'deactivated';
 }
 
 export interface TenantForEdit {

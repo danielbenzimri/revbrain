@@ -32,6 +32,7 @@ const InviteUserPage = lazy(routeLazyImports['/users/invite']);
 const TeamPage = lazy(routeLazyImports['/users']);
 const AdminDashboardPage = lazy(routeLazyImports['/admin']);
 const TenantListPage = lazy(routeLazyImports['/admin/tenants']);
+const TenantDetailPage = lazy(routeLazyImports['/admin/tenants/:id']);
 const PricingPlansPage = lazy(routeLazyImports['/admin/pricing']);
 const AdminSupportPage = lazy(routeLazyImports['/admin/support']);
 const AdminUserListPage = lazy(routeLazyImports['/admin/users']);
@@ -161,6 +162,14 @@ const router = createBrowserRouter([
             element: (
               <Suspense fallback={<PageSkeleton />}>
                 <TenantListPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: 'tenants/:id',
+            element: (
+              <Suspense fallback={<PageSkeleton />}>
+                <TenantDetailPage />
               </Suspense>
             ),
           },

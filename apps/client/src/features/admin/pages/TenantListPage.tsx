@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import {
   Plus,
   Search,
@@ -133,7 +134,12 @@ export default function TenantListPage() {
                         <Building2 className="h-4 w-4" />
                       </div>
                       <div>
-                        <p className="font-medium text-slate-900">{tenant.name}</p>
+                        <Link
+                          to={`/admin/tenants/${tenant.id}`}
+                          className="font-medium text-slate-900 hover:text-violet-600 hover:underline"
+                        >
+                          {tenant.name}
+                        </Link>
                         <p className="text-xs text-slate-500">{tenant.slug}</p>
                       </div>
                     </div>

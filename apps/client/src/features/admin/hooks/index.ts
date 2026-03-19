@@ -8,6 +8,15 @@ export { usePlans, useAllPlans, useCreatePlan, useUpdatePlan, useDeletePlan } fr
 export { useTenants, useUpdateTenant, useDeactivateTenant } from './use-tenants';
 export type { Tenant, TenantForEdit } from './use-tenants';
 
+// Tenant Detail
+export { useTenantDetail } from './use-tenant-detail';
+export type {
+  TenantDetail,
+  TenantDetailPlan,
+  TenantDetailActivity,
+  TenantDetailOverride,
+} from './use-tenant-detail';
+
 // Users
 export {
   useAdminUsers,

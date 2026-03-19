@@ -48,7 +48,27 @@
     "deactivateConfirm": "Are you sure you want to deactivate this tenant?",
     "noTenants": "No tenants found.",
     "deactivate": "Deactivate",
-    "manageOverrides": "Manage Overrides"
+    "manageOverrides": "Manage Overrides",
+    "detail": {
+      "title": "Tenant Details",
+      "overview": "Overview",
+      "plan": "Subscription Plan",
+      "usage": "Usage",
+      "users": "Users",
+      "projects": "Projects",
+      "activity": "Recent Activity",
+      "overrides": "Feature Overrides",
+      "noActivity": "No recent activity",
+      "viewUsers": "View Users",
+      "manageOverrides": "Manage Overrides",
+      "backToList": "Back to Tenants"
+    },
+    "lifecycle": {
+      "active": "Active",
+      "trial": "Trial",
+      "suspended": "Suspended",
+      "deactivated": "Deactivated"
+    }
   },
   "overrides": {
     "title": "Feature Overrides",
