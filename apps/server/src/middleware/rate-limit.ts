@@ -208,13 +208,15 @@ export const listLimiter = rateLimiter({
 
 /**
  * Strict rate limiter for admin operations
- * 10 operations per hour per user
+ * Production: 10 operations per hour per user
+ * Local/dev: 10,000 per hour (effectively unlimited for testing)
  *
  * Key: User ID (admin authenticated required)
  */
+const isLocalEnv = process.env.APP_ENV === 'local' || process.env.NODE_ENV === 'development';
 export const adminLimiter = rateLimiter({
   windowMs: 60 * 60 * 1000, // 1 hour
-  limit: 10,
+  limit: isLocalEnv ? 10_000 : 10,
   standardHeaders: 'draft-6',
   keyGenerator: userKeyGenerator,
   handler: (c: Context<AppEnv>) => {
