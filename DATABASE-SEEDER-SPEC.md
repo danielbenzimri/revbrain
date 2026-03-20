@@ -1,617 +1,613 @@
 # RevBrain — Database Seeder Spec
 
-> **Purpose:** Specification for a database seeding system that populates a real Supabase/PostgreSQL database with curated test data. This bridges the gap between RevBrain's in-memory mock mode (used for local development) and real database environments (staging, QA, demos). Written for external review.
+> **Purpose:** Specification for a database seeding system that populates a real Supabase/PostgreSQL database with curated test data. Bridges the gap between RevBrain's in-memory mock mode and real database environments (staging, QA, demos). Written for external review.
 >
-> **Context:** RevBrain is a multi-tenant SaaS platform for Salesforce CPQ → RCA migration. It uses Supabase (PostgreSQL) with Drizzle ORM, Row-Level Security (RLS), and a dual-adapter architecture (mock mode for offline dev, production mode for real databases).
+> **Context:** RevBrain is a multi-tenant SaaS for Salesforce CPQ → RCA migration. Uses Supabase (PostgreSQL) with Drizzle ORM, Row-Level Security (RLS), and a dual-adapter architecture (mock mode for offline dev, production mode for real databases).
 >
-> **Date:** 2026-03-20 | **Status:** Spec — implementation pending
+> **Date:** 2026-03-20 | **Revision:** 2.0 (post dual external review)
 
 ---
 
 ## Table of Contents
 
 1. [Why This Matters](#1-why-this-matters)
-2. [Current State — The Gap](#2-current-state--the-gap)
-3. [Reference: What Procure Built](#3-reference-what-procure-built)
-4. [Proposed Solution for RevBrain](#4-proposed-solution-for-revbrain)
-5. [Architecture Design](#5-architecture-design)
-6. [Data Inventory — What Gets Seeded](#6-data-inventory--what-gets-seeded)
-7. [Insertion Order & Foreign Key Dependencies](#7-insertion-order--foreign-key-dependencies)
-8. [Idempotency & Safety](#8-idempotency--safety)
-9. [RLS & Tenant Isolation](#9-rls--tenant-isolation)
-10. [CLI Interface](#10-cli-interface)
-11. [Environment Strategy](#11-environment-strategy)
-12. [Implementation Plan](#12-implementation-plan)
-13. [Testing Strategy](#13-testing-strategy)
+2. [Current State](#2-current-state)
+3. [Reference: Procure's Approach](#3-reference-procures-approach)
+4. [Architecture](#4-architecture)
+5. [Phased Execution Model](#5-phased-execution-model)
+6. [Data Inventory](#6-data-inventory)
+7. [Auth User Reconciliation](#7-auth-user-reconciliation)
+8. [Idempotency & Upsert Semantics](#8-idempotency--upsert-semantics)
+9. [Cleanup & Provenance](#9-cleanup--provenance)
+10. [Environment Safety](#10-environment-safety)
+11. [RLS Verification Suite](#11-rls-verification-suite)
+12. [CLI Interface](#12-cli-interface)
+13. [Error Handling Matrix](#13-error-handling-matrix)
+14. [Implementation Plan](#14-implementation-plan)
 
 ---
 
 ## 1. Why This Matters
 
-### The Problem
+RevBrain has 8 curated mock data files with ~49 entities powering local development via in-memory repositories. This data cannot reach a real database. The seeder solves:
 
-RevBrain has a mature mock data layer — 8 seed data files with 60+ entities covering plans, organizations, users, projects, tickets, coupons, overrides, and audit logs. This data powers local development via in-memory mock repositories. However, **none of this data can reach a real database**.
+| Problem                            | Impact                                       | Who             |
+| ---------------------------------- | -------------------------------------------- | --------------- |
+| Empty staging after deploy         | Manual setup before every test cycle         | Engineering, QA |
+| No demo data                       | Sales demos require hand-populating          | Sales, Product  |
+| Mock-mode bugs differ from DB-mode | Data shape mismatches between environments   | QA              |
+| New engineer onboarding friction   | Must learn manual tenant/user creation       | Engineering     |
+| No E2E fixtures for real DB        | Playwright tests only work against mock mode | CI/CD           |
+| No Supabase Auth users exist       | Mock mode bypasses auth entirely             | Engineering     |
 
-This creates several critical problems:
-
-| Problem                                            | Impact                                                                                                                       | Who It Affects  |
-| -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | --------------- |
-| **Staging is empty after deployment**              | Every staging deploy starts with zero data. Engineers must manually create test tenants, users, and projects before testing. | Engineering, QA |
-| **Demo environments have no data**                 | Sales demos require pre-populating data by hand. Each demo reset requires manual re-creation.                                | Sales, Product  |
-| **QA cannot reproduce mock-mode bugs**             | Bugs found in mock mode may behave differently in real DB mode because the data shape is different.                          | QA              |
-| **New engineers have no starting data**            | Onboarding requires learning how to create tenants/users/plans manually before seeing real functionality.                    | Engineering     |
-| **E2E tests against real DB have no fixture data** | Playwright E2E tests currently run against mock mode only. Testing against a real database requires seed data.               | CI/CD           |
-| **Supabase Auth users don't exist**                | Mock mode bypasses Supabase Auth entirely. Real DB mode needs actual auth users with matching database records.              | Engineering     |
-
-### The Value
-
-A database seeder eliminates all of the above by providing a single command that populates any database with the same curated data used in mock mode:
-
-```bash
-pnpm db:seed                    # Seed local/staging database
-pnpm db:seed --cleanup          # Wipe and re-seed
-pnpm db:seed --env=production   # Seed production (with safeguards)
-```
-
-**Key benefits:**
-
-- **Consistency:** Same data in mock mode, staging, and demos — developers and sales see the same tenants, users, and projects everywhere
-- **Speed:** New environment from zero to fully populated in seconds, not hours of manual setup
-- **Reproducibility:** Deterministic UUIDs mean the same entities have the same IDs across all environments
-- **Safety:** Idempotent — can re-run without duplicating data. Production safeguards prevent accidental seeding
-- **E2E enablement:** Provides the fixture data needed to run E2E tests against real databases
+**Value:** A single command (`pnpm db:seed`) populates any database with the same curated data used in mock mode — consistently, reproducibly, safely.
 
 ---
 
-## 2. Current State — The Gap
+## 2. Current State
 
-### What RevBrain Has (Mock Layer)
+### What exists (mock layer)
 
-RevBrain has a well-structured mock data layer at `apps/server/src/mocks/`:
+8 seed data files at `apps/server/src/mocks/` with deterministic IDs (`MOCK_IDS`):
 
-| File                  | Entities                                   | Count                  |
-| --------------------- | ------------------------------------------ | ---------------------- |
-| `plans.ts`            | Plans (Starter, Pro, Enterprise)           | 3                      |
-| `organizations.ts`    | Organizations (Acme Corp, Beta Industries) | 2                      |
-| `users.ts`            | Users across all roles                     | 8                      |
-| `projects.ts`         | Migration projects                         | 4                      |
-| `audit-logs.ts`       | Admin action logs                          | 10                     |
-| `support-tickets.ts`  | Support tickets with messages              | 6 tickets, 10 messages |
-| `coupons.ts`          | Discount coupons                           | 4                      |
-| `tenant-overrides.ts` | Feature overrides                          | 2                      |
+| File                  | Count  | Data                              |
+| --------------------- | ------ | --------------------------------- |
+| `plans.ts`            | 3      | Starter, Pro, Enterprise          |
+| `organizations.ts`    | 2      | Acme Corp, Beta Industries        |
+| `users.ts`            | 8      | All 5 roles + pending user        |
+| `projects.ts`         | 4      | Active, completed, draft          |
+| `audit-logs.ts`       | 10     | Onboarding, invitations, updates  |
+| `support-tickets.ts`  | 6 + 10 | Tickets with messages             |
+| `coupons.ts`          | 4      | Active, expired, scheduled, maxed |
+| `tenant-overrides.ts` | 2      | Active grant, expired grant       |
 
-**Total: ~49 entities** across 8 entity types, all with deterministic IDs (`MOCK_IDS` in `constants.ts`).
+### What's missing
 
-These entities follow the contract types from `packages/contract/src/repositories/types.ts` and are used by mock repositories in `apps/server/src/repositories/mock/`. The mock mode (`USE_MOCK_DATA=true`) runs entirely in-memory — data is lost on server restart, reset via `resetAllMockData()`.
+`db:seed` command, Drizzle-based insertion, Supabase Auth user creation, idempotency, CLI, environment safety.
 
-### What RevBrain Doesn't Have
+### What exists (database layer)
 
-| Capability                                     | Status      |
-| ---------------------------------------------- | ----------- |
-| `db:seed` command                              | **Missing** |
-| Script to insert mock data into real database  | **Missing** |
-| Drizzle-based seeder using existing schema     | **Missing** |
-| Auth user creation for seed users              | **Missing** |
-| Idempotency tracking (avoid duplicate inserts) | **Missing** |
-| CLI with options (cleanup, env selection)      | **Missing** |
-| Supabase Auth integration for seed users       | **Missing** |
-
-### What RevBrain Has (Database Layer)
-
-- **Drizzle ORM schema** at `packages/database/src/schema.ts` — full schema for plans, organizations, users, projects, audit logs, support tickets, job queue, and more
-- **Drizzle migration system** — `db:generate` and `db:migrate` commands
-- **Database client** at `packages/database/src/client.ts` — PostgreSQL connection via `DATABASE_URL`
-- **Drizzle repositories** at `apps/server/src/repositories/drizzle/` — production-mode data access
-
-The seeder needs to bridge `mocks/*.ts` (source data) → `packages/database/src/schema.ts` (target schema) via Drizzle ORM.
+Drizzle ORM schema (`packages/database/src/schema.ts`), migration system, DB client, Drizzle repositories. The seeder bridges mock data → Drizzle schema → PostgreSQL.
 
 ---
 
-## 3. Reference: What Procure Built
+## 3. Reference: Procure's Approach
 
-RevBrain's sister project, [Procure](https://github.com/danielbenzimri/procure) (a procurement SaaS), solved this problem with a 3-layer Data Factory architecture. Understanding Procure's approach informs RevBrain's design.
+Procure (sister project) built a 3-layer Data Factory: Builders → Seeders → Scenarios. Key features: curated seeder reusing mock data, deterministic UUIDs (UUID v5), `seed_log` idempotency, RLS context management (`setTenantContext()` RPC), CLI with progress output.
 
-### Procure's Architecture
+**What RevBrain adopts:** Curated mock data reuse, idempotency tracking, CLI with options, auth user creation.
 
-```
-Layer 1: Builders (pure functions)
-  ↓ generates
-Layer 2: Seeders (DB-aware insertion)
-  ↓ composed by
-Layer 3: Scenarios (business-oriented configurations)
-```
-
-**Layer 1 — Builders:** Pure functions that generate typed entities with no database awareness. Use Faker.js for realistic data, support seeded randomness for deterministic output. Example: `buildSupplier(tenantId, { otd: 55 })` returns a Supplier object.
-
-**Layer 2 — Seeders:** Functions that take builder output and insert it into a real database via Supabase client. Handle RLS context (`setTenantContext()`), batching, progress reporting, and idempotency tracking via a `seed_log` table.
-
-**Layer 3 — Scenarios:** Named business configurations like `tenantWithLateSupplier` or `healthyCompany` that compose builders and seeders into complete test environments. Support scaling from `testBasic` (3 entities) to `enterprise` (5,000+ entities).
-
-### Key Procure Features
-
-| Feature                          | How It Works                                                                                                                                       |
-| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Curated seeder**               | `seedCuratedDemo()` inserts the exact same data as the frontend mock service — Acme Corporation with 10 suppliers, 15 purchase orders, 8 AI agents |
-| **Deterministic UUIDs**          | `deterministicUUID(key)` generates stable UUIDs via UUID v5. Same key → same UUID across all environments                                          |
-| **Idempotency**                  | `seed_log` table tracks which seed operations have been applied. `seedIfNotExists()` skips already-applied seeds                                   |
-| **RLS-aware**                    | `setTenantContext()` / `clearTenantContext()` RPCs ensure all inserts go through RLS policies                                                      |
-| **CLI**                          | `npx tsx scripts/seed-staging.ts --curated --cleanup` with progress reporting and login credential output                                          |
-| **~5,800 lines of curated data** | Hand-crafted, realistic business data across 11 files                                                                                              |
-
-### What RevBrain Should Adopt vs. Skip
-
-| Procure Feature                                   | Adopt?                       | Reasoning                                                                                                                                               |
-| ------------------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Curated seeder reusing mock data                  | **Yes**                      | Core feature — RevBrain's mock data is already curated                                                                                                  |
-| Deterministic UUIDs                               | **Already done**             | RevBrain's `MOCK_IDS` are already deterministic                                                                                                         |
-| Idempotency (seed_log)                            | **Yes, simplified**          | Prevent duplicate inserts on re-run                                                                                                                     |
-| RLS-aware seeding                                 | **Yes**                      | RevBrain uses RLS via Supabase                                                                                                                          |
-| CLI with options                                  | **Yes**                      | Essential for developer experience                                                                                                                      |
-| 3-layer architecture (builders/seeders/scenarios) | **No — too complex for now** | RevBrain has fewer entity types and already has curated data. A single-layer seeder is sufficient. Builders and scenarios can be added later if needed. |
-| Faker-based random generation                     | **No — not needed yet**      | RevBrain's curated data is sufficient. Random generation adds complexity without clear benefit at this stage.                                           |
+**What RevBrain skips:** 3-layer architecture (too complex for 49 entities), Faker random generation, named scenarios, Supabase client for insertion (using Drizzle ORM instead).
 
 ---
 
-## 4. Proposed Solution for RevBrain
+## 4. Architecture
 
-### Design Philosophy
+### Structural decision: Seed data in a shared package
 
-**Simple, single-purpose, and reliable.** Unlike Procure's 3-layer factory, RevBrain needs a focused tool that does one thing well: take the existing curated mock data and insert it into a real database.
+**Problem identified by review:** The spec originally placed the seeder in `packages/database/` importing from `apps/server/src/mocks/`. This violates monorepo dependency rules — shared packages must not import from app packages.
 
-### Core Concept
-
-```
-SEED_* arrays (mocks/*.ts)
-        ↓ transform
-Drizzle insert values (schema-compatible)
-        ↓ insert
-PostgreSQL via Drizzle ORM
-        ↓ verify
-Console output with counts and credentials
-```
-
-The seeder reuses the **exact same data** that powers mock mode. No separate data to maintain. When mock data is updated, the seeder automatically uses the new data.
-
-### Architecture Decision: Drizzle ORM, Not Supabase Client
-
-Procure uses the Supabase client (`supabase.from('table').insert(...)`) for seeding. RevBrain should use **Drizzle ORM** (`db.insert(table).values(...)`) instead:
-
-| Approach                 | Pros                                                                                                    | Cons                                                              |
-| ------------------------ | ------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| **Supabase client**      | RLS-aware by default, matches runtime behavior                                                          | Requires RLS context management RPCs, different API from app code |
-| **Drizzle ORM** (chosen) | Same ORM as production code, type-safe schema, transaction support, no RLS bypass needed (service role) | Must bypass RLS via service role or disable temporarily           |
-
-**Why Drizzle:** RevBrain's production code uses Drizzle, not the Supabase client. Using the same ORM for seeding ensures the seed data matches the exact schema types. The seeder connects with the service role key (which bypasses RLS) — this is acceptable because seeding is an admin operation.
-
----
-
-## 5. Architecture Design
-
-### File Structure
+**Solution:** Extract seed data to a shared package consumed by both the mock system and the seeder:
 
 ```
+packages/seed-data/               # NEW: shared fixture data
+├── src/
+│   ├── plans.ts                   # Moved from apps/server/src/mocks/
+│   ├── organizations.ts
+│   ├── users.ts
+│   ├── projects.ts
+│   ├── audit-logs.ts
+│   ├── support-tickets.ts
+│   ├── coupons.ts
+│   ├── tenant-overrides.ts
+│   ├── constants.ts               # MOCK_IDS
+│   ├── helpers.ts                 # daysAgo, hoursAgo, cloneArray
+│   └── index.ts                   # Barrel exports
+│
+apps/server/src/mocks/
+├── index.ts                       # Imports from @revbrain/seed-data, creates mutable stores
+│
 packages/database/
 ├── src/
-│   ├── schema.ts          # Existing Drizzle schema
-│   ├── client.ts           # Existing DB connection
-│   ├── seed.ts             # NEW: Seed entry point
+│   ├── seed.ts                    # CLI entry point
 │   └── seeders/
-│       ├── index.ts         # Orchestrator
-│       ├── transform.ts     # Mock data → Drizzle insert values
-│       ├── seed-log.ts      # Idempotency tracking
-│       └── auth-users.ts    # Supabase Auth user creation
+│       ├── index.ts               # Orchestrator (imports from @revbrain/seed-data)
+│       ├── seed-log.ts            # Run tracking
+│       └── auth-users.ts          # Supabase Auth reconciliation
 ```
 
-### Key Components
+**Dependency flow:**
 
-**1. Transform Layer (`transform.ts`)**
-
-Maps mock data types (from `apps/server/src/mocks/`) to Drizzle insert types (from `packages/database/src/schema.ts`). Handles field name differences, type coercions, and any necessary transformations.
-
-```typescript
-// Example transform
-function transformUser(seedUser: SeedUser): NewUser {
-  return {
-    id: seedUser.id,
-    supabaseUserId: seedUser.supabaseUserId,
-    organizationId: seedUser.organizationId,
-    email: seedUser.email,
-    fullName: seedUser.fullName,
-    role: seedUser.role,
-    isOrgAdmin: seedUser.isOrgAdmin,
-    isActive: seedUser.isActive,
-    invitedBy: seedUser.invitedBy,
-    phoneNumber: seedUser.phoneNumber,
-    jobTitle: seedUser.jobTitle,
-    // ... map all fields
-    createdAt: seedUser.createdAt,
-  };
-}
+```
+packages/seed-data  ←  apps/server/src/mocks (mock stores)
+packages/seed-data  ←  packages/database/src/seeders (DB insertion)
 ```
 
-**2. Orchestrator (`index.ts`)**
+Both consumers import the same source data. No cross-layer coupling.
 
-Controls the seeding flow:
+### Transform layer: Likely unnecessary
 
-1. Check idempotency (has this seed already been applied?)
-2. Insert entities in dependency order
-3. Log results
-4. Mark seed as applied
+**Review feedback:** If mock types (from `@revbrain/contract`) align with Drizzle insert types (from `schema.ts`), a dedicated transform file is over-engineering.
 
-**3. Auth User Creation (`auth-users.ts`)**
+**Decision:** Inline any field mapping directly in the orchestrator. If fewer than 5 fields differ per entity, no separate transform module is needed. The Drizzle insert type (`typeof table.$inferInsert`) will enforce completeness at compile time — if a required column is missing from seed data, TypeScript catches it.
 
-Creates Supabase Auth users for the seed users so they can actually log in. Uses the Supabase Admin API (`supabase.auth.admin.createUser()`).
+### Schema drift protection
+
+Add a CI check: the seeder's TypeScript compilation is itself a schema compatibility test. If `schema.ts` adds a `NOT NULL` column without a default, and seed data doesn't provide it, the build fails. No separate compatibility check needed.
+
+---
+
+## 5. Phased Execution Model
+
+**Key insight from review:** DB writes and Supabase Auth calls cannot be in a single transaction. Auth is an external API call — it cannot be rolled back with a Postgres `ROLLBACK`. The seeder must handle partial failures across these boundaries.
+
+### Four phases
+
+```
+Phase 0: Preflight
+  ├── Validate target environment (DB host allowlist)
+  ├── Check schema compatibility (TypeScript compilation)
+  ├── Check prior seed runs
+  └── Display plan (entity counts, target DB)
+
+Phase 1: DB Seed (transactional)
+  ├── Insert/upsert all relational entities in FK order
+  ├── Record entity provenance
+  └── Mark run status: db_complete
+
+Phase 2: Auth Reconciliation (non-transactional, resumable)
+  ├── For each seed user: create or find Supabase Auth user
+  ├── Update DB user records with auth IDs
+  ├── Handle existing users gracefully
+  └── Mark run status: auth_complete
+
+Phase 3: Verification
+  ├── Count checks (each table matches expected)
+  ├── Auth login checks (each seed user can authenticate)
+  ├── RLS checks (cross-tenant isolation verified)
+  └── Mark run status: completed
+```
+
+### Partial failure handling
+
+| Phase 1 fails     | DB transaction rolls back. No cleanup needed. Run can be retried.                                                        |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| **Phase 2 fails** | DB is seeded. Auth is partially done. Run marked `partial_auth`. Re-run resumes auth reconciliation for remaining users. |
+| **Phase 3 fails** | DB + Auth complete. Verification issues logged as warnings. Run marked `completed_with_warnings`.                        |
+
+---
+
+## 6. Data Inventory
+
+49 entities across 8 types, all with deterministic IDs from `MOCK_IDS`:
+
+| Entity           | Count | FK Dependencies                                 |
+| ---------------- | ----- | ----------------------------------------------- |
+| Plans            | 3     | None                                            |
+| Organizations    | 2     | plans.id                                        |
+| Users            | 8     | organizations.id, users.id (self-ref invitedBy) |
+| Projects         | 4     | users.id, organizations.id                      |
+| Audit Logs       | 10    | users.id, organizations.id                      |
+| Support Tickets  | 6     | users.id, organizations.id                      |
+| Ticket Messages  | 10    | support_tickets.id                              |
+| Coupons          | 4     | None                                            |
+| Tenant Overrides | 2     | organizations.id, users.id                      |
+
+### Insertion order (FK-safe)
+
+1. plans → 2. organizations → 3. users (with `invitedBy: null`) → 4. users UPDATE (set invitedBy) → 5. projects → 6. audit_logs → 7. support_tickets → 8. ticket_messages → 9. coupons → 10. tenant_overrides
+
+### Self-referencing users
+
+Two-pass: insert all users with `invitedBy: null`, then update `invitedBy` for users who were invited by other seed users.
+
+---
+
+## 7. Auth User Reconciliation
+
+This is the hardest part of the seeder and requires explicit handling of every edge case.
+
+### Auth users to create
+
+| Email               | Role         | Org             | Auth Created?               |
+| ------------------- | ------------ | --------------- | --------------------------- |
+| `admin@revbrain.io` | system_admin | Platform        | Yes                         |
+| `david@acme.com`    | org_owner    | Acme Corp       | Yes                         |
+| `sarah@acme.com`    | admin        | Acme Corp       | Yes                         |
+| `mike@acme.com`     | operator     | Acme Corp       | Yes                         |
+| `amy@acme.com`      | reviewer     | Acme Corp       | Yes                         |
+| `lisa@beta-ind.com` | org_owner    | Beta Industries | Yes                         |
+| `tom@beta-ind.com`  | operator     | Beta Industries | Yes                         |
+| `pending@acme.com`  | operator     | Acme Corp       | **No** (pending invitation) |
+
+### Password handling
+
+Passwords are **not hardcoded in the spec or source code**. Instead:
 
 ```typescript
-async function createAuthUser(supabase: SupabaseClient, user: SeedUser, password: string) {
+const seedPassword = process.env.SEED_PASSWORD || 'RevBrain-Dev-2026!';
+```
+
+- **Local/staging:** Uses `SEED_PASSWORD` env var or a default (acceptable for dev)
+- **CI:** `SEED_PASSWORD` set from CI secrets
+- **Credentials displayed:** Only when `--show-credentials` flag is explicitly passed. Not printed by default except in local/development environment.
+
+### Edge case matrix
+
+| Scenario                                                  | Action                                                                                           |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Auth user **does not exist**                              | Create via `supabase.auth.admin.createUser()`                                                    |
+| Auth user **exists with same email**                      | Fetch existing user, map DB record to existing auth ID, optionally update metadata               |
+| Auth **creation succeeds** but DB update fails            | Log warning, continue. Auth user exists but DB mapping is missing. Next run will reconcile.      |
+| Auth creation **fails** (rate limit, API error)           | Log error, mark user as `auth_failed`, continue with remaining users. Run marked `partial_auth`. |
+| DB `supabaseUserId` **already set** and matches auth      | Skip (already reconciled)                                                                        |
+| DB `supabaseUserId` **already set** but auth user missing | Clear DB field, recreate auth user                                                               |
+
+### Implementation
+
+```typescript
+async function reconcileAuthUser(supabase, db, seedUser, password) {
+  // Skip pending/inactive users
+  if (!seedUser.isActive) return { status: 'skipped', reason: 'inactive' };
+
+  // Check if already reconciled
+  const dbUser = await db.query.users.findFirst({ where: eq(users.id, seedUser.id) });
+  if (dbUser?.supabaseUserId) {
+    // Verify auth user still exists
+    const { data } = await supabase.auth.admin.getUserById(dbUser.supabaseUserId);
+    if (data.user) return { status: 'already_reconciled' };
+    // Auth user gone — clear and recreate
+  }
+
+  // Check if auth user exists by email
+  const { data: existing } = await supabase.auth.admin.listUsers();
+  const existingAuth = existing.users.find((u) => u.email === seedUser.email);
+
+  if (existingAuth) {
+    // Map to existing auth user
+    await db
+      .update(users)
+      .set({ supabaseUserId: existingAuth.id })
+      .where(eq(users.id, seedUser.id));
+    return { status: 'mapped_existing', authId: existingAuth.id };
+  }
+
+  // Create new auth user
   const { data, error } = await supabase.auth.admin.createUser({
-    email: user.email,
+    email: seedUser.email,
     password,
     email_confirm: true,
     user_metadata: {
-      full_name: user.fullName,
-      role: user.role,
-      organization_id: user.organizationId,
+      full_name: seedUser.fullName,
+      role: seedUser.role,
+      organization_id: seedUser.organizationId,
     },
   });
-  // Update the database user record with the Supabase Auth ID
-  if (data.user) {
-    await db.update(users).set({ supabaseUserId: data.user.id }).where(eq(users.id, user.id));
-  }
+
+  if (error) return { status: 'auth_failed', error: error.message };
+
+  await db.update(users).set({ supabaseUserId: data.user.id }).where(eq(users.id, seedUser.id));
+  return { status: 'created', authId: data.user.id };
 }
 ```
 
-**4. Seed Log (`seed-log.ts`)**
+---
 
-Simple idempotency tracking:
+## 8. Idempotency & Upsert Semantics
+
+### Primary mechanism: Upsert, not insert-ignore
+
+**Review feedback:** `onConflictDoNothing()` silently skips updates, causing DB data to drift from seed source when mock data changes. For curated datasets, **upsert** is correct:
+
+```typescript
+await db
+  .insert(plans)
+  .values(seedPlans)
+  .onConflictDoUpdate({
+    target: plans.id,
+    set: {
+      name: sql`excluded.name`,
+      price: sql`excluded.price`,
+      limits: sql`excluded.limits`,
+      features: sql`excluded.features`,
+      // ... all mutable fields
+    },
+  });
+```
+
+This means: re-running `db:seed` always aligns the database with the current seed data source. If mock data changes, the next seed run updates existing rows.
+
+### Operational tracking: `_seed_runs` table
+
+A lightweight run log for operational visibility (not as a gate):
 
 ```sql
-CREATE TABLE IF NOT EXISTS _seed_log (
-  seed_id VARCHAR(100) PRIMARY KEY,
-  applied_at TIMESTAMPTZ DEFAULT NOW(),
+CREATE TABLE IF NOT EXISTS _seed_runs (
+  run_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  dataset_name TEXT NOT NULL,          -- 'curated'
+  status TEXT NOT NULL,                -- started, db_complete, auth_complete, completed, failed
+  started_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  completed_at TIMESTAMPTZ,
+  environment TEXT,
   entity_counts JSONB,
-  environment VARCHAR(50)
+  auth_results JSONB,
+  error_summary TEXT
 );
 ```
 
-Before seeding, check if `seed_id` exists. After seeding, record it. This allows `db:seed` to be run multiple times safely.
+This is **not a gate** — the seeder doesn't refuse to run because a prior run exists. It always upserts. The table provides operational auditability: when was the last seed? What was the status? How many entities?
 
 ---
 
-## 6. Data Inventory — What Gets Seeded
+## 9. Cleanup & Provenance
 
-The seeder inserts the **exact same entities** from the mock data files:
+### Provenance tracking
 
-| Entity Type          | Source File                 | Count   | Key Data                                                                               |
-| -------------------- | --------------------------- | ------- | -------------------------------------------------------------------------------------- |
-| **Plans**            | `mocks/plans.ts`            | 3       | Starter (free), Pro ($99/mo), Enterprise ($499/mo)                                     |
-| **Organizations**    | `mocks/organizations.ts`    | 2       | Acme Corp (Pro plan, 25 seats), Beta Industries (Starter, 5 seats)                     |
-| **Users**            | `mocks/users.ts`            | 8       | 1 system_admin, 5 Acme users (all roles), 2 Beta users, 1 pending                      |
-| **Projects**         | `mocks/projects.ts`         | 4       | Q1 Migration (active), Legacy Cleanup (active), RCA Pilot (completed), Phase 2 (draft) |
-| **Audit Logs**       | `mocks/audit-logs.ts`       | 10      | Onboarding, invitations, project creates/updates                                       |
-| **Support Tickets**  | `mocks/support-tickets.ts`  | 6       | Across all statuses/priorities                                                         |
-| **Ticket Messages**  | `mocks/support-tickets.ts`  | 10      | Admin replies, customer messages, internal notes                                       |
-| **Coupons**          | `mocks/coupons.ts`          | 4       | Active percent, expired fixed, scheduled, maxed-out                                    |
-| **Tenant Overrides** | `mocks/tenant-overrides.ts` | 2       | Active grant, expired grant                                                            |
-| **Total**            |                             | **~49** |                                                                                        |
+To safely identify seed data for cleanup, each seeded row is tracked:
 
-### Auth Users Created
-
-For each seed user, a corresponding Supabase Auth user is created with a default password so they can log in:
-
-| Email               | Role         | Org             | Default Password |
-| ------------------- | ------------ | --------------- | ---------------- |
-| `admin@revbrain.io` | system_admin | Platform        | `RevBrain2024!`  |
-| `david@acme.com`    | org_owner    | Acme Corp       | `RevBrain2024!`  |
-| `sarah@acme.com`    | admin        | Acme Corp       | `RevBrain2024!`  |
-| `mike@acme.com`     | operator     | Acme Corp       | `RevBrain2024!`  |
-| `amy@acme.com`      | reviewer     | Acme Corp       | `RevBrain2024!`  |
-| `lisa@beta-ind.com` | org_owner    | Beta Industries | `RevBrain2024!`  |
-| `tom@beta-ind.com`  | operator     | Beta Industries | `RevBrain2024!`  |
-| `pending@acme.com`  | operator     | Acme Corp       | (not activated)  |
-
-The seeder outputs these credentials after completion so the developer knows how to log in.
-
----
-
-## 7. Insertion Order & Foreign Key Dependencies
-
-Entities must be inserted in dependency order to satisfy foreign key constraints:
-
-```
-1. plans          ← no dependencies
-2. organizations  ← references plans.id (planId)
-3. users          ← references organizations.id, users.id (invitedBy)
-4. projects       ← references users.id (ownerId), organizations.id
-5. audit_logs     ← references users.id, organizations.id
-6. support_tickets ← references users.id, organizations.id
-7. ticket_messages ← references support_tickets.id
-8. coupons         ← no foreign keys (standalone)
-9. tenant_overrides ← references organizations.id, users.id (grantedBy)
+```sql
+CREATE TABLE IF NOT EXISTS _seed_entities (
+  dataset_name TEXT NOT NULL,
+  table_name TEXT NOT NULL,
+  entity_id UUID NOT NULL,
+  run_id UUID NOT NULL,
+  PRIMARY KEY (dataset_name, table_name, entity_id)
+);
 ```
 
-The seeder processes these in order within a single database transaction. If any step fails, the entire seed is rolled back.
-
-### Self-Referencing Users
-
-The `users` table has a self-referencing `invitedBy` column. The seeder handles this by:
-
-1. First inserting users with `invitedBy: null`
-2. Then updating the `invitedBy` field for users who were invited by other seed users
-
----
-
-## 8. Idempotency & Safety
-
-### Idempotency Strategy
-
-The seeder uses a `_seed_log` table to track which seed sets have been applied:
+After inserting each entity, record it in `_seed_entities`. Cleanup is then driven by provenance, not hardcoded ID lists:
 
 ```typescript
-// Before seeding
-const alreadyApplied = await isSeedApplied('revbrain-curated-v1');
-if (alreadyApplied && !options.force) {
-  console.log('Seed already applied. Use --force to re-apply or --cleanup to wipe first.');
-  return;
-}
+// Cleanup: delete all entities from dataset 'curated'
+const seededEntities = await db
+  .select()
+  .from(seedEntities)
+  .where(eq(seedEntities.datasetName, 'curated'))
+  .orderBy(/* reverse FK order */);
 
-// After seeding
-await markSeedApplied('revbrain-curated-v1', {
-  entityCounts: { plans: 3, orgs: 2, users: 8, ... },
-  environment: process.env.APP_ENV,
-});
-```
-
-### Conflict Resolution
-
-For individual entity inserts, use Drizzle's `onConflictDoNothing()`:
-
-```typescript
-await db.insert(plans).values(seedPlans).onConflictDoNothing({ target: plans.id });
-```
-
-This ensures re-running the seeder with the same IDs doesn't throw errors or duplicate data.
-
-### Cleanup Mode
-
-`--cleanup` flag wipes seed data before re-inserting:
-
-```typescript
-if (options.cleanup) {
-  // Delete in reverse dependency order
-  await db.delete(tenantOverrides).where(inArray(tenantOverrides.id, OVERRIDE_IDS));
-  await db.delete(ticketMessages).where(inArray(ticketMessages.ticketId, TICKET_IDS));
-  await db.delete(supportTickets).where(inArray(supportTickets.id, TICKET_IDS));
-  // ... etc
-  await db.delete(plans).where(inArray(plans.id, PLAN_IDS));
-
-  // Also remove auth users
-  for (const user of SEED_USERS) {
-    await supabase.auth.admin.deleteUser(user.supabaseUserId);
-  }
-
-  // Clear seed log
-  await db.delete(seedLog).where(eq(seedLog.seedId, 'revbrain-curated-v1'));
+for (const entity of seededEntities) {
+  await db
+    .delete(tableMap[entity.tableName])
+    .where(eq(tableMap[entity.tableName].id, entity.entityId));
 }
 ```
 
-### Production Safeguards
+**Benefits over hardcoded IDs:**
 
-The seeder **refuses to run** in production unless explicitly confirmed:
+- New seed entities are automatically tracked
+- No manual reverse-order delete lists to maintain
+- Cleanup is dataset-scoped (supports future `test` dataset alongside `curated`)
+
+### Cleanup safety
+
+- `--cleanup` shows row counts and requires `--yes` confirmation (or `--non-interactive` for CI)
+- Cleanup deletes in reverse FK order (overrides → messages → tickets → audit → projects → users → orgs → plans)
+- Auth user deletion: for each cleaned user, calls `supabase.auth.admin.deleteUser()`
+
+---
+
+## 10. Environment Safety
+
+### Database identity verification (not just env vars)
+
+**Review feedback:** `APP_ENV` alone is insufficient for a destructive tool. The seeder verifies the **actual database target**:
 
 ```typescript
-if (environment === 'production') {
-  if (!options.iKnowWhatImDoing) {
-    console.error('REFUSING to seed production. Use --i-know-what-im-doing to override.');
-    process.exit(1);
-  }
-  console.warn('⚠️  SEEDING PRODUCTION DATABASE. Press Ctrl+C within 5 seconds to abort...');
-  await sleep(5000);
+// Parse database host from connection string
+const dbHost = new URL(process.env.DATABASE_URL).hostname;
+
+// Known environment registry
+const KNOWN_TARGETS = {
+  localhost: { env: 'local', safe: true },
+  '127.0.0.1': { env: 'local', safe: true },
+  'db.*.supabase.co': { env: 'remote', safe: true }, // matches staging/dev projects
+};
+
+// Production detection
+const isProduction = dbHost.includes('prod') || process.env.APP_ENV === 'production';
+
+if (isProduction) {
+  console.error('ERROR: Refusing to seed a production database.');
+  console.error(`Database host: ${dbHost}`);
+  console.error('Production seeding is not supported. Use a staging project instead.');
+  process.exit(1);
+}
+
+if (!isKnownTarget(dbHost)) {
+  console.error(`WARNING: Unknown database host: ${dbHost}`);
+  console.error('Use --allow-unknown-target to proceed.');
+  process.exit(1);
 }
 ```
 
+### No production seeding
+
+**Decision (per review):** Remove `--env=production` entirely. The seeder does not support production databases. Period. If production bootstrapping is ever needed, it will be a separate, purpose-built script with its own safety model.
+
+### Preflight output
+
+Before any writes, the seeder displays:
+
+```
+🌱 RevBrain Database Seeder — Preflight
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Target:      db.abcdefgh.supabase.co (staging)
+Dataset:     curated (49 entities)
+Prior runs:  1 (last: 2026-03-19, status: completed)
+Action:      Upsert (update existing, insert new)
+
+Proceed? [y/N]
+```
+
+In CI (`--non-interactive`), the confirmation is skipped but the preflight info is still logged.
+
 ---
 
-## 9. RLS & Tenant Isolation
+## 11. RLS Verification Suite
 
-### Approach: Service Role Bypass
+Post-seed verification is a defined test suite, not a smoke test.
 
-The seeder connects using the `SUPABASE_SERVICE_ROLE_KEY`, which bypasses Row-Level Security policies. This is the standard approach for admin/seeder operations because:
+### Checks
 
-1. Seeding inserts data across multiple tenants (Acme and Beta) — RLS would prevent cross-tenant inserts
-2. The service role key is already used by the server for admin operations
-3. No RPC-based context switching needed (simpler than Procure's approach)
+| #   | Check                                          | Expected                         |
+| --- | ---------------------------------------------- | -------------------------------- |
+| 1   | Acme org_owner can read Acme org               | Yes                              |
+| 2   | Acme org_owner **cannot** read Beta org        | 403 or empty                     |
+| 3   | Acme org_owner can read Acme projects          | 4 projects                       |
+| 4   | Acme org_owner **cannot** read Beta projects   | 0 projects                       |
+| 5   | Beta org_owner can read Beta org               | Yes                              |
+| 6   | Beta org_owner **cannot** read Acme org        | 403 or empty                     |
+| 7   | system_admin can read all orgs                 | 2 orgs                           |
+| 8   | system_admin can read all users                | 8 users                          |
+| 9   | Pending user **cannot** authenticate           | Auth fails                       |
+| 10  | Support ticket messages inherit tenant scoping | Acme user sees only Acme tickets |
 
-### Post-Seed Verification
+### Implementation
 
-After seeding, the script runs a verification step that connects with the **anon key** (RLS-enforced) and verifies:
+The verification step authenticates as each seed user via `supabase.auth.signInWithPassword()` and runs scoped queries. Results are reported as pass/fail with details.
 
-1. Authenticating as `david@acme.com` (Acme org_owner) can see Acme projects but NOT Beta projects
-2. Authenticating as `lisa@beta-ind.com` (Beta org_owner) can see Beta data but NOT Acme data
+### When to run
 
-This confirms that RLS policies are correctly applied to the seeded data.
+- **Always** after a fresh seed (Phase 3)
+- **Standalone** via `pnpm db:seed --verify-only` (no seeding, just checks)
+- **In CI** as a post-seed validation step
 
 ---
 
-## 10. CLI Interface
-
-### Commands
+## 12. CLI Interface
 
 ```bash
-# Seed the database configured in .env.local (or DATABASE_URL)
-pnpm db:seed
-
-# Seed with cleanup (wipe existing seed data first)
-pnpm db:seed --cleanup
-
-# Seed staging environment
-pnpm db:seed --env=staging
-
-# Force re-seed even if already applied
-pnpm db:seed --force
-
-# Skip auth user creation (DB records only)
-pnpm db:seed --skip-auth
-
-# Dry run — show what would be inserted without inserting
-pnpm db:seed --dry-run
+pnpm db:seed                        # Seed (upsert) with interactive confirmation
+pnpm db:seed --cleanup --yes        # Wipe seed data and re-seed
+pnpm db:seed --skip-auth            # DB records only, no Supabase Auth
+pnpm db:seed --show-credentials     # Display login credentials after seeding
+pnpm db:seed --dry-run              # Show plan without executing
+pnpm db:seed --verify-only          # Run RLS verification without seeding
+pnpm db:seed --non-interactive      # CI mode, no prompts
 ```
 
-### Output
+**Removed:** `--env=production`, `--force`, `--i-know-what-im-doing`. Production seeding is not supported.
+
+### Output (default)
 
 ```
 🌱 RevBrain Database Seeder
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Environment: development
-Database:    postgresql://...@localhost:5432/revbrain
+Target: db.abcdefgh.supabase.co
 
-Step 1/9: Seeding plans...           ✓ 3 plans
-Step 2/9: Seeding organizations...   ✓ 2 organizations
-Step 3/9: Seeding users...           ✓ 8 users
-Step 4/9: Creating auth users...     ✓ 7 auth users (1 pending skipped)
-Step 5/9: Seeding projects...        ✓ 4 projects
-Step 6/9: Seeding audit logs...      ✓ 10 audit logs
-Step 7/9: Seeding support tickets... ✓ 6 tickets, 10 messages
-Step 8/9: Seeding coupons...         ✓ 4 coupons
-Step 9/9: Seeding overrides...       ✓ 2 overrides
+Phase 1: DB Seed
+  plans...            ✓ 3 (2 updated, 1 inserted)
+  organizations...    ✓ 2 (2 updated)
+  users...            ✓ 8 (8 updated)
+  projects...         ✓ 4
+  audit_logs...       ✓ 10
+  support_tickets...  ✓ 6 + 10 messages
+  coupons...          ✓ 4
+  overrides...        ✓ 2
+
+Phase 2: Auth Reconciliation
+  admin@revbrain.io   ✓ already_reconciled
+  david@acme.com      ✓ created
+  sarah@acme.com      ✓ created
+  mike@acme.com       ✓ mapped_existing
+  amy@acme.com        ✓ created
+  lisa@beta-ind.com   ✓ created
+  tom@beta-ind.com    ✓ created
+  pending@acme.com    ⊘ skipped (inactive)
+
+Phase 3: Verification
+  RLS checks...       ✓ 10/10 passed
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
-✅ Seed complete! 49 entities created.
-
-Login Credentials:
-┌─────────────────────┬──────────────┬────────────────┐
-│ Email               │ Role         │ Password       │
-├─────────────────────┼──────────────┼────────────────┤
-│ admin@revbrain.io   │ system_admin │ RevBrain2024!  │
-│ david@acme.com      │ org_owner    │ RevBrain2024!  │
-│ sarah@acme.com      │ admin        │ RevBrain2024!  │
-│ mike@acme.com       │ operator     │ RevBrain2024!  │
-│ amy@acme.com        │ reviewer     │ RevBrain2024!  │
-│ lisa@beta-ind.com   │ org_owner    │ RevBrain2024!  │
-│ tom@beta-ind.com    │ operator     │ RevBrain2024!  │
-└─────────────────────┴──────────────┴────────────────┘
+✅ Seed complete. 49 entities, 6 auth users.
+   Use --show-credentials to display login info.
 ```
 
 ---
 
-## 11. Environment Strategy
+## 13. Error Handling Matrix
 
-| Environment         | Seeded By                        | Auth Users                   | Production Guard                             | Cleanup Allowed        |
-| ------------------- | -------------------------------- | ---------------------------- | -------------------------------------------- | ---------------------- |
-| **Local (real DB)** | Developer manually               | Yes (default password)       | No                                           | Yes                    |
-| **Staging**         | CI/CD or manual                  | Yes (default password)       | No                                           | Yes                    |
-| **Demo**            | Pre-deployment script            | Yes (demo-specific password) | No                                           | Yes                    |
-| **Production**      | Never (unless explicit override) | No                           | `--i-know-what-im-doing` required + 5s delay | Only via explicit flag |
-| **CI/CD**           | Test setup fixture               | Yes (test password)          | No                                           | Always (fresh per run) |
+| Phase         | Failure                                  | State After                              | Recovery                                            |
+| ------------- | ---------------------------------------- | ---------------------------------------- | --------------------------------------------------- |
+| 0 (Preflight) | Unknown DB host                          | No changes                               | Fix DATABASE_URL or use --allow-unknown-target      |
+| 0 (Preflight) | Schema incompatible                      | No changes                               | Update seed data to match schema                    |
+| 1 (DB Seed)   | Insert fails (constraint violation)      | Transaction rolled back, no changes      | Fix seed data, re-run                               |
+| 1 (DB Seed)   | Connection lost mid-transaction          | Transaction rolled back                  | Re-run                                              |
+| 2 (Auth)      | Supabase Auth API error for one user     | DB seeded, some auth users created       | Re-run (reconciliation skips already-created users) |
+| 2 (Auth)      | Supabase Auth API down                   | DB seeded, no auth users                 | Re-run later (Phase 2 is resumable)                 |
+| 2 (Auth)      | Auth user exists with different password | Mapped to existing (password unchanged)  | Use `--reset-passwords` if password sync needed     |
+| 3 (Verify)    | RLS check fails                          | DB + Auth complete, verification warning | Investigate RLS policies                            |
+| Cleanup       | FK constraint prevents delete            | Partial cleanup                          | Run again (provenance-driven cleanup retries)       |
 
-### Environment Detection
+### Concurrency
 
-```typescript
-const env = process.env.APP_ENV || process.env.NODE_ENV || 'development';
-```
-
-The seeder loads environment variables from the appropriate `.env` file:
-
-- `.env.local` for local development
-- `.env.dev` for staging
-- `.env.prod` for production (with safeguards)
+Two developers seeding the same staging DB simultaneously: safe because upserts are idempotent. The `_seed_runs` table may show two concurrent runs, but the final state is the same regardless of execution order.
 
 ---
 
-## 12. Implementation Plan
+## 14. Implementation Plan
 
-### Tasks
+| #   | Task                                                                                                             | Effort | Dependencies        |
+| --- | ---------------------------------------------------------------------------------------------------------------- | ------ | ------------------- |
+| S.0 | Extract seed data to `packages/seed-data/` — move files, update imports in `apps/server/src/mocks/`              | 2-3h   | None                |
+| S.1 | Create `packages/database/src/seeders/index.ts` — orchestrator with phased execution, upsert logic, FK ordering  | 3-4h   | S.0                 |
+| S.2 | Create `packages/database/src/seeders/seed-log.ts` — `_seed_runs` + `_seed_entities` table creation and tracking | 1-2h   | None                |
+| S.3 | Create `packages/database/src/seeders/auth-users.ts` — full reconciliation with edge case handling               | 3-4h   | Supabase connection |
+| S.4 | Create `packages/database/src/seed.ts` — CLI entry point with arg parsing, preflight, environment safety         | 2h     | S.1                 |
+| S.5 | Add `db:seed` script to root `package.json`                                                                      | 5m     | S.4                 |
+| S.6 | RLS verification suite                                                                                           | 2-3h   | S.1, Supabase       |
+| S.7 | Integration test: seed → verify → cleanup → re-seed                                                              | 2-3h   | S.1, S.3            |
 
-| #   | Task                                                                                         | Effort | Dependencies        |
-| --- | -------------------------------------------------------------------------------------------- | ------ | ------------------- |
-| S.1 | Create `packages/database/src/seeders/transform.ts` — map mock types to Drizzle insert types | 2-3h   | None                |
-| S.2 | Create `packages/database/src/seeders/seed-log.ts` — idempotency tracking                    | 1h     | None                |
-| S.3 | Create `packages/database/src/seeders/auth-users.ts` — Supabase Auth user creation           | 2h     | Supabase connection |
-| S.4 | Create `packages/database/src/seeders/index.ts` — orchestrator with dependency ordering      | 2-3h   | S.1, S.2            |
-| S.5 | Create `packages/database/src/seed.ts` — CLI entry point with argument parsing               | 1-2h   | S.4                 |
-| S.6 | Add `db:seed` script to `package.json`                                                       | 5m     | S.5                 |
-| S.7 | Post-seed RLS verification                                                                   | 1h     | S.4, Supabase       |
-| S.8 | Integration test: seed → verify → cleanup → re-seed                                          | 2h     | S.4                 |
-
-**Total effort:** ~1.5–2 days
+**Total effort:** 3-4 days (revised from 1.5-2 days per review feedback)
 
 ### Verification
 
-- **Integration test:** Seed, query each table to verify counts match, cleanup, re-seed — all pass
-- **Auth test:** Log in as each seed user via Supabase Auth — all succeed
-- **RLS test:** Query as Acme user, verify zero Beta data visible
-- **Idempotency test:** Run `db:seed` twice — second run skips without error
+- Full seed creates expected counts per table
+- Cleanup removes all seeded entities (provenance-driven)
+- Re-seed after cleanup produces same counts
+- Upsert: modify mock data, re-seed, verify DB reflects changes
+- Auth users can authenticate after seeding
+- RLS suite: 10 checks pass
+- Concurrent seed runs produce consistent state
+- Schema drift: add NOT NULL column without seed data → TypeScript compile error
 
 ---
 
-## 13. Testing Strategy
+## Appendix: Auditor Feedback Triage
 
-### Unit Tests
+| Feedback                                | Source    | Action                                                                                                           |
+| --------------------------------------- | --------- | ---------------------------------------------------------------------------------------------------------------- |
+| Cross-package dependency inversion      | Both      | **Fixed** — seed data extracted to `packages/seed-data/`                                                         |
+| Auth edge cases under-specified         | Both      | **Fixed** — full edge case matrix + reconciliation code                                                          |
+| Production safeguard is weak            | Both      | **Fixed** — production seeding removed entirely                                                                  |
+| Hardcoded passwords                     | Both      | **Fixed** — env var with fallback, `--show-credentials` opt-in                                                   |
+| Transaction claim incorrect with Auth   | Auditor 1 | **Fixed** — phased execution model with explicit boundaries                                                      |
+| `onConflictDoNothing` hides drift       | Auditor 1 | **Fixed** — upsert semantics for curated data                                                                    |
+| Cleanup needs provenance                | Auditor 1 | **Fixed** — `_seed_entities` table                                                                               |
+| Environment targeting needs DB identity | Auditor 1 | **Fixed** — database host verification                                                                           |
+| RLS verification too thin               | Auditor 1 | **Fixed** — 10-check verification suite                                                                          |
+| Transform layer may be unnecessary      | Auditor 2 | **Accepted** — inlined, no separate transform module                                                             |
+| `_seed_log` over-engineering            | Auditor 2 | **Partially accepted** — simplified to `_seed_runs` (operational tracking, not a gate)                           |
+| Effort estimate optimistic              | Auditor 2 | **Accepted** — revised to 3-4 days                                                                               |
+| Entity count inconsistency              | Both      | **Fixed** — consistently 49 entities throughout                                                                  |
+| Missing error handling matrix           | Auditor 2 | **Fixed** — Section 13                                                                                           |
+| Missing concurrency handling            | Auditor 2 | **Fixed** — upserts are inherently concurrent-safe                                                               |
+| Seed versioning unclear                 | Auditor 1 | **Deferred** — upsert semantics make versioning less critical. `_seed_runs` tracks when data was applied.        |
+| Multiple seed modes (curated vs test)   | Auditor 1 | **Deferred** — single curated mode sufficient for now. `dataset_name` in tracking tables supports future modes.  |
+| Seed data manifest/hash                 | Auditor 1 | **Deferred** — adds complexity without clear near-term value. Can add when dataset versioning becomes important. |
 
-```
-transform.test.ts:
-  - transformPlan() maps all fields correctly
-  - transformUser() handles null invitedBy
-  - transformProject() maps status enum values
-  - All MOCK_IDS are preserved through transformation
-```
+### Comparison with Procure
 
-### Integration Tests
-
-```
-seed.integration.test.ts:
-  - Full seed creates expected entity counts
-  - Cleanup removes all seeded entities
-  - Re-seed after cleanup produces same counts
-  - Idempotency: second seed without cleanup is a no-op
-  - Auth users can authenticate after seeding
-  - RLS: org_owner sees own org data only
-  - Foreign key relationships are intact (project.ownerId → user.id)
-  - Conflict handling: partial seed + re-run doesn't duplicate
-```
-
-### CI Considerations
-
-For CI pipelines that test against a real database:
-
-1. Seed data as test setup fixture
-2. Run E2E tests against seeded database
-3. Cleanup as test teardown
-4. Each CI run gets a fresh seed (no reliance on previous state)
-
----
-
-## Appendix: Comparison with Procure
-
-| Aspect                | Procure                                                                                            | RevBrain (Proposed)                                                   |
-| --------------------- | -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| **Architecture**      | 3-layer (Builders → Seeders → Scenarios)                                                           | Single-layer (Transform + Orchestrate)                                |
-| **Curated data**      | ~5,800 lines across 11 files                                                                       | ~1,100 lines across 8 files                                           |
-| **Entity types**      | Tenants, users, suppliers, POs, agents, signals, shipments, playbooks, emails, invoices, contracts | Plans, orgs, users, projects, audit logs, tickets, coupons, overrides |
-| **DB client**         | Supabase client (`supabase.from().insert()`)                                                       | Drizzle ORM (`db.insert().values()`)                                  |
-| **RLS handling**      | `setTenantContext()` RPC                                                                           | Service role bypass                                                   |
-| **Deterministic IDs** | UUID v5 via `deterministicUUID()`                                                                  | Pre-defined constants (`MOCK_IDS`)                                    |
-| **Idempotency**       | `seed_log` table                                                                                   | `_seed_log` table (same concept)                                      |
-| **Random data**       | Faker.js with seeded randomness                                                                    | Not needed (curated only)                                             |
-| **Scenarios**         | 9 named business scenarios                                                                         | Not needed (single curated scenario)                                  |
-| **CLI**               | `--curated`, `--random`, `--cleanup`                                                               | `--cleanup`, `--force`, `--skip-auth`, `--dry-run`                    |
-| **Auth integration**  | Manual auth user scripts                                                                           | Integrated `supabase.auth.admin.createUser()`                         |
-| **Complexity**        | ~3,000 lines of seeder code                                                                        | ~500 lines (estimated)                                                |
-
-### Why RevBrain's Approach Is Simpler
-
-1. **RevBrain has fewer entity types** (8 vs. 11+) and fewer relationships
-2. **The curated data already exists** in mock files — no builders needed
-3. **Drizzle ORM provides type safety** for inserts — no manual schema mapping
-4. **Single scenario is sufficient** — Acme Corp + Beta Industries covers all role/plan combinations
-5. **Auth user creation is integrated** — Procure had it as a separate manual step
-
-### What RevBrain Can Add Later (If Needed)
-
-- **Builders:** Pure functions for generating random entities (useful for load testing)
-- **Scenarios:** Named configurations for specific test cases (e.g., `tenantAtSeatLimit`)
-- **Scaling:** Generate hundreds/thousands of entities for performance testing
-- **Data Factory package:** Extract to `packages/data-factory/` if complexity grows
-
-These are not needed for MVP. The curated seeder provides the immediate value.
+| Aspect       | Procure                                  | RevBrain                                              |
+| ------------ | ---------------------------------------- | ----------------------------------------------------- |
+| Architecture | 3-layer (Builders → Seeders → Scenarios) | Single-layer (Orchestrate + Upsert)                   |
+| Data source  | `packages/data-factory/src/mocks/`       | `packages/seed-data/` (new shared package)            |
+| DB client    | Supabase client                          | Drizzle ORM                                           |
+| Idempotency  | `seed_log` + `onConflictDoNothing`       | `_seed_runs` tracking + `onConflictDoUpdate` (upsert) |
+| Auth         | Separate manual scripts                  | Integrated reconciliation with edge case handling     |
+| RLS          | `setTenantContext()` RPC                 | Service role bypass + post-seed RLS verification      |
+| Cleanup      | Hardcoded ID lists                       | Provenance-driven via `_seed_entities`                |
+| Production   | Allowed with flag                        | **Not supported** (removed entirely)                  |
+| Complexity   | ~3,000 lines                             | ~600 lines (estimated)                                |
