@@ -5,98 +5,79 @@
 
 ---
 
-## Phase 1: Extract Seed Data Package (no Supabase needed)
+## Phase 1: Extract Seed Data Package — COMPLETE
 
-| Task | Description                                                                     | Spec Section     | Status  | Commit |
-| ---- | ------------------------------------------------------------------------------- | ---------------- | ------- | ------ |
-| S.0a | Create `packages/seed-data/` package with tsconfig, package.json                | §4 Architecture  | Pending | —      |
-| S.0b | Move seed data files from `apps/server/src/mocks/` to `packages/seed-data/src/` | §4 Architecture  | Pending | —      |
-| S.0c | Update `apps/server/src/mocks/index.ts` to import from `@revbrain/seed-data`    | §4 Architecture  | Pending | —      |
-| S.0d | Update `apps/client/src/lib/mock-ids.ts` to import from `@revbrain/seed-data`   | §4 Architecture  | Pending | —      |
-| S.0e | Verify all existing tests pass with new package structure                       | §4 Architecture  | Pending | —      |
-| S.0f | Add referential integrity test for seed data (FK references valid)              | §14 Verification | Pending | —      |
+| Task | Description                                                           | Spec Section     | Status   | Commit    |
+| ---- | --------------------------------------------------------------------- | ---------------- | -------- | --------- |
+| S.0a | Create `packages/seed-data/` package (tsconfig, package.json, vitest) | §4 Architecture  | **Done** | `eb9d7d2` |
+| S.0b | Move seed data files to `packages/seed-data/src/`                     | §4 Architecture  | **Done** | `eb9d7d2` |
+| S.0c | Server mocks re-export from `@revbrain/seed-data`                     | §4 Architecture  | **Done** | `eb9d7d2` |
+| S.0d | Client mock-ids re-exports from `@revbrain/seed-data`                 | §4 Architecture  | **Done** | `eb9d7d2` |
+| S.0e | All 741 existing tests pass (29 seed-data + 553 server + 159 client)  | §4 Architecture  | **Done** | `eb9d7d2` |
+| S.0f | Referential integrity test (14 FK checks + 4 business rules)          | §14 Verification | **Done** | `eb9d7d2` |
 
-## Phase 2: Seeder Core (needs DATABASE_URL)
+**Test coverage added:** 29 tests in `packages/seed-data/src/seed-data.test.ts`:
 
-| Task | Description                                                            | Spec Section                           | Status  | Commit |
-| ---- | ---------------------------------------------------------------------- | -------------------------------------- | ------- | ------ |
-| S.1a | Create `_seed_runs` table creation logic + seed-log.ts                 | §8 Idempotency                         | Pending | —      |
-| S.1b | Create per-entity mapping functions (toPlanInsert, toUserInsert, etc.) | §4 Transform                           | Pending | —      |
-| S.1c | Create orchestrator with phased execution + FK-ordered upserts         | §5 Phased Execution, §6 Data Inventory | Pending | —      |
-| S.1d | Create preflight checks (DB host verification, environment safety)     | §10 Environment Safety                 | Pending | —      |
-| S.1e | Create CLI entry point with arg parsing                                | §12 CLI Interface                      | Pending | —      |
-| S.1f | Add `db:seed` script to package.json                                   | §12 CLI                                | Pending | —      |
-| S.1g | Integration test: seed → verify counts → cleanup → re-seed             | §14 Verification                       | Pending | —      |
-
-## Phase 3: Auth Reconciliation (needs SUPABASE_SERVICE_ROLE_KEY)
-
-| Task | Description                                                 | Spec Section           | Status  | Commit |
-| ---- | ----------------------------------------------------------- | ---------------------- | ------- | ------ |
-| S.2a | Create auth-users.ts with full reconciliation logic         | §7 Auth Reconciliation | Pending | —      |
-| S.2b | Wire auth reconciliation into orchestrator Phase 2          | §5 Phased Execution    | Pending | —      |
-| S.2c | Handle cleanup auth ID caching (read before delete)         | §9 Cleanup             | Pending | —      |
-| S.2d | Integration test: auth create → login → cleanup → re-create | §14 Verification       | Pending | —      |
-
-## Phase 4: RLS Verification (needs Supabase Auth working)
-
-| Task | Description                                         | Spec Section         | Status  | Commit |
-| ---- | --------------------------------------------------- | -------------------- | ------- | ------ |
-| S.3a | Create RLS verification suite (10 checks from spec) | §11 RLS Verification | Pending | —      |
-| S.3b | Wire verification into orchestrator Phase 3         | §5 Phased Execution  | Pending | —      |
-| S.3c | Add `--verify-only` CLI flag                        | §12 CLI              | Pending | —      |
+- 3 MOCK_IDS tests (categories, UUID format, uniqueness)
+- 9 entity count tests
+- 13 referential integrity tests (all FK references valid)
+- 4 business rule tests (all roles covered, all statuses, pending users, messages)
 
 ---
 
-## Spec Coverage Matrix
+## Phase 2: Seeder Core — BLOCKED (needs DATABASE_URL)
 
-| Spec Section                            | Tasks Covering It             | Status                      |
-| --------------------------------------- | ----------------------------- | --------------------------- |
-| §1 Why This Matters                     | N/A (motivation)              | Covered by implementation   |
-| §2 Current State                        | N/A (analysis)                | Covered by implementation   |
-| §3 Procure Reference                    | N/A (context)                 | Covered by design decisions |
-| §4 Architecture (shared package)        | S.0a-S.0e                     | **Pending**                 |
-| §4 Architecture (transform decision)    | S.1b                          | **Pending**                 |
-| §4 Architecture (schema drift)          | S.0f, S.1b (TypeScript types) | **Pending**                 |
-| §5 Phased Execution (Phase 0 preflight) | S.1d                          | **Pending**                 |
-| §5 Phased Execution (Phase 1 DB seed)   | S.1c                          | **Pending**                 |
-| §5 Phased Execution (Phase 2 auth)      | S.2a, S.2b                    | **Pending**                 |
-| §5 Phased Execution (Phase 3 verify)    | S.3a, S.3b                    | **Pending**                 |
-| §5 Partial failure handling             | S.1c, S.2b                    | **Pending**                 |
-| §6 Data Inventory (49 entities)         | S.1c                          | **Pending**                 |
-| §6 Insertion order (FK-safe)            | S.1c                          | **Pending**                 |
-| §6 Self-referencing users               | S.1c                          | **Pending**                 |
-| §7 Auth users to create                 | S.2a                          | **Pending**                 |
-| §7 Password handling (env var)          | S.2a                          | **Pending**                 |
-| §7 Edge case matrix (6 scenarios)       | S.2a                          | **Pending**                 |
-| §8 Upsert semantics                     | S.1c                          | **Pending**                 |
-| §8 `_seed_runs` table                   | S.1a                          | **Pending**                 |
-| §9 Cleanup (deterministic IDs)          | S.1c                          | **Pending**                 |
-| §9 Cleanup safety (confirmation)        | S.1e                          | **Pending**                 |
-| §9 Auth cleanup (cache IDs first)       | S.2c                          | **Pending**                 |
-| §10 DB host verification                | S.1d                          | **Pending**                 |
-| §10 No production seeding               | S.1d                          | **Pending**                 |
-| §10 Preflight output                    | S.1d                          | **Pending**                 |
-| §11 RLS checks (10 defined)             | S.3a                          | **Pending**                 |
-| §11 When to run                         | S.3c                          | **Pending**                 |
-| §12 CLI commands                        | S.1e                          | **Pending**                 |
-| §12 CLI output format                   | S.1e                          | **Pending**                 |
-| §13 Error handling matrix               | S.1c, S.2a, S.3a              | **Pending**                 |
-| §13 Concurrency (advisory lock)         | S.1c                          | **Pending**                 |
-| §14 Implementation plan                 | This document                 | In progress                 |
+| Task | Description                                                 | Spec Section   | Status      | Commit |
+| ---- | ----------------------------------------------------------- | -------------- | ----------- | ------ |
+| S.1a | Create `_seed_runs` table creation logic + seed-log.ts      | §8 Idempotency | **Blocked** | —      |
+| S.1b | Per-entity mapping functions (toPlanInsert, etc.)           | §4 Transform   | **Blocked** | —      |
+| S.1c | Orchestrator with phased execution + FK-ordered upserts     | §5, §6         | **Blocked** | —      |
+| S.1d | Preflight checks (DB host verification, environment safety) | §10            | **Blocked** | —      |
+| S.1e | CLI entry point with arg parsing                            | §12            | **Blocked** | —      |
+| S.1f | Add `db:seed` script to package.json                        | §12            | **Blocked** | —      |
+| S.1g | Integration test: seed → verify → cleanup → re-seed         | §14            | **Blocked** | —      |
+
+## Phase 3: Auth Reconciliation — BLOCKED (needs SUPABASE_SERVICE_ROLE_KEY)
+
+| Task | Description                                       | Spec Section | Status      | Commit |
+| ---- | ------------------------------------------------- | ------------ | ----------- | ------ |
+| S.2a | Auth reconciliation logic with edge case handling | §7           | **Blocked** | —      |
+| S.2b | Wire auth into orchestrator Phase 2               | §5           | **Blocked** | —      |
+| S.2c | Cleanup auth ID caching (read before delete)      | §9           | **Blocked** | —      |
+| S.2d | Integration test: auth lifecycle                  | §14          | **Blocked** | —      |
+
+## Phase 4: RLS Verification — BLOCKED (needs Supabase Auth)
+
+| Task | Description                         | Spec Section | Status      | Commit |
+| ---- | ----------------------------------- | ------------ | ----------- | ------ |
+| S.3a | RLS verification suite (10 checks)  | §11          | **Blocked** | —      |
+| S.3b | Wire verification into orchestrator | §5           | **Blocked** | —      |
+| S.3c | `--verify-only` CLI flag            | §12          | **Blocked** | —      |
 
 ---
 
-## Auditor Implementation Notes (from reviews)
+## Spec Coverage
 
-Applied during implementation:
+| Spec Section                     | Status                                                          |
+| -------------------------------- | --------------------------------------------------------------- |
+| §4 Architecture (shared package) | **Done** — `packages/seed-data/`                                |
+| §4 Architecture (schema drift)   | **Done** — TypeScript compilation + referential integrity tests |
+| §4 Transform (mapping functions) | **Blocked** — needs schema types                                |
+| §5-§14 (all other sections)      | **Blocked** — needs DATABASE_URL                                |
 
-- [x] Lightweight per-entity mapping functions (not full transform layer)
-- [ ] Drop `_seed_entities` provenance — use deterministic ID constants for cleanup
-- [ ] Cache auth IDs before cleanup deletes
-- [ ] Guard Phase 3 against Phase 2 failures
-- [ ] Use email filter on `listUsers()` not full scan
-- [ ] Type assertion: `const values: (typeof table.$inferInsert)[] = data`
-- [ ] Advisory lock for concurrency (`pg_advisory_lock`)
-- [ ] Derive RLS expected counts from seed data, not hardcoded
-- [ ] Add `--reset-passwords` to CLI or remove from error matrix
-- [ ] Add timeout on auth API calls
+**Phase 1 complete: 6/17 tasks done. Remaining 11 tasks blocked on Supabase.**
+
+---
+
+## Auditor Notes Applied
+
+- [x] Shared package for seed data (no cross-layer coupling)
+- [x] Referential integrity tests for all FK references
+- [x] Business rule validation (roles, statuses, messages)
+- [x] Single source of truth (client + server import same package)
+- [ ] Per-entity mapping functions (Phase 2)
+- [ ] Upsert semantics (Phase 2)
+- [ ] Advisory lock for concurrency (Phase 2)
+- [ ] Auth edge case handling (Phase 3)
+- [ ] Auth ID caching before cleanup (Phase 3)
+- [ ] RLS verification derived from seed data counts (Phase 4)
