@@ -2,6 +2,7 @@
  * Mock Data Central Export
  *
  * Mutable stores initialized from immutable seed data.
+ * Seed data sourced from @revbrain/seed-data (shared package).
  * resetAllMockData() restores everything to initial state.
  */
 import type {
@@ -11,36 +12,43 @@ import type {
   AuditLogEntity,
   ProjectEntity,
 } from '@revbrain/contract';
-import { cloneArray } from './helpers.ts';
-import { SEED_PLANS } from './plans.ts';
-import { SEED_ORGANIZATIONS } from './organizations.ts';
-import { SEED_USERS } from './users.ts';
-import { SEED_PROJECTS } from './projects.ts';
-import { SEED_AUDIT_LOGS } from './audit-logs.ts';
 import {
+  MOCK_IDS,
+  cloneArray,
+  SEED_PLANS,
+  SEED_ORGANIZATIONS,
+  SEED_USERS,
+  SEED_PROJECTS,
+  SEED_AUDIT_LOGS,
   SEED_TICKETS,
   SEED_TICKET_MESSAGES,
+  SEED_COUPONS,
+  SEED_TENANT_OVERRIDES,
   type SeedTicket,
   type SeedTicketMessage,
-} from './support-tickets.ts';
-import { SEED_COUPONS, type SeedCoupon } from './coupons.ts';
-import { SEED_TENANT_OVERRIDES, type SeedTenantOverride } from './tenant-overrides.ts';
+  type SeedCoupon,
+  type SeedTenantOverride,
+} from '@revbrain/seed-data';
 
-// Re-export constants and seeds for direct access
-export { MOCK_IDS } from './constants.ts';
-export { SEED_PLANS } from './plans.ts';
-export { SEED_ORGANIZATIONS } from './organizations.ts';
-export { SEED_USERS } from './users.ts';
-export { SEED_PROJECTS } from './projects.ts';
-export { SEED_AUDIT_LOGS } from './audit-logs.ts';
-export { SEED_TICKETS, SEED_TICKET_MESSAGES } from './support-tickets.ts';
-export { SEED_COUPONS } from './coupons.ts';
-export { SEED_TENANT_OVERRIDES } from './tenant-overrides.ts';
-
-// Re-export types for repository use
-export type { SeedTicket, SeedTicketMessage } from './support-tickets.ts';
-export type { SeedCoupon } from './coupons.ts';
-export type { SeedTenantOverride } from './tenant-overrides.ts';
+// Re-export everything from seed-data for backward compatibility
+export { MOCK_IDS } from '@revbrain/seed-data';
+export {
+  SEED_PLANS,
+  SEED_ORGANIZATIONS,
+  SEED_USERS,
+  SEED_PROJECTS,
+  SEED_AUDIT_LOGS,
+  SEED_TICKETS,
+  SEED_TICKET_MESSAGES,
+  SEED_COUPONS,
+  SEED_TENANT_OVERRIDES,
+} from '@revbrain/seed-data';
+export type {
+  SeedTicket,
+  SeedTicketMessage,
+  SeedCoupon,
+  SeedTenantOverride,
+} from '@revbrain/seed-data';
 
 // Mutable stores — these are what mock repositories read/write
 export let mockPlans: PlanEntity[] = cloneArray(SEED_PLANS);

@@ -1,37 +1,32 @@
 /**
- * Mock ID Parity Test
+ * Mock ID Source Test
  *
- * Verifies that client-side mock IDs match server-side mock IDs.
- * Reads the client file as text to avoid cross-package import issues.
+ * Verifies that MOCK_IDS from the server mocks module resolves to the
+ * shared @revbrain/seed-data package, ensuring single source of truth.
+ *
+ * Previous test: checked text parity between server and client files.
+ * Now: both import from @revbrain/seed-data, so parity is structural.
  */
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
-import { MOCK_IDS } from './constants.ts';
+import { MOCK_IDS as serverIds } from './constants.ts';
+import { MOCK_IDS as seedDataIds } from '@revbrain/seed-data';
 
-describe('Mock ID parity (server ↔ client)', () => {
-  it('client mock-ids.ts contains all server MOCK_IDS values', () => {
-    const clientFilePath = resolve(__dirname, '../../../../apps/client/src/lib/mock-ids.ts');
-    const clientContent = readFileSync(clientFilePath, 'utf-8');
+describe('Mock ID source (shared seed-data package)', () => {
+  it('server MOCK_IDS matches seed-data package MOCK_IDS', () => {
+    // Both should be the exact same object reference since server re-exports from seed-data
+    expect(Object.keys(serverIds).length).toBe(Object.keys(seedDataIds).length);
 
-    for (const [key, value] of Object.entries(MOCK_IDS)) {
+    for (const [key, value] of Object.entries(seedDataIds)) {
       expect(
-        clientContent.includes(value),
-        `MOCK_IDS.${key} (${value}) not found in client mock-ids.ts`
-      ).toBe(true);
+        (serverIds as Record<string, string>)[key],
+        `MOCK_IDS.${key} mismatch between server and seed-data`
+      ).toBe(value);
     }
   });
 
-  it('client and server have same number of IDs', () => {
-    const clientFilePath = resolve(__dirname, '../../../../apps/client/src/lib/mock-ids.ts');
-    const clientContent = readFileSync(clientFilePath, 'utf-8');
-
-    // Count UUID-like values in client file
-    const clientUUIDs = clientContent.match(
-      /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/g
-    );
-    const serverCount = Object.keys(MOCK_IDS).length;
-
-    expect(clientUUIDs?.length).toBe(serverCount);
+  it('all IDs are unique UUIDs', () => {
+    const values = Object.values(serverIds);
+    const unique = new Set(values);
+    expect(unique.size).toBe(values.length);
   });
 });

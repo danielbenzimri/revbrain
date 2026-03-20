@@ -20,6 +20,7 @@
   "dependencies": {
     "@revbrain/contract": "workspace:*",
     "@revbrain/database": "workspace:*",
+    "@revbrain/seed-data": "workspace:*",
     "@hono/node-server": "^1.19.9",
     "@hono/zod-openapi": "^1.2.1",
     "@hono/zod-validator": "^0.7.6",
