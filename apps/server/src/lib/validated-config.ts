@@ -52,7 +52,7 @@ const envSchema = z.object({
   emailFrom: z
     .string()
     .email()
-    .default('noreply@revbrain.com')
+    .default('noreply@revbrain.ai')
     .describe('Default sender email address'),
 
   // URLs
@@ -245,7 +245,7 @@ export function validateConfig(): ValidatedConfig {
     email: {
       adapter: env.emailAdapter || 'console',
       resendApiKey: env.resendApiKey,
-      from: env.emailFrom || 'noreply@revbrain.com',
+      from: env.emailFrom || 'noreply@revbrain.ai',
       isConfigured: env.emailAdapter === 'resend' && !!env.resendApiKey,
     },
 

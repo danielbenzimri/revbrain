@@ -49,7 +49,7 @@ describe('Service Layer Verification (Matrix Test)', () => {
     });
 
     it('should persist session', async () => {
-      await authAdapter.login('admin@revbrain.com');
+      await authAdapter.login('admin@revbrain.ai');
       const session = await authAdapter.getSession();
       expect(session).not.toBeNull();
     });

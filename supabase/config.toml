@@ -45,12 +45,12 @@ site_url = "http://localhost:5173"
 additional_redirect_urls = [
   "http://localhost:5173/set-password",
   "http://localhost:5173/reset-password",
-  "https://app.revbrain.com/set-password",
-  "https://app.revbrain.com/reset-password",
-  "https://app.revbrain.com/login",
-  "https://stg.revbrain.com/set-password",
-  "https://stg.revbrain.com/reset-password",
-  "https://stg.revbrain.com/login"
+  "https://app.revbrain.ai/set-password",
+  "https://app.revbrain.ai/reset-password",
+  "https://app.revbrain.ai/login",
+  "https://stg.revbrain.ai/set-password",
+  "https://stg.revbrain.ai/reset-password",
+  "https://stg.revbrain.ai/login"
 ]
 jwt_expiry = 3600
 enable_signup = false

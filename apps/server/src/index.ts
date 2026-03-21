@@ -51,14 +51,14 @@ function getCorsOrigins(): string[] {
   // Default origins (includes legacy .vercel.app domains during transition)
   return isProduction()
     ? [
-        'https://app.revbrain.com',
-        'https://revbrain.com',
+        'https://app.revbrain.ai',
+        'https://revbrain.ai',
         'https://revbrain-client.vercel.app', // Legacy — remove after transition
       ]
     : [
-        'https://stg.revbrain.com',
-        'https://app.revbrain.com',
-        'https://revbrain.com',
+        'https://stg.revbrain.ai',
+        'https://app.revbrain.ai',
+        'https://revbrain.ai',
         'https://revbrain-client.vercel.app', // Legacy — remove after transition
         'https://revbrain-client-staging.vercel.app', // Legacy — remove after transition
         'http://localhost:5173',

@@ -47,7 +47,7 @@ Removed `OrganizationType` (`contractor` / `client`) distinction. Removed `UserG
 - Package names: `@geometrix/*` → `@revbrain/*`
 - UI text: `GEOMETRIX` → `REVBRAIN`
 - Storage keys: `geometrix_*` → `revbrain_*`
-- Domains: `geometrixlabs.com` → `revbrain.com`
+- Domains: `geometrixlabs.com` → `revbrain.ai`
 - Subtitle: "Calculation System" → "Revenue Operations Platform"
 - Zero remaining references to "geometrix" or construction terminology
 

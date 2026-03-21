@@ -425,7 +425,7 @@ export class UserService {
 
     // Send welcome email (fire-and-forget)
     const org = await this.repos.organizations.findById(activated.organizationId);
-    const loginUrl = `${getEnv('APP_URL') || 'https://app.revbrain.com'}/login`;
+    const loginUrl = `${getEnv('APP_URL') || 'https://app.revbrain.ai'}/login`;
     const html = renderWelcomeEmail({
       userName: activated.fullName || activated.email,
       orgName: org?.name || 'RevBrain',

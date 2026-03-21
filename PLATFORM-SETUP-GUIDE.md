@@ -183,7 +183,7 @@ VITE_STRIPE_PUBLISHABLE_KEY=pk_test_your_test_key_here
 2. **Get your API key** from the dashboard → API Keys → Create API Key
 
 3. **Verify a sending domain:**
-   - Add your domain (e.g., `revbrain.com`)
+   - Add your domain (e.g., `revbrain.ai`)
    - Add the DNS records Resend provides (DKIM, SPF, DMARC)
    - Wait for verification (usually minutes)
 
@@ -191,11 +191,11 @@ VITE_STRIPE_PUBLISHABLE_KEY=pk_test_your_test_key_here
 
 ### Environment Variables
 
-| Variable         | Local                       | Staging                              | Production                        |
-| ---------------- | --------------------------- | ------------------------------------ | --------------------------------- |
-| `RESEND_API_KEY` | Omit (uses console adapter) | `re_...` (your dev key)              | `re_...` (your prod key)          |
-| `EMAIL_FROM`     | N/A (console)               | `RevBrain <noreply@your-domain.com>` | `RevBrain <noreply@revbrain.com>` |
-| `EMAIL_ASYNC`    | `false`                     | `true`                               | `true`                            |
+| Variable         | Local                       | Staging                              | Production                       |
+| ---------------- | --------------------------- | ------------------------------------ | -------------------------------- |
+| `RESEND_API_KEY` | Omit (uses console adapter) | `re_...` (your dev key)              | `re_...` (your prod key)         |
+| `EMAIL_FROM`     | N/A (console)               | `RevBrain <noreply@your-domain.com>` | `RevBrain <noreply@revbrain.ai>` |
+| `EMAIL_ASYNC`    | `false`                     | `true`                               | `true`                           |
 
 **No Resend (default local):**
 
@@ -207,7 +207,7 @@ VITE_STRIPE_PUBLISHABLE_KEY=pk_test_your_test_key_here
 
 ```env
 RESEND_API_KEY=re_your_api_key_here
-EMAIL_FROM=RevBrain <noreply@revbrain.com>
+EMAIL_FROM=RevBrain <noreply@revbrain.ai>
 EMAIL_ASYNC=true
 ```
 
@@ -278,11 +278,11 @@ SENTRY_ENVIRONMENT=production
 
 ### Environment Variables
 
-| Variable                    | Local                       | Staging                      | Production                             |
-| --------------------------- | --------------------------- | ---------------------------- | -------------------------------------- |
-| `SLACK_ALERT_WEBHOOK_URL`   | Omit (alerts go to console) | Your staging channel webhook | Your production channel webhook        |
-| `ALERT_EMAIL_RECIPIENTS`    | Omit                        | `dev@revbrain.com`           | `ops@revbrain.com,oncall@revbrain.com` |
-| `ALERT_CRITICAL_RECIPIENTS` | Omit                        | Same as above                | `cto@revbrain.com,ops@revbrain.com`    |
+| Variable                    | Local                       | Staging                      | Production                           |
+| --------------------------- | --------------------------- | ---------------------------- | ------------------------------------ |
+| `SLACK_ALERT_WEBHOOK_URL`   | Omit (alerts go to console) | Your staging channel webhook | Your production channel webhook      |
+| `ALERT_EMAIL_RECIPIENTS`    | Omit                        | `dev@revbrain.ai`            | `ops@revbrain.ai,oncall@revbrain.ai` |
+| `ALERT_CRITICAL_RECIPIENTS` | Omit                        | Same as above                | `cto@revbrain.ai,ops@revbrain.ai`    |
 
 **No Slack (local):**
 
@@ -294,7 +294,7 @@ SENTRY_ENVIRONMENT=production
 
 ```env
 SLACK_ALERT_WEBHOOK_URL=https://hooks.slack.com/services/T.../B.../xxx
-ALERT_EMAIL_RECIPIENTS=ops@revbrain.com
+ALERT_EMAIL_RECIPIENTS=ops@revbrain.ai
 ```
 
 ---
@@ -384,8 +384,8 @@ VITE_STRIPE_PUBLISHABLE_KEY=pk_test_...
 # === Core ===
 NODE_ENV=production
 APP_ENV=staging
-APP_URL=https://staging.revbrain.com
-FRONTEND_URL=https://staging.revbrain.com
+APP_URL=https://staging.revbrain.ai
+FRONTEND_URL=https://staging.revbrain.ai
 
 # === Real Mode ===
 USE_MOCK_DATA=false
@@ -411,7 +411,7 @@ VITE_STRIPE_PUBLISHABLE_KEY=pk_test_...
 
 # === Email ===
 RESEND_API_KEY=re_...
-EMAIL_FROM=RevBrain <noreply@revbrain.com>
+EMAIL_FROM=RevBrain <noreply@revbrain.ai>
 EMAIL_ASYNC=true
 
 # === Monitoring ===
@@ -420,7 +420,7 @@ SENTRY_ENVIRONMENT=staging
 
 # === Alerting (optional) ===
 SLACK_ALERT_WEBHOOK_URL=https://hooks.slack.com/services/...
-ALERT_EMAIL_RECIPIENTS=dev@revbrain.com
+ALERT_EMAIL_RECIPIENTS=dev@revbrain.ai
 ```
 
 ### Production
@@ -429,8 +429,8 @@ ALERT_EMAIL_RECIPIENTS=dev@revbrain.com
 # === Core ===
 NODE_ENV=production
 APP_ENV=production
-APP_URL=https://app.revbrain.com
-FRONTEND_URL=https://app.revbrain.com
+APP_URL=https://app.revbrain.ai
+FRONTEND_URL=https://app.revbrain.ai
 
 # === Real Mode ===
 USE_MOCK_DATA=false
@@ -456,7 +456,7 @@ STRIPE_WEBHOOK_SECRET=whsec_... (production webhook endpoint)
 
 # === Email ===
 RESEND_API_KEY=re_...
-EMAIL_FROM=RevBrain <noreply@revbrain.com>
+EMAIL_FROM=RevBrain <noreply@revbrain.ai>
 EMAIL_ASYNC=true
 
 # === Monitoring ===
@@ -465,11 +465,11 @@ SENTRY_ENVIRONMENT=production
 
 # === Alerting ===
 SLACK_ALERT_WEBHOOK_URL=https://hooks.slack.com/services/...
-ALERT_EMAIL_RECIPIENTS=ops@revbrain.com,oncall@revbrain.com
-ALERT_CRITICAL_RECIPIENTS=cto@revbrain.com,ops@revbrain.com
+ALERT_EMAIL_RECIPIENTS=ops@revbrain.ai,oncall@revbrain.ai
+ALERT_CRITICAL_RECIPIENTS=cto@revbrain.ai,ops@revbrain.ai
 
 # === Sales ===
-SALES_NOTIFICATION_EMAIL=sales@revbrain.com
+SALES_NOTIFICATION_EMAIL=sales@revbrain.ai
 CALENDLY_BOOKING_URL=https://calendly.com/revbrain/demo
 ```
 

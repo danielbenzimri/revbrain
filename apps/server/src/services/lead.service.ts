@@ -116,7 +116,7 @@ export class LeadService {
    * Send notification email to sales team.
    */
   private async sendNotificationEmail(lead: typeof leads.$inferSelect) {
-    const salesEmail = getEnv('SALES_NOTIFICATION_EMAIL') || 'sales@revbrain.com';
+    const salesEmail = getEnv('SALES_NOTIFICATION_EMAIL') || 'sales@revbrain.ai';
     const emailService = getEmailService();
 
     try {
@@ -128,7 +128,7 @@ export class LeadService {
         companySize: lead.companySize || 'Not provided',
         message: lead.message || 'No message',
         source: lead.source || 'website',
-        dashboardUrl: `${getEnv('APP_URL') || 'https://app.revbrain.com'}/admin/leads/${lead.id}`,
+        dashboardUrl: `${getEnv('APP_URL') || 'https://app.revbrain.ai'}/admin/leads/${lead.id}`,
       });
 
       await emailService.send({

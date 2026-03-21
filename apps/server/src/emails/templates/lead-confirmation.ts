@@ -63,7 +63,7 @@ export function renderLeadConfirmationEmail(data: LeadConfirmationEmailData): st
     <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;" />
 
     <p style="margin:0;font-size:12px;color:#94a3b8;line-height:1.5;">
-      You're receiving this email because you submitted a contact request on revbrain.com.
+      You're receiving this email because you submitted a contact request on revbrain.ai.
     </p>`;
 
   return wrapInLayout(content, 'Thanks for contacting RevBrain!');

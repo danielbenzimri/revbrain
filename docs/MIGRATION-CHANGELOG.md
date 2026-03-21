@@ -86,10 +86,10 @@ This file serves as a reference for pending database migrations and completed wo
 
 ### Domains & Emails
 
-- `geometrixlabs.com` → `revbrain.com`
+- `geometrixlabs.com` → `revbrain.ai`
 - `geometrix.io` → `revbrain.io`
-- `noreply@geometrixlabs.com` → `noreply@revbrain.com`
-- `sales@geometrixlabs.com` → `sales@revbrain.com`
+- `noreply@geometrixlabs.com` → `noreply@revbrain.ai`
+- `sales@geometrixlabs.com` → `sales@revbrain.ai`
 
 ### Config
 
