@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { NotificationBell } from './NotificationBell';
 import { useAuthStore, useUser } from '@/stores/auth-store';
 import { useImpersonationStore } from '@/stores/impersonation-store';
 import { ROLE_DISPLAY_NAMES } from '@/types/auth';
@@ -183,6 +184,7 @@ export function Sidebar({ className }: SidebarProps) {
                 <p className="text-sm font-medium truncate">{userDisplayName}</p>
                 <p className="text-xs text-slate-400 truncate">{userRole || userEmail}</p>
               </div>
+              {isSystemAdmin && !isImpersonating && <NotificationBell />}
               <button
                 onClick={handleLogout}
                 className="text-slate-400 hover:text-red-400 transition-colors"
@@ -193,13 +195,16 @@ export function Sidebar({ className }: SidebarProps) {
             </>
           )}
           {isCollapsed && (
-            <button
-              onClick={handleLogout}
-              className="text-slate-400 hover:text-red-400 transition-colors"
-              title={t('nav.logout')}
-            >
-              <LogOut className="h-4 w-4" />
-            </button>
+            <>
+              {isSystemAdmin && !isImpersonating && <NotificationBell />}
+              <button
+                onClick={handleLogout}
+                className="text-slate-400 hover:text-red-400 transition-colors"
+                title={t('nav.logout')}
+              >
+                <LogOut className="h-4 w-4" />
+              </button>
+            </>
           )}
         </div>
       </div>

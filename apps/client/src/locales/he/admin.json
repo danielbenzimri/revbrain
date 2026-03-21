@@ -498,5 +498,12 @@
       "create": "יצירת קופון",
       "saveError": "שמירת הקופון נכשלה"
     }
+  },
+  "notifications": {
+    "title": "התראות",
+    "noNotifications": "אין התראות",
+    "markAllRead": "סמן הכל כנקרא",
+    "markRead": "סמן כנקרא",
+    "unread": "לא נקראו"
   }
 }

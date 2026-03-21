@@ -43,4 +43,9 @@ export const adminKeys = {
   supportTicketsList: () => [...adminKeys.supportTickets(), 'list'] as const,
   supportTicketDetail: (id: string) => [...adminKeys.supportTickets(), 'detail', id] as const,
   supportStats: () => [...adminKeys.support(), 'stats'] as const,
+
+  // Notifications
+  notifications: () => [...adminKeys.all, 'notifications'] as const,
+  notificationsList: () => [...adminKeys.notifications(), 'list'] as const,
+  notificationsCount: () => [...adminKeys.notifications(), 'count'] as const,
 };

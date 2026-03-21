@@ -498,5 +498,12 @@
       "create": "Create Coupon",
       "saveError": "Failed to save coupon"
     }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "noNotifications": "No notifications",
+    "markAllRead": "Mark all as read",
+    "markRead": "Mark as read",
+    "unread": "unread"
   }
 }

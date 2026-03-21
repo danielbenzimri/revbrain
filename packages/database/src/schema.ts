@@ -1013,3 +1013,27 @@ export const adminRoleAssignments = pgTable('admin_role_assignments', {
 
 export type AdminRoleAssignment = typeof adminRoleAssignments.$inferSelect;
 export type NewAdminRoleAssignment = typeof adminRoleAssignments.$inferInsert;
+
+// ============================================================================
+// ADMIN NOTIFICATIONS TABLE
+// ============================================================================
+/**
+ * In-app notifications for admin users.
+ * Supports severity levels (critical, warning, info) and dedup via type+metadata.entityId.
+ */
+export const adminNotifications = pgTable('admin_notifications', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  adminUserId: uuid('admin_user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  type: varchar('type', { length: 50 }).notNull(), // e.g., 'high_priority_ticket', 'failed_payment', 'dead_job'
+  severity: varchar('severity', { length: 20 }).notNull(), // 'critical', 'warning', 'info'
+  title: varchar('title', { length: 200 }).notNull(),
+  message: text('message').notNull(),
+  metadata: jsonb('metadata').$type<Record<string, unknown>>(),
+  isRead: boolean('is_read').notNull().default(false),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+export type AdminNotification = typeof adminNotifications.$inferSelect;
+export type NewAdminNotification = typeof adminNotifications.$inferInsert;

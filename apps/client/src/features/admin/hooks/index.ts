@@ -70,3 +70,12 @@ export type {
   TicketUpdateInput,
   AddMessageInput,
 } from './use-support-tickets';
+
+// Notifications
+export {
+  useNotificationCount,
+  useNotifications,
+  useMarkRead,
+  useMarkAllRead,
+} from './use-notifications';
+export type { AdminNotification } from './use-notifications';
