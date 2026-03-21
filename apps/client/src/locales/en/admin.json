@@ -416,6 +416,22 @@
     "showDetails": "Show details",
     "hideDetails": "Hide details"
   },
+  "impersonation": {
+    "loginAsOwner": "Login as Owner",
+    "dialogTitle": "Start Impersonation Session",
+    "dialogSubtitle": "You will view the platform as this tenant's owner",
+    "reasonLabel": "Reason for access",
+    "reasonPlaceholder": "e.g., Investigating ticket TK-003",
+    "reasonRequired": "Reason is required",
+    "startSession": "Start Read-Only Session",
+    "banner": {
+      "viewingAs": "Viewing as",
+      "readOnly": "Read-only",
+      "reason": "Reason",
+      "expiresIn": "Expires in",
+      "endSession": "End Session"
+    }
+  },
   "coupons": {
     "title": "Coupons & Promotions",
     "subtitle": "Manage discount codes and promotional offers",

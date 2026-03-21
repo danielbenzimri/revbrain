@@ -11,11 +11,13 @@ import {
   Edit,
   Trash2,
   Shield,
+  Eye,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { OnboardTenantDrawer } from '../components/OnboardTenantDrawer';
 import { EditTenantDrawer } from '../components/EditTenantDrawer';
 import { TenantOverridesDrawer } from '../components/TenantOverridesDrawer';
+import { ImpersonationReasonSheet } from '../components/ImpersonationReasonSheet';
 import { useTenants, useDeactivateTenant, type Tenant, type TenantForEdit } from '../hooks';
 import {
   DropdownMenu,
@@ -33,6 +35,10 @@ export default function TenantListPage() {
   const [showOverridesDrawer, setShowOverridesDrawer] = useState(false);
   const [selectedTenant, setSelectedTenant] = useState<TenantForEdit | null>(null);
   const [overridesTenant, setOverridesTenant] = useState<{ orgId: string; orgName: string } | null>(
+    null
+  );
+  const [showImpersonateSheet, setShowImpersonateSheet] = useState(false);
+  const [impersonateTenant, setImpersonateTenant] = useState<{ id: string; name: string } | null>(
     null
   );
   const [searchTerm, setSearchTerm] = useState('');
@@ -57,6 +63,11 @@ export default function TenantListPage() {
   const handleManageOverrides = (tenant: Tenant) => {
     setOverridesTenant({ orgId: tenant.id, orgName: tenant.name });
     setShowOverridesDrawer(true);
+  };
+
+  const handleImpersonate = (tenant: Tenant) => {
+    setImpersonateTenant({ id: tenant.id, name: tenant.name });
+    setShowImpersonateSheet(true);
   };
 
   const handleDeactivate = async (id: string) => {
@@ -197,6 +208,10 @@ export default function TenantListPage() {
                           <Shield className="h-4 w-4 me-2" />
                           {t('admin.tenants.manageOverrides', 'Manage Overrides')}
                         </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleImpersonate(tenant)}>
+                          <Eye className="h-4 w-4 me-2" />
+                          {t('admin.impersonation.loginAsOwner')}
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           onClick={() => handleDeactivate(tenant.id)}
@@ -231,6 +246,13 @@ export default function TenantListPage() {
         onOpenChange={setShowOverridesDrawer}
         orgId={overridesTenant?.orgId ?? null}
         orgName={overridesTenant?.orgName ?? ''}
+      />
+
+      {/* Impersonation Reason Sheet */}
+      <ImpersonationReasonSheet
+        open={showImpersonateSheet}
+        onOpenChange={setShowImpersonateSheet}
+        tenant={impersonateTenant}
       />
     </div>
   );

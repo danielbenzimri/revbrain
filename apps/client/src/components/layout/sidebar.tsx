@@ -19,6 +19,7 @@ import {
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore, useUser } from '@/stores/auth-store';
+import { useImpersonationStore } from '@/stores/impersonation-store';
 import { ROLE_DISPLAY_NAMES } from '@/types/auth';
 import { useShallow } from 'zustand/shallow';
 import { useSidebarStore } from '@/stores/sidebar-store';
@@ -41,6 +42,8 @@ export function Sidebar({ className }: SidebarProps) {
   const isHebrew = i18n.language === 'he';
 
   const isSystemAdmin = user?.role === 'system_admin';
+  const isImpersonating = useImpersonationStore((s) => s.isImpersonating);
+
   const mainItems = [
     { nameKey: 'nav.dashboard', href: '/', icon: LayoutDashboard },
     { nameKey: 'nav.projects', href: '/projects', icon: FolderKanban },
@@ -60,7 +63,8 @@ export function Sidebar({ className }: SidebarProps) {
     { nameKey: 'nav.settings', href: '/settings', icon: Settings },
   ];
 
-  const items = isSystemAdmin ? adminItems : mainItems;
+  // During impersonation, show org navigation instead of admin items
+  const items = isImpersonating ? mainItems : isSystemAdmin ? adminItems : mainItems;
 
   const handleLogout = () => {
     logout();

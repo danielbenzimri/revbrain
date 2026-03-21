@@ -416,6 +416,22 @@
     "showDetails": "הצג פרטים",
     "hideDetails": "הסתר פרטים"
   },
+  "impersonation": {
+    "loginAsOwner": "התחברות כבעלים",
+    "dialogTitle": "התחלת הפעלת התחזות",
+    "dialogSubtitle": "תצפה בפלטפורמה כבעלי הארגון הזה",
+    "reasonLabel": "סיבת הגישה",
+    "reasonPlaceholder": "לדוגמה: בדיקת פנייה TK-003",
+    "reasonRequired": "סיבה היא שדה חובה",
+    "startSession": "התחלת הפעלה לקריאה בלבד",
+    "banner": {
+      "viewingAs": "צפייה כ",
+      "readOnly": "קריאה בלבד",
+      "reason": "סיבה",
+      "expiresIn": "פג תוקף בעוד",
+      "endSession": "סיום הפעלה"
+    }
+  },
   "coupons": {
     "title": "קופונים והטבות",
     "subtitle": "ניהול קודי הנחה והצעות מבצע",
