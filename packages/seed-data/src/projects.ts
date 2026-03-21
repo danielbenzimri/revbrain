@@ -1,6 +1,6 @@
 import type { ProjectEntity } from '@revbrain/contract';
-import { MOCK_IDS } from './constants';
-import { daysAgo, hoursAgo } from './helpers';
+import { MOCK_IDS } from './constants.ts';
+import { daysAgo, hoursAgo } from './helpers.ts';
 
 export const SEED_PROJECTS: readonly ProjectEntity[] = [
   {

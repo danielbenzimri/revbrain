@@ -1,6 +1,6 @@
 import type { PlanEntity } from '@revbrain/contract';
-import { MOCK_IDS } from './constants';
-import { daysAgo } from './helpers';
+import { MOCK_IDS } from './constants.ts';
+import { daysAgo } from './helpers.ts';
 
 export const SEED_PLANS: readonly PlanEntity[] = [
   {

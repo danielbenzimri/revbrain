@@ -3,8 +3,8 @@
  *
  * 2 overrides in varied states: active grant, expired grant.
  */
-import { MOCK_IDS } from './constants';
-import { daysAgo } from './helpers';
+import { MOCK_IDS } from './constants.ts';
+import { daysAgo } from './helpers.ts';
 
 export interface SeedTenantOverride {
   id: string;

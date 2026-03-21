@@ -10,7 +10,7 @@ import {
   SEED_TICKET_MESSAGES,
   SEED_COUPONS,
   SEED_TENANT_OVERRIDES,
-} from './index';
+} from './index.ts';
 
 describe('Seed Data Package', () => {
   describe('MOCK_IDS', () => {

@@ -4,8 +4,8 @@
  * 6 tickets across statuses and priorities, with messages.
  * References MOCK_IDS for users and organizations.
  */
-import { MOCK_IDS } from './constants';
-import { daysAgo, hoursAgo } from './helpers';
+import { MOCK_IDS } from './constants.ts';
+import { daysAgo, hoursAgo } from './helpers.ts';
 
 export interface SeedTicket {
   id: string;

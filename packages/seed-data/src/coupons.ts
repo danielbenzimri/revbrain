@@ -3,8 +3,8 @@
  *
  * 4 coupons in varied states: active, expired, scheduled, maxed-out.
  */
-import { MOCK_IDS } from './constants';
-import { daysAgo } from './helpers';
+import { MOCK_IDS } from './constants.ts';
+import { daysAgo } from './helpers.ts';
 
 export interface SeedCoupon {
   id: string;

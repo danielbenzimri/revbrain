@@ -11,20 +11,20 @@
  */
 
 // Constants (deterministic IDs)
-export { MOCK_IDS } from './constants';
+export { MOCK_IDS } from './constants.ts';
 
 // Helpers
-export { daysAgo, hoursAgo, cloneArray } from './helpers';
+export { daysAgo, hoursAgo, cloneArray } from './helpers.ts';
 
 // Seed data arrays
-export { SEED_PLANS } from './plans';
-export { SEED_ORGANIZATIONS } from './organizations';
-export { SEED_USERS } from './users';
-export { SEED_PROJECTS } from './projects';
-export { SEED_AUDIT_LOGS } from './audit-logs';
-export { SEED_TICKETS, SEED_TICKET_MESSAGES } from './support-tickets';
-export type { SeedTicket, SeedTicketMessage } from './support-tickets';
-export { SEED_COUPONS } from './coupons';
-export type { SeedCoupon } from './coupons';
-export { SEED_TENANT_OVERRIDES } from './tenant-overrides';
-export type { SeedTenantOverride } from './tenant-overrides';
+export { SEED_PLANS } from './plans.ts';
+export { SEED_ORGANIZATIONS } from './organizations.ts';
+export { SEED_USERS } from './users.ts';
+export { SEED_PROJECTS } from './projects.ts';
+export { SEED_AUDIT_LOGS } from './audit-logs.ts';
+export { SEED_TICKETS, SEED_TICKET_MESSAGES } from './support-tickets.ts';
+export type { SeedTicket, SeedTicketMessage } from './support-tickets.ts';
+export { SEED_COUPONS } from './coupons.ts';
+export type { SeedCoupon } from './coupons.ts';
+export { SEED_TENANT_OVERRIDES } from './tenant-overrides.ts';
+export type { SeedTenantOverride } from './tenant-overrides.ts';
