@@ -64,7 +64,6 @@ export function OnboardTenantDrawer({ open, onOpenChange }: OnboardTenantDrawerP
         admin: {
           email: adminEmail,
           fullName: adminName,
-          role: 'org_owner',
         },
       });
 

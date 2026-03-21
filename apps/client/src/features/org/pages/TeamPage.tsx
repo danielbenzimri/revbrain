@@ -42,7 +42,7 @@ export default function TeamPage() {
   const [error, setError] = useState<string | null>(null);
 
   // Check if user can invite
-  const canInvite = user?.role === 'org_owner' || user?.role === 'org_owner';
+  const canInvite = user?.role === 'admin' || user?.role === 'org_owner';
 
   useEffect(() => {
     const fetchMembers = async () => {

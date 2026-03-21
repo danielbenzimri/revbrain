@@ -381,7 +381,7 @@ function MetadataView({ entry }: { entry: AuditLogEntry }) {
   }
 
   // Check for before/after diffs
-  const hasDiff = metadata.before && metadata.after;
+  const hasDiff = !!(metadata.before && metadata.after);
 
   return (
     <div className="space-y-3">

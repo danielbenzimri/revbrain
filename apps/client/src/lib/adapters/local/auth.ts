@@ -55,7 +55,7 @@ export class LocalAuthAdapter implements AuthAdapter {
       name: mockUser.name,
       avatar: mockUser.avatar,
       role: mockUser.role,
-      metadata: { group: mockUser.group },
+      metadata: {},
     };
 
     const session: Session = {
@@ -174,7 +174,7 @@ export function simulateRole(role: UserRole): AuthResult {
     name: mockUser.name,
     avatar: mockUser.avatar,
     role: mockUser.role,
-    metadata: { group: mockUser.group },
+    metadata: {},
   };
 
   const session: Session = {

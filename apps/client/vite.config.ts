@@ -72,8 +72,6 @@ export default defineConfig({
           ],
           // Charting - only needed for dashboards
           'chart-vendor': ['recharts'],
-          // 3D/geo - only needed for specific modules
-          'geo-vendor': ['three', 'leaflet', 'proj4'],
           // Forms - used widely but stable
           'form-vendor': ['react-hook-form', '@hookform/resolvers', 'zod'],
           // i18n - stable runtime

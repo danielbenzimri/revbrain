@@ -174,7 +174,7 @@ adminUsersRouter.openapi(
     },
   }),
   async (c) => {
-    const { limit = DEFAULT_LIMIT, offset = 0, cursor } = c.req.query();
+    const { limit = DEFAULT_LIMIT, offset = 0, cursor: _cursor } = c.req.query();
     const parsedLimit = Math.min(Number(limit) || DEFAULT_LIMIT, MAX_LIMIT);
     const parsedOffset = Number(offset) || 0;
 

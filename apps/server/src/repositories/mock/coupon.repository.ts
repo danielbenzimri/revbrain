@@ -80,7 +80,7 @@ export class MockCouponRepository {
     return true;
   }
 
-  async getUsageHistory(couponId: string) {
+  async getUsageHistory(_couponId: string) {
     // Mock: return empty usage history
     return [] as Array<{
       id: string;

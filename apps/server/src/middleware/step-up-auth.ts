@@ -12,7 +12,6 @@
  * Note: Must work against both staging and production.
  */
 import type { MiddlewareHandler } from 'hono';
-import { AppError } from '@revbrain/contract';
 
 /**
  * Middleware factory: requires the JWT to have been issued within

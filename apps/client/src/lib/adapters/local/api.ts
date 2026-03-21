@@ -22,20 +22,20 @@ export class LocalAPIAdapter implements APIAdapter {
     return { success: true, data: [] } as T;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async post<T>(path: string, data?: unknown): Promise<T> {
+   
+  async post<T>(path: string, _data?: unknown): Promise<T> {
     this.warn('POST', path);
     throw new Error('Data mutations require the mock server. Run: pnpm dev:real');
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async put<T>(path: string, data?: unknown): Promise<T> {
+   
+  async put<T>(path: string, _data?: unknown): Promise<T> {
     this.warn('PUT', path);
     throw new Error('Data mutations require the mock server. Run: pnpm dev:real');
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async patch<T>(path: string, data?: unknown): Promise<T> {
+   
+  async patch<T>(path: string, _data?: unknown): Promise<T> {
     this.warn('PATCH', path);
     throw new Error('Data mutations require the mock server. Run: pnpm dev:real');
   }

@@ -5,7 +5,6 @@
  * Used when USE_MOCK_DATA=true — no database needed.
  */
 import type { Repositories } from '@revbrain/contract';
-import { resetAllMockData } from '../../mocks/index.ts';
 import { MockUserRepository } from './user.repository.ts';
 import { MockOrganizationRepository } from './organization.repository.ts';
 import { MockPlanRepository } from './plan.repository.ts';

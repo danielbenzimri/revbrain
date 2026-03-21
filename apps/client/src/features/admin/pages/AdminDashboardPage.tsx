@@ -153,11 +153,11 @@ export default function AdminDashboardPage() {
                       <p className="font-medium text-slate-900 text-sm">
                         {formatAction(entry.action)}
                       </p>
-                      {entry.metadata && (entry.metadata as Record<string, unknown>).email && (
+                      {entry.metadata && (entry.metadata as Record<string, unknown>).email ? (
                         <p className="text-xs text-slate-500">
-                          {(entry.metadata as Record<string, unknown>).email as string}
+                          {String((entry.metadata as Record<string, unknown>).email)}
                         </p>
-                      )}
+                      ) : null}
                     </div>
                   </div>
                   <span className="text-xs text-slate-400 whitespace-nowrap">

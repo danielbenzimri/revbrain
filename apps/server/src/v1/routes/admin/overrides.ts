@@ -178,7 +178,7 @@ adminOverridesRouter.openapi(
       throw new AppError(ErrorCodes.VALIDATION_ERROR, 'Override already revoked', 400);
     }
 
-    const revoked = await overrideRepo.revoke(id);
+    await overrideRepo.revoke(id);
 
     try {
       const auditCtx = buildAuditContext(c);

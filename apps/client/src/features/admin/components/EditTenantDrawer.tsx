@@ -26,8 +26,10 @@ export function EditTenantDrawer({ open, onOpenChange, tenant }: EditTenantDrawe
   const getInitialFormData = (): TenantForEdit => ({
     id: tenant?.id || '',
     name: tenant?.name || '',
+    type: tenant?.type || '',
     planId: tenant?.planId || null,
     seatLimit: tenant?.seatLimit || 5,
+    seatUsed: tenant?.seatUsed || 0,
     isActive: tenant?.isActive ?? true,
   });
 
