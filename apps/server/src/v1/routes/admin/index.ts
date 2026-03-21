@@ -11,6 +11,7 @@ import { adminStatsRouter } from './stats.ts';
 import { adminAuditRouter } from './audit.ts';
 import { adminJobsRouter } from './jobs.ts';
 import { adminOverridesRouter } from './overrides.ts';
+import { requireMFA } from '../../../middleware/mfa-check.ts';
 import type { AppEnv } from '../../../types/index.ts';
 
 const adminRouter = new OpenAPIHono<AppEnv>({
@@ -78,6 +79,11 @@ adminRouter.onError((err, c) => {
     500
   );
 });
+
+// MFA enforcement — runs on all admin routes
+// Controlled by MFA_ENFORCEMENT env var: 'log' (default) or 'enforce'
+// Skipped in mock auth mode
+adminRouter.use('*', requireMFA);
 
 // Mount sub-routers
 adminRouter.route('/', onboardingRouter);
