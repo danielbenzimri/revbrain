@@ -17,9 +17,11 @@
     "db:generate": "drizzle-kit generate:pg",
     "db:migrate": "tsx src/migrate.ts",
     "db:studio": "drizzle-kit studio",
+    "seed": "tsx src/seed.ts",
     "lint": "tsc --noEmit"
   },
   "dependencies": {
+    "@revbrain/seed-data": "workspace:*",
     "drizzle-orm": "^0.29.1",
     "postgres": "^3.4.3"
   },

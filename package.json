@@ -21,6 +21,7 @@
     "format:check": "prettier --check .",
     "db:generate": "pnpm --filter @revbrain/database db:generate",
     "db:migrate": "pnpm --filter @revbrain/database db:migrate",
+    "db:seed": "pnpm --filter @revbrain/database seed",
     "clean": "turbo run clean && rm -rf node_modules",
     "setup:cloud": "./scripts/init-supabase-cloud.sh",
     "perf:test": "playwright test --project=performance",
