@@ -11,7 +11,17 @@
  *   pnpm db:seed
  *   pnpm db:seed -- --cleanup
  */
-import 'dotenv/config';
+import { config } from 'dotenv';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+// Load env from monorepo root: .env.stg by default (seeder needs real DB)
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const monorepoRoot = resolve(__dirname, '../../..'); // packages/database/src → root
+const envFile = process.env.APP_ENV === 'prod' ? '.env.prod' : '.env.stg';
+config({ path: resolve(monorepoRoot, envFile) });
+// Also load base .env as fallback
+config({ path: resolve(monorepoRoot, '.env') });
 import { getDB } from './client';
 import { seedDatabase, cleanupSeedData } from './seeders/index';
 import { getLastRun } from './seeders/seed-log';

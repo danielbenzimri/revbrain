@@ -9,9 +9,10 @@
   },
   "packageManager": "pnpm@8.15.0",
   "scripts": {
+    "local": "turbo run local",
     "dev": "turbo run dev",
-    "dev:real": "turbo run dev:real",
     "dev:remote": "pnpm --filter client dev:remote",
+    "stg": "pnpm --filter client dev:remote",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "test": "turbo run test",

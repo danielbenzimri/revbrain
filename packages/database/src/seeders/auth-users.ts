@@ -33,7 +33,7 @@ export function createSupabaseAdmin(): SupabaseClient {
   if (!url || !key) {
     throw new Error(
       'SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required for auth reconciliation.\n' +
-        'Set them in .env.local or pass --skip-auth to skip auth user creation.'
+        'Set them in .env.stg or pass --skip-auth to skip auth user creation.'
     );
   }
 

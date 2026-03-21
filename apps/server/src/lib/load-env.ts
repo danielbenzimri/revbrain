@@ -2,13 +2,16 @@
  * Environment loader for LOCAL server development
  *
  * Loads environment variables from the monorepo root:
- * - APP_ENV=local → loads /.env.local (default)
- * - APP_ENV=dev   → loads /.env.dev
- * - APP_ENV=prod  → loads /.env.prod
+ * - APP_ENV=local → loads /.env.local (mock mode, no external services)
+ * - APP_ENV=stg   → loads /.env.stg   (local server against staging Supabase)
+ * - APP_ENV=prod  → loads /.env.prod   (production — edge functions only)
  *
- * Note: DEV and PROD environments run on Supabase Edge Functions,
- * which inject environment variables automatically. This loader is
- * only used when running the local Hono server for testing.
+ * Commands:
+ * - pnpm local → APP_ENV=local (mock mode)
+ * - pnpm dev   → APP_ENV=stg   (local frontend+server, staging DB)
+ *
+ * Note: STG and PROD edge functions inject env vars automatically.
+ * This loader is only used when running the local Hono dev server.
  *
  * Usage: Import this at the top of dev.ts (local server entry point)
  */
