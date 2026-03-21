@@ -16,6 +16,7 @@ import { getDB } from './client';
 import { seedDatabase, cleanupSeedData } from './seeders/index';
 import { getLastRun } from './seeders/seed-log';
 import { reconcileAuthUsers, cleanupAuthUsers } from './seeders/auth-users';
+import { verifyRLS } from './seeders/rls-verify';
 import { runPreflight, displayPreflight } from './seeders/preflight';
 
 // ---------------------------------------------------------------------------
@@ -29,6 +30,7 @@ const flags = {
   nonInteractive: args.includes('--non-interactive'),
   showCredentials: args.includes('--show-credentials'),
   skipAuth: args.includes('--skip-auth'),
+  verifyOnly: args.includes('--verify-only'),
 };
 
 // ---------------------------------------------------------------------------
@@ -61,6 +63,25 @@ async function main() {
     console.log('This does not appear to be a local database.');
     console.log('Pass --yes to confirm you want to proceed.\n');
     process.exit(1);
+  }
+
+  // --- Verify-only mode ---
+  if (flags.verifyOnly) {
+    console.log('Mode: VERIFY ONLY (RLS checks)\n');
+    try {
+      const { results, passed, failed } = await verifyRLS();
+      console.log('\n--- RLS Verification Results ---');
+      results.forEach((r) => {
+        const icon = r.passed ? '✓' : '✗';
+        console.log(`  ${icon} ${r.check}: expected ${r.expected}, got ${r.actual}`);
+      });
+      console.log(`\n  ${passed} passed, ${failed} failed`);
+      console.log('--------------------------------\n');
+      process.exit(failed > 0 ? 1 : 0);
+    } catch (err) {
+      console.error('RLS verification failed:', err instanceof Error ? err.message : err);
+      process.exit(1);
+    }
   }
 
   // Connect
