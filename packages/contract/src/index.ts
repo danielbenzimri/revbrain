@@ -82,6 +82,67 @@ export const PROJECT_SCOPED_ROLES: UserRole[] = ['operator', 'reviewer'];
 /** Roles with org-wide access (see all projects) */
 export const ORG_WIDE_ROLES: UserRole[] = ['org_owner', 'admin'];
 
+// ============================================================================
+// INTERNAL ADMIN PERMISSIONS (separate from tenant roles)
+// ============================================================================
+
+/**
+ * Named admin role definitions with their permission sets.
+ * These are internal platform roles, NOT tenant application roles.
+ */
+export const ADMIN_ROLE_DEFINITIONS = {
+  super_admin: {
+    permissions: ['*'],
+    description: 'Full platform access (break-glass)',
+  },
+  support_admin: {
+    permissions: [
+      'support:read',
+      'support:reply',
+      'impersonate:read_only',
+      'users:read',
+      'tenants:read',
+      'audit:read',
+    ],
+    description: 'Support tickets + read-only impersonation',
+  },
+  billing_admin: {
+    permissions: [
+      'billing:read',
+      'billing:refund',
+      'plans:read',
+      'plans:write',
+      'coupons:read',
+      'coupons:write',
+    ],
+    description: 'Billing, plans, and coupons',
+  },
+  security_admin: {
+    permissions: ['users:read', 'users:write', 'tenants:read', 'audit:read', 'audit:export'],
+    description: 'User management and security',
+  },
+  readonly_admin: {
+    permissions: [
+      'users:read',
+      'tenants:read',
+      'plans:read',
+      'coupons:read',
+      'support:read',
+      'billing:read',
+      'audit:read',
+      'stats:read',
+      'jobs:read',
+    ],
+    description: 'View all admin pages, no mutations',
+  },
+  compliance_auditor: {
+    permissions: ['audit:read', 'audit:export'],
+    description: 'Audit log access only',
+  },
+} as const;
+
+export type AdminRoleName = keyof typeof ADMIN_ROLE_DEFINITIONS;
+
 /**
  * Check if role is an org admin role (can invite users, manage org)
  */

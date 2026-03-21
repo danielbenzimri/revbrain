@@ -971,3 +971,45 @@ export const projectFilesRelations = relations(projectFiles, ({ one }) => ({
     references: [users.id],
   }),
 }));
+
+// ============================================================================
+// ADMIN ROLE DEFINITIONS TABLE
+// ============================================================================
+/**
+ * Named admin role definitions with permission sets.
+ * Separate from tenant roles (org_owner, admin, operator, reviewer).
+ *
+ * Pre-defined roles: super_admin, support_admin, billing_admin,
+ * security_admin, readonly_admin, compliance_auditor
+ */
+export const adminRoleDefinitions = pgTable('admin_role_definitions', {
+  roleName: varchar('role_name', { length: 50 }).primaryKey(),
+  permissions: jsonb('permissions').$type<string[]>().notNull(), // e.g., ['users:read', 'users:write', ...]
+  description: text('description'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+export type AdminRoleDefinition = typeof adminRoleDefinitions.$inferSelect;
+export type NewAdminRoleDefinition = typeof adminRoleDefinitions.$inferInsert;
+
+// ============================================================================
+// ADMIN ROLE ASSIGNMENTS TABLE
+// ============================================================================
+/**
+ * Junction table: which admin users have which admin roles.
+ * A user can have multiple admin roles.
+ */
+export const adminRoleAssignments = pgTable('admin_role_assignments', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  roleName: varchar('role_name', { length: 50 })
+    .notNull()
+    .references(() => adminRoleDefinitions.roleName),
+  grantedBy: uuid('granted_by').references(() => users.id),
+  grantedAt: timestamp('granted_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+export type AdminRoleAssignment = typeof adminRoleAssignments.$inferSelect;
+export type NewAdminRoleAssignment = typeof adminRoleAssignments.$inferInsert;
