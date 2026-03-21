@@ -16,6 +16,7 @@ import { loggerMiddleware } from './middleware/logger.ts';
 import { correlationIdMiddleware } from './middleware/correlation-id.ts';
 import { securityHeadersMiddleware } from './middleware/security-headers.ts';
 import { authMiddleware } from './middleware/auth.ts';
+import { impersonationMiddleware } from './middleware/impersonation.ts';
 import { authLimiter, apiLimiter } from './middleware/rate-limit.ts';
 import { apiBodyLimit, webhookBodyLimit, fileUploadBodyLimit } from './middleware/body-limit.ts';
 import {
@@ -184,6 +185,25 @@ app.use('/v1/support/*', authMiddleware);
 app.use('/v1/projects/*', authMiddleware);
 app.use('/v1/chat/*', authMiddleware);
 app.use('/v1/storage/*', authMiddleware);
+
+// 5.8. Impersonation Detection (runs after auth)
+// Detects impersonation JWTs and enforces read-only mode
+app.use('/api/v1/users/*', impersonationMiddleware);
+app.use('/api/v1/admin/*', impersonationMiddleware);
+app.use('/api/v1/org/*', impersonationMiddleware);
+app.use('/api/v1/billing/*', impersonationMiddleware);
+app.use('/api/v1/support/*', impersonationMiddleware);
+app.use('/api/v1/projects/*', impersonationMiddleware);
+app.use('/api/v1/chat/*', impersonationMiddleware);
+app.use('/api/v1/storage/*', impersonationMiddleware);
+app.use('/v1/users/*', impersonationMiddleware);
+app.use('/v1/admin/*', impersonationMiddleware);
+app.use('/v1/org/*', impersonationMiddleware);
+app.use('/v1/billing/*', impersonationMiddleware);
+app.use('/v1/support/*', impersonationMiddleware);
+app.use('/v1/projects/*', impersonationMiddleware);
+app.use('/v1/chat/*', impersonationMiddleware);
+app.use('/v1/storage/*', impersonationMiddleware);
 
 // 6. Rate Limiting
 // Strict on authentication endpoints

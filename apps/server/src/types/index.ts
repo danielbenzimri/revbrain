@@ -45,6 +45,9 @@ export interface Variables {
   user: User;
   jwtPayload: SupabaseJWTPayload;
   requestId: string;
+  realUser?: User;
+  impersonationMode?: string;
+  impersonationReason?: string;
 }
 
 export type AppEnv = {
