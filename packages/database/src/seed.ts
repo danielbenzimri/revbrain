@@ -15,6 +15,7 @@ import 'dotenv/config';
 import { getDB } from './client';
 import { seedDatabase, cleanupSeedData } from './seeders/index';
 import { getLastRun } from './seeders/seed-log';
+import { reconcileAuthUsers, cleanupAuthUsers } from './seeders/auth-users';
 import { runPreflight, displayPreflight } from './seeders/preflight';
 
 // ---------------------------------------------------------------------------
@@ -68,6 +69,17 @@ async function main() {
   if (flags.cleanup) {
     // --- Cleanup mode ---
     console.log('Mode: CLEANUP (deleting seed data)\n');
+
+    // Clean up auth users BEFORE DB deletion (need supabaseUserId from DB)
+    if (!flags.skipAuth) {
+      console.log('[cleanup] Removing auth users...');
+      try {
+        await cleanupAuthUsers(db);
+      } catch (err) {
+        console.warn('[cleanup] Auth cleanup warning:', err instanceof Error ? err.message : err);
+        console.warn('[cleanup] Continuing with DB cleanup...');
+      }
+    }
 
     const result = await cleanupSeedData(db, {
       dryRun: flags.dryRun,
@@ -124,9 +136,42 @@ async function main() {
     if (!result.success) {
       process.exit(1);
     }
+
+    // Phase 2: Auth reconciliation
+    if (!flags.skipAuth && !flags.dryRun) {
+      console.log('\nPhase 2: Auth Reconciliation');
+      try {
+        const authResults = await reconcileAuthUsers(db);
+        const created = authResults.filter((r) => r.status === 'created').length;
+        const mapped = authResults.filter((r) => r.status === 'mapped_existing').length;
+        const reconciled = authResults.filter((r) => r.status === 'already_reconciled').length;
+        const skipped = authResults.filter((r) => r.status === 'skipped').length;
+        const failed = authResults.filter((r) => r.status === 'auth_failed').length;
+        console.log(
+          `\n  Summary: ${created} created, ${mapped} mapped, ${reconciled} existing, ${skipped} skipped, ${failed} failed`
+        );
+
+        if (flags.showCredentials) {
+          const password = process.env.SEED_PASSWORD || 'RevBrain-Dev-2026!';
+          console.log('\n  Login Credentials:');
+          authResults
+            .filter((r) => r.status !== 'skipped' && r.status !== 'auth_failed')
+            .forEach((r) => {
+              console.log(`    ${r.email} | ${r.role} | ${password}`);
+            });
+        } else {
+          console.log('  Use --show-credentials to display login info.');
+        }
+      } catch (err) {
+        console.error('\n  Auth reconciliation failed:', err instanceof Error ? err.message : err);
+        console.error('  DB seed is complete. Re-run to retry auth.');
+      }
+    } else if (flags.skipAuth) {
+      console.log('\nPhase 2: Auth Reconciliation — SKIPPED (--skip-auth)');
+    }
   }
 
-  // Graceful shutdown — give postgres.js time to close
+  // Graceful shutdown
   process.exit(0);
 }
 

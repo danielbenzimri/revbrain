@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@revbrain/seed-data": "workspace:*",
+    "@supabase/supabase-js": "^2.49.8",
     "drizzle-orm": "^0.29.1",
     "postgres": "^3.4.3"
   },

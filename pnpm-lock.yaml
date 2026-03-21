@@ -317,6 +317,9 @@ importers:
       '@revbrain/seed-data':
         specifier: workspace:*
         version: link:../seed-data
+      '@supabase/supabase-js':
+        specifier: ^2.49.8
+        version: 2.95.3
       drizzle-orm:
         specifier: 0.29.5
         version: 0.29.5(postgres@3.4.8)
