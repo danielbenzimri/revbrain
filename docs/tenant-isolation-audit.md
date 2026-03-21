@@ -45,10 +45,49 @@
 
 ## Supabase RLS Status
 
-**STATUS: NOT YET VERIFIED.** Requires Supabase dashboard access to confirm whether Row-Level Security policies are enabled on tenant-scoped tables. RLS would provide an additional database-level safety net. Full RLS enablement is planned for Enterprise phase (E6).
+**VERIFIED: 2026-03-21 — RLS ENABLED on all 19 tables.**
+
+Supabase enables RLS by default on all tables. Confirmed via `pg_tables.rowsecurity`:
+
+| Table           | RLS     |
+| --------------- | ------- |
+| audit_logs      | ENABLED |
+| billing_events  | ENABLED |
+| chat_groups     | ENABLED |
+| chat_messages   | ENABLED |
+| coupon_usages   | ENABLED |
+| coupons         | ENABLED |
+| job_queue       | ENABLED |
+| lead_activities | ENABLED |
+| leads           | ENABLED |
+| organizations   | ENABLED |
+| payment_history | ENABLED |
+| plans           | ENABLED |
+| project_files   | ENABLED |
+| project_members | ENABLED |
+| projects        | ENABLED |
+| subscriptions   | ENABLED |
+| support_tickets | ENABLED |
+| ticket_messages | ENABLED |
+| users           | ENABLED |
+
+### Audit Log Immutability
+
+RLS policies on `audit_logs` table:
+
+- `audit_logs_insert_only` — INSERT for service_role only
+- `audit_logs_select` — SELECT for service_role only
+- **No UPDATE or DELETE policies** — audit logs are immutable via RLS
+
+The app server uses `service_role` for audit writes. No application-level code path can UPDATE or DELETE audit log entries through RLS-enforced connections.
+
+### Note for Production
+
+The same RLS status and audit log policies must be verified and applied on the production Supabase project (revbrain-prd) when it is configured.
 
 ## Recommendations
 
-1. **Enable RLS** on all tenant-scoped tables as defense-in-depth (Enterprise phase)
-2. **Add `tenant-isolation.spec.ts`** integration test that creates two tenants and verifies zero cross-visibility (blocked on Supabase connection for realistic testing)
+1. ~~Enable RLS on all tenant-scoped tables~~ **DONE** — RLS enabled on all 19 tables by default
+2. **Add `tenant-isolation.spec.ts`** integration test against real DB (can now proceed with Supabase connected)
 3. Consider a **query-scoping interceptor** at the ORM layer to make org-scoping automatic rather than per-handler (Enterprise phase)
+4. **Add tenant-specific RLS policies** defining which roles can access which tables (Enterprise phase E6)
