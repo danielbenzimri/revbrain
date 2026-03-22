@@ -23,22 +23,21 @@ export class LocalAPIAdapter implements APIAdapter {
   }
 
    
-  async post<T>(path: string, _data?: unknown): Promise<T> {
+  async post<T>(path: string, ..._args: unknown[]): Promise<T> {
     this.warn('POST', path);
     throw new Error('Data mutations require the mock server. Run: pnpm dev:real');
   }
 
-   
-  async put<T>(path: string, _data?: unknown): Promise<T> {
+  async put<T>(path: string, ..._args: unknown[]): Promise<T> {
     this.warn('PUT', path);
     throw new Error('Data mutations require the mock server. Run: pnpm dev:real');
   }
 
-   
-  async patch<T>(path: string, _data?: unknown): Promise<T> {
+  async patch<T>(path: string, ..._args: unknown[]): Promise<T> {
     this.warn('PATCH', path);
     throw new Error('Data mutations require the mock server. Run: pnpm dev:real');
   }
+   
 
   async delete<T>(path: string): Promise<T> {
     this.warn('DELETE', path);
