@@ -63,10 +63,7 @@ jobs:
         run: supabase link --project-ref $PROJECT_ID
 
       - name: Push database migrations
-        if: hashFiles('supabase/migrations/**') != ''
-        run: supabase db push --include-all
-        env:
-          DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: echo "y" | supabase db push --include-all -p "${{ secrets.SUPABASE_DB_PASSWORD }}"
 
       - name: Deploy Edge Functions
         run: supabase functions deploy api --no-verify-jwt
