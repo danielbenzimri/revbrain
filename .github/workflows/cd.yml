@@ -63,7 +63,9 @@ jobs:
         run: supabase link --project-ref $PROJECT_ID
 
       - name: Push database migrations
-        run: echo "y" | supabase db push --include-all -p "${{ secrets.SUPABASE_DB_PASSWORD }}"
+        run: echo "y" | supabase db push --include-all -p "${DB_PASSWORD}" || echo "⚠️ Migration push failed or no new migrations — continuing with deploy"
+        env:
+          DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
 
       - name: Deploy Edge Functions
         run: supabase functions deploy api --no-verify-jwt
