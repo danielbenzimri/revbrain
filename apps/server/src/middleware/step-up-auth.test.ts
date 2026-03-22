@@ -29,12 +29,15 @@ describe('requireRecentAuth middleware', () => {
   });
 
   it('blocks old auth (10 min ago with 5 min limit)', async () => {
+    const origAuthMode = process.env.AUTH_MODE;
+    process.env.AUTH_MODE = 'jwt';
     const iat = Math.floor(Date.now() / 1000) - 600; // 10 minutes ago
     const app = createApp(5, iat);
     const res = await app.request('/test');
     expect(res.status).toBe(403);
     const body = (await res.json()) as { error: { code: string } };
     expect(body.error.code).toBe('STEP_UP_REQUIRED');
+    process.env.AUTH_MODE = origAuthMode;
   });
 
   it('allows when no iat claim exists', async () => {
@@ -51,10 +54,13 @@ describe('requireRecentAuth middleware', () => {
   });
 
   it('blocks at boundary (6 min ago with 5 min limit)', async () => {
+    const origAuthMode = process.env.AUTH_MODE;
+    process.env.AUTH_MODE = 'jwt';
     const iat = Math.floor(Date.now() / 1000) - 360; // 6 minutes ago
     const app = createApp(5, iat);
     const res = await app.request('/test');
     expect(res.status).toBe(403);
+    process.env.AUTH_MODE = origAuthMode;
   });
 
   it('skips in mock auth mode', async () => {
