@@ -1,0 +1,132 @@
+# =============================================================================
+# CD - Continuous Deployment
+# =============================================================================
+# Runs on: Push to main or staging (after CI passes)
+# Purpose: Deploy backend (Supabase Edge Functions) + frontend (Vercel)
+#
+# Flow:
+#   staging branch → revbrain-stg (Supabase) + revbrain-stg (Vercel)
+#   main branch    → revbrain-prd (Supabase) + revbrain (Vercel)
+#
+# Required GitHub Secrets:
+#   SUPABASE_ACCESS_TOKEN     — Supabase CLI auth token
+#   SUPABASE_PROJECT_ID_STG   — qutuivleheybnkbhpdbn
+#   SUPABASE_PROJECT_ID_PROD  — kfalhnqyzoghalidubrs
+#   SUPABASE_DB_PASSWORD      — Database password for migrations
+#   VERCEL_TOKEN              — Vercel API token
+#   VERCEL_ORG_ID             — Vercel team/org ID
+#   VERCEL_PROJECT_ID_STG     — Vercel project ID for staging
+#   VERCEL_PROJECT_ID_PROD    — Vercel project ID for production
+# =============================================================================
+
+name: CD
+
+on:
+  push:
+    branches: [main, staging]
+
+concurrency:
+  group: cd-${{ github.ref }}
+  cancel-in-progress: false # Don't cancel in-progress deploys
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Deploy Backend (Supabase Edge Functions)
+  # ---------------------------------------------------------------------------
+  deploy-backend:
+    name: Deploy Backend
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Determine environment
+        run: |
+          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "PROJECT_ID=${{ secrets.SUPABASE_PROJECT_ID_PROD }}" >> $GITHUB_ENV
+            echo "ENV_NAME=production" >> $GITHUB_ENV
+          else
+            echo "PROJECT_ID=${{ secrets.SUPABASE_PROJECT_ID_STG }}" >> $GITHUB_ENV
+            echo "ENV_NAME=staging" >> $GITHUB_ENV
+          fi
+
+      - name: Link Supabase project
+        run: supabase link --project-ref $PROJECT_ID
+
+      - name: Push database migrations
+        if: hashFiles('supabase/migrations/**') != ''
+        run: supabase db push --include-all
+        env:
+          DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+
+      - name: Deploy Edge Functions
+        run: supabase functions deploy api --no-verify-jwt
+
+      - name: Verify deployment
+        run: |
+          HEALTH_URL="https://${PROJECT_ID}.supabase.co/functions/v1/api/v1/health"
+          echo "Checking: $HEALTH_URL"
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$HEALTH_URL")
+          if [ "$STATUS" != "200" ]; then
+            echo "❌ Health check failed (HTTP $STATUS)"
+            exit 1
+          fi
+          echo "✓ Edge function healthy ($ENV_NAME)"
+
+  # ---------------------------------------------------------------------------
+  # Deploy Frontend (Vercel)
+  # ---------------------------------------------------------------------------
+  deploy-frontend:
+    name: Deploy Frontend
+    needs: deploy-backend
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Determine Vercel project
+        run: |
+          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "VERCEL_PROJECT_ID=${{ secrets.VERCEL_PROJECT_ID_PROD }}" >> $GITHUB_ENV
+            echo "VERCEL_ENV=production" >> $GITHUB_ENV
+          else
+            echo "VERCEL_PROJECT_ID=${{ secrets.VERCEL_PROJECT_ID_STG }}" >> $GITHUB_ENV
+            echo "VERCEL_ENV=production" >> $GITHUB_ENV
+          fi
+
+      - name: Pull Vercel environment
+        run: vercel pull --yes --environment=$VERCEL_ENV --token=$VERCEL_TOKEN
+
+      - name: Build
+        run: vercel build --prod --token=$VERCEL_TOKEN
+
+      - name: Deploy
+        run: |
+          URL=$(vercel deploy --prebuilt --prod --token=$VERCEL_TOKEN)
+          echo "✓ Deployed to: $URL"
