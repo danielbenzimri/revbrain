@@ -2,7 +2,6 @@
 .env
 .env.*
 !.env.example
-!.env.dev.example
 
 # Dependencies
 node_modules/
