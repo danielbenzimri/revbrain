@@ -903,7 +903,7 @@ salesforceRouter.openapi(
             },
             signal: controller.signal,
           });
-        } catch (refreshError) {
+        } catch (_refreshError) {
           await repos.salesforceConnections.updateStatus(
             connection.id,
             'error',
@@ -959,5 +959,77 @@ salesforceRouter.openapi(
     }
   }
 );
+
+// =============================================================================
+// MOCK OAUTH CALLBACK (only available in mock mode)
+// =============================================================================
+
+if (getEnv('AUTH_MODE') === 'mock') {
+  salesforceRouter.get('/oauth/mock-callback', async (c) => {
+    const projectId = c.req.query('projectId') || '';
+    const connectionRole = (c.req.query('role') as 'source' | 'target') || 'source';
+
+    const { repos } = c.var;
+
+    // Create a mock connection
+    const connection = await repos.salesforceConnections.create({
+      projectId,
+      organizationId: '00000000-0000-4000-a000-000000000201', // MOCK_IDS.ORG_ACME
+      connectionRole,
+      salesforceOrgId: '00D5g00000MOCK01',
+      salesforceInstanceUrl: 'https://mock-org.my.salesforce.com',
+      oauthBaseUrl: 'https://login.salesforce.com',
+      salesforceUserId: '0055g00000MOCK01',
+      salesforceUsername: 'admin@mock-org.com',
+      instanceType: 'production',
+      apiVersion: 'v66.0',
+      connectedBy: '00000000-0000-4000-a000-000000000302', // MOCK_IDS.USER_ACME_OWNER
+    });
+
+    // Create mock secrets
+    await repos.salesforceConnectionSecrets.create(
+      connection.id,
+      'mock-access-token',
+      'mock-refresh-token',
+      'api refresh_token id'
+    );
+
+    // Update metadata
+    await repos.salesforceConnections.updateMetadata(connection.id, {
+      cpqInstalled: true,
+      cpqVersion: '242.1',
+      rcaAvailable: false,
+      apiVersion: 'v66.0',
+      dailyApiLimit: 100000,
+      dailyApiRemaining: 99500,
+      sfEdition: 'Enterprise',
+      authorizingUserProfile: 'System Administrator',
+      missingPermissions: [],
+    });
+
+    const appOrigin = getEnv('APP_URL') || 'http://localhost:5173';
+    const cspNonce = crypto.randomUUID();
+
+    return c.html(
+      `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body>
+<p>Mock connection created successfully.</p>
+<script nonce="${cspNonce}">
+const APP_ORIGIN = '${appOrigin}';
+if (window.opener) {
+  window.opener.postMessage({ type: 'sf_connected', role: '${connectionRole}' }, APP_ORIGIN);
+  window.close();
+} else {
+  window.location.href = '/project/${projectId}?sf_connected=true&role=${connectionRole}';
+}
+</script></body></html>`,
+      200,
+      {
+        'Referrer-Policy': 'no-referrer',
+        'Cache-Control': 'no-store',
+        'Content-Security-Policy': `default-src 'self'; script-src 'nonce-${cspNonce}'`,
+      }
+    );
+  });
+}
 
 export { salesforceRouter };
