@@ -300,6 +300,60 @@ export const tenantBillingLimiter = rateLimiter({
   },
 });
 
+// =============================================================================
+// SALESFORCE RATE LIMITERS
+// =============================================================================
+
+/**
+ * Rate limiter for Salesforce OAuth connect initiation
+ * 5 requests per minute per user — prevents OAuth flow abuse
+ *
+ * Key: User ID (authenticated required)
+ */
+export const salesforceConnectLimiter = rateLimiter({
+  windowMs: 60 * 1000, // 1 minute
+  limit: 5,
+  standardHeaders: 'draft-6',
+  keyGenerator: userKeyGenerator,
+  handler: (c) => {
+    return c.json(
+      {
+        success: false,
+        error: {
+          code: 'RATE_LIMIT_EXCEEDED',
+          message: 'Too many connection attempts. Please try again later.',
+        },
+      },
+      429
+    );
+  },
+});
+
+/**
+ * Rate limiter for Salesforce OAuth callback (public-facing)
+ * 10 requests per minute per IP — prevents callback endpoint abuse
+ *
+ * Key: IP address (unauthenticated — called by Salesforce redirect)
+ */
+export const salesforceCallbackLimiter = rateLimiter({
+  windowMs: 60 * 1000, // 1 minute
+  limit: 10,
+  standardHeaders: 'draft-6',
+  keyGenerator: ipKeyGenerator,
+  handler: (c) => {
+    return c.json(
+      {
+        success: false,
+        error: {
+          code: 'RATE_LIMIT_EXCEEDED',
+          message: 'Too many requests. Please try again later.',
+        },
+      },
+      429
+    );
+  },
+});
+
 /**
  * Organization-level export rate limiter
  * 10 exports per hour per organization
