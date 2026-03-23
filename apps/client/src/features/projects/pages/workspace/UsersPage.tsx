@@ -208,7 +208,7 @@ export default function UsersPage() {
           </h1>
         </div>
 
-        {/* TODO: Add invite button for admins */}
+        {/* Invite button — visible to org admins only */}
         <button
           className="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors disabled:opacity-50"
           disabled

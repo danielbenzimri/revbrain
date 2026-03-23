@@ -71,7 +71,7 @@ function decodeJWTHeader(token: string): { alg?: string; kid?: string } {
 /**
  * Remote JWT verification via Supabase Admin SDK.
  * Used as fallback when local verification fails or no JWT secret is configured.
- * Capped at 3s timeout to prevent unbounded latency (following Procure pattern).
+ * Capped at 3s timeout to prevent unbounded latency.
  */
 async function verifyTokenRemotely(token: string): Promise<SupabaseJWTPayload> {
   const REMOTE_TIMEOUT_MS = 3000;
@@ -292,8 +292,8 @@ export const authMiddleware = createMiddleware<AppEnv>(async (c, next) => {
     if (isES256) {
       // ES256 = Supabase-signed JWT. On Edge Functions the Supabase gateway already
       // verified the signature, so we just decode the claims (no crypto, ~0ms).
-      // This follows Procure's proven pattern — full JWKS verification was adding
-      // network calls + crypto overhead on every request for zero security gain.
+      // Full JWKS verification would add network calls + crypto overhead on every
+      // request for zero security gain (see docs/adr/005-jwt-impersonation.md).
       try {
         const decoded = decode(token);
         payload = decoded.payload as unknown as SupabaseJWTPayload;

@@ -33,7 +33,7 @@ function selectEngine(options: RepositoryMiddlewareOptions): RepositoryEngine {
   const isSupabaseEdge = typeof Deno !== 'undefined' && !!Deno.env?.get('SUPABASE_URL');
 
   if (isSupabaseEdge && options.preferAccelerated !== false) {
-    return 'drizzle'; // TODO: Return 'supabase' when implemented
+    return 'drizzle';
   }
 
   return 'drizzle';

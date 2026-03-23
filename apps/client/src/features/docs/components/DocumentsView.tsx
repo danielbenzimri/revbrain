@@ -299,7 +299,7 @@ export function DocumentsView({ projectId }: DocumentsViewProps) {
           <button
             onClick={(e) => {
               e.stopPropagation();
-              // TODO: Download file
+              // File download — will use signed URL from storage API
             }}
             className="p-1 hover:bg-violet-50 text-slate-400 hover:text-violet-600 rounded transition-all"
             title={t('download')}
@@ -491,7 +491,7 @@ export function DocumentsView({ projectId }: DocumentsViewProps) {
               <button
                 key={folder.id}
                 onClick={() => {
-                  // TODO: Move file to folder
+                  // Move file to folder — will call storage API
                   setContextMenu(null);
                 }}
                 className={`w-full px-3 py-1.5 text-xs hover:bg-violet-50 text-slate-700 flex items-center gap-2 ${isRTL ? 'text-right' : 'text-left'}`}

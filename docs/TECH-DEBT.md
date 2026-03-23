@@ -52,13 +52,16 @@ Triggered by operational needs, not scheduled.
 
 ## Code Quality — Known Issues
 
-| Item                                 | Location                                                              | Impact                                                            | Priority                                         |
-| ------------------------------------ | --------------------------------------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------ |
-| **In-app notifications (2.17-2.18)** | Not yet built                                                         | Admins discover issues only by checking dashboard                 | Low — slippable, build when needed               |
-| **Geometrix CSS warning**            | `use-virtual-list.ts` — TanStack Virtual incompatible-library warning | ESLint warning (1), not an error                                  | Low — third-party library issue                  |
-| **Dual mock system**                 | `LocalAPIAdapter` (client) vs mock server (server)                    | LocalAPIAdapter reduced to auth-only stub; mock server is primary | Resolved — documented in code                    |
-| **Step-up auth mechanism**           | Uses JWT `iat` claim as proxy for last MFA time                       | Works but not a true MFA re-challenge — requires session refresh  | Acceptable for now; upgrade when MFA is enforced |
-| **Test coverage %**                  | Unknown — not formally measured                                       | Cannot assert coverage targets                                    | Low — 889+ tests exist, critical paths covered   |
+| Item                                    | Location                                                     | Impact                                                                     | Priority                                                          |
+| --------------------------------------- | ------------------------------------------------------------ | -------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| **In-app notifications (2.17-2.18)**    | Not yet built                                                | Admins discover issues only by checking dashboard                          | Low — slippable, build when needed                                |
+| **File download/move in DocumentsView** | `apps/client/src/features/docs/components/DocumentsView.tsx` | Download and move-to-folder buttons are wired but have no implementation   | Core product — implement with file management feature             |
+| **Lead → Tenant conversion**            | `apps/server/src/services/lead.service.ts:402`               | Won leads are marked as won but don't auto-create a tenant org             | Core product — wire OnboardingService when lead pipeline is built |
+| **Client-side Sentry**                  | `apps/client/src/components/error-boundary.tsx`              | Error boundary catches errors but doesn't report to Sentry                 | Blocked on Sentry setup                                           |
+| **Remote storage/DB adapters**          | `apps/client/src/lib/adapters/remote/storage.ts`, `db.ts`    | Stub adapters that throw — data goes through API, not direct client access | May never be needed — API-first architecture                      |
+| **TanStack Virtual warning**            | `use-virtual-list.ts` — incompatible-library ESLint warning  | 1 ESLint warning, not an error                                             | Low — third-party library issue                                   |
+| **Step-up auth mechanism**              | Uses JWT `iat` claim as proxy for last MFA time              | Works but not a true MFA re-challenge — requires session refresh           | Acceptable for now; upgrade when MFA is enforced                  |
+| **Test coverage %**                     | Unknown — not formally measured                              | Cannot assert coverage targets                                             | Low — 889+ tests exist, critical paths covered                    |
 
 ---
 

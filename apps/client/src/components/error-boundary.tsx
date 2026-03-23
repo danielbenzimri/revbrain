@@ -37,10 +37,8 @@ export class ErrorBoundary extends Component<Props, State> {
     // Log error to console in development
     console.error('ErrorBoundary caught an error:', error, errorInfo);
 
-    // TODO: In production, send to error tracking service (e.g., Sentry)
-    // if (import.meta.env.PROD) {
-    //   captureException(error, { extra: errorInfo });
-    // }
+    // Sentry integration: uncomment when SENTRY_DSN is configured
+    // if (import.meta.env.PROD) { captureException(error, { extra: errorInfo }); }
   }
 
   handleRetry = () => {

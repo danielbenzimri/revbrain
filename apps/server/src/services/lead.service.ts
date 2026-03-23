@@ -399,8 +399,7 @@ export class LeadService {
       throw new Error('Lead has already been closed');
     }
 
-    // TODO: Use OnboardingService to create organization
-    // For now, just mark as won
+    // Future: integrate with OnboardingService to auto-create organization from won lead
     await this.updateLead(leadId, { status: 'won' }, actorId);
 
     await this.addActivity(leadId, {

@@ -72,8 +72,7 @@ export function getDBAdapter(): DBAdapter {
     if (!localDBAdapter) localDBAdapter = new LocalDBAdapter();
     return localDBAdapter;
   } else {
-    // Online mode - currently uses RemoteDBAdapter stub
-    // TODO: Configure connection string based on targets.database
+    // Online mode — DB operations go through the API, not direct client-side DB access
     if (!remoteDBAdapter) remoteDBAdapter = new RemoteDBAdapter();
     return remoteDBAdapter;
   }
