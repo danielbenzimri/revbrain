@@ -193,12 +193,7 @@ export const authMiddleware = createMiddleware<AppEnv>(async (c, next) => {
 
     // DB fallback for legacy mock token behavior (dynamic import — only in mock mode)
     const mockEmail = `mock.${userId}@revbrain.io`;
-    const {
-      db,
-      users: usersTable,
-      organizations: orgsTable,
-      eq: eqOp,
-    } = await import('@revbrain/database');
+    const { db, users: usersTable, organizations: orgsTable } = await import('@revbrain/database');
     let localUser = await db.query.users.findFirst({
       where: (u, { or, eq: eqFn }) => or(eqFn(u.id, userId), eqFn(u.email, mockEmail)),
     });
