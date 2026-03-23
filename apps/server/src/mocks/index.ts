@@ -11,6 +11,8 @@ import type {
   UserEntity,
   AuditLogEntity,
   ProjectEntity,
+  SalesforceConnectionEntity,
+  SalesforceConnectionSecretsEntity,
 } from '@revbrain/contract';
 import {
   MOCK_IDS as _MOCK_IDS,
@@ -24,6 +26,8 @@ import {
   SEED_TICKET_MESSAGES,
   SEED_COUPONS,
   SEED_TENANT_OVERRIDES,
+  SEED_SALESFORCE_CONNECTIONS,
+  SEED_SALESFORCE_CONNECTION_SECRETS,
   type SeedTicket,
   type SeedTicketMessage,
   type SeedCoupon,
@@ -42,6 +46,8 @@ export {
   SEED_TICKET_MESSAGES,
   SEED_COUPONS,
   SEED_TENANT_OVERRIDES,
+  SEED_SALESFORCE_CONNECTIONS,
+  SEED_SALESFORCE_CONNECTION_SECRETS,
 } from '@revbrain/seed-data';
 export type {
   SeedTicket,
@@ -60,6 +66,12 @@ export let mockTickets: SeedTicket[] = cloneArray(SEED_TICKETS);
 export let mockTicketMessages: SeedTicketMessage[] = cloneArray(SEED_TICKET_MESSAGES);
 export let mockCoupons: SeedCoupon[] = cloneArray(SEED_COUPONS);
 export let mockTenantOverrides: SeedTenantOverride[] = cloneArray(SEED_TENANT_OVERRIDES);
+export let mockSalesforceConnections: SalesforceConnectionEntity[] = cloneArray(
+  SEED_SALESFORCE_CONNECTIONS
+);
+export let mockSalesforceConnectionSecrets: SalesforceConnectionSecretsEntity[] = cloneArray(
+  SEED_SALESFORCE_CONNECTION_SECRETS
+);
 
 /**
  * Reset all mutable stores to their initial seed state.
@@ -75,4 +87,6 @@ export function resetAllMockData(): void {
   mockTicketMessages = cloneArray(SEED_TICKET_MESSAGES);
   mockCoupons = cloneArray(SEED_COUPONS);
   mockTenantOverrides = cloneArray(SEED_TENANT_OVERRIDES);
+  mockSalesforceConnections = cloneArray(SEED_SALESFORCE_CONNECTIONS);
+  mockSalesforceConnectionSecrets = cloneArray(SEED_SALESFORCE_CONNECTION_SECRETS);
 }
