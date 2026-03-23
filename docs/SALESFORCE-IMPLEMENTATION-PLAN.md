@@ -1782,19 +1782,19 @@ All migrations backward-compatible. `pnpm drizzle-kit generate` per phase, test 
 | 1.3   | Database Schema — Core Salesforce Tables      | ✅ Done        | `472fb28` |
 | 1.4   | RLS Policies for Salesforce Tables            | ⬜ Not Started | —         |
 | 1.5   | Repository Interfaces — Contract Package      | ✅ Done        | `e3f258f` |
-| 1.6   | Drizzle Repository Implementations            | ⬜ Not Started | —         |
-| 1.7   | Mock Repository Implementations               | ⬜ Not Started | —         |
+| 1.6   | Drizzle Repository Implementations            | ✅ Done        | `1eb9333` |
+| 1.7   | Mock Repository Implementations               | ✅ Done        | `ed42ef1` |
 | 1.8   | OAuth Service                                 | ✅ Done        | `0e3625b` |
-| 1.9   | Rate Limiting for Salesforce Endpoints        | ⬜ Not Started | —         |
-| 1.10  | OAuth Route — Connect Endpoint                | ⬜ Not Started | —         |
-| 1.11  | OAuth Route — Callback Endpoint               | ⬜ Not Started | —         |
-| 1.12  | Post-Connection Permission Audit              | ⬜ Not Started | —         |
-| 1.13  | Status, Test, Disconnect, Reconnect Endpoints | ⬜ Not Started | —         |
+| 1.9   | Rate Limiting for Salesforce Endpoints        | ✅ Done        | `ac54c24` |
+| 1.10  | OAuth Route — Connect Endpoint                | ✅ Done | `1930084` |
+| 1.11  | OAuth Route — Callback Endpoint               | ✅ Done | `1930084` |
+| 1.12  | Post-Connection Permission Audit              | ✅ Done | `1930084` |
+| 1.13  | Status, Test, Disconnect, Reconnect Endpoints | ✅ Done | `1930084` |
 | 1.14  | Client UI — Salesforce Connection Components  | ⬜ Not Started | —         |
-| 1.15  | Mock Mode Support                             | ⬜ Not Started | —         |
-| 1.16  | Environment Variables                         | ✅ Done        | `87d3c4b` |
-| 1.17  | Pending Flow Cleanup Job                      | ⬜ Not Started | —         |
-| 1.18  | Customer-Facing Setup Guide                   | ⬜ Not Started | —         |
+| 1.15  | Mock Mode Support                             | ✅ Done | `338c8ad` |
+| 1.16  | Environment Variables                         | ✅ Done | `87d3c4b` |
+| 1.17  | Pending Flow Cleanup Job                      | ✅ Done | `338c8ad` |
+| 1.18  | Customer-Facing Setup Guide                   | ✅ Done | `338c8ad` |
 | 1.19  | Security Checklist Verification — Phase 1     | ⬜ Not Started | —         |
 | 2.0   | Worker App Foundation                         | ⬜ Not Started | —         |
 | 2.0.1 | Assessment Run Data Model                     | ⬜ Not Started | —         |
