@@ -13,6 +13,12 @@ import { DrizzleOrganizationRepository } from './organization.repository.ts';
 import { DrizzlePlanRepository } from './plan.repository.ts';
 import { DrizzleAuditLogRepository } from './audit-log.repository.ts';
 import { DrizzleProjectRepository } from './project.repository.ts';
+import {
+  StubSalesforceConnectionRepository,
+  StubSalesforceConnectionSecretsRepository,
+  StubOauthPendingFlowRepository,
+  StubSalesforceConnectionLogRepository,
+} from '../salesforce-stubs.ts';
 export type { DrizzleDB } from '@revbrain/database';
 
 // Re-export individual repositories
@@ -37,6 +43,11 @@ export function createDrizzleRepositories(dbOrTx?: DrizzleDB): Repositories {
     plans: new DrizzlePlanRepository(instance),
     auditLogs: new DrizzleAuditLogRepository(instance),
     projects: new DrizzleProjectRepository(instance),
+    // Salesforce repos — stubs replaced by real implementations in Task 1.6
+    salesforceConnections: new StubSalesforceConnectionRepository(),
+    salesforceConnectionSecrets: new StubSalesforceConnectionSecretsRepository(),
+    oauthPendingFlows: new StubOauthPendingFlowRepository(),
+    salesforceConnectionLogs: new StubSalesforceConnectionLogRepository(),
   };
 }
 

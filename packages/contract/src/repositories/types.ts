@@ -370,6 +370,184 @@ export interface ProjectEntity {
 }
 
 // ============================================================
+// SALESFORCE CONNECTION ENTITIES
+// ============================================================
+
+/**
+ * Salesforce connection metadata — does NOT include decrypted tokens.
+ * Used for display, status checks, and connection management.
+ */
+export interface SalesforceConnectionEntity {
+  id: string;
+  projectId: string;
+  organizationId: string;
+  connectionRole: 'source' | 'target';
+  salesforceOrgId: string;
+  salesforceInstanceUrl: string;
+  customLoginUrl: string | null;
+  oauthBaseUrl: string;
+  salesforceUserId: string | null;
+  salesforceUsername: string | null;
+  instanceType: 'production' | 'sandbox';
+  apiVersion: string | null;
+  connectionMetadata: Record<string, unknown> | null;
+  status: string;
+  lastUsedAt: Date | null;
+  lastSuccessfulApiCallAt: Date | null;
+  lastError: string | null;
+  lastErrorAt: Date | null;
+  connectedBy: string | null;
+  disconnectedBy: string | null;
+  disconnectedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CreateSalesforceConnectionInput {
+  projectId: string;
+  organizationId: string;
+  connectionRole: 'source' | 'target';
+  salesforceOrgId: string;
+  salesforceInstanceUrl: string;
+  customLoginUrl?: string | null;
+  oauthBaseUrl: string;
+  salesforceUserId?: string | null;
+  salesforceUsername?: string | null;
+  instanceType: 'production' | 'sandbox';
+  apiVersion?: string | null;
+  connectedBy: string;
+}
+
+export interface SalesforceConnectionRepository {
+  findById(id: string): Promise<SalesforceConnectionEntity | null>;
+  findByProjectAndRole(
+    projectId: string,
+    role: 'source' | 'target'
+  ): Promise<SalesforceConnectionEntity | null>;
+  findByProject(projectId: string): Promise<SalesforceConnectionEntity[]>;
+  findByOrganization(organizationId: string): Promise<SalesforceConnectionEntity[]>;
+  findAllActive(): Promise<SalesforceConnectionEntity[]>;
+  create(data: CreateSalesforceConnectionInput): Promise<SalesforceConnectionEntity>;
+  updateStatus(
+    id: string,
+    status: string,
+    error?: string | null
+  ): Promise<SalesforceConnectionEntity | null>;
+  updateMetadata(
+    id: string,
+    metadata: Record<string, unknown>
+  ): Promise<SalesforceConnectionEntity | null>;
+  disconnect(id: string, disconnectedBy: string): Promise<boolean>;
+  delete(id: string): Promise<boolean>;
+}
+
+// ============================================================
+// SALESFORCE CONNECTION SECRETS ENTITIES
+// ============================================================
+
+/**
+ * Decrypted Salesforce OAuth tokens.
+ * Only returned from methods that explicitly need tokens (API calls, refresh).
+ */
+export interface SalesforceConnectionSecretsEntity {
+  id: string;
+  connectionId: string;
+  accessToken: string; // Decrypted
+  refreshToken: string; // Decrypted
+  encryptionKeyVersion: number;
+  tokenVersion: number;
+  tokenIssuedAt: Date | null;
+  tokenScopes: string | null;
+  lastRefreshAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface SalesforceConnectionSecretsRepository {
+  findByConnectionId(connectionId: string): Promise<SalesforceConnectionSecretsEntity | null>;
+  create(
+    connectionId: string,
+    accessToken: string,
+    refreshToken: string,
+    scopes?: string
+  ): Promise<SalesforceConnectionSecretsEntity>;
+  /** Returns null if tokenVersion doesn't match (optimistic lock failed — another process refreshed). */
+  updateTokens(
+    connectionId: string,
+    accessToken: string,
+    expectedTokenVersion: number
+  ): Promise<SalesforceConnectionSecretsEntity | null>;
+  deleteByConnectionId(connectionId: string): Promise<boolean>;
+}
+
+// ============================================================
+// OAUTH PENDING FLOWS ENTITIES
+// ============================================================
+
+export interface OauthPendingFlowEntity {
+  nonce: string;
+  projectId: string;
+  organizationId: string;
+  userId: string;
+  connectionRole: string;
+  codeVerifier: string;
+  oauthBaseUrl: string;
+  expiresAt: Date;
+  createdAt: Date;
+}
+
+export interface CreateOauthPendingFlowInput {
+  nonce: string;
+  projectId: string;
+  organizationId: string;
+  userId: string;
+  connectionRole: string;
+  codeVerifier: string;
+  oauthBaseUrl: string;
+  expiresAt: Date;
+}
+
+export interface OauthPendingFlowRepository {
+  create(data: CreateOauthPendingFlowInput): Promise<OauthPendingFlowEntity>;
+  findByNonce(nonce: string): Promise<OauthPendingFlowEntity | null>;
+  deleteByNonce(nonce: string): Promise<boolean>;
+  /** Inserts new flow. If a flow exists for the same project+role: replaces if expired, throws if still live. */
+  upsertForProject(data: CreateOauthPendingFlowInput): Promise<OauthPendingFlowEntity>;
+  /** Checks if a non-expired flow exists for project+role. Used to derive "connecting" status. */
+  findLiveByProjectAndRole(projectId: string, role: string): Promise<OauthPendingFlowEntity | null>;
+  /** Deletes all expired flows. Returns count of deleted rows. */
+  cleanupExpired(): Promise<number>;
+}
+
+// ============================================================
+// SALESFORCE CONNECTION LOGS ENTITIES
+// ============================================================
+
+export interface SalesforceConnectionLogEntity {
+  id: string;
+  connectionId: string;
+  event: string;
+  details: Record<string, unknown> | null;
+  performedBy: string | null;
+  createdAt: Date;
+}
+
+export interface CreateSalesforceConnectionLogInput {
+  connectionId: string;
+  event: string;
+  details?: Record<string, unknown> | null;
+  performedBy?: string | null;
+}
+
+export interface SalesforceConnectionLogRepository {
+  create(data: CreateSalesforceConnectionLogInput): Promise<SalesforceConnectionLogEntity>;
+  findByConnection(
+    connectionId: string,
+    options?: FindManyOptions
+  ): Promise<SalesforceConnectionLogEntity[]>;
+}
+
+// ============================================================
 // REPOSITORY CONTAINER
 // ============================================================
 
@@ -379,6 +557,10 @@ export interface Repositories {
   plans: PlanRepository;
   auditLogs: AuditLogRepository;
   projects: ProjectRepository;
+  salesforceConnections: SalesforceConnectionRepository;
+  salesforceConnectionSecrets: SalesforceConnectionSecretsRepository;
+  oauthPendingFlows: OauthPendingFlowRepository;
+  salesforceConnectionLogs: SalesforceConnectionLogRepository;
 }
 
 // ============================================================

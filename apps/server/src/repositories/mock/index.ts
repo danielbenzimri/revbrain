@@ -13,6 +13,12 @@ import { MockProjectRepository } from './project.repository.ts';
 import { MockTicketRepository } from './ticket.repository.ts';
 import { MockCouponRepository } from './coupon.repository.ts';
 import { MockOverrideRepository } from './override.repository.ts';
+import {
+  StubSalesforceConnectionRepository,
+  StubSalesforceConnectionSecretsRepository,
+  StubOauthPendingFlowRepository,
+  StubSalesforceConnectionLogRepository,
+} from '../salesforce-stubs.ts';
 
 export { resetAllMockData as resetMockData } from '../../mocks/index.ts';
 export { MockTicketRepository } from './ticket.repository.ts';
@@ -30,6 +36,11 @@ export function createMockRepositories(): Repositories {
     plans: new MockPlanRepository(),
     auditLogs: new MockAuditLogRepository(),
     projects: new MockProjectRepository(),
+    // Salesforce repos — stubs replaced by real implementations in Task 1.7
+    salesforceConnections: new StubSalesforceConnectionRepository(),
+    salesforceConnectionSecrets: new StubSalesforceConnectionSecretsRepository(),
+    oauthPendingFlows: new StubOauthPendingFlowRepository(),
+    salesforceConnectionLogs: new StubSalesforceConnectionLogRepository(),
   };
 }
 

@@ -15,6 +15,12 @@ import { PostgRESTOrganizationRepository } from './organization.repository.ts';
 import { PostgRESTPlanRepository } from './plan.repository.ts';
 import { PostgRESTAuditLogRepository } from './audit-log.repository.ts';
 import { PostgRESTProjectRepository } from './project.repository.ts';
+import {
+  StubSalesforceConnectionRepository,
+  StubSalesforceConnectionSecretsRepository,
+  StubOauthPendingFlowRepository,
+  StubSalesforceConnectionLogRepository,
+} from '../salesforce-stubs.ts';
 
 // Re-export individual repositories
 export { PostgRESTUserRepository } from './user.repository.ts';
@@ -35,5 +41,10 @@ export function createPostgRESTRepositories(supabase: SupabaseClient): Repositor
     plans: new PostgRESTPlanRepository(supabase),
     auditLogs: new PostgRESTAuditLogRepository(supabase),
     projects: new PostgRESTProjectRepository(supabase),
+    // Salesforce repos — stubs for PostgREST engine (Salesforce ops use Drizzle directly)
+    salesforceConnections: new StubSalesforceConnectionRepository(),
+    salesforceConnectionSecrets: new StubSalesforceConnectionSecretsRepository(),
+    oauthPendingFlows: new StubOauthPendingFlowRepository(),
+    salesforceConnectionLogs: new StubSalesforceConnectionLogRepository(),
   };
 }
