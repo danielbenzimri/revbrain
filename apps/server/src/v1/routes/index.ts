@@ -11,6 +11,7 @@ import { supportRouter } from './support.ts';
 import { webhooksRouter } from './webhooks.ts';
 import { devRouter } from './dev.ts';
 import { projectsRouter } from './projects.ts';
+import { salesforceRouter } from './salesforce.ts';
 import { type AppEnv } from '../../types/index.ts';
 
 /**
@@ -51,6 +52,12 @@ v1Router.route('/support', supportRouter);
 
 // Projects routes (project management)
 v1Router.route('/projects', projectsRouter);
+
+// Salesforce routes (OAuth connect/disconnect, project-scoped)
+v1Router.route('/projects', salesforceRouter);
+
+// Salesforce OAuth callback (public-facing, called by Salesforce redirect)
+v1Router.route('/salesforce', salesforceRouter);
 
 // Webhook routes (external services - no auth, uses signature verification)
 v1Router.route('/webhooks', webhooksRouter);
