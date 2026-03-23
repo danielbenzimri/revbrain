@@ -139,6 +139,35 @@ Tenant overrides allow temporary feature grants/revocations independent of plan.
 **Decision:** CD (deploy) only runs after CI (lint+test+build) passes. Uses GitHub Actions `workflow_run` trigger.
 **Why:** Prevents deploying broken code. CI failure = no deploy. The previous approach (CI and CD in parallel) risked deploying untested code.
 
+### ADR-008: PostgREST Repositories for Edge Functions
+
+**Decision:** On Supabase Edge Functions (Deno runtime), use PostgREST repositories (Supabase JS client over HTTP) instead of Drizzle (postgres.js over TCP).
+
+**Why:** postgres.js initialization in Deno triggers Node.js polyfill loading (`Deno.core.runMicrotasks`), causing 3-5 second cold starts. PostgREST initializes instantly (just HTTP — no TCP connection, no Node polyfills).
+
+**Implementation:**
+
+- `repositories/postgrest/` — 5 repository classes implementing the same `Repositories` interface as Drizzle repos
+- `repositories/middleware.ts` — runtime detection: `isEdgeRuntime()` → PostgREST, else → Drizzle
+- `case-map.ts` — bidirectional snake_case ↔ camelCase conversion (Supabase returns snake_case, entities use camelCase)
+- Routes don't change — `c.var.repos.users.findById()` works identically regardless of engine
+- Dynamic imports prevent loading postgres.js on Edge (never imported if PostgREST mode)
+
+**Engine selection:**
+
+```
+Mock Mode:  pnpm local    → MockRepositories (in-memory)
+Edge Fn:    Deno + creds  → PostgRESTRepositories (HTTP/instant)
+Node.js:    pnpm dev      → DrizzleRepositories (TCP/type-safe)
+```
+
+**Performance:**
+
+- Cold start: 3s → <500ms (6x improvement)
+- Warm requests: 500ms → ~200ms (PostgREST is closer to the DB)
+
+**Pattern from:** Procure (sister project), where this optimization was proven in production.
+
 ---
 
 ## Billing Architecture

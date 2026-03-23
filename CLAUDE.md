@@ -28,7 +28,7 @@ pnpm db:seed        # Seed staging DB
 
 ## Key Patterns
 
-- **Dual-adapter:** Mock mode (in-memory) and production mode (Supabase/Drizzle) share the same interfaces
+- **Triple-adapter:** Mock (in-memory), PostgREST (Supabase JS/HTTP for Edge), Drizzle (postgres.js/TCP for Node) — same interface, runtime-selected
 - **Contract-first:** All shared types in `@revbrain/contract`. Server and client both depend on it.
 - **Feature gating:** `requireFeature()`, `requireUserCapacity()` middleware enforce plan limits
 - **Admin permissions:** `requireAdminPermission('users:write')` — not role-based, permission-based
