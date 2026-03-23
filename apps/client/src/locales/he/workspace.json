@@ -1,0 +1,209 @@
+{
+  "sidebar": {
+    "migration": "מיגרציה",
+    "operations": "תפעול",
+    "projectSection": "פרויקט",
+    "overview": "סקירה כללית",
+    "cpqExplorer": "סייר CPQ",
+    "assessment": "הערכה",
+    "deployment": "פריסה",
+    "runs": "הרצות",
+    "issues": "בעיות",
+    "team": "צוות",
+    "activity": "פעילות",
+    "artifacts": "קבצים ומסמכים",
+    "settings": "הגדרות",
+    "notifications": "התראות",
+    "connectionStatus": "סטטוס חיבור",
+    "sourceOrg": "מקור",
+    "targetOrg": "יעד",
+    "apiBudget": "תקציב API",
+    "apiResets": "איפוס בעוד {{time}}",
+    "locked": "נעול",
+    "unlockHint": {
+      "cpqExplorer": "חלץ נתונים מארגון המקור כדי לפתוח",
+      "assessment": "השלם חילוץ נתונים כדי לפתוח",
+      "deployment": "השלם הערכה כדי לפתוח"
+    },
+    "projectSwitcher": "החלף פרויקט",
+    "searchProjects": "חיפוש פרויקטים...",
+    "recentProjects": "פרויקטים אחרונים",
+    "collapse": "כווץ סרגל צד",
+    "expand": "הרחב סרגל צד"
+  },
+  "health": {
+    "source": "מקור",
+    "data": "נתונים",
+    "assessment": "הערכה",
+    "target": "יעד",
+    "deploy": "פריסה",
+    "validate": "אימות",
+    "connected": "מחובר",
+    "notConnected": "לא מחובר",
+    "notExtracted": "לא חולץ",
+    "waiting": "ממתין",
+    "recordCount": "{{count}} רשומות",
+    "rulesAnalyzed": "{{count}} כללים נותחו",
+    "deployed": "נפרס",
+    "passed": "עבר",
+    "inProgress": "בתהליך",
+    "failed": "נכשל"
+  },
+  "overview": {
+    "title": "סקירה כללית",
+    "connectionCards": {
+      "source": "ארגון מקור",
+      "target": "ארגון יעד",
+      "connectSource": "חבר ארגון מקור",
+      "connectTarget": "חבר ארגון יעד",
+      "orgType": "סוג",
+      "cpqVersion": "גרסת CPQ",
+      "apiVersion": "גרסת API",
+      "health": "תקינות",
+      "lastSync": "סנכרון אחרון",
+      "objects": "אובייקטים",
+      "records": "רשומות",
+      "test": "בדוק",
+      "reExtract": "חלץ מחדש",
+      "disconnect": "נתק",
+      "connect": "חבר",
+      "noTargetDescription": "חבר את ארגון Revenue Cloud Advanced שלך כדי לפרוס תצורות שהומרו.",
+      "noSourceDescription": "חבר את ארגון Salesforce CPQ שלך כדי להתחיל בניתוח המיגרציה.",
+      "healthy": "תקין",
+      "degraded": "ירוד",
+      "disconnected": "מנותק"
+    },
+    "whatsNext": {
+      "title": "מה הלאה"
+    },
+    "topIssues": {
+      "title": "בעיות עיקריות",
+      "viewAll": "הצג הכל",
+      "noIssues": "לא נמצאו בעיות",
+      "noIssuesDescription": "הפרויקט שלך רץ חלק."
+    },
+    "recentActivity": {
+      "title": "פעילות אחרונה",
+      "viewAll": "הצג הכל",
+      "noActivity": "אין פעילות עדיין",
+      "noActivityDescription": "פעילות תופיע כאן כשתעבוד על הפרויקט."
+    }
+  },
+  "whatsNext": {
+    "connectSource": {
+      "title": "חבר את ארגון ה-Salesforce המקורי",
+      "description": "התחל בחיבור ארגון ה-Salesforce שמכיל את תצורת ה-CPQ שלך. ננתח אותו כדי לתכנן את המיגרציה.",
+      "cta": "חבר ארגון מקור",
+      "secondary": "למד על תהליך המיגרציה"
+    },
+    "extractData": {
+      "title": "חלץ את נתוני ה-CPQ",
+      "description": "ארגון המקור מחובר. הרץ חילוץ נתונים כדי לנתח את תצורת ה-CPQ והרשומות שלך.",
+      "cta": "התחל חילוץ",
+      "secondary": "הצג פרטי חיבור"
+    },
+    "connectTarget": {
+      "title": "חבר את ארגון היעד",
+      "description": "ההערכה הושלמה. חבר את ארגון Revenue Cloud Advanced שלך כדי להתחיל בפריסת התצורות שהומרו.",
+      "cta": "חבר ארגון יעד",
+      "secondary": "סקור תוצאות הערכה"
+    },
+    "complete": {
+      "title": "המיגרציה הושלמה",
+      "description": "כל שלבי המיגרציה הושלמו. תצורת ה-CPQ שלך הומרה בהצלחה ל-Revenue Cloud Advanced.",
+      "cta": "הצג דוח סופי"
+    }
+  },
+  "activity": {
+    "assessmentCompleted": "הרצת הערכה הושלמה",
+    "extractionCompleted": "חילוץ נתונים הושלם",
+    "userJoined": "{{user}} הצטרף לפרויקט",
+    "settingsUpdated": "הגדרות הפרויקט עודכנו",
+    "sourceConnected": "ארגון המקור חובר בהצלחה",
+    "targetConnected": "ארגון היעד חובר בהצלחה",
+    "projectCreated": "הפרויקט נוצר",
+    "validationPassed": "האימות עבר — כל הבדיקות ירוקות",
+    "deploymentCompleted": "הפריסה הושלמה בהצלחה",
+    "assessmentFinalized": "ההערכה הסתיימה"
+  },
+  "placeholder": {
+    "cpqExplorer": {
+      "title": "סייר CPQ",
+      "heading": "חקור את נתוני ה-CPQ שלך",
+      "description": "לאחר חילוץ נתונים מארגון המקור, תראה כאן פירוט מפורט של כל אובייקטי CPQ, שדות ורשומות.",
+      "cta": "עבור לסקירה",
+      "locked": "חלץ נתונים מארגון המקור כדי לפתוח את סייר ה-CPQ."
+    },
+    "assessment": {
+      "title": "הערכה",
+      "heading": "הערכת מוכנות למיגרציה",
+      "description": "לאחר חילוץ הנתונים, RevBrain מנתח את תצורת ה-CPQ שלך כדי לקבוע תאימות מיגרציה והערכות מאמץ.",
+      "cta": "עבור לסקירה",
+      "locked": "השלם חילוץ נתונים כדי לפתוח את ההערכה."
+    },
+    "deployment": {
+      "title": "פריסה",
+      "heading": "פרוס ל-Revenue Cloud",
+      "description": "כשההערכה תושלם וארגון היעד יחובר, תנהל כאן הרצות פריסה, תעקוב אחר התקדמות ותאמת תוצאות.",
+      "cta": "עבור לסקירה",
+      "locked": "השלם את ההערכה וחבר את ארגון היעד כדי לפתוח את הפריסה."
+    },
+    "runs": {
+      "title": "הרצות",
+      "heading": "הרצות חילוץ ומיגרציה",
+      "description": "עקוב אחר כל הרצות החילוץ, ההערכה, הפריסה והאימות. הצג לוגים, מדדי ביצועים ופרטי שגיאות.",
+      "cta": "עבור לסקירה",
+      "noRuns": "אין הרצות עדיין. התחל חילוץ מדף הסקירה."
+    },
+    "issues": {
+      "title": "בעיות",
+      "heading": "בעיות ואזהרות מיגרציה",
+      "description": "סקור חוסמים, אזהרות והערות מידע שנמצאו במהלך ההערכה. פתור בעיות כדי להמשיך בפריסה.",
+      "cta": "עבור לסקירה",
+      "noIssues": "לא נמצאו בעיות. המיגרציה שלך נראית נקייה."
+    },
+    "team": {
+      "title": "צוות",
+      "heading": "צוות הפרויקט",
+      "description": "נהל מי יש לו גישה לפרויקט, הקצה תפקידים ושלוט בהרשאות לפעולות מיגרציה.",
+      "cta": "הזמן חבר צוות"
+    },
+    "activity": {
+      "title": "פעילות",
+      "heading": "יומן פעילות הפרויקט",
+      "description": "רשומה כרונולוגית של כל הפעולות שבוצעו בפרויקט — חיבורים, חילוצים, הערכות, פריסות ושינויי צוות.",
+      "cta": "עבור לסקירה",
+      "noActivity": "אין פעילות עדיין. אירועים יופיעו כאן כשתעבוד על הפרויקט."
+    },
+    "artifacts": {
+      "title": "קבצים ומסמכים",
+      "heading": "קבצים ומסמכים של הפרויקט",
+      "description": "גש לדוחות שנוצרו, תוכניות מיגרציה, מסמכי מיפוי וחומרי עזר שהועלו לפרויקט.",
+      "cta": "עבור לסקירה",
+      "noArtifacts": "אין קבצים עדיין. דוחות ייוצרו ככל שתתקדם בתהליך המיגרציה."
+    }
+  },
+  "severity": {
+    "blocker": "חוסם",
+    "warning": "אזהרה",
+    "info": "מידע"
+  },
+  "runType": {
+    "extraction": "חילוץ",
+    "assessment": "הערכה",
+    "deployment": "פריסה",
+    "validation": "אימות"
+  },
+  "runStatus": {
+    "completed": "הושלם",
+    "running": "פועל",
+    "failed": "נכשל",
+    "queued": "בתור"
+  },
+  "timeAgo": {
+    "justNow": "הרגע",
+    "minutesAgo": "לפני {{count}} דקות",
+    "hoursAgo": "לפני {{count}} שעות",
+    "daysAgo": "לפני {{count}} ימים"
+  }
+}

@@ -1786,15 +1786,15 @@ All migrations backward-compatible. `pnpm drizzle-kit generate` per phase, test 
 | 1.7   | Mock Repository Implementations               | ✅ Done        | `ed42ef1` |
 | 1.8   | OAuth Service                                 | ✅ Done        | `0e3625b` |
 | 1.9   | Rate Limiting for Salesforce Endpoints        | ✅ Done        | `ac54c24` |
-| 1.10  | OAuth Route — Connect Endpoint                | ✅ Done | `1930084` |
-| 1.11  | OAuth Route — Callback Endpoint               | ✅ Done | `1930084` |
-| 1.12  | Post-Connection Permission Audit              | ✅ Done | `1930084` |
-| 1.13  | Status, Test, Disconnect, Reconnect Endpoints | ✅ Done | `1930084` |
+| 1.10  | OAuth Route — Connect Endpoint                | ✅ Done        | `1930084` |
+| 1.11  | OAuth Route — Callback Endpoint               | ✅ Done        | `1930084` |
+| 1.12  | Post-Connection Permission Audit              | ✅ Done        | `1930084` |
+| 1.13  | Status, Test, Disconnect, Reconnect Endpoints | ✅ Done        | `1930084` |
 | 1.14  | Client UI — Salesforce Connection Components  | ⬜ Not Started | —         |
-| 1.15  | Mock Mode Support                             | ✅ Done | `338c8ad` |
-| 1.16  | Environment Variables                         | ✅ Done | `87d3c4b` |
-| 1.17  | Pending Flow Cleanup Job                      | ✅ Done | `338c8ad` |
-| 1.18  | Customer-Facing Setup Guide                   | ✅ Done | `338c8ad` |
+| 1.15  | Mock Mode Support                             | ✅ Done        | `338c8ad` |
+| 1.16  | Environment Variables                         | ✅ Done        | `87d3c4b` |
+| 1.17  | Pending Flow Cleanup Job                      | ✅ Done        | `338c8ad` |
+| 1.18  | Customer-Facing Setup Guide                   | ✅ Done        | `338c8ad` |
 | 1.19  | Security Checklist Verification — Phase 1     | ⬜ Not Started | —         |
 | 2.0   | Worker App Foundation                         | ⬜ Not Started | —         |
 | 2.0.1 | Assessment Run Data Model                     | ⬜ Not Started | —         |

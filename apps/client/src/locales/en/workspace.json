@@ -1,0 +1,209 @@
+{
+  "sidebar": {
+    "migration": "MIGRATION",
+    "operations": "OPERATIONS",
+    "projectSection": "PROJECT",
+    "overview": "Overview",
+    "cpqExplorer": "CPQ Explorer",
+    "assessment": "Assessment",
+    "deployment": "Deployment",
+    "runs": "Runs",
+    "issues": "Issues",
+    "team": "Team",
+    "activity": "Activity",
+    "artifacts": "Artifacts & Docs",
+    "settings": "Settings",
+    "notifications": "Notifications",
+    "connectionStatus": "Connection Status",
+    "sourceOrg": "Source",
+    "targetOrg": "Target",
+    "apiBudget": "API Budget",
+    "apiResets": "Resets in {{time}}",
+    "locked": "Locked",
+    "unlockHint": {
+      "cpqExplorer": "Extract data from your source org to unlock",
+      "assessment": "Complete data extraction to unlock",
+      "deployment": "Complete assessment to unlock"
+    },
+    "projectSwitcher": "Switch Project",
+    "searchProjects": "Search projects...",
+    "recentProjects": "Recent Projects",
+    "collapse": "Collapse sidebar",
+    "expand": "Expand sidebar"
+  },
+  "health": {
+    "source": "Source",
+    "data": "Data",
+    "assessment": "Assessment",
+    "target": "Target",
+    "deploy": "Deploy",
+    "validate": "Validate",
+    "connected": "Connected",
+    "notConnected": "Not connected",
+    "notExtracted": "Not extracted",
+    "waiting": "Waiting",
+    "recordCount": "{{count}} records",
+    "rulesAnalyzed": "{{count}} rules analyzed",
+    "deployed": "Deployed",
+    "passed": "Passed",
+    "inProgress": "In progress",
+    "failed": "Failed"
+  },
+  "overview": {
+    "title": "Overview",
+    "connectionCards": {
+      "source": "Source Org",
+      "target": "Target Org",
+      "connectSource": "Connect Source Org",
+      "connectTarget": "Connect Target Org",
+      "orgType": "Type",
+      "cpqVersion": "CPQ Version",
+      "apiVersion": "API Version",
+      "health": "Health",
+      "lastSync": "Last Sync",
+      "objects": "Objects",
+      "records": "Records",
+      "test": "Test",
+      "reExtract": "Re-extract",
+      "disconnect": "Disconnect",
+      "connect": "Connect",
+      "noTargetDescription": "Connect your Revenue Cloud Advanced org to deploy migrated configurations.",
+      "noSourceDescription": "Connect your Salesforce CPQ org to begin the migration analysis.",
+      "healthy": "Healthy",
+      "degraded": "Degraded",
+      "disconnected": "Disconnected"
+    },
+    "whatsNext": {
+      "title": "What's Next"
+    },
+    "topIssues": {
+      "title": "Top Issues",
+      "viewAll": "View all",
+      "noIssues": "No issues found",
+      "noIssuesDescription": "Your project is running smoothly."
+    },
+    "recentActivity": {
+      "title": "Recent Activity",
+      "viewAll": "View all",
+      "noActivity": "No activity yet",
+      "noActivityDescription": "Activity will appear here as you work on your project."
+    }
+  },
+  "whatsNext": {
+    "connectSource": {
+      "title": "Connect your source Salesforce org",
+      "description": "Start by connecting the Salesforce org that contains your CPQ configuration. We'll analyze it to plan your migration.",
+      "cta": "Connect Source Org",
+      "secondary": "Learn about the migration process"
+    },
+    "extractData": {
+      "title": "Extract your CPQ data",
+      "description": "Your source org is connected. Run a data extraction to analyze your CPQ configuration and records.",
+      "cta": "Start Extraction",
+      "secondary": "View connection details"
+    },
+    "connectTarget": {
+      "title": "Connect your target org",
+      "description": "Your assessment is complete. Connect your Revenue Cloud Advanced org to start deploying migrated configurations.",
+      "cta": "Connect Target Org",
+      "secondary": "Review assessment results"
+    },
+    "complete": {
+      "title": "Migration complete",
+      "description": "All migration steps are done. Your CPQ configuration has been successfully migrated to Revenue Cloud Advanced.",
+      "cta": "View Final Report"
+    }
+  },
+  "activity": {
+    "assessmentCompleted": "Assessment run completed",
+    "extractionCompleted": "Data extraction completed",
+    "userJoined": "{{user}} joined the project",
+    "settingsUpdated": "Project settings updated",
+    "sourceConnected": "Source org connected",
+    "targetConnected": "Target org connected",
+    "projectCreated": "Project created",
+    "validationPassed": "Validation passed — all checks green",
+    "deploymentCompleted": "Deployment completed successfully",
+    "assessmentFinalized": "Assessment finalized"
+  },
+  "placeholder": {
+    "cpqExplorer": {
+      "title": "CPQ Explorer",
+      "heading": "Explore your CPQ data",
+      "description": "Once you extract data from your source org, you'll see a detailed breakdown of all CPQ objects, fields, and records here.",
+      "cta": "Go to Overview",
+      "locked": "Extract data from your source org to unlock the CPQ Explorer."
+    },
+    "assessment": {
+      "title": "Assessment",
+      "heading": "Migration readiness assessment",
+      "description": "After data extraction, RevBrain analyzes your CPQ configuration to determine migration compatibility and effort estimates.",
+      "cta": "Go to Overview",
+      "locked": "Complete data extraction to unlock the Assessment."
+    },
+    "deployment": {
+      "title": "Deployment",
+      "heading": "Deploy to Revenue Cloud",
+      "description": "When your assessment is complete and target org connected, you'll manage deployment runs, track progress, and validate results here.",
+      "cta": "Go to Overview",
+      "locked": "Complete the assessment and connect your target org to unlock Deployment."
+    },
+    "runs": {
+      "title": "Runs",
+      "heading": "Extraction & migration runs",
+      "description": "Track all extraction, assessment, deployment, and validation runs. View logs, performance metrics, and error details.",
+      "cta": "Go to Overview",
+      "noRuns": "No runs yet. Start an extraction from the Overview page."
+    },
+    "issues": {
+      "title": "Issues",
+      "heading": "Migration issues & warnings",
+      "description": "Review blockers, warnings, and informational notes found during assessment. Resolve issues to proceed with deployment.",
+      "cta": "Go to Overview",
+      "noIssues": "No issues found. Your migration is looking clean."
+    },
+    "team": {
+      "title": "Team",
+      "heading": "Project team",
+      "description": "Manage who has access to this project, assign roles, and control permissions for migration operations.",
+      "cta": "Invite Team Member"
+    },
+    "activity": {
+      "title": "Activity",
+      "heading": "Project activity log",
+      "description": "A chronological record of all actions taken in this project — connections, extractions, assessments, deployments, and team changes.",
+      "cta": "Go to Overview",
+      "noActivity": "No activity yet. Events will appear here as you work on the project."
+    },
+    "artifacts": {
+      "title": "Artifacts & Docs",
+      "heading": "Project artifacts & documentation",
+      "description": "Access generated reports, migration plans, mapping documents, and uploaded reference materials for this project.",
+      "cta": "Go to Overview",
+      "noArtifacts": "No artifacts yet. Reports will be generated as you progress through the migration."
+    }
+  },
+  "severity": {
+    "blocker": "Blocker",
+    "warning": "Warning",
+    "info": "Info"
+  },
+  "runType": {
+    "extraction": "Extraction",
+    "assessment": "Assessment",
+    "deployment": "Deployment",
+    "validation": "Validation"
+  },
+  "runStatus": {
+    "completed": "Completed",
+    "running": "Running",
+    "failed": "Failed",
+    "queued": "Queued"
+  },
+  "timeAgo": {
+    "justNow": "Just now",
+    "minutesAgo": "{{count}}m ago",
+    "hoursAgo": "{{count}}h ago",
+    "daysAgo": "{{count}}d ago"
+  }
+}

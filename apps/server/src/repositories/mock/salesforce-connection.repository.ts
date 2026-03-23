@@ -4,9 +4,7 @@ import type {
   CreateSalesforceConnectionInput,
 } from '@revbrain/contract';
 import { mockSalesforceConnections } from '../../mocks/index.ts';
-import { generateId, validateFilters, applyFilters } from './helpers.ts';
-
-const ALLOWED_FILTERS = ['organizationId', 'projectId', 'status', 'connectionRole'] as const;
+import { generateId } from './helpers.ts';
 
 export class MockSalesforceConnectionRepository implements SalesforceConnectionRepository {
   async findById(id: string): Promise<SalesforceConnectionEntity | null> {

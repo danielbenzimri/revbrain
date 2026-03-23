@@ -41,6 +41,14 @@ const AuditLogPage = lazy(routeLazyImports['/admin/audit']);
 
 // Project Workspace Pages
 const OverviewPage = lazy(routeLazyImports['/project/overview']);
+const CpqExplorerPage = lazy(routeLazyImports['/project/cpq-explorer']);
+const AssessmentPage = lazy(routeLazyImports['/project/assessment']);
+const DeploymentPage = lazy(routeLazyImports['/project/deployment']);
+const RunsPage = lazy(routeLazyImports['/project/runs']);
+const IssuesPage = lazy(routeLazyImports['/project/issues']);
+const ProjectTeamPage = lazy(routeLazyImports['/project/team']);
+const ActivityPage = lazy(routeLazyImports['/project/activity']);
+const ArtifactsPage = lazy(routeLazyImports['/project/artifacts']);
 const DocsPage = lazy(routeLazyImports['/project/docs']);
 const UsersPage = lazy(routeLazyImports['/project/users']);
 const ProjectSettingsPage = lazy(routeLazyImports['/project/settings']);
@@ -288,6 +296,70 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<WorkspaceSkeleton />}>
             <OverviewPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'cpq-explorer',
+        element: (
+          <Suspense fallback={<WorkspaceSkeleton />}>
+            <CpqExplorerPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'assessment',
+        element: (
+          <Suspense fallback={<WorkspaceSkeleton />}>
+            <AssessmentPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'deployment',
+        element: (
+          <Suspense fallback={<WorkspaceSkeleton />}>
+            <DeploymentPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'runs',
+        element: (
+          <Suspense fallback={<WorkspaceSkeleton />}>
+            <RunsPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'issues',
+        element: (
+          <Suspense fallback={<WorkspaceSkeleton />}>
+            <IssuesPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'team',
+        element: (
+          <Suspense fallback={<WorkspaceSkeleton />}>
+            <ProjectTeamPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'activity',
+        element: (
+          <Suspense fallback={<WorkspaceSkeleton />}>
+            <ActivityPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'artifacts',
+        element: (
+          <Suspense fallback={<WorkspaceSkeleton />}>
+            <ArtifactsPage />
           </Suspense>
         ),
       },
