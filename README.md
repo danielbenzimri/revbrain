@@ -2,115 +2,128 @@
 
 > **Salesforce CPQ to Revenue Cloud Advanced migration platform**
 
-RevBrain is a multi-tenant SaaS platform that enables revenue operations teams to migrate from Salesforce CPQ (Steelbrick) to Revenue Cloud Advanced (RCA) with confidence.
+RevBrain is a multi-tenant SaaS platform that enables revenue operations teams to migrate from Salesforce CPQ to Revenue Cloud Advanced (RCA) with confidence.
 
 ## Tech Stack
 
-| Layer    | Technology                                        |
-| -------- | ------------------------------------------------- |
-| Frontend | React 19, Vite, TailwindCSS, React Query, Zustand |
-| Backend  | Hono (TypeScript), Zod validation, OpenAPI        |
-| Database | PostgreSQL via Drizzle ORM                        |
-| Auth     | Supabase Auth (JWT, magic links, password reset)  |
-| Billing  | Stripe (subscriptions, trials, coupons)           |
-| Email    | Resend (transactional emails)                     |
-| Monorepo | pnpm workspaces, Turborepo                        |
+| Layer    | Technology                                                    |
+| -------- | ------------------------------------------------------------- |
+| Frontend | React 18, Vite, TailwindCSS, React Query, Zustand             |
+| Backend  | Hono (TypeScript), Zod validation, OpenAPI                    |
+| Database | PostgreSQL via Supabase + Drizzle ORM                         |
+| Auth     | Supabase Auth (JWT, magic links, MFA)                         |
+| Billing  | Stripe (subscriptions, checkout, coupons, webhooks)           |
+| Email    | Resend (transactional, async via job queue)                   |
+| Hosting  | Supabase Edge Functions (backend) + Vercel (frontend)         |
+| CI/CD    | GitHub Actions (CI gates CD — lint, test, build, then deploy) |
+| Monorepo | pnpm workspaces, Turborepo                                    |
 
 ## Repository Structure
 
 ```
 revbrain/
 ├── apps/
-│   ├── server/          # Hono API server
-│   └── client/          # React frontend (Vite)
+│   ├── server/              # Hono API server
+│   └── client/              # React frontend (Vite)
 ├── packages/
-│   ├── contract/        # Shared types, Zod schemas, repository interfaces
-│   └── database/        # Drizzle ORM schema & migrations
+│   ├── contract/            # Shared types, Zod schemas, repository interfaces
+│   ├── database/            # Drizzle ORM schema, migrations, seeder
+│   └── seed-data/           # Curated test data (shared by mock mode + seeder)
 ├── supabase/
-│   ├── config.toml      # Supabase project config
-│   ├── migrations/      # SQL migrations
-│   ├── templates/       # Auth email templates
-│   └── functions/       # Edge Function adapter
-├── e2e/                 # Playwright E2E tests
-└── docs/                # Project documentation
+│   ├── config.toml          # Supabase project config
+│   ├── migrations/          # SQL migrations
+│   ├── templates/           # Auth email templates
+│   └── functions/api/       # Edge Function adapter
+├── e2e/                     # Playwright E2E tests
+└── docs/                    # Project documentation
 ```
 
-## Quick Start (Mock Mode)
+## Development Commands
 
-Default local development runs with **in-memory mock data** — no database or external services needed.
+| Command        | What It Does                                                        |
+| -------------- | ------------------------------------------------------------------- |
+| `pnpm local`   | Frontend + backend in **mock mode** (offline, no external services) |
+| `pnpm dev`     | Frontend + backend against **staging Supabase** (real DB + Auth)    |
+| `pnpm stg`     | Frontend only, pointing at **staging edge function**                |
+| `pnpm test`    | Run all unit + integration tests                                    |
+| `pnpm lint`    | Lint all packages                                                   |
+| `pnpm format`  | Format with Prettier                                                |
+| `pnpm db:seed` | Seed staging database with curated test data                        |
+
+## Quick Start
+
+### Mock Mode (no setup required)
 
 ```bash
 pnpm install
-pnpm dev        # Starts in mock mode automatically
+pnpm local
 ```
 
-Open http://localhost:5173 — auto-logged in as org_owner with 4 sample projects.
+Open http://localhost:5173 — auto-logged in as org_owner with sample data.
 
-### Switch Roles
+### Development Mode (against staging Supabase)
 
-Use the role switcher on the login page (dev mode) to test as: system_admin, org_owner, admin, operator, reviewer.
-
-### Reset Mock Data
+Requires `.env.stg` with Supabase credentials (ask project owner).
 
 ```bash
-curl -X POST http://localhost:3000/v1/dev/reset-mock-data
+pnpm dev
 ```
 
-### Real Mode (requires Supabase)
+### Running Tests
 
 ```bash
-cp .env.example .env
-# Fill in DATABASE_URL, SUPABASE_URL, etc.
-pnpm dev:real
+pnpm test                              # All tests (889+)
+pnpm --filter @revbrain/server test    # Server tests (579)
+pnpm --filter client test              # Client tests (160)
+npx playwright test                    # E2E tests (90+)
 ```
 
-> **Hot reload note**: tsx watch resets mock data when the mock module is invalidated. Changes to unrelated files may preserve in-memory state. Use the reset endpoint for deterministic resets.
+## Environments
 
-### Testing
-
-```bash
-pnpm test                              # All tests
-pnpm --filter @revbrain/server test    # Server tests
-pnpm --filter client test              # Client tests
-```
-
-### Linting
-
-```bash
-pnpm lint                    # All packages
-pnpm format                  # Prettier
-pnpm format:check            # Check only
-```
+| Environment  | Frontend        | Backend               | Database     |
+| ------------ | --------------- | --------------------- | ------------ |
+| `pnpm local` | localhost:5173  | localhost:3000 (mock) | In-memory    |
+| `pnpm dev`   | localhost:5173  | localhost:3000 (real) | Supabase STG |
+| Staging      | stg.revbrain.ai | Edge Function STG     | Supabase STG |
+| Production   | app.revbrain.ai | Edge Function PRD     | Supabase PRD |
 
 ## Architecture
 
 Multi-tenant SaaS with hexagonal architecture:
 
 - **Contract package** — Shared types, Zod schemas, repository interfaces
-- **Database package** — Drizzle ORM schema, PostgreSQL
-- **Server** — Hono REST API with OpenAPI, RBAC, rate limiting, alerting
-- **Client** — React SPA with i18n (EN/HE), role-based UI
+- **Database package** — Drizzle ORM schema, seeder, migrations
+- **Seed-data package** — Curated test data shared by mock mode and DB seeder
+- **Server** — Hono REST API with OpenAPI, RBAC, rate limiting, feature gating, alerting
+- **Client** — React SPA with i18n (EN/HE + RTL), role-based UI, admin control plane
 
 ### User Roles
 
-| Role           | Scope        | Access                                |
-| -------------- | ------------ | ------------------------------------- |
-| `system_admin` | Global       | Platform super admin                  |
-| `org_owner`    | Organization | Tenant owner, billing, full access    |
-| `admin`        | Organization | Full operational access, all projects |
-| `operator`     | Project      | Migration work on assigned projects   |
-| `reviewer`     | Project      | View-only + remarks                   |
+| Role           | Scope        | Access                                             |
+| -------------- | ------------ | -------------------------------------------------- |
+| `system_admin` | Global       | Platform super admin — all tenants, users, billing |
+| `org_owner`    | Organization | Tenant owner — billing, team, full access          |
+| `admin`        | Organization | Full operational access, all projects              |
+| `operator`     | Project      | Migration work on assigned projects                |
+| `reviewer`     | Project      | View-only + remarks                                |
 
-### Platform Features
+### CI/CD Pipeline
 
-- Multi-tenant org management with seat limits
-- Stripe billing (subscriptions, trials, plan upgrades, coupons)
-- Support ticket system
-- Enterprise lead capture
-- Per-project file storage
-- Email notifications (Resend)
-- Multi-channel alerting (Sentry, Slack, email)
-- Rate limiting and security headers
+```
+Push to main/staging
+  → CI: Lint → Test → Build → Seed Check
+  → CI passes → CD triggers
+  → CD: Deploy Edge Functions → Deploy Vercel
+```
+
+## Documentation
+
+| Document                                                             | Purpose                                   |
+| -------------------------------------------------------------------- | ----------------------------------------- |
+| [SYSTEM-ADMIN-AUDIT.md](./SYSTEM-ADMIN-AUDIT.md)                     | System admin platform audit & spec (v3.1) |
+| [docs/TECH-DEBT.md](./docs/TECH-DEBT.md)                             | Known tech debt and deferred items        |
+| [docs/tenant-isolation-audit.md](./docs/tenant-isolation-audit.md)   | Tenant data isolation verification        |
+| [docs/spike-jwt-impersonation.md](./docs/spike-jwt-impersonation.md) | JWT approach for impersonation (ADR)      |
 
 ## License
 
