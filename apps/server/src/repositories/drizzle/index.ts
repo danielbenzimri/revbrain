@@ -13,12 +13,10 @@ import { DrizzleOrganizationRepository } from './organization.repository.ts';
 import { DrizzlePlanRepository } from './plan.repository.ts';
 import { DrizzleAuditLogRepository } from './audit-log.repository.ts';
 import { DrizzleProjectRepository } from './project.repository.ts';
-import {
-  StubSalesforceConnectionRepository,
-  StubSalesforceConnectionSecretsRepository,
-  StubOauthPendingFlowRepository,
-  StubSalesforceConnectionLogRepository,
-} from '../salesforce-stubs.ts';
+import { DrizzleSalesforceConnectionRepository } from './salesforce-connection.repository.ts';
+import { DrizzleSalesforceConnectionSecretsRepository } from './salesforce-connection-secrets.repository.ts';
+import { DrizzleOauthPendingFlowRepository } from './oauth-pending-flow.repository.ts';
+import { DrizzleSalesforceConnectionLogRepository } from './salesforce-connection-log.repository.ts';
 export type { DrizzleDB } from '@revbrain/database';
 
 // Re-export individual repositories
@@ -27,6 +25,10 @@ export { DrizzleOrganizationRepository } from './organization.repository.ts';
 export { DrizzlePlanRepository } from './plan.repository.ts';
 export { DrizzleAuditLogRepository } from './audit-log.repository.ts';
 export { DrizzleProjectRepository } from './project.repository.ts';
+export { DrizzleSalesforceConnectionRepository } from './salesforce-connection.repository.ts';
+export { DrizzleSalesforceConnectionSecretsRepository } from './salesforce-connection-secrets.repository.ts';
+export { DrizzleOauthPendingFlowRepository } from './oauth-pending-flow.repository.ts';
+export { DrizzleSalesforceConnectionLogRepository } from './salesforce-connection-log.repository.ts';
 
 /**
  * Create all Drizzle repositories.
@@ -43,11 +45,10 @@ export function createDrizzleRepositories(dbOrTx?: DrizzleDB): Repositories {
     plans: new DrizzlePlanRepository(instance),
     auditLogs: new DrizzleAuditLogRepository(instance),
     projects: new DrizzleProjectRepository(instance),
-    // Salesforce repos — stubs replaced by real implementations in Task 1.6
-    salesforceConnections: new StubSalesforceConnectionRepository(),
-    salesforceConnectionSecrets: new StubSalesforceConnectionSecretsRepository(),
-    oauthPendingFlows: new StubOauthPendingFlowRepository(),
-    salesforceConnectionLogs: new StubSalesforceConnectionLogRepository(),
+    salesforceConnections: new DrizzleSalesforceConnectionRepository(instance),
+    salesforceConnectionSecrets: new DrizzleSalesforceConnectionSecretsRepository(instance),
+    oauthPendingFlows: new DrizzleOauthPendingFlowRepository(instance),
+    salesforceConnectionLogs: new DrizzleSalesforceConnectionLogRepository(instance),
   };
 }
 
