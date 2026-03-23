@@ -1,10 +1,14 @@
 # Salesforce Integration Spec — Project-Level Connection
 
-> **Status:** Draft v3 — post-audit revision
+> **Status:** v5-final — implementation-ready (both auditors signed off)
 > **Author:** Daniel + Claude
 > **Date:** 2026-03-23
 > **Audience:** Engineering team, external reviewers, security auditors
-> **Changelog:** v3 incorporates feedback from two external auditors. Key changes: External Client App (ECA) over legacy Connected App, fixed IV-per-field encryption, multi-connection source/target model, added write-back phase, expanded RCA mapping, data retention policy, Bulk API strategy, My Domain Day 1 support, post-connection permission audit.
+> **Changelog:**
+>
+> - **v5:** Final polish from second audit round. Fixes: `oauth_pending_flows` table schema added, pending-flow deletion moved to after token exchange, SSRF prevention on loginUrl, postMessage origin locking, internal consistency fixes (stateful PKCE wording, CPQ detection alignment, refresh heuristic alignment). Resolved: ECA supports JWT Bearer (Open Question #6 closed). Added: 2GP packaging requirement for Phase 7, ECA credential rotation API note, explicit revocation endpoint.
+> - **v4:** Second round of auditor feedback. Key changes: reverted PKCE to stateful storage (security fix), consistent OAuth base URL handling, CPQ/RCA coexistence model for write-back, metadata vs data deployment boundary, ARM rebrand acknowledgment, CPQ end-of-sale market context, popup blocker fallback, callback anti-leak headers, revised Phase 5 estimates.
+> - **v3:** External Client App (ECA) over legacy Connected App, fixed IV-per-field encryption, multi-connection source/target model, added write-back phase, expanded RCA mapping, data retention policy, Bulk API strategy, My Domain Day 1 support, post-connection permission audit.
 
 ---
 
@@ -39,7 +43,9 @@
 
 ### What is RevBrain?
 
-RevBrain is a multi-tenant SaaS that helps Revenue Operations teams migrate from **Salesforce CPQ** (Configure, Price, Quote) to **Revenue Cloud Advanced (RCA)**. The typical customer is a Salesforce consulting partner / SI (Systems Integrator) that manages migrations for multiple end-clients.
+RevBrain is a multi-tenant SaaS that helps Revenue Operations teams migrate from **Salesforce CPQ** (Configure, Price, Quote) to **Revenue Cloud Advanced (RCA)**, now being rebranded by Salesforce as **Agentforce Revenue Management (ARM)**. The typical customer is a Salesforce consulting partner / SI (Systems Integrator) that manages migrations for multiple end-clients.
+
+> **Terminology note:** Salesforce is actively rebranding RCA as "Agentforce Revenue Management" (ARM). This spec uses "RCA" throughout as it remains the widely recognized term. The RevBrain UI should make naming configurable — some customers will say "RCA", others "ARM", others "Revenue Cloud". API object names (e.g., `ProductSellingModel`) remain unchanged regardless of branding.
 
 ### Why Salesforce Integration?
 
@@ -50,6 +56,10 @@ The entire value proposition of RevBrain depends on being able to:
 3. **Write** the equivalent RCA configuration (ProductSellingModel, PSMRelationship, PricingPlan, etc.)
 
 Without a live connection to the customer's Salesforce org, RevBrain is just a project management tool. The Salesforce connection is the product's core enabling capability.
+
+### Market Context: CPQ End-of-Sale
+
+> **v4 addition:** Salesforce ecosystem reporting (including confirmation from Salesforce spokespeople via Salesforce Ben and partner channels) indicates that CPQ has entered **end-of-sale** status — new customers can no longer purchase CPQ licenses. Existing customers retain support and can renew, but no major new features are being developed. Salesforce's entire innovation roadmap is centered on RCA/ARM. This makes CPQ→RCA migration **inevitable** for the entire installed base, not just an optional upgrade. This is a massive market validation for RevBrain and should inform our positioning, pricing, and urgency messaging to customers and investors.
 
 ### The Multi-Tenant Dimension
 
@@ -222,7 +232,9 @@ Salesforce offers several authentication mechanisms. We need one that:
 
 ## 6. External Client App Setup (Replaces Legacy Connected App)
 
-> **CRITICAL (v3 change):** As of Spring '26, Salesforce has restricted creation of new legacy Connected Apps (both UI and Metadata API). The recommended replacement is **External Client Apps (ECAs)** — the next-generation framework for third-party integrations. The OAuth flow itself remains identical; the registration process and governance model differ.
+> **CRITICAL (v3 change):** As of Spring '26, Salesforce has **effectively blocked** creation of new legacy Connected Apps by default — the default setting for Connected App creation is now turned off, and re-enabling it requires a request to Salesforce Support. The recommended replacement is **External Client Apps (ECAs)** — the next-generation framework for third-party integrations. The OAuth flow itself remains identical; the registration process and governance model differ.
+>
+> **v5 note:** Spring '26 also introduced native APIs for credential rotation on ECAs (securely stage, rotate, and maintain OAuth credentials). This could simplify consumer secret rotation procedures in Phase 3/7.
 
 ### What Is an External Client App?
 
@@ -239,17 +251,20 @@ An External Client App (ECA) is Salesforce's modern framework for registering ex
 
 We will create a single External Client App in a Salesforce org we control:
 
-| Field                              | Value                                                           |
-| ---------------------------------- | --------------------------------------------------------------- |
-| App Name                           | RevBrain                                                        |
-| Contact Email                      | security@revbrain.com                                           |
-| OAuth Enabled                      | Yes                                                             |
-| Callback URL                       | `https://app.revbrain.com/api/v1/salesforce/oauth/callback`     |
-|                                    | `https://staging.revbrain.com/api/v1/salesforce/oauth/callback` |
-|                                    | `http://localhost:5173/api/v1/salesforce/oauth/callback` (dev)  |
-| Selected OAuth Scopes              | See [Section 14](#14-scopes--permissions)                       |
-| Require PKCE                       | Yes                                                             |
-| Require Secret for Web Server Flow | Yes                                                             |
+| Field                              | Value                                                                                                       |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| App Name                           | RevBrain                                                                                                    |
+| Contact Email                      | security@revbrain.com                                                                                       |
+| OAuth Enabled                      | Yes                                                                                                         |
+| Callback URL                       | `https://app.revbrain.com/api/v1/salesforce/oauth/callback`                                                 |
+|                                    | `https://staging.revbrain.com/api/v1/salesforce/oauth/callback`                                             |
+|                                    | `http://localhost:5173/api/v1/salesforce/oauth/callback` (dev)                                              |
+| Selected OAuth Scopes              | See [Section 14](#14-scopes--permissions)                                                                   |
+| Require PKCE                       | Yes                                                                                                         |
+| Require Secret for Web Server Flow | Yes (ECA UI label may be "Require Secret for Refresh Token Flow" — verify exact field name during Step 1.1) |
+| Distribution State                 | **Packaged** (required for future AppExchange listing — set from Day 1 to avoid migration)                  |
+| Refresh Token Policy               | **Refresh token is valid until revoked** (multi-week migrations need persistent access)                     |
+| IP Relaxation                      | Enforce IP restrictions (or Relax as needed per deployment)                                                 |
 
 ### Credentials We'll Store
 
@@ -314,22 +329,39 @@ If RevBrain is listed on the Salesforce AppExchange, the end-client can install 
 ```
 User clicks "Connect Salesforce" on their project page
   ↓
-RevBrain frontend opens a popup window
-  ↓
-Popup loads POST /v1/projects/:id/salesforce/connect
+RevBrain frontend calls POST /v1/projects/:id/salesforce/connect via fetch()
   with body: { instanceType: "production" | "sandbox", connectionRole: "source" | "target",
                loginUrl?: "https://globalcorp.my.salesforce.com" }
   ↓
+Server validates loginUrl if provided (SSRF prevention — v5):
+  - Must be HTTPS
+  - Hostname must match Salesforce-owned patterns: *.my.salesforce.com, *.my.salesforce.mil,
+    login.salesforce.com, test.salesforce.com
+  - Reject IP literals, localhost, private RFC1918 ranges
+  - Normalize to origin: new URL(loginUrl).origin
+  ↓
+Server determines the OAuth base URL (used for ALL OAuth operations on this connection):
+  - Custom domain (if provided and validated): https://globalcorp.my.salesforce.com
+  - Production (default):                      https://login.salesforce.com
+  - Sandbox:                                   https://test.salesforce.com
+  ↓
 Server generates:
+  - nonce = crypto.randomUUID()
   - codeVerifier = crypto.randomBytes(64).toString('base64url')
   - codeChallenge = sha256(codeVerifier).toString('base64url')
-  - state = sign({ projectId, orgId, userId, connectionRole, nonce, exp, codeVerifier }, secret)
-    ↑ code verifier is embedded in the signed state (stateless PKCE — no server-side storage needed)
+  - state = sign({ nonce, exp }, secret)    ← minimal data only (data minimization)
+  - Server stores: { nonce → projectId, orgId, userId, connectionRole, codeVerifier, oauthBaseUrl }
+    in `oauth_pending_flows` table with 10-minute TTL
   ↓
-Server returns redirect URL using the appropriate login URL:
-  - Custom domain (if provided): https://globalcorp.my.salesforce.com/services/oauth2/authorize
-  - Production (default): https://login.salesforce.com/services/oauth2/authorize
-  - Sandbox: https://test.salesforce.com/services/oauth2/authorize
+Server returns: { redirectUrl: "{oauthBaseUrl}/services/oauth2/authorize?..." }
+  ↓
+Frontend opens popup: window.open(redirectUrl, 'sf_connect', 'width=600,height=700')
+  If window.open() returns null (popup blocked):
+    → Fall back to redirect: window.location.href = redirectUrl
+    → Show message: "Popup was blocked — continuing in this window"
+  ↓
+Popup/browser navigates to Salesforce login:
+  {oauthBaseUrl}/services/oauth2/authorize
   ?response_type=code
   &client_id={CONSUMER_KEY}
   &redirect_uri={CALLBACK_URL}
@@ -338,16 +370,16 @@ Server returns redirect URL using the appropriate login URL:
   &code_challenge={codeChallenge}
   &code_challenge_method=S256
   &prompt=login consent
-  ↓
-Popup redirects to Salesforce login
 ```
 
-> **Design decisions (v3):**
+> **Design decisions (v4):**
 >
-> - **Popup over redirect** — user stays on the project page, popup closes after auth. Implementation: `window.open()` → callback page calls `window.opener.postMessage({ type: 'sf_connected' })` → popup closes. ~20 lines of extra code for significantly better UX.
-> - **Stateless PKCE** — the code verifier is included inside the signed state JWT. No server-side storage needed (no Redis, no DB row, no job queue pollution). Since the state is signed with a secret, the code verifier cannot be tampered with. This is the most elegant solution and eliminates the TTL cleanup concern.
-> - **My Domain support from Day 1** — users can optionally provide their custom login URL. My Domain is now required for all Salesforce orgs, and some have disabled the generic `login.salesforce.com` redirect. The implementation cost is trivial (one additional text field).
-> - **Connection role** — `source` or `target` is captured during initiation and stored with the connection, enabling the multi-connection pattern.
+> - **Popup with redirect fallback** — popup is the primary UX (user stays on project page). If browser blocks the popup (common in enterprise environments with aggressive popup policies), falls back gracefully to full-page redirect. The frontend detects a blocked popup when `window.open()` returns `null`.
+> - **Stateful PKCE (reverted from v3)** — v3 embedded the code verifier in the signed `state` parameter. Both auditors flagged this: even though the state is signed (integrity), it is not confidential. The code verifier would be visible in the browser's address bar, history, proxy logs, and analytics. PKCE's security model (RFC 7636) requires the verifier to **never be transmitted to the user agent**. The code verifier is now stored server-side in an `oauth_pending_flows` table, keyed by a random nonce, with a 10-minute TTL. This is the standard, most defensible approach for security audits.
+> - **Data minimization in `state`** — the signed state JWT contains only `{ nonce, exp }`. All internal identifiers (projectId, orgId, userId) and the code verifier are stored server-side. This minimizes information exposure in URLs, browser history, and logs.
+> - **Consistent OAuth base URL** — the same `oauthBaseUrl` is determined once during initiation and stored with the pending flow. It is used for ALL OAuth operations: authorize, token exchange, token refresh, and token revocation. v3 inconsistently used the custom domain for authorize but `login.salesforce.com` for token exchange — which would break for sandboxes and some custom domain configurations.
+> - **My Domain support from Day 1** — users can optionally provide their custom login URL. My Domain is now required for all Salesforce orgs.
+> - **Connection role** — `source` or `target` is captured during initiation and stored with the connection.
 
 ### Phase 2: Consent (Salesforce)
 
@@ -373,11 +405,12 @@ Salesforce redirects to:
 ```
 GET /v1/salesforce/oauth/callback?code=xxx&state=yyy
   ↓
-Server validates state (verify signature, check expiry, extract projectId + connectionRole)
-Server extracts codeVerifier from the signed state payload
+Server validates state (verify signature, check expiry, extract nonce)
+Server looks up pending flow by nonce → retrieves projectId, orgId, userId,
+  connectionRole, codeVerifier, oauthBaseUrl
   ↓
-Server exchanges code for tokens (server-to-server, POST):
-  POST https://login.salesforce.com/services/oauth2/token
+Server exchanges code for tokens using the SAME oauthBaseUrl (server-to-server, POST):
+  POST {oauthBaseUrl}/services/oauth2/token
   Content-Type: application/x-www-form-urlencoded
 
   grant_type=authorization_code
@@ -398,11 +431,33 @@ Salesforce responds:
     "scope": "api refresh_token id"
   }
   ↓
+Server deletes the pending flow row (one-time use — AFTER successful exchange, not before)
+Server stores oauthBaseUrl with the connection (for future refresh/revoke calls)
 Server runs post-connection permission audit (see below)
-  ↓
 Server stores tokens securely (see Section 9)
   ↓
-Popup shows success → posts message to parent window → closes
+Server renders a minimal HTML callback page with anti-leak headers:
+  Referrer-Policy: no-referrer
+  Cache-Control: no-store
+  Content-Security-Policy: default-src 'self'; script-src 'nonce-{random}'
+  (nonce-based CSP — allows our inline script while blocking all others.
+   Generate a fresh nonce per response and set it on the <script nonce="..."> tag.
+   Do NOT use 'unsafe-inline' — that defeats the purpose of CSP.)
+  ↓
+Callback page JavaScript (role and projectId are server-rendered, script has CSP nonce):
+  const APP_ORIGIN = 'https://app.revbrain.com';  // hardcoded, not dynamic
+  if (window.opener) {
+    window.opener.postMessage(
+      { type: 'sf_connected', role: '{connectionRole}' },  // dynamic from pending flow
+      APP_ORIGIN  // locked target origin — prevents spoofing
+    );
+    window.close();
+  } else {
+    // Redirect fallback — user was not in a popup
+    window.location.href = '/projects/{projectId}?sf_connected=true&role={connectionRole}';
+  }
+
+  // Parent page must also verify: event.origin === APP_ORIGIN before trusting the message
 ```
 
 ### Post-Connection Permission Audit (automatic)
@@ -414,12 +469,16 @@ Immediately after token storage:
   ↓
 1. GET {instance_url}/services/data/  → confirms API access, captures supported API versions
 2. Auto-detect latest API version from response (instead of hardcoding)
-3. Query: SELECT Id, NamespacePrefix, MajorVersion, MinorVersion
-          FROM Publisher WHERE NamespacePrefix = 'SBQQ'
-   → confirms CPQ is installed, captures version
+3. Tooling API query: SELECT Id, SubscriberPackage.Name, SubscriberPackage.NamespacePrefix,
+          SubscriberPackageVersion.MajorVersion, SubscriberPackageVersion.MinorVersion,
+          SubscriberPackageVersion.PatchVersion, SubscriberPackageVersion.BuildNumber
+          FROM InstalledSubscriberPackage
+          WHERE SubscriberPackage.NamespacePrefix = 'SBQQ'
+   → confirms CPQ is installed, captures full version (major.minor.patch.build)
+   → fallback to Publisher query if Tooling API is restricted by the user's profile
 4. Describe SBQQ__Quote__c → confirms CPQ objects are accessible
 5. If target connection: Describe ProductSellingModel → confirms RCA is available
-6. GET {instance_url}/services/data/v66.0/limits → captures API budget (daily limit, remaining)
+6. GET {instance_url}/services/data/{auto_detected_version}/limits → captures API budget (daily limit, remaining)
 7. Capture authorizing user's profile name (from /id response) for debugging
   ↓
 Store audit results in connection metadata:
@@ -545,7 +604,7 @@ function decrypt(blob: Buffer, masterKey: Buffer, context: string): string {
 
 - **Lifespan**: ~2 hours (Salesforce default, configurable per Connected App in the target org)
 - **Usage**: Included as `Authorization: Bearer {token}` in every Salesforce API call
-- **Refresh**: Proactively at 75% of TTL (before expiry), and reactively on 401
+- **Refresh**: Reactively on 401 (primary, always correct), and proactively as best-effort (refresh if `now - issued_at > 90 minutes`). Note: Salesforce does not consistently return `expires_in` in token responses, so proactive refresh uses a configurable heuristic, not an exact TTL. The scheduled health check (Phase 3) is the backbone for long-running connections.
 
 ### Refresh Token
 
@@ -560,7 +619,7 @@ function decrypt(blob: Buffer, masterKey: Buffer, context: string): string {
 ### Refresh Flow
 
 ```
-POST https://login.salesforce.com/services/oauth2/token
+POST {oauthBaseUrl}/services/oauth2/token    ← same base URL stored during initial connection
 Content-Type: application/x-www-form-urlencoded
 
 grant_type=refresh_token
@@ -627,6 +686,7 @@ CREATE TABLE salesforce_connections (
   salesforce_org_id       VARCHAR(18) NOT NULL,       -- e.g., "00Dxx0000001234"
   salesforce_instance_url TEXT NOT NULL,               -- e.g., "https://globalcorp.my.salesforce.com"
   custom_login_url        TEXT,                        -- Optional My Domain URL for login
+  oauth_base_url          TEXT NOT NULL,                -- Base URL for token/refresh/revoke operations
   salesforce_user_id      VARCHAR(18),                 -- The user who authorized
   salesforce_username     TEXT,                         -- For display (see note below)
   instance_type           VARCHAR(10) NOT NULL,         -- "production" | "sandbox"
@@ -683,6 +743,41 @@ CREATE INDEX idx_sf_connections_sf_org ON salesforce_connections(salesforce_org_
 > - `api_version` is now nullable (auto-detected, not hardcoded to v62.0)
 > - `salesforce_username` remains plaintext `TEXT` for display — it's protected by RLS and is no more sensitive than the user's email which is already stored in plaintext elsewhere. The real security boundary is the encrypted tokens.
 > - Phase 6 browser automation columns (`encrypted_sf_username`, `encrypted_sf_password`, `encrypted_mfa_secret`, `browser_auth_status`) are NOT included here — they will be added in a separate `browser_automation_credentials` table when Phase 6 is implemented. Don't add unused nullable columns prematurely.
+
+### New Table: `oauth_pending_flows`
+
+> **v5 addition:** Both v4 auditors noted this table was referenced in Section 8 but never defined in the data model.
+
+Short-lived storage for OAuth PKCE state during the authorization flow. Rows are created when the user initiates a connection and deleted after successful token exchange.
+
+```sql
+CREATE TABLE oauth_pending_flows (
+  nonce               UUID PRIMARY KEY,                -- Random, used as lookup key from signed state
+  project_id          UUID NOT NULL REFERENCES projects(id),
+  organization_id     UUID NOT NULL REFERENCES organizations(id),
+  user_id             UUID NOT NULL REFERENCES users(id),
+  connection_role     VARCHAR(10) NOT NULL,             -- 'source' | 'target'
+  code_verifier       TEXT NOT NULL,                    -- PKCE code verifier (never sent to browser)
+  oauth_base_url      TEXT NOT NULL,                    -- Validated base URL for token/refresh/revoke
+  expires_at          TIMESTAMPTZ NOT NULL,             -- created_at + 10 minutes
+  created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+  -- Prevent duplicate flows for the same project+role
+  UNIQUE (project_id, connection_role)
+);
+
+-- Index for cleanup job
+CREATE INDEX idx_oauth_pending_expires ON oauth_pending_flows(expires_at);
+```
+
+**Lifecycle:**
+
+1. Created when `POST /connect` is called (10-minute TTL). If an existing row exists for the same `(project_id, connection_role)`:
+   - If `expires_at > now()` (still live) → reject with "Connection in progress, please wait"
+   - If `expires_at <= now()` (expired) → UPSERT: overwrite with new nonce/verifier/expires_at (prevents blocking users for up to ~50 min if cleanup hasn't run yet)
+2. Looked up by nonce during callback
+3. **Deleted after successful token exchange** (not before — if exchange fails transiently, the verifier is preserved for retry within the 10-minute window)
+4. **Cleanup job:** runs hourly, deletes rows where `expires_at < now()` (catches abandoned flows)
 
 ### New Table: `salesforce_connection_logs`
 
@@ -759,7 +854,9 @@ GET /v1/projects/:projectId/salesforce/connections/:role
 # Disconnect
 POST /v1/projects/:projectId/salesforce/disconnect
   Body: { connectionRole: "source" | "target" }
-  → Revokes tokens at Salesforce, marks connection as disconnected
+  → Revokes tokens at Salesforce via POST {oauth_base_url}/services/oauth2/revoke
+    with token={refresh_token} in form body
+  → Marks connection as disconnected
 
 # Reconnect (re-initiate OAuth after a revocation)
 POST /v1/projects/:projectId/salesforce/reconnect
@@ -959,6 +1056,27 @@ Some CPQ behaviors **only exist in the browser**:
 
 Browser automation requires **actual login credentials** (username + password). The end-client should create a dedicated Salesforce user for RevBrain. See Phase 6 in Section 22 for full details. This is an optional, advanced feature — not required for Phases 1-5.
 
+### RCA Target Objects Reference
+
+> **v4 addition:** For engineers unfamiliar with RCA, these are the key objects RevBrain will write to in the target org during Phase 5.
+
+| RCA Object                  | Purpose                                                                    |
+| --------------------------- | -------------------------------------------------------------------------- |
+| `ProductSellingModel`       | Defines how a product is sold (one-time, evergreen, termed)                |
+| `ProductSellingModelOption` | Options within a selling model                                             |
+| `ProductRelationship`       | Replaces CPQ bundles — parent/child product relationships                  |
+| `ProductRelationshipType`   | Categorizes relationship types                                             |
+| `PricingPlan`               | Defines the pricing structure for a product                                |
+| `PricingPlanStep`           | Individual steps within a pricing plan                                     |
+| `PricingProcedure`          | Replaces both CPQ Price Rules AND QCP — the core pricing logic engine      |
+| `PricingProcedureStep`      | Steps within a pricing procedure                                           |
+| `PricingAdjustment`         | Discounts, surcharges, adjustments                                         |
+| `PricingAdjustmentTier`     | Tiers within an adjustment (volume pricing)                                |
+| `ContextDefinition`         | New data mapping layer — no CPQ equivalent                                 |
+| `ContextMapping`            | Maps data between objects within a context definition                      |
+| `Quote` (native)            | The standard Salesforce Quote object — RCA uses this, NOT `SBQQ__Quote__c` |
+| `QuoteLineItem` (native)    | Standard quote line items                                                  |
+
 ### The Multi-Connection Model
 
 ```
@@ -1064,6 +1182,13 @@ Project "CPQ→RCA Migration — GlobalCorp"
 
 6. **Same org as source AND target** — Allowed. The project would have two connections with the same `salesforce_org_id` but different `connection_role` values. Each has its own tokens (potentially authorized by different users with different permission levels).
 
+7. **Sandbox cloning and ECA approvals** — When an end-client clones a sandbox, ECA approval behavior depends on installation method:
+   - **Before Phase 7 (AppExchange):** Customers approve RevBrain manually via OAuth Usage. This approval does NOT copy to cloned sandboxes — the admin must re-approve in each new sandbox.
+   - **After Phase 7 (AppExchange):** Customers install RevBrain as a managed package. Installed packages ARE copied when cloning sandboxes — no re-approval needed.
+   - Document this distinction in the customer-facing setup guide.
+
+8. **Multiple target sandboxes** — The current `UNIQUE(project_id, connection_role)` constraint allows exactly one source and one target. Real migrations sometimes involve multiple targets (dev sandbox, QA sandbox, UAT sandbox, then production). This is a **known limitation** for v1. Future enhancement: extend `connection_role` to allow `target_dev`, `target_qa`, `target_uat`, `target_prod`, or use a free-text label with a `role_type` enum.
+
 ---
 
 ## 18. Security Checklist
@@ -1072,7 +1197,9 @@ Project "CPQ→RCA Migration — GlobalCorp"
 - [ ] **Encryption key in env vars only** — never in code, DB, or logs
 - [ ] **Derived keys per data class** — HKDF with different context strings for OAuth tokens vs browser credentials
 - [ ] **PKCE enforced** — prevents authorization code interception
-- [ ] **State parameter signed with embedded PKCE verifier** — prevents CSRF, stateless
+- [ ] **State parameter signed (nonce + exp only)** — prevents CSRF, minimal data exposure
+- [ ] **PKCE verifier stored server-side** — never transmitted through user agent (RFC 7636 compliant)
+- [ ] **Callback page anti-leak headers** — `Referrer-Policy: no-referrer`, `Cache-Control: no-store`, strict CSP, no third-party scripts
 - [ ] **Tokens never sent to client** — browser only sees connection status
 - [ ] **RLS on salesforce_connections** — org-scoped, no cross-tenant access
 - [ ] **Audit logging** — all connect/disconnect/refresh events logged
@@ -1083,6 +1210,8 @@ Project "CPQ→RCA Migration — GlobalCorp"
 - [ ] **Access logging** — log which user/project triggered each Salesforce API call
 - [ ] **Rate limiting on initiation AND callback endpoints** — prevent abuse (callback is public-facing)
 - [ ] **SOQL injection prevention** — validate all object/field names against describe(), escape values
+- [ ] **loginUrl SSRF prevention** — allowlist Salesforce-owned hostnames only, reject IP literals/localhost/RFC1918, HTTPS required
+- [ ] **postMessage origin locking** — callback uses hardcoded `APP_ORIGIN`, parent verifies `event.origin`
 - [ ] **Connection locking** — `connecting` status with TTL prevents concurrent OAuth flows
 - [ ] **Data retention enforcement** — automated cleanup of extracted data after retention window
 - [ ] **Post-connection permission audit** — verify CPQ access immediately after OAuth
@@ -1091,6 +1220,9 @@ Project "CPQ→RCA Migration — GlobalCorp"
 - [ ] **Playwright sessions isolated** — separate container context per project, no cookie/state leakage
 - [ ] **Browser sessions short-lived** — closed after each job
 - [ ] **Screenshots access-controlled** — project-scoped storage, never publicly accessible
+- [ ] **Structured API call logging** — every Salesforce API call logs: project ID, connection role, HTTP method, endpoint, response code, duration, `Sforce-Limit-Info` remaining
+- [ ] **API usage metrics** — per-project daily call counts, error rates, refresh frequency, tracked in application or external monitoring (Datadog, etc.)
+- [ ] **Alerting** — API budget exhaustion (80%/90% thresholds), sustained error rates, token refresh failures
 
 ---
 
@@ -1122,14 +1254,15 @@ Project "CPQ→RCA Migration — GlobalCorp"
 
 > These were open questions in v2. They have been resolved based on auditor feedback and team discussion.
 
-### 1. Popup for OAuth flow (was: "popup vs redirect?")
+### 1. Popup with redirect fallback for OAuth flow (was: "popup vs redirect?")
 
-**Decision: Popup.** Both auditors recommended it. The implementation is ~20 lines of extra code:
+**Decision: Popup primary, redirect fallback.** Both auditors recommended popup. v4 adds fallback for popup blockers (common in enterprise):
 
-1. `window.open(oauthUrl, 'sf_connect', 'width=600,height=700')`
-2. Callback page: `window.opener.postMessage({ type: 'sf_connected', role: 'source' }, origin)`
-3. Popup closes itself
-4. Parent page React Query invalidates connection cache on message receipt
+1. Frontend calls `POST /connect` via `fetch()`, receives `redirectUrl`
+2. `window.open(redirectUrl, 'sf_connect', 'width=600,height=700')`
+3. If `window.open()` returns `null` (blocked), fall back to `window.location.href = redirectUrl`
+4. Callback page: `window.opener.postMessage(...)` → popup closes, or redirect back with query param
+5. Parent page React Query invalidates connection cache on message receipt
 
 ### 2. My Domain login URLs supported from Day 1 (was: "should we support My Domain?")
 
@@ -1143,13 +1276,19 @@ Project "CPQ→RCA Migration — GlobalCorp"
 
 **Decision: Spike in Phase 1.** Evaluate Supabase Vault (pgsodium) during Phase 1 implementation. If it provides sufficient control and the developer experience is good, use it. Otherwise, proceed with application-level AES-256-GCM. Both are valid approaches.
 
-### 5. Stateless PKCE (was: "where to store code verifier?")
+### 5. Stateful PKCE storage (was: "where to store code verifier?")
 
-**Decision: Embed in signed state JWT.** No server-side storage needed. The code verifier is included in the state JWT payload, signed with a secret. Eliminates cleanup concerns and job queue pollution.
+**Decision (v4 — revised from v3): Store server-side with TTL.** v3 embedded the code verifier in the signed state JWT. Both v3 auditors flagged this as a PKCE violation — the verifier would be visible in the browser address bar, history, and logs, defeating PKCE's protection against authorization code interception (RFC 7636). Reverted to server-side storage: `oauth_pending_flows` table, keyed by random nonce, 10-minute TTL, deleted after use. This is the standard approach and the most defensible for security audits.
 
 ### 6. External Client App (was: not previously discussed)
 
-**Decision: Use ECA, not legacy Connected App.** New Connected App creation is restricted in Spring '26. ECAs are the modern framework, fully support the same OAuth flows, and are better positioned for AppExchange.
+**Decision: Use ECA, not legacy Connected App.** New Connected App creation is effectively blocked by default in Spring '26. ECAs are the modern framework, fully support the same OAuth flows, and are better positioned for AppExchange.
+
+### 7. ECA supports JWT Bearer Flow (was: Open Question #6 in v4)
+
+**Decision (v5 — resolved): ECAs DO support JWT Bearer Flow.** Salesforce documentation and Trailhead confirm that ECAs support JWT Bearer configuration: upload a public certificate in the ECA OAuth settings and enable JWT Bearer Flow. This means Phase 7's JWT Bearer plan is feasible using the same ECA — no legacy Connected App needed.
+
+See above — resolved in v3.
 
 ---
 
@@ -1177,6 +1316,10 @@ Project "CPQ→RCA Migration — GlobalCorp"
 5. **Should we add a `project_admin` role for project-level connection management?**
    - Currently, only `org_owner` and `admin` can connect/disconnect. In consulting firms, a project lead (who might be an `operator`) may need this ability scoped to their project.
    - **Lean:** Evaluate after initial launch based on customer feedback.
+
+6. **Should we leverage the Named Query API for extraction?** (v4 addition, renumbered)
+   - Spring '26 introduced the Named Query API (GA) for defining and exposing custom SOQL queries with better performance. If RevBrain ships pre-defined named queries as part of a managed package (Phase 7), these could execute with Salesforce-managed pagination and caching — potentially significant for large-org extraction.
+   - **Lean:** Evaluate during Phase 7 AppExchange work. Not in initial scope, but more than a minor optimization.
 
 ---
 
@@ -1260,12 +1403,12 @@ Project "CPQ→RCA Migration — GlobalCorp"
 
 #### Step 1.5: OAuth Flow Endpoints + Post-Connection Audit
 
-**What:** OAuth initiation, callback with stateless PKCE, disconnect, and automatic permission audit.
+**What:** OAuth initiation, callback with stateful PKCE, disconnect, and automatic permission audit.
 
 **Three endpoints + one audit routine:**
 
-1. `POST /v1/projects/:projectId/salesforce/connect` — generates signed state with embedded code verifier, returns redirect URL, sets `connecting` status with 10-min TTL
-2. `GET /v1/salesforce/oauth/callback` — validates state, extracts code verifier, exchanges tokens, runs permission audit, stores encrypted, renders popup-closing HTML
+1. `POST /v1/projects/:projectId/salesforce/connect` — generates nonce, stores code verifier + context in `oauth_pending_flows` table (10-min TTL), returns redirect URL, sets `connecting` status
+2. `GET /v1/salesforce/oauth/callback` — validates signed state, looks up pending flow by nonce, retrieves code verifier, exchanges tokens using stored `oauthBaseUrl`, runs permission audit, stores encrypted, renders popup-closing HTML with anti-leak headers (Referrer-Policy, Cache-Control, CSP)
 3. `POST /v1/projects/:projectId/salesforce/disconnect` — revokes tokens at Salesforce, marks disconnected
 4. **Post-connection audit routine** — automatically runs after token exchange: detects CPQ version, tests object access, captures API limits, stores results in `connection_metadata`
 
@@ -1296,7 +1439,7 @@ Project "CPQ→RCA Migration — GlobalCorp"
 1. "Salesforce Connections" section on project settings/workspace
 2. Two connection slots: Source (CPQ) and Target (RCA) — each with its own connect/disconnect
 3. Environment selector (Production/Sandbox) + optional My Domain URL field
-4. Popup OAuth flow with `window.open()` + `postMessage` listener
+4. Popup OAuth flow: `fetch()` for redirect URL → `window.open()` + `postMessage` listener. If popup blocked (`window.open()` returns `null`), fall back to redirect with "Popup was blocked" message
 5. Connected state: green badge, instance URL, user, CPQ version, API budget, "Test" and "Disconnect" buttons
 6. Pre-connection checklist (Section 7 instructions) shown as expandable help text
 7. Error states with actionable messages
@@ -1371,7 +1514,7 @@ Project "CPQ→RCA Migration — GlobalCorp"
 
 **What:** Auto-detect CPQ package version and available objects.
 
-1. Query `Publisher` for SBQQ namespace → CPQ version
+1. Tooling API query for `InstalledSubscriberPackage` where NamespacePrefix = 'SBQQ' → CPQ version (major.minor.patch.build); fallback to `Publisher` query if Tooling API is restricted
 2. `describeGlobal()` → filter `SBQQ__` objects
 3. `describe()` each → field metadata, types, picklist values
 4. Store schema in `connection_metadata`
@@ -1391,8 +1534,9 @@ Project "CPQ→RCA Migration — GlobalCorp"
 - Progress bar in UI: "Extracting Price Rules... 245/312"
 - API limit awareness: pause extraction if approaching daily limit (80% threshold)
 - Store in project-scoped `cpq_extracted_data` table
+- **Pre-calculated quote snapshots** (v4): Extract fully calculated quote states via CPQ Read Quote API (`SBQQ.ServiceRouter`). These serve as the validation baseline in Phase 5, even if CPQ is later deactivated in the source org. Without these snapshots, there's no way to verify that RCA produces the same pricing.
 
-**Effort:** ~12-16 hours.
+**Effort:** ~14-18 hours (increased from v3 to include quote snapshot extraction).
 
 #### Step 2.5: CPQ Data Visualization UI
 
@@ -1418,7 +1562,7 @@ Project "CPQ→RCA Migration — GlobalCorp"
 
 **Effort:** ~4-6 hours.
 
-#### Phase 2 Total: **~48-64 hours** (~2-3 weeks solo, ~1-2 weeks with 2 devs)
+#### Phase 2 Total: **~50-66 hours** (~2-3 weeks solo, ~1-2 weeks with 2 devs)
 
 ---
 
@@ -1428,7 +1572,7 @@ Project "CPQ→RCA Migration — GlobalCorp"
 
 #### Step 3.1: Robust Token Refresh
 
-Proactive refresh at 75% TTL, optimistic locking, retry with backoff, permanent failure detection.
+Reactive refresh on 401 (primary), best-effort proactive refresh at 90-minute heuristic (Salesforce doesn't reliably provide `expires_in`), optimistic locking, retry with backoff, permanent failure detection on `invalid_grant`.
 **Effort:** ~5-7 hours.
 
 #### Step 3.2: Connection Health Monitoring
@@ -1523,42 +1667,101 @@ Auto-generate phased plan based on analysis. Estimate effort per step. Identify 
 
 **What the user gets:** "RevBrain can create the RCA configuration in my target org based on the migration mapping, and validate that it produces correct results."
 
-#### Step 5.1: RCA Object Creation API
+#### Step 5.1: CPQ/RCA Coexistence Model
 
-**What:** Use the target connection's OAuth tokens to create RCA objects via the Salesforce REST API.
+> **v4 addition:** Auditor 1 flagged that CPQ and RCA can coexist in the same org. This fundamentally shapes the write-back architecture.
+
+**Key insight:** CPQ uses the custom `SBQQ__Quote__c` object. RCA uses the **native `Quote` object**. They are separate and can run simultaneously. This enables phased migrations:
+
+- **New business:** Launch all new quotes in RCA from Day 1
+- **Existing contracts:** Keep active contracts in CPQ until renewal
+- **Renewal flip:** When a contract renews, bridge data from CPQ into an RCA renewal quote
+- **Gradual retirement:** CPQ is decommissioned only after all active contracts have cycled through
+
+**What this means for RevBrain's write-back:**
+
+- RevBrain must write to **native RCA objects** (not SBQQ\_\_ objects), even if CPQ is still active in the same org
+- The write-back must NOT interfere with existing CPQ operation
+- The deployment strategy should support partial migrations (some products on RCA, others still on CPQ)
+- RevBrain should detect and report which products have been migrated vs which remain on CPQ
+
+#### Step 5.2: Data Records vs Metadata Deployment
+
+> **v4 addition:** Both auditors flagged that Phase 5 conflated data and metadata. These require different APIs and deployment strategies.
+
+RCA configuration consists of two distinct categories:
+
+**Data records (deployable via REST/Composite/Bulk API):**
+
+- `ProductSellingModel`, `ProductSellingModelOption` records
+- `PricingPlan`, `PricingPlanStep` records
+- `PricingProcedure`, `PricingProcedureStep` records
+- `PricingAdjustment`, `PricingAdjustmentTier` records
+- `ProductRelationship`, `ProductRelationshipType` records
+- `ContextDefinition`, `ContextMapping` records
+
+**Metadata (requires Metadata API or Tooling API):**
+
+- Custom fields on standard/custom objects
+- Flow definitions (for automation)
+- OmniStudio assets (FlexCards, Integration Procedures, DataRaptors)
+- LWC components (for custom UI behavior)
+- Permission sets (for access control)
+- Page layouts
+
+**RevBrain's approach:**
+
+1. **Data records** — RevBrain creates directly via REST API with upsert (Phase 5 core capability)
+2. **Metadata** — RevBrain generates a **deployable artifact** (Metadata API zip package or changeset instructions) that the end-client's team deploys using their standard CI/CD tooling (Gearset, Copado, SFDX, or manual changeset). RevBrain does NOT deploy metadata directly — this respects the end-client's deployment governance.
+3. **Step-by-step instructions** — for metadata that RevBrain can't auto-generate, produce clear instructions ("Create a custom field `RevBrain_External_Key__c` on ProductSellingModel")
+
+#### Step 5.3: RCA Object Creation API
+
+**What:** Use the target connection's OAuth tokens to create RCA data records.
 
 **Key challenges:**
 
 - **Deployment ordering:** Parent objects before children (e.g., `ProductSellingModel` before `ProductSellingModelOption`)
-- **Mixed config + data:** RCA configuration involves both metadata (custom fields, flows) and data (records). Most deployment tools can't handle both — RevBrain's write-back needs to handle both
 - **Idempotency:** Must support re-running write-back without creating duplicates (upsert by external ID)
+
+**External ID strategy:**
+
+- RevBrain creates a custom field `RevBrain_Migration_Key__c` (Text, External ID) on each target RCA object
+- Naming scheme: `{revbrainProjectId}:{sourceOrgId}:{sourceCpqRecordId}`
+- This enables upsert semantics: re-running a deployment updates existing records instead of creating duplicates
+- If the customer runs multiple projects against the same target org, the project ID prefix prevents collisions
+- The external ID field itself is metadata — included in the metadata deployment artifact (Step 5.2)
 
 **What to build:**
 
 1. Deployment plan generator — topologically sorted creation order based on object dependencies
-2. Upsert-based creation (use external IDs to prevent duplicates)
+2. Upsert-based creation using `RevBrain_Migration_Key__c` as external ID
 3. Progress tracking in UI ("Creating ProductSellingModel... 12/45")
 4. Error handling per record — continue on soft errors, abort on hard errors
 5. Detailed deployment report (what was created, what failed, why)
+6. Metadata artifact generator — produces a deployable zip for custom fields, permission sets, etc.
 
-**Effort:** ~16-22 hours.
+**Effort:** ~20-28 hours.
 
-#### Step 5.2: Validation Testing
+#### Step 5.4: Validation Testing
 
 **What:** After write-back, verify that the RCA configuration produces the same pricing as the original CPQ configuration.
 
+> **v4 addition:** Auditor 1 noted that the source org's CPQ may be decommissioned by the time validation runs. RevBrain should capture pre-calculated quote snapshots during Phase 2 extraction as a baseline.
+
 **What to build:**
 
-1. Create test quotes in the target org using RCA pricing
-2. Compare results against CPQ-calculated quotes (from Layer 2 ServiceRouter API)
-3. Highlight discrepancies with specific field-level diffs
-4. "Validation Report" showing pass/fail per pricing scenario
+1. **During Phase 2 extraction:** Also extract pre-calculated quote snapshots via the CPQ Read Quote API (`SBQQ.ServiceRouter`) — fully calculated quote states that serve as the comparison baseline even after CPQ is deactivated
+2. Create test quotes in the target org using RCA pricing
+3. Compare RCA results against captured CPQ quote snapshots
+4. Highlight discrepancies with specific field-level diffs
+5. "Validation Report" showing pass/fail per pricing scenario
 
-**Effort:** ~10-14 hours.
+**Effort:** ~12-16 hours.
 
-#### Step 5.3: Rollback Strategy
+#### Step 5.5: Rollback Strategy
 
-**What:** If a deployment fails or produces wrong results, undo the changes.
+**What:** If a deployment fails or produces wrong results, undo the data record changes.
 
 **What to build:**
 
@@ -1566,10 +1769,13 @@ Auto-generate phased plan based on analysis. Estimate effort per step. Identify 
 2. "Rollback" button that deletes all created records in reverse dependency order
 3. Confirmation dialog with clear warning
 4. Rollback report
+5. Note: metadata changes (custom fields, flows) are NOT auto-rolled back — they must be handled through the end-client's standard deployment/rollback process
 
 **Effort:** ~6-8 hours.
 
-#### Phase 5 Total: **~32-44 hours** (~2 weeks solo)
+#### Phase 5 Total: **~50-70 hours** (~2-3 weeks solo, ~1-2 weeks with 2 devs)
+
+> **v4 estimate revision:** Auditor 1 flagged that v3's ~32-44 hours was optimistic given the metadata/data split, coexistence handling, external ID strategy, and cross-org deployment complexity. The write-back is arguably harder than extraction (Phase 2) because creating correctly interconnected records with external ID linking is more error-prone than reading them.
 
 ---
 
@@ -1640,6 +1846,9 @@ Navigate to Configurator, capture option visibility, selection dependencies, int
 #### Step 7.1: AppExchange Listing
 
 Security review, documentation, penetration testing, compliance. **Eliminates the "app not approved" friction from Section 7.**
+
+> **v5 note:** ECAs only work with **Second Generation Packaging (2GP)**, not 1GP. Since RevBrain is starting fresh, this isn't a blocker, but the team must plan for 2GP from the start. All managed package development should use 2GP tooling (SFDX, scratch orgs for package development).
+
 **Effort:** ~30-50 hours (includes review cycles).
 
 #### Step 7.2: JWT Bearer Flow (Alternative Auth)
@@ -1671,21 +1880,21 @@ Document credential handling, data retention, access controls for compliance aud
 | Phase       | What You Get                        | Dev Effort  | Calendar (1 dev) | Calendar (2 devs) |
 | ----------- | ----------------------------------- | ----------- | ---------------- | ----------------- |
 | **Phase 1** | Connect + verify + permission audit | ~47-61 hrs  | ~2-3 weeks       | ~1-2 weeks        |
-| **Phase 2** | Extract and view all CPQ data       | ~48-64 hrs  | ~2-3 weeks       | ~1-2 weeks        |
+| **Phase 2** | Extract and view all CPQ data       | ~50-66 hrs  | ~2-3 weeks       | ~1-2 weeks        |
 | **Phase 3** | Reliable long-running connections   | ~26-38 hrs  | ~1-2 weeks       | ~1 week           |
 | **Phase 4** | CPQ→RCA mapping and migration plan  | ~47-65 hrs  | ~2-3 weeks       | ~1-2 weeks        |
-| **Phase 5** | RCA write-back and validation       | ~32-44 hrs  | ~1-2 weeks       | ~1 week           |
+| **Phase 5** | RCA write-back and validation       | ~50-70 hrs  | ~2-3 weeks       | ~1-2 weeks        |
 | **Phase 6** | Browser-based behavioral analysis   | ~64-84 hrs  | ~3-4 weeks       | ~2-3 weeks        |
 | **Phase 7** | AppExchange, enterprise, compliance | ~67-103 hrs | ~3-5 weeks       | ~2-3 weeks        |
 
-**Total: ~331-459 hours**
+**Total: ~355-489 hours**
 
 **Recommended launch plan:**
 
 - **Phases 1-2** together → first usable product (connect + see data). ~3-4 weeks.
 - **Phase 3** → production-ready connections. +1-2 weeks.
 - **Phase 4** → the real product differentiator (migration intelligence). +2-3 weeks.
-- **Phase 5** → complete the core value prop (write-back + validation). +1-2 weeks.
+- **Phase 5** → complete the core value prop (write-back + validation). +2-3 weeks.
 - **Phase 6** → premium feature for complex CPQ setups. +3-4 weeks.
 - **Phase 7** → in parallel with Phase 4-6: start AppExchange security review early to reduce onboarding friction.
 
@@ -1727,33 +1936,67 @@ For reviewers unfamiliar with the codebase:
 
 ## Appendix D: Auditor Feedback Resolution Matrix
 
-| #   | Issue                                               | Auditor | Severity | Resolution                                                  | Section       |
-| --- | --------------------------------------------------- | ------- | -------- | ----------------------------------------------------------- | ------------- |
-| 1   | Connected App installation requirement              | A1      | Critical | Added Section 7 (pre-connection guide), ECA in Section 6    | §6, §7        |
-| 2   | External Client App (ECA) over legacy Connected App | A2      | Critical | Section 6 fully rewritten for ECA                           | §6            |
-| 3   | IV reuse in encryption                              | A1      | Critical | Per-field IV packed into BYTEA blob + HKDF derived keys     | §9, §11       |
-| 4   | API version outdated (v62→v66)                      | A1      | Critical | Auto-detection, no hardcoding                               | §8, §11, §20  |
-| 5   | RCA mapping incomplete                              | A1      | Critical | Expanded table with 17 rows, version-aware rules            | §22 (Phase 4) |
-| 6   | No write-back phase                                 | A1, A2  | High     | New Phase 5: RCA Write-Back & Deployment                    | §22 (Phase 5) |
-| 7   | Single connection per project                       | A1      | High     | `UNIQUE(project_id, connection_role)`, source+target model  | §11, §13      |
-| 8   | No data retention policy                            | A1      | High     | New Section 16                                              | §16           |
-| 9   | No Bulk/Composite API strategy                      | A1, A2  | High     | Phase 2 Step 2.2                                            | §22 (Phase 2) |
-| 10  | My Domain Day 1                                     | A1, A2  | High     | `custom_login_url` field, supported from Phase 1            | §8, §11, §20  |
-| 11  | Post-connection permission audit                    | A1, A2  | High     | Added to OAuth callback flow                                | §8            |
-| 12  | Stateless PKCE                                      | A1      | Medium   | Code verifier embedded in signed state JWT                  | §8, §20       |
-| 13  | Popup OAuth flow                                    | A1, A2  | Medium   | Resolved: popup with postMessage                            | §8, §20       |
-| 14  | Concurrent connection handling                      | A1      | Medium   | `connecting` status with TTL lock                           | §10, §17      |
-| 15  | SOQL injection protection                           | A1      | Medium   | Documented in §17, enforced in API client                   | §17, §22      |
-| 16  | Premature Phase 5 columns                           | A1      | Low      | Removed — separate `browser_automation_credentials` table   | §11, §22      |
-| 17  | Missing `salesforce_org_id` index                   | A1      | Low      | Added to schema                                             | §11           |
-| 18  | Rate limit callback endpoint                        | A1      | Low      | Added to security checklist                                 | §18           |
-| 19  | Effort estimates buffer                             | A1      | Low      | 30-50% buffer added to all estimates                        | §22           |
-| 20  | HKDF derived keys per sensitivity                   | A1      | Medium   | Added to encryption design                                  | §9            |
-| 21  | Connection metadata capture                         | A1      | Medium   | `connection_metadata` JSONB + audit routine                 | §8, §11       |
-| 22  | Optimistic locking for refresh                      | A1      | Medium   | `token_version` counter                                     | §10, §11      |
-| 23  | Hyperforce URL changes                              | A1      | Low      | Update instance_url on every refresh                        | §10           |
-| 24  | Stakeholders JSONB validation                       | A1      | Low      | Zod schema required                                         | §11           |
-| 25  | Browser credentials separate table                  | A1      | Low      | `browser_automation_credentials` table                      | §22 (Phase 6) |
-| 26  | Phase 5 credential security language                | A2      | Medium   | Strengthened: explicit opt-in, consent, high-risk warning   | §22 (Phase 6) |
-| 27  | RCA feature parity tracking                         | A1      | Medium   | Version-aware mapping rules in Phase 4, tracking in Phase 7 | §22           |
-| 28  | Consumer secret rotation behavior                   | A1      | Low      | Clarified in §10 and §17 edge case #4                       | §10, §17      |
+### v2 → v3 (first audit round, 28 items)
+
+| #     | Issue                                               | Auditor | Severity | Resolution                                                 | Section       |
+| ----- | --------------------------------------------------- | ------- | -------- | ---------------------------------------------------------- | ------------- |
+| 1     | Connected App installation requirement              | A1      | Critical | Added Section 7 (pre-connection guide), ECA in Section 6   | §6, §7        |
+| 2     | External Client App (ECA) over legacy Connected App | A2      | Critical | Section 6 fully rewritten for ECA                          | §6            |
+| 3     | IV reuse in encryption                              | A1      | Critical | Per-field IV packed into BYTEA blob + HKDF derived keys    | §9, §11       |
+| 4     | API version outdated (v62→v66)                      | A1      | Critical | Auto-detection, no hardcoding                              | §8, §11, §20  |
+| 5     | RCA mapping incomplete                              | A1      | Critical | Expanded table with 17 rows, version-aware rules           | §22 (Phase 4) |
+| 6     | No write-back phase                                 | A1, A2  | High     | New Phase 5: RCA Write-Back & Deployment                   | §22 (Phase 5) |
+| 7     | Single connection per project                       | A1      | High     | `UNIQUE(project_id, connection_role)`, source+target model | §11, §13      |
+| 8     | No data retention policy                            | A1      | High     | New Section 16                                             | §16           |
+| 9     | No Bulk/Composite API strategy                      | A1, A2  | High     | Phase 2 Step 2.2                                           | §22 (Phase 2) |
+| 10    | My Domain Day 1                                     | A1, A2  | High     | `custom_login_url` field, supported from Phase 1           | §8, §11, §20  |
+| 11    | Post-connection permission audit                    | A1, A2  | High     | Added to OAuth callback flow                               | §8            |
+| 12-28 | (Medium/Low items)                                  | Various | Med/Low  | All resolved — see v3 changelog                            | Various       |
+
+### v3 → v4 (second audit round, 18 items)
+
+| #   | Issue                                                           | Auditor | Severity | Resolution                                                                                                                                   | Section       |
+| --- | --------------------------------------------------------------- | ------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| 29  | PKCE verifier in browser-transmitted state (security)           | A1, A2  | Must-fix | Reverted to stateful storage: `oauth_pending_flows` table with TTL. Code verifier never sent through user agent. RFC 7636 compliant.         | §8, §20       |
+| 30  | OAuth endpoint base URL inconsistency (token/refresh/revoke)    | A2      | Must-fix | Added `oauth_base_url` stored per connection. Same base URL used for authorize, token exchange, refresh, and revocation.                     | §8, §10, §11  |
+| 31  | Popup flow HTTP mechanics (POST as navigation)                  | A2      | Must-fix | Fixed: `fetch()` for redirect URL, then `window.open()`. Added popup blocker fallback to redirect.                                           | §8, §22       |
+| 32  | CPQ version detection (Publisher vs InstalledSubscriberPackage) | A2      | Must-fix | Changed to Tooling API `InstalledSubscriberPackage` query (full version including patch/build). Fallback to Publisher if Tooling restricted. | §8            |
+| 33  | RCA/ARM rebrand not acknowledged                                | A1      | High     | Added terminology note in §1, naming to be configurable in UI                                                                                | §1            |
+| 34  | CPQ end-of-sale market positioning                              | A1      | High     | Added market context subsection to §1                                                                                                        | §1            |
+| 35  | CPQ/RCA coexistence in write-back                               | A1      | High     | New Step 5.1 covering coexistence model, native Quote usage, phased migration support                                                        | §22 (Phase 5) |
+| 36  | Metadata vs data deployment boundary                            | A1, A2  | High     | New Step 5.2 categorizing data records (REST API) vs metadata (deployable artifact)                                                          | §22 (Phase 5) |
+| 37  | ECA Distribution State not specified                            | A1      | Medium   | Added to §6 config table: "Packaged" from Day 1                                                                                              | §6            |
+| 38  | Refresh Token Policy missing from ECA config                    | A1      | Medium   | Added to §6 config table: "Valid until revoked"                                                                                              | §6            |
+| 39  | Popup blocker fallback missing                                  | A1      | Medium   | Added: detect `null` from `window.open()`, fall back to redirect                                                                             | §8, §22       |
+| 40  | Callback anti-leak headers                                      | A2      | Medium   | Added: `Referrer-Policy: no-referrer`, `Cache-Control: no-store`, strict CSP on callback HTML                                                | §8, §18       |
+| 41  | Sandbox cloning doesn't copy local ECA approvals                | A1      | Medium   | Added as edge case #7 in §17                                                                                                                 | §17           |
+| 42  | Multi-sandbox/multi-source limitation                           | A1      | Low      | Documented as known v1 limitation in edge case #8, future enhancement noted                                                                  | §17           |
+| 43  | Pre-calculated quote snapshots for validation                   | A1      | Medium   | Added to Phase 2 extraction (Step 2.4) and Phase 5 validation (Step 5.4)                                                                     | §22           |
+| 44  | Phase 5 effort underestimate                                    | A1      | Medium   | Revised from ~32-44 to ~50-70 hours                                                                                                          | §22           |
+| 45  | RCA target objects reference table                              | A1      | Low      | Added to §15                                                                                                                                 | §15           |
+| 46  | Observability / structured logging strategy                     | A1      | Low      | Added to security checklist: structured API logging, metrics, alerting                                                                       | §18           |
+| 47  | External ID strategy for write-back                             | A2      | Medium   | Specified in Phase 5 Step 5.3: `RevBrain_Migration_Key__c` with naming scheme                                                                | §22           |
+| 48  | Access token TTL not reliably knowable                          | A2      | Medium   | Proactive refresh changed to best-effort heuristic (90 min), reactive 401 as primary                                                         | §10           |
+| 49  | ECA JWT Bearer flow support verification needed                 | A1      | Medium   | Added as open question #6                                                                                                                    | §21           |
+| 50  | Named Query API as future optimization                          | A1      | Low      | Added as open question #7                                                                                                                    | §21           |
+| 51  | Data minimization in state parameter                            | A2      | Medium   | State contains only `{ nonce, exp }`. All internal IDs stored server-side.                                                                   | §8            |
+
+### v4 → v5 (final polish, 7 items)
+
+| #   | Issue                                                                       | Source | Resolution                                                                        | Section  |
+| --- | --------------------------------------------------------------------------- | ------ | --------------------------------------------------------------------------------- | -------- |
+| 52  | `oauth_pending_flows` table undefined in data model                         | A2     | Added full schema with nonce PK, cleanup index, unique constraint, lifecycle docs | §11      |
+| 53  | Pending-flow deleted before token exchange (retry risk)                     | A2     | Moved deletion to after successful exchange                                       | §8       |
+| 54  | loginUrl SSRF prevention missing                                            | A2     | Added allowlist validation (Salesforce hostnames only, no IPs/localhost)          | §8, §18  |
+| 55  | postMessage origin not locked                                               | A2     | Hardcoded `APP_ORIGIN`, parent verifies `event.origin`                            | §8, §18  |
+| 56  | ECA JWT Bearer support unresolved                                           | A1     | Confirmed ECAs support JWT Bearer. Moved to Resolved Decisions §20 #7             | §20, §21 |
+| 57  | 2GP packaging requirement for AppExchange                                   | A1     | Noted in Phase 7 Step 7.1                                                         | §22      |
+| 58  | Internal consistency (stateless→stateful, CPQ detection, refresh heuristic) | A2     | Fixed all references across §§8, 22                                               | Various  |
+
+### v5 → v5-final (sign-off round, 3 items)
+
+| #   | Issue                                               | Source | Resolution                                                                                | Section |
+| --- | --------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------- | ------- |
+| 59  | Callback CSP blocks inline script (popup hangs)     | A2     | Changed to nonce-based CSP: `script-src 'nonce-{random}'` with per-response nonce         | §8      |
+| 60  | Expired pending flow blocks new connection attempts | A1, A2 | Added UPSERT-if-expired pattern to lifecycle: overwrite expired rows instead of rejecting | §11     |
+| 61  | Hardcoded v66.0 in permission audit step 6          | A1     | Changed to `{auto_detected_version}`                                                      | §8      |

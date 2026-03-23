@@ -26,6 +26,8 @@
     "clean": "turbo run clean && rm -rf node_modules",
     "setup:cloud": "./scripts/init-supabase-cloud.sh",
     "perf:test": "playwright test --project=performance",
+    "perf:edge": "tsx scripts/benchmark-edge.ts",
+    "perf:edge:quick": "tsx scripts/benchmark-edge.ts --skip-wait",
     "perf:baseline": "tsx scripts/capture-perf-baseline.ts",
     "perf:compare": "tsx scripts/capture-perf-baseline.ts --compare",
     "prepare": "husky"
