@@ -785,21 +785,21 @@ The principle throughout: **reduce cognitive load, increase confidence.** At eve
 
 | Task | Description                                                                                                                                | Status         |
 | ---- | ------------------------------------------------------------------------------------------------------------------------------------------ | -------------- |
-| F.1  | Mock data: multiple projects at different journey stages + all entity seed data                                                            | ⬜ Not Started |
-| F.2  | Project workspace layout: new sidebar with 3 groups (Migration/Operations/Project), connection status panel, API budget, notification bell | ⬜ Not Started |
-| F.3  | Locked sidebar items with tooltips + navigation to contextual empty states                                                                 | ⬜ Not Started |
-| F.4  | Project switcher dropdown with search                                                                                                      | ⬜ Not Started |
-| F.5  | Translation files: `en/workspace.json` + `he/workspace.json` with all new strings                                                          | ⬜ Not Started |
-| F.6  | URL routing: all 10 workspace pages registered in router                                                                                   | ⬜ Not Started |
+| F.1  | Mock data: multiple projects at different journey stages + all entity seed data                                                            | ✅ Done `3c9cfef` |
+| F.2  | Project workspace layout: new sidebar with 3 groups (Migration/Operations/Project), connection status panel, API budget, notification bell | ✅ Done `3c9cfef` |
+| F.3  | Locked sidebar items with tooltips + navigation to contextual empty states                                                                 | ✅ Done `3c9cfef` |
+| F.4  | Project switcher dropdown with search                                                                                                      | ✅ Done `3c9cfef` |
+| F.5  | Translation files: `en/workspace.json` + `he/workspace.json` with all new strings                                                          | ✅ Done `3c9cfef` |
+| F.6  | URL routing: all 10 workspace pages registered in router                                                                                   | ✅ Done `3c9cfef` |
 
 ### Pages
 
 | Task | Description                                                                                           | Status         |
 | ---- | ----------------------------------------------------------------------------------------------------- | -------------- |
-| P.1  | Overview: health strip (6 pills with status + click navigation)                                       | ⬜ Not Started |
-| P.2  | Overview: connection cards (source + target) with inline connect flow                                 | ⬜ Not Started |
-| P.3  | Overview: "What's Next" card with primary + secondary action, state progression table                 | ⬜ Not Started |
-| P.4  | Overview: top issues panel + recent activity feed                                                     | ⬜ Not Started |
+| P.1  | Overview: health strip (6 pills with status + click navigation)                                       | ✅ Done `3c9cfef` |
+| P.2  | Overview: connection cards (source + target) with inline connect flow                                 | ✅ Done `3c9cfef` |
+| P.3  | Overview: "What's Next" card with primary + secondary action, state progression table                 | ✅ Done `3c9cfef` |
+| P.4  | Overview: top issues panel + recent activity feed                                                     | ✅ Done `3c9cfef` |
 | P.5  | CPQ Explorer: category sidebar + data table with search + extraction toolbar                          | ⬜ Not Started |
 | P.6  | CPQ Explorer: first extraction ceremony card vs compact subsequent toolbar                            | ⬜ Not Started |
 | P.7  | CPQ Explorer: detail panel (slide-over sheet for v1) with dependencies list                           | ⬜ Not Started |
@@ -827,7 +827,7 @@ The principle throughout: **reduce cognitive load, increase confidence.** At eve
 
 | Task | Description                                                                                  | Status         |
 | ---- | -------------------------------------------------------------------------------------------- | -------------- |
-| E.1  | All empty states per the empty state table (10 contextual empty states with CTAs)            | ⬜ Not Started |
+| E.1  | All empty states per the empty state table (10 contextual empty states with CTAs)            | ✅ Done `3c9cfef` |
 | E.2  | Connection flow: inline in Overview with instance type selector → popup → success transition | ⬜ Not Started |
 | E.3  | Connection flow: popup blocked fallback (redirect + toast + `?sf_connected=true` detection)  | ⬜ Not Started |
 
