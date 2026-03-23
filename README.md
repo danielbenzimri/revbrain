@@ -118,12 +118,15 @@ Push to main/staging
 
 ## Documentation
 
-| Document                                                             | Purpose                                   |
-| -------------------------------------------------------------------- | ----------------------------------------- |
-| [SYSTEM-ADMIN-AUDIT.md](./SYSTEM-ADMIN-AUDIT.md)                     | System admin platform audit & spec (v3.1) |
-| [docs/TECH-DEBT.md](./docs/TECH-DEBT.md)                             | Known tech debt and deferred items        |
-| [docs/tenant-isolation-audit.md](./docs/tenant-isolation-audit.md)   | Tenant data isolation verification        |
-| [docs/spike-jwt-impersonation.md](./docs/spike-jwt-impersonation.md) | JWT approach for impersonation (ADR)      |
+| Document                                                                 | Purpose                                           |
+| ------------------------------------------------------------------------ | ------------------------------------------------- |
+| [ARCHITECTURE.md](./docs/ARCHITECTURE.md)                                | System design, patterns, key decisions            |
+| [CONTRIBUTING.md](./docs/CONTRIBUTING.md)                                | Dev workflow, conventions, testing, security      |
+| [CLAUDE.md](./CLAUDE.md)                                                 | AI assistant context (auto-loaded by Claude Code) |
+| [docs/SYSTEM-ADMIN-AUDIT.md](./docs/SYSTEM-ADMIN-AUDIT.md)               | System admin platform audit & spec (v3.1)         |
+| [docs/TECH-DEBT.md](./docs/TECH-DEBT.md)                                 | Known tech debt and deferred items                |
+| [docs/tenant-isolation-audit.md](./docs/tenant-isolation-audit.md)       | Tenant data isolation verification                |
+| [docs/adr/005-jwt-impersonation.md](./docs/adr/005-jwt-impersonation.md) | JWT impersonation design spike                    |
 
 ## License
 
