@@ -22,11 +22,13 @@
 name: CD
 
 on:
-  push:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
     branches: [main, staging]
 
 concurrency:
-  group: cd-${{ github.ref }}
+  group: cd-${{ github.event.workflow_run.head_branch }}
   cancel-in-progress: false # Don't cancel in-progress deploys
 
 jobs:
@@ -35,6 +37,7 @@ jobs:
   # ---------------------------------------------------------------------------
   deploy-backend:
     name: Deploy Backend
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
@@ -51,7 +54,8 @@ jobs:
 
       - name: Determine environment
         run: |
-          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+          BRANCH="${{ github.event.workflow_run.head_branch }}"
+          if [ "$BRANCH" == "main" ]; then
             echo "PROJECT_ID=${{ secrets.SUPABASE_PROJECT_ID_PROD }}" >> $GITHUB_ENV
             echo "ENV_NAME=production" >> $GITHUB_ENV
           else
@@ -86,6 +90,7 @@ jobs:
   # ---------------------------------------------------------------------------
   deploy-frontend:
     name: Deploy Frontend
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     needs: deploy-backend
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -111,7 +116,8 @@ jobs:
 
       - name: Determine Vercel project
         run: |
-          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+          BRANCH="${{ github.event.workflow_run.head_branch }}"
+          if [ "$BRANCH" == "main" ]; then
             echo "VERCEL_PROJECT_ID=${{ secrets.VERCEL_PROJECT_ID_PROD }}" >> $GITHUB_ENV
             echo "VERCEL_ENV=production" >> $GITHUB_ENV
           else
