@@ -1,6 +1,5 @@
 import { createMiddleware } from 'hono/factory';
 import { decode, verify } from 'hono/jwt';
-import { db, users, organizations, eq } from '@revbrain/database';
 import { AppError, ErrorCodes } from '@revbrain/contract';
 import type { UserEntity } from '@revbrain/contract';
 import { MOCK_IDS } from '../mocks/constants.ts';
@@ -8,51 +7,28 @@ import type { SupabaseJWTPayload } from '../types/index.ts';
 import { getEnv } from '../lib/env.ts';
 import { getSupabaseAdmin } from '../lib/supabase.ts';
 import { logger } from '../lib/logger.ts';
+import { lookupUserBySubject } from '../lib/user-lookup.ts';
 
 import type { AppEnv } from '../types/index.ts';
 
 // ============================================================================
-// USER CACHE - Eliminates DB round-trip on every request
+// USER CACHE — delegates to user-lookup.ts (runtime-aware: PostgREST on Edge)
 // ============================================================================
-// Cache users in memory with 10-minute TTL. This saves ~10-50ms per request.
-// Critical user changes (role, deactivation, delete) clear the cache immediately
-// via clearUserCache() calls in user.service.ts.
+// User lookup caching is handled by lib/user-lookup.ts (5-minute TTL).
+// These exports are kept for backward compatibility with user.service.ts
+// which calls clearUserCache() on user updates.
 // ============================================================================
-
-type CachedUser = typeof users.$inferSelect;
-interface CacheEntry {
-  user: CachedUser;
-  expiresAt: number;
-}
-
-const USER_CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes (safe since we clear on updates)
-const userCache = new Map<string, CacheEntry>();
-
-function getCachedUser(supabaseUserId: string): CachedUser | null {
-  const entry = userCache.get(supabaseUserId);
-  if (!entry) return null;
-  if (Date.now() > entry.expiresAt) {
-    userCache.delete(supabaseUserId);
-    return null;
-  }
-  return entry.user;
-}
-
-function setCachedUser(supabaseUserId: string, user: CachedUser): void {
-  userCache.set(supabaseUserId, {
-    user,
-    expiresAt: Date.now() + USER_CACHE_TTL_MS,
-  });
-}
+import { clearUserCache as clearLookupCache } from '../lib/user-lookup.ts';
 
 /** Clear cache for a specific user (call on user update/delete) */
-export function clearUserCache(supabaseUserId: string): void {
-  userCache.delete(supabaseUserId);
+export function clearUserCache(_supabaseUserId: string): void {
+  // Clear the entire lookup cache — it's small and cheap to rebuild
+  clearLookupCache();
 }
 
 /** Clear entire user cache (for testing or emergency) */
 export function clearAllUserCache(): void {
-  userCache.clear();
+  clearLookupCache();
 }
 
 /**
@@ -115,7 +91,7 @@ async function verifyTokenRemotely(token: string): Promise<SupabaseJWTPayload> {
 /**
  * Create a mock JWT payload for development auth.
  */
-function createMockJwtPayload(user: UserEntity | CachedUser): SupabaseJWTPayload {
+function createMockJwtPayload(user: UserEntity): SupabaseJWTPayload {
   return {
     sub: user.supabaseUserId,
     exp: Math.floor(Date.now() / 1000) + 3600,
@@ -215,8 +191,14 @@ export const authMiddleware = createMiddleware<AppEnv>(async (c, next) => {
       return;
     }
 
-    // DB fallback for legacy mock token behavior
+    // DB fallback for legacy mock token behavior (dynamic import — only in mock mode)
     const mockEmail = `mock.${userId}@revbrain.io`;
+    const {
+      db,
+      users: usersTable,
+      organizations: orgsTable,
+      eq: eqOp,
+    } = await import('@revbrain/database');
     let localUser = await db.query.users.findFirst({
       where: (u, { or, eq: eqFn }) => or(eqFn(u.id, userId), eqFn(u.email, mockEmail)),
     });
@@ -224,7 +206,7 @@ export const authMiddleware = createMiddleware<AppEnv>(async (c, next) => {
     if (!localUser) {
       const mockOrgId = '00000000-0000-0000-0000-000000000000';
       await db
-        .insert(organizations)
+        .insert(orgsTable)
         .values({
           id: mockOrgId,
           name: 'Mock Organization',
@@ -232,9 +214,9 @@ export const authMiddleware = createMiddleware<AppEnv>(async (c, next) => {
           type: 'business',
           seatLimit: 999,
         })
-        .onConflictDoNothing({ target: organizations.id });
+        .onConflictDoNothing({ target: orgsTable.id });
       const [upsertedUser] = await db
-        .insert(users)
+        .insert(usersTable)
         .values({
           id: userId,
           supabaseUserId: userId,
@@ -245,7 +227,7 @@ export const authMiddleware = createMiddleware<AppEnv>(async (c, next) => {
           isOrgAdmin: false,
           organizationId: mockOrgId,
         })
-        .onConflictDoNothing({ target: users.id })
+        .onConflictDoNothing({ target: usersTable.id })
         .returning();
       localUser =
         upsertedUser ??
@@ -258,8 +240,8 @@ export const authMiddleware = createMiddleware<AppEnv>(async (c, next) => {
       throw new AppError(ErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to provision mock user', 500);
     }
 
-    c.set('user', localUser);
-    c.set('jwtPayload', createMockJwtPayload(localUser));
+    c.set('user', localUser as unknown as UserEntity);
+    c.set('jwtPayload', createMockJwtPayload(localUser as unknown as UserEntity));
     await next();
     return;
   }
@@ -327,20 +309,9 @@ export const authMiddleware = createMiddleware<AppEnv>(async (c, next) => {
       payload = await verifyTokenRemotely(token);
     }
 
-    // Fetch local user by Supabase ID (cache-first to avoid DB round-trip)
-    let localUser = getCachedUser(payload.sub);
-
-    if (!localUser) {
-      // Cache miss - fetch from DB and cache
-      const dbUser = await db.query.users.findFirst({
-        where: eq(users.supabaseUserId, payload.sub),
-      });
-
-      if (dbUser) {
-        setCachedUser(payload.sub, dbUser);
-        localUser = dbUser;
-      }
-    }
+    // Fetch local user by Supabase ID (uses PostgREST on Edge, Drizzle on Node)
+    // lookupUserBySubject has its own 5-minute cache
+    const localUser = await lookupUserBySubject(payload.sub);
 
     if (!localUser) {
       throw new AppError(ErrorCodes.USER_NOT_FOUND, 'User not found in system', 403);
@@ -416,10 +387,8 @@ export const authMiddlewareAllowInactive = createMiddleware<AppEnv>(async (c, ne
       payload = await verifyTokenRemotely(token);
     }
 
-    // Fetch local user
-    let localUser = await db.query.users.findFirst({
-      where: eq(users.supabaseUserId, payload.sub),
-    });
+    // Fetch local user (uses PostgREST on Edge, Drizzle on Node)
+    let localUser = await lookupUserBySubject(payload.sub);
 
     // AUTO-RECOVERY: If user exists in Auth Provider but not locally (orphaned invite)
     if (!localUser && payload.user_metadata) {
@@ -428,6 +397,8 @@ export const authMiddlewareAllowInactive = createMiddleware<AppEnv>(async (c, ne
 
       // Only auto-create if we have the required metadata from the invite
       if (meta.full_name && email && meta.organization_id) {
+        // Dynamic import — only loads postgres.js when auto-recovery is needed (rare)
+        const { db, users } = await import('@revbrain/database');
         const [created] = await db
           .insert(users)
           .values({
@@ -442,7 +413,7 @@ export const authMiddlewareAllowInactive = createMiddleware<AppEnv>(async (c, ne
           })
           .returning();
 
-        localUser = created;
+        localUser = created as unknown as UserEntity;
         logger.info('Auto-recovered orphaned user via JWT payload', { email });
       }
     }

@@ -14,8 +14,8 @@
  * so the admin can end the session or perform admin actions.
  */
 import type { MiddlewareHandler } from 'hono';
-import { db, users, eq } from '@revbrain/database';
 import { logger } from '../lib/logger.ts';
+import { lookupUserBySubject as lookupUser } from '../lib/user-lookup.ts';
 
 /**
  * Allowlist of routes permitted during read-only impersonation.
@@ -48,11 +48,10 @@ function isAllowedDuringImpersonation(method: string, path: string): boolean {
 
 /**
  * Look up a user by their Supabase user ID (the `sub` / `realSubject` claim).
+ * Uses the runtime-aware lookup (PostgREST on Edge, Drizzle on Node).
  */
-async function lookupUserBySubject(supabaseUserId: string) {
-  return db.query.users.findFirst({
-    where: eq(users.supabaseUserId, supabaseUserId),
-  });
+async function lookupUserBySubjectId(supabaseUserId: string) {
+  return lookupUser(supabaseUserId);
 }
 
 export const impersonationMiddleware: MiddlewareHandler = async (c, next) => {
@@ -65,7 +64,7 @@ export const impersonationMiddleware: MiddlewareHandler = async (c, next) => {
 
   // Set dual identity — look up the real admin user
   try {
-    const realUser = await lookupUserBySubject(jwtPayload.realSubject);
+    const realUser = await lookupUserBySubjectId(jwtPayload.realSubject);
     if (realUser) {
       c.set('realUser', realUser);
     } else {
