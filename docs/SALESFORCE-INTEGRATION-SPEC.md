@@ -6,6 +6,7 @@
 > **Audience:** Engineering team, external reviewers, security auditors
 > **Changelog:**
 >
+> - **v5-final (addendum):** Added execution architecture (§15) — control plane vs worker plane split. Added worker credential access protocol (§9) — internal token-mint endpoint, refresh token never leaves control plane. Added `cpq_assessment_runs` + `cpq_assessment_run_events` tables (§11). Updated Phase 2 + Phase 6 notes (§22). Added worker security checklist items (§18).
 > - **v5:** Final polish from second audit round. Fixes: `oauth_pending_flows` table schema added, pending-flow deletion moved to after token exchange, SSRF prevention on loginUrl, postMessage origin locking, internal consistency fixes (stateful PKCE wording, CPQ detection alignment, refresh heuristic alignment). Resolved: ECA supports JWT Bearer (Open Question #6 closed). Added: 2GP packaging requirement for Phase 7, ECA credential rotation API note, explicit revocation endpoint.
 > - **v4:** Second round of auditor feedback. Key changes: reverted PKCE to stateful storage (security fix), consistent OAuth base URL handling, CPQ/RCA coexistence model for write-back, metadata vs data deployment boundary, ARM rebrand acknowledgment, CPQ end-of-sale market context, popup blocker fallback, callback anti-leak headers, revised Phase 5 estimates.
 > - **v3:** External Client App (ECA) over legacy Connected App, fixed IV-per-field encryption, multi-connection source/target model, added write-back phase, expanded RCA mapping, data retention policy, Bulk API strategy, My Domain Day 1 support, post-connection permission audit.
@@ -596,6 +597,29 @@ function decrypt(blob: Buffer, masterKey: Buffer, context: string): string {
 - **Row-Level Security (RLS)**: Supabase RLS policies will prevent cross-tenant access even if someone bypasses the application layer
 - **No client-side access**: Tokens are never sent to the browser. The client only sees connection status (connected/disconnected/error)
 
+#### Worker Credential Access Protocol
+
+> **v5-final addition:** The worker plane (Cloud Run / container) needs Salesforce tokens to execute jobs, but the refresh token must never leave the control plane.
+
+**Internal token-mint endpoint:** `POST /internal/salesforce/access-token`
+
+- Input: `{ connectionId }`
+- Auth: worker identity — shared secret, signed JWT, or Supabase service role key, restricted to internal network or allowlisted IPs
+- Behavior:
+  1. Look up connection + secrets
+  2. Decrypt refresh token server-side
+  3. If access token is expired, refresh it (update DB)
+  4. Return `{ instanceUrl, apiVersion, accessToken, issuedAt }` (short-lived access token only)
+- The worker uses this token for Salesforce API calls. On 401, it calls the endpoint again.
+
+**Security properties:**
+
+- Refresh token never leaves the control plane database
+- Access tokens are short-lived (~2h) — compromise window is limited
+- Worker does NOT hold the encryption key — it can't decrypt tokens directly
+- Queue payloads contain only `{ jobId, assessmentRunId }` — no secrets
+- The token-mint endpoint is rate-limited and logged for audit
+
 ---
 
 ## 10. Token Lifecycle Management
@@ -795,6 +819,51 @@ CREATE TABLE salesforce_connection_logs (
 
 -- Events: 'connected', 'refreshed', 'refresh_failed', 'disconnected', 'reconnected',
 --         'permission_audit', 'app_not_approved_error', 'api_limit_warning'
+```
+
+### New Table: `cpq_assessment_runs`
+
+> **v5-final addition:** Unifies extraction + analysis + mapping into a single trackable pipeline.
+
+```sql
+CREATE TABLE cpq_assessment_runs (
+  id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  project_id        UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  organization_id   UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  connection_id     UUID NOT NULL REFERENCES salesforce_connections(id),
+  status            VARCHAR(30) NOT NULL DEFAULT 'queued',
+                    -- 'queued' | 'running' | 'extracting' | 'analyzing' | 'mapping' | 'completed' | 'failed' | 'cancelled'
+  progress_pct      INTEGER NOT NULL DEFAULT 0,           -- 0-100
+  current_step      TEXT,                                  -- e.g., "Extracting Price Rules (245/312)"
+  result_summary    JSONB,                                 -- coverage stats, complexity scores, etc.
+  artifact_paths    TEXT[],                                 -- Supabase Storage paths for reports
+  last_error        TEXT,
+  started_by        UUID NOT NULL REFERENCES users(id),
+  started_at        TIMESTAMPTZ,
+  completed_at      TIMESTAMPTZ,
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at        TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_assessment_runs_project ON cpq_assessment_runs(project_id);
+CREATE INDEX idx_assessment_runs_status ON cpq_assessment_runs(status);
+```
+
+### New Table: `cpq_assessment_run_events`
+
+Append-only progress events from the worker. Powers the UI timeline and debugging.
+
+```sql
+CREATE TABLE cpq_assessment_run_events (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  run_id          UUID NOT NULL REFERENCES cpq_assessment_runs(id) ON DELETE CASCADE,
+  event           VARCHAR(50) NOT NULL,     -- 'started', 'extracting', 'extracted', 'analyzing', 'mapped', 'completed', 'failed', 'error'
+  message         TEXT,                      -- Human-readable description
+  details         JSONB,                     -- Structured data (counts, errors, timing)
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_assessment_events_run ON cpq_assessment_run_events(run_id);
 ```
 
 ### Changes to Existing Tables
@@ -1052,6 +1121,30 @@ Some CPQ behaviors **only exist in the browser**:
 
 **4. Quote Document PDF Rendering** — templates are API-readable, but actual rendering (merge fields, conditional sections, Visualforce) happens server-side within Salesforce.
 
+### Execution Architecture — Control Plane vs Worker Plane
+
+> **v5-final addition:** CPQ extraction, analysis, mapping, and write-back are **long-running, resource-intensive operations** — querying hundreds of Salesforce objects, running AST analysis on QCP code, and compiling reports can take 5–30 minutes depending on org complexity. Supabase Edge Functions have a ~60s execution limit and limited CPU/memory.
+
+**These operations MUST run on a dedicated worker plane (Node.js container / Cloud Run / ECS), NOT on Edge Functions.**
+
+```
+Control Plane (Supabase Edge Functions / Hono API):
+  ├── User auth, project CRUD, Salesforce OAuth — short-lived, fits Edge Functions
+  ├── "Start Assessment" / "Start Deployment" API — creates run record, enqueues job
+  ├── Status/progress polling — reads from DB
+  └── Internal token-mint endpoint — provides short-lived Salesforce tokens to worker
+
+Worker Plane (apps/worker/ — Node.js container):
+  ├── CPQ extraction (Bulk API, pagination, 10-30 min)
+  ├── CPQ analysis + mapping (AST parsing, rule evaluation)
+  ├── RCA write-back + validation (deployment, comparison)
+  └── Browser automation (Playwright, Phase 6)
+```
+
+**Queue strategy:** Phase 1-3 uses Postgres `jobQueue` table with worker polling (cloud-neutral, sufficient for <100 concurrent jobs). Migration to Cloud Tasks / SQS when scaling demands it — the control-plane APIs and worker interface remain unchanged, only the queue transport changes.
+
+**Worker credential access:** The worker does NOT hold the encryption key or decrypt tokens directly. Instead, it calls an internal token-mint endpoint on the control plane (see Section 9) to obtain short-lived Salesforce access tokens. The refresh token never leaves the control plane. See the implementation plan for the full protocol.
+
 ### The Dedicated User Requirement (for Browser Automation)
 
 Browser automation requires **actual login credentials** (username + password). The end-client should create a dedicated Salesforce user for RevBrain. See Phase 6 in Section 22 for full details. This is an optional, advanced feature — not required for Phases 1-5.
@@ -1223,6 +1316,10 @@ Project "CPQ→RCA Migration — GlobalCorp"
 - [ ] **Structured API call logging** — every Salesforce API call logs: project ID, connection role, HTTP method, endpoint, response code, duration, `Sforce-Limit-Info` remaining
 - [ ] **API usage metrics** — per-project daily call counts, error rates, refresh frequency, tracked in application or external monitoring (Datadog, etc.)
 - [ ] **Alerting** — API budget exhaustion (80%/90% thresholds), sustained error rates, token refresh failures
+- [ ] **Worker credential isolation** — worker obtains Salesforce tokens ONLY via internal token-mint endpoint; refresh token never leaves control plane
+- [ ] **Token-mint endpoint secured** — authenticated via worker secret, rate-limited, logged, restricted to internal network
+- [ ] **Queue payload minimal** — contains only `{ assessmentRunId }` or `{ jobId }`, never tokens or secrets
+- [ ] **Stale job detection** — jobs stuck in `running` >15 min auto-marked as failed
 
 ---
 
@@ -1477,7 +1574,9 @@ See above — resolved in v3.
 
 ### Phase 2: CPQ Data Extraction
 
-**What the user gets:** "I can see all my CPQ configuration data inside RevBrain — products, rules, pricing, templates, everything."
+**What the user gets:** "I click 'Start CPQ Assessment', and RevBrain extracts and displays all my CPQ configuration — products, rules, pricing, templates, everything — with live progress updates."
+
+> **v5-final note:** This phase introduces the **worker plane** (`apps/worker/`). Extraction, analysis, and all Salesforce-heavy operations run on the worker (Node.js container), NOT on Edge Functions. The worker obtains Salesforce tokens via the internal token-mint endpoint (§9). The user triggers assessments from the UI; the control plane enqueues jobs; the worker executes them. See §15 "Execution Architecture" for the full pattern.
 
 #### Step 2.1: Salesforce API Client
 
@@ -1784,6 +1883,8 @@ RCA configuration consists of two distinct categories:
 **What the user gets:** "RevBrain can observe how the CPQ UI actually behaves — field visibility, configurator interactions — and capture that behavior for accurate migration."
 
 **Why this late:** Most customers get a successful migration from Phases 1-5 (API data + code analysis + write-back). Phase 6 is for complex CPQ implementations where UI behavior diverges from what the rules data suggests.
+
+> **v5-final note:** Phase 6 does NOT create a new worker app. It extends the existing `apps/worker/` (introduced in Phase 2) by adding Playwright/Chromium to the Docker image and registering browser automation as a new job type handler. The worker infrastructure, job queue, and credential access protocol are already in place.
 
 > **Security posture (v3 strengthened):** This phase is **explicitly optional and high-risk**. Storing passwords (even encrypted, even for a dedicated user) is the biggest security/compliance liability in the entire plan. Customer consent and disclaimers are required.
 
