@@ -13,7 +13,9 @@ import {
   renderWelcomeEmail,
   initializeEmailJobHandler,
 } from '../../emails/index.ts';
-import { getDB, coupons, leads, users, like, sql, inArray } from '@revbrain/database';
+import { getDB } from '@revbrain/database/client';
+import { coupons, leads, users } from '@revbrain/database';
+import { like, sql, inArray } from 'drizzle-orm';
 import { CronService } from '../../services/cron.service.ts';
 import { JobQueueService } from '../../services/job-queue.service.ts';
 import { getSupabaseAdmin } from '../../lib/supabase.ts';

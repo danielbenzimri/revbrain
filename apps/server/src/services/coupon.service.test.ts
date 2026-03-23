@@ -33,9 +33,9 @@ const mockStripe = vi.hoisted(() => ({
 }));
 
 /**
- * Mock database - all from @revbrain/database (including schema + drizzle utilities)
+ * Mock database - split across @revbrain/database/client, @revbrain/database, and drizzle-orm
  */
-vi.mock('@revbrain/database', () => ({
+vi.mock('@revbrain/database/client', () => ({
   db: {
     query: {
       coupons: {
@@ -54,12 +54,17 @@ vi.mock('@revbrain/database', () => ({
     transaction: mockTransaction,
     select: mockSelect,
   },
+}));
+
+vi.mock('@revbrain/database', () => ({
   // Schema tables
   coupons: { id: 'id', code: 'code', isActive: 'is_active', currentUses: 'current_uses' },
   couponUsages: { couponId: 'coupon_id', organizationId: 'organization_id' },
   plans: { id: 'id' },
   auditLogs: { id: 'id', userId: 'user_id', organizationId: 'organization_id', action: 'action' },
-  // Drizzle-orm utilities
+}));
+
+vi.mock('drizzle-orm', () => ({
   eq: vi.fn((...args) => ({ type: 'eq', args })),
   and: vi.fn((...args) => ({ type: 'and', args })),
   sql: vi.fn((strings, ...values) => ({ type: 'sql', strings, values })),

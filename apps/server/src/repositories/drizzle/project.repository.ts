@@ -1,4 +1,6 @@
-import { db as defaultDb, projects, eq, desc, asc, sql } from '@revbrain/database';
+import { db as defaultDb } from '@revbrain/database/client';
+import { projects } from '@revbrain/database';
+import { eq, desc, asc, sql } from 'drizzle-orm';
 import type {
   ProjectRepository,
   ProjectEntity,

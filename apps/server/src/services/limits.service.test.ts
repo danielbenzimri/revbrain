@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { LimitsService } from './limits.service.ts';
 import type {
@@ -10,7 +11,7 @@ import type {
 // Mock the subscription query
 const mockSubscriptionsFindFirst = vi.hoisted(() => vi.fn());
 
-vi.mock('@revbrain/database', () => ({
+vi.mock('@revbrain/database/client', () => ({
   db: {
     query: {
       subscriptions: {
@@ -18,9 +19,15 @@ vi.mock('@revbrain/database', () => ({
       },
     },
   },
+}));
+
+vi.mock('@revbrain/database', () => ({
   subscriptions: {
     organizationId: 'organization_id',
   },
+}));
+
+vi.mock('drizzle-orm', () => ({
   eq: vi.fn((...args) => ({ type: 'eq', args })),
 }));
 

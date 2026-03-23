@@ -13,7 +13,8 @@ import type { AppEnv } from '../../types/index.ts';
 import { logger } from '../../lib/logger.ts';
 import { AppError, ErrorCodes } from '@revbrain/contract';
 import { getSupabaseAdmin } from '../../lib/supabase.ts';
-import { db, projectFiles } from '@revbrain/database';
+import { db } from '@revbrain/database/client';
+import { projectFiles } from '@revbrain/database';
 import { eq } from 'drizzle-orm';
 
 const projectFilesRouter = new OpenAPIHono<AppEnv>();

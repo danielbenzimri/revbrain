@@ -20,7 +20,7 @@ const { mockFindFirst, mockFindMany, mockInsert, mockUpdate, mockDelete, mockSel
  * Mock the database module
  * This allows us to test repository logic without a real database connection
  */
-vi.mock('@revbrain/database', () => ({
+vi.mock('@revbrain/database/client', () => ({
   db: {
     query: {
       plans: {
@@ -33,6 +33,9 @@ vi.mock('@revbrain/database', () => ({
     delete: mockDelete,
     select: mockSelect,
   },
+}));
+
+vi.mock('@revbrain/database', () => ({
   plans: {
     id: 'id',
     name: 'name',
@@ -42,7 +45,9 @@ vi.mock('@revbrain/database', () => ({
     isPublic: 'is_public',
     createdAt: 'created_at',
   },
-  // Re-export drizzle-orm utilities (mock versions)
+}));
+
+vi.mock('drizzle-orm', () => ({
   eq: vi.fn((a, b) => ({ op: 'eq', a, b })),
   ne: vi.fn((a, b) => ({ op: 'ne', a, b })),
   and: vi.fn((...args) => ({ op: 'and', args })),

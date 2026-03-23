@@ -6,7 +6,7 @@
  */
 
 import type { Repositories } from '@revbrain/contract';
-import { db as defaultDb } from '@revbrain/database';
+import { db as defaultDb } from '@revbrain/database/client';
 import type { DrizzleDB } from '@revbrain/database';
 import { DrizzleUserRepository } from './user.repository.ts';
 import { DrizzleOrganizationRepository } from './organization.repository.ts';

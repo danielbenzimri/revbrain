@@ -109,7 +109,7 @@ async function getDrizzleRepos(): Promise<Repositories> {
   if (drizzleRepos) return drizzleRepos;
 
   // Initialize database connection (dynamic import of postgres.js)
-  const { initDB } = await import('@revbrain/database');
+  const { initDB } = await import('@revbrain/database/client');
   const dbInstance = await initDB();
 
   const { createDrizzleRepositories } = await import('./drizzle/index.ts');

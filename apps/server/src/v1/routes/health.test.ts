@@ -47,10 +47,25 @@ vi.mock('../../lib/logger.ts', () => ({
   },
 }));
 
-vi.mock('@revbrain/database', () => ({
+vi.mock('@revbrain/database/client', () => ({
   getDB: mockGetDB,
   client: mockClient,
+  db: {},
+}));
+
+vi.mock('@revbrain/database', () => ({
   users: { id: 'id' },
+  billingEvents: {
+    processedAt: 'processed_at',
+    retryCount: 'retry_count',
+    maxRetries: 'max_retries',
+  },
+}));
+
+vi.mock('drizzle-orm', () => ({
+  sql: vi.fn((strings: TemplateStringsArray, ...values: unknown[]) => ({ strings, values })),
+  and: vi.fn((...args: unknown[]) => ({ type: 'and', args })),
+  isNull: vi.fn((col: unknown) => ({ type: 'isNull', col })),
 }));
 
 // Create test app

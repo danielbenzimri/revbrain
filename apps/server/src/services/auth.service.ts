@@ -1,5 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { db, users, eq, sql } from '@revbrain/database';
+import { db } from '@revbrain/database/client';
+import { users } from '@revbrain/database';
+import { eq, sql } from 'drizzle-orm';
 import { logger } from '../lib/logger.ts';
 
 /**

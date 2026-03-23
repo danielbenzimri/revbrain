@@ -1,24 +1,12 @@
-export { db, client, getDB, initDB } from './client.ts';
-export type { DrizzleDB } from './client.ts';
+/**
+ * @revbrain/database — Public API
+ *
+ * Only re-exports schema (table definitions, relations, types).
+ * Does NOT export db, client, getDB, initDB — those live in ./client.ts
+ * and must be imported explicitly to avoid triggering postgres.js loading.
+ *
+ * This keeps Edge Function cold starts fast: importing @revbrain/database
+ * for schema tables never loads postgres.js.
+ */
 export * from './schema.ts';
-
-// Re-export drizzle-orm utilities to ensure consistent version across consumers
-export {
-  eq,
-  ne,
-  gt,
-  gte,
-  lt,
-  lte,
-  and,
-  or,
-  not,
-  inArray,
-  isNull,
-  isNotNull,
-  sql,
-  desc,
-  asc,
-  like,
-  ilike,
-} from 'drizzle-orm';
+export type { DrizzleDB } from './client.ts';

@@ -5,18 +5,9 @@
  * Supports deduplication, broadcast to all system_admins,
  * and email alerts for critical notifications via the job queue.
  */
-import {
-  db,
-  adminNotifications,
-  users,
-  eq,
-  and,
-  sql,
-  desc,
-  gte,
-  inArray,
-} from '@revbrain/database';
+import { adminNotifications, users } from '@revbrain/database';
 import type { DrizzleDB } from '@revbrain/database';
+import { eq, and, sql, gte, inArray } from 'drizzle-orm';
 import { logger } from '../lib/logger.ts';
 import { JobQueueService } from './job-queue.service.ts';
 

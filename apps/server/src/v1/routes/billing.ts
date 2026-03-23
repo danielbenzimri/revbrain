@@ -5,7 +5,9 @@
  * Requires authentication - users can only access their own org's billing.
  */
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import { db, organizations, eq } from '@revbrain/database';
+import { db } from '@revbrain/database/client';
+import { organizations } from '@revbrain/database';
+import { eq } from 'drizzle-orm';
 import { authMiddleware } from '../../middleware/auth.ts';
 import { requireActiveSubscription } from '../../middleware/limits.ts';
 import { routeMiddleware } from '../../lib/middleware-types.ts';

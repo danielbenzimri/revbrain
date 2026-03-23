@@ -3,20 +3,9 @@
  *
  * Handles enterprise lead capture, CRM operations, and conversion.
  */
-import {
-  db,
-  leads,
-  leadActivities,
-  auditLogs,
-  eq,
-  desc,
-  and,
-  or,
-  gte,
-  lte,
-  ilike,
-  sql,
-} from '@revbrain/database';
+import { db } from '@revbrain/database/client';
+import { leads, leadActivities, auditLogs } from '@revbrain/database';
+import { eq, desc, and, or, gte, lte, ilike, sql } from 'drizzle-orm';
 import { getEmailService } from '../emails/index.ts';
 import {
   renderLeadNotificationEmail,

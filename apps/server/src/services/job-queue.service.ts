@@ -5,7 +5,9 @@
  * Supports multiple job types, retries with exponential backoff,
  * and distributed locking for concurrent workers.
  */
-import { db, jobQueue, eq, and, lte, or, isNull, sql, desc } from '@revbrain/database';
+import { db } from '@revbrain/database/client';
+import { jobQueue } from '@revbrain/database';
+import { eq, and, lte, or, isNull, sql, desc } from 'drizzle-orm';
 import { logger } from '../lib/logger.ts';
 import { randomUUID } from 'node:crypto';
 

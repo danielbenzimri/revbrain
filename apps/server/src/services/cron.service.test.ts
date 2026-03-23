@@ -20,8 +20,8 @@ const mockEmailService = vi.hoisted(() => ({
   send: vi.fn().mockResolvedValue({ success: true }),
 }));
 
-// Mock dependencies - all from @revbrain/database (including drizzle utilities)
-vi.mock('@revbrain/database', () => ({
+// Mock dependencies - split across @revbrain/database/client, @revbrain/database, and drizzle-orm
+vi.mock('@revbrain/database/client', () => ({
   db: {
     query: {
       subscriptions: {
@@ -36,6 +36,9 @@ vi.mock('@revbrain/database', () => ({
     },
     update: mockUpdate,
   },
+}));
+
+vi.mock('@revbrain/database', () => ({
   // Schema tables
   subscriptions: {
     id: 'id',
@@ -45,7 +48,9 @@ vi.mock('@revbrain/database', () => ({
   },
   users: { organizationId: 'organization_id', role: 'role' },
   organizations: { id: 'id' },
-  // Drizzle-orm utilities
+}));
+
+vi.mock('drizzle-orm', () => ({
   eq: vi.fn((...args) => ({ type: 'eq', args })),
   and: vi.fn((...args) => ({ type: 'and', args })),
   lte: vi.fn((...args) => ({ type: 'lte', args })),

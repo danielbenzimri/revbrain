@@ -1,4 +1,6 @@
-import { db as defaultDb, users, eq, desc, asc, sql } from '@revbrain/database';
+import { db as defaultDb } from '@revbrain/database/client';
+import { users } from '@revbrain/database';
+import { eq, desc, asc, sql } from 'drizzle-orm';
 import type {
   UserRepository,
   UserEntity,

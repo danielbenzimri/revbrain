@@ -26,7 +26,7 @@ vi.mock('../lib/logger.ts', () => ({
 }));
 
 // Mock database - not used in mock rejection tests
-vi.mock('@revbrain/database', () => ({
+vi.mock('@revbrain/database/client', () => ({
   db: {
     query: {
       users: { findFirst: vi.fn() },
@@ -39,8 +39,14 @@ vi.mock('@revbrain/database', () => ({
       })),
     })),
   },
+}));
+
+vi.mock('@revbrain/database', () => ({
   users: { id: 'id' },
   organizations: { id: 'id' },
+}));
+
+vi.mock('drizzle-orm', () => ({
   eq: vi.fn((...args) => ({ type: 'eq', args })),
 }));
 

@@ -69,8 +69,8 @@ const mockEmailService = vi.hoisted(() => ({
   send: vi.fn().mockResolvedValue({ success: true }),
 }));
 
-// Mock dependencies - all from @revbrain/database (including schema + drizzle utilities)
-vi.mock('@revbrain/database', () => ({
+// Mock dependencies - split across @revbrain/database/client, @revbrain/database, and drizzle-orm
+vi.mock('@revbrain/database/client', () => ({
   db: {
     query: {
       plans: {
@@ -116,6 +116,9 @@ vi.mock('@revbrain/database', () => ({
       return { set: vi.fn().mockReturnValue({ where: vi.fn() }) };
     }),
   },
+}));
+
+vi.mock('@revbrain/database', () => ({
   // Schema tables
   plans: { id: 'id', stripeProductId: 'stripe_product_id' },
   organizations: { id: 'id', stripeCustomerId: 'stripe_customer_id' },
@@ -124,7 +127,9 @@ vi.mock('@revbrain/database', () => ({
   billingEvents: { stripeEventId: 'stripe_event_id' },
   users: { organizationId: 'organization_id', role: 'role' },
   auditLogs: { id: 'id', userId: 'user_id', organizationId: 'organization_id', action: 'action' },
-  // Drizzle-orm utilities
+}));
+
+vi.mock('drizzle-orm', () => ({
   eq: vi.fn((...args) => ({ type: 'eq', args })),
   and: vi.fn((...args) => ({ type: 'and', args })),
   isNull: vi.fn((...args) => ({ type: 'isNull', args })),

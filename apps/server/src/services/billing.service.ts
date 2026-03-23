@@ -4,8 +4,8 @@
  * Handles all billing operations: plan sync with Stripe,
  * checkout session creation, customer portal, subscription management.
  */
+import { db } from '@revbrain/database/client';
 import {
-  db,
   plans,
   organizations,
   subscriptions,
@@ -13,11 +13,8 @@ import {
   billingEvents,
   auditLogs,
   users,
-  eq,
-  isNull,
-  and,
-  inArray,
 } from '@revbrain/database';
+import { eq, isNull, and, inArray } from 'drizzle-orm';
 import { getStripe, formatAmount, isStripeConfigured } from '../lib/stripe.ts';
 import { getEnv } from '../lib/env.ts';
 import { logger } from '../lib/logger.ts';

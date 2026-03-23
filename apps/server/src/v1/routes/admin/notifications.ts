@@ -10,7 +10,9 @@ import { requireRole } from '../../../middleware/rbac.ts';
 import { adminLimiter, listLimiter } from '../../../middleware/rate-limit.ts';
 import { routeMiddleware } from '../../../lib/middleware-types.ts';
 import { AppError, ErrorCodes } from '@revbrain/contract';
-import { db, adminNotifications, eq, and, desc, sql } from '@revbrain/database';
+import { db } from '@revbrain/database/client';
+import { adminNotifications } from '@revbrain/database';
+import { eq, and, desc, sql } from 'drizzle-orm';
 import type { AppEnv } from '../../../types/index.ts';
 
 const adminNotificationsRouter = new OpenAPIHono<AppEnv>();

@@ -13,11 +13,17 @@ const mockFrom = vi.hoisted(() => vi.fn());
 const mockWhere = vi.hoisted(() => vi.fn());
 const mockLimit = vi.hoisted(() => vi.fn());
 
-vi.mock('@revbrain/database', () => ({
+vi.mock('@revbrain/database/client', () => ({
   db: {
     select: mockSelect,
   },
+}));
+
+vi.mock('@revbrain/database', () => ({
   users: { email: 'email' },
+}));
+
+vi.mock('drizzle-orm', () => ({
   eq: vi.fn((a, b) => ({ a, b })),
   sql: vi.fn((strings: TemplateStringsArray, ...values: unknown[]) => ({
     strings,

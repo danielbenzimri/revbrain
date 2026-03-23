@@ -4,17 +4,9 @@
  * Handles coupon CRUD, Stripe sync, and validation.
  * Coupons are synced to Stripe as Coupon + Promotion Code pairs.
  */
-import {
-  db,
-  coupons,
-  couponUsages,
-  plans,
-  auditLogs,
-  eq,
-  and,
-  sql,
-  inArray,
-} from '@revbrain/database';
+import { db } from '@revbrain/database/client';
+import { coupons, couponUsages, plans, auditLogs } from '@revbrain/database';
+import { eq, and, sql, inArray } from 'drizzle-orm';
 import { getStripe, isStripeConfigured } from '../lib/stripe.ts';
 import { logger } from '../lib/logger.ts';
 import type Stripe from 'stripe';

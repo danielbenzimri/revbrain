@@ -1,4 +1,6 @@
-import { db as defaultDb, plans, eq, desc, asc, sql, and } from '@revbrain/database';
+import { db as defaultDb } from '@revbrain/database/client';
+import { plans } from '@revbrain/database';
+import { eq, desc, asc, sql, and } from 'drizzle-orm';
 import type {
   PlanRepository,
   PlanEntity,

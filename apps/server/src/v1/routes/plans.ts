@@ -1,6 +1,8 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { zValidator } from '@hono/zod-validator';
-import { db, plans, eq } from '@revbrain/database';
+import { db } from '@revbrain/database/client';
+import { plans } from '@revbrain/database';
+import { eq } from 'drizzle-orm';
 import { authMiddleware } from '../../middleware/auth.ts';
 import { requireRole } from '../../middleware/rbac.ts';
 import { validateUuidParam } from '../../middleware/validate-uuid.ts';

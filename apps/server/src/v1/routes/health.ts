@@ -1,6 +1,8 @@
 import { Hono } from 'hono';
 import type { HealthCheckResponse } from '@revbrain/contract';
-import { db, users, billingEvents, sql, and, isNull } from '@revbrain/database';
+import { db } from '@revbrain/database/client';
+import { users, billingEvents } from '@revbrain/database';
+import { sql, and, isNull } from 'drizzle-orm';
 import { getVersion, getRegion, isProduction } from '../../lib/config.ts';
 import { getEnv } from '../../lib/env.ts';
 import { logger } from '../../lib/logger.ts';
@@ -91,7 +93,7 @@ healthRouter.get('/', (c) => {
 // Diagnostic route to test DB connectivity without auth
 healthRouter.get('/db', async (c) => {
   try {
-    const { getDB, client } = await import('@revbrain/database');
+    const { getDB, client } = await import('@revbrain/database/client');
     const dbInstance = getDB();
 
     // 1. Try raw query first to check connection
@@ -238,7 +240,7 @@ healthRouter.get('/full', async (c) => {
   const checkDatabase = async (): Promise<DependencyStatus> => {
     const start = Date.now();
     try {
-      const { getDB, client } = await import('@revbrain/database');
+      const { getDB, client } = await import('@revbrain/database/client');
       const dbInstance = getDB();
 
       // Quick connectivity check

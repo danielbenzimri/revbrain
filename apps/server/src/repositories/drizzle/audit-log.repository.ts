@@ -1,4 +1,6 @@
-import { db as defaultDb, auditLogs, eq, desc, sql } from '@revbrain/database';
+import { db as defaultDb } from '@revbrain/database/client';
+import { auditLogs } from '@revbrain/database';
+import { eq, desc, sql } from 'drizzle-orm';
 import type {
   AuditLogRepository,
   AuditLogEntity,

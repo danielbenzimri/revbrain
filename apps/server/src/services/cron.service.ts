@@ -9,19 +9,9 @@
  * This service is called by external schedulers (pg_cron, Vercel Cron, etc.)
  * and processes pending tasks in a batch.
  */
-import {
-  db,
-  subscriptions,
-  users,
-  organizations,
-  eq,
-  and,
-  lte,
-  gte,
-  isNull,
-  inArray,
-  sql,
-} from '@revbrain/database';
+import { db } from '@revbrain/database/client';
+import { subscriptions, users, organizations } from '@revbrain/database';
+import { eq, and, lte, gte, isNull, inArray, sql } from 'drizzle-orm';
 import { getEmailService } from '../emails/index.ts';
 import { renderTrialEndingEmail, renderTrialEndedEmail } from '../emails/templates/index.ts';
 import { getEnv } from '../lib/env.ts';

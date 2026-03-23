@@ -5,7 +5,9 @@
  * This service is used to process webhook events that failed during
  * initial processing and need to be retried.
  */
-import { db, billingEvents, eq, and, lt, isNull, sql, lte } from '@revbrain/database';
+import { db } from '@revbrain/database/client';
+import { billingEvents } from '@revbrain/database';
+import { eq, and, lt, isNull, sql, lte } from 'drizzle-orm';
 import { BillingService } from './billing.service.ts';
 import { logger } from '../lib/logger.ts';
 import type Stripe from 'stripe';

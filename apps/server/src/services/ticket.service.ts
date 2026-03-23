@@ -3,18 +3,9 @@
  *
  * Handles support ticket CRUD, messaging, and status management.
  */
-import {
-  db,
-  supportTickets,
-  ticketMessages,
-  auditLogs,
-  eq,
-  and,
-  desc,
-  sql,
-  or,
-  ilike,
-} from '@revbrain/database';
+import { db } from '@revbrain/database/client';
+import { supportTickets, ticketMessages, auditLogs } from '@revbrain/database';
+import { eq, and, desc, sql, or, ilike } from 'drizzle-orm';
 import { logger } from '../lib/logger.ts';
 
 export interface CreateTicketInput {

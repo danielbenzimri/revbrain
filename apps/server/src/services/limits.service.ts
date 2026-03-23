@@ -16,7 +16,9 @@ import type {
   PlanFeatures,
 } from '@revbrain/contract';
 import { AppError, ErrorCodes } from '@revbrain/contract';
-import { db, subscriptions, eq } from '@revbrain/database';
+import { db } from '@revbrain/database/client';
+import { subscriptions } from '@revbrain/database';
+import { eq } from 'drizzle-orm';
 import { logger } from '../lib/logger.ts';
 
 // ============================================================================
