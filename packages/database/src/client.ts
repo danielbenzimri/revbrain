@@ -1,73 +1,114 @@
-import { drizzle } from 'drizzle-orm/postgres-js';
+/**
+ * Database Client — Lazy Initialization
+ *
+ * On Supabase Edge Functions (Deno), statically importing `postgres`
+ * triggers Node.js polyfill loading causing 3-5s cold starts.
+ *
+ * Solution: The `db` export is a lazy Proxy. When first accessed,
+ * it imports postgres.js and drizzle-orm and creates the connection.
+ * On Edge Functions with PostgREST mode, `db` is never accessed,
+ * so postgres.js is never loaded → instant cold start.
+ *
+ * NOTE: The static `import postgres from 'postgres'` was removed.
+ * The import happens inside getDB() via dynamic import.
+ */
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
 import * as schema from './schema.ts';
 
-/**
- * CRITICAL: Database Connection Configuration
- */
-
-// Export the typed database type for consumers to use
 export type DrizzleDB = PostgresJsDatabase<typeof schema>;
 
 let dbInstance: DrizzleDB | null = null;
-let queryClient: postgres.Sql | null = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let queryClient: any = null;
+
+// Track initialization promise to prevent concurrent init
+let initPromise: Promise<DrizzleDB> | null = null;
 
 // Cross-runtime environment variable access
 const getEnv = (key: string) => {
-  // @ts-ignore
+  // @ts-ignore — Deno global may not exist
   if (typeof Deno !== 'undefined' && Deno.env) {
     // @ts-ignore
     return Deno.env.get(key);
   }
-  // Fallback for local Node.js tooling (e.g. migrations)
-  // but protected to avoid auto-polyfilling in edge runtime
   try {
-    const global = globalThis as any;
-    return global['process']?.['env']?.[key];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const g = globalThis as any;
+    return g['process']?.['env']?.[key];
   } catch {
     return undefined;
   }
 };
 
 /**
- * Lazy-initializes the database connection.
- * This prevents crashes during boot if variables are missing.
+ * Async database initialization.
+ * Uses dynamic import() so postgres.js module loading is deferred.
  */
-export const getDB = () => {
+export async function initDB(): Promise<DrizzleDB> {
+  if (dbInstance) return dbInstance;
+  if (initPromise) return initPromise;
+
+  initPromise = (async () => {
+    let connectionString = getEnv('SUPABASE_DB_URL') || getEnv('DATABASE_URL');
+    if (!connectionString) {
+      throw new Error('DATABASE_URL or SUPABASE_DB_URL environment variable is not set');
+    }
+
+    if (connectionString.includes('sslmode=disable')) {
+      connectionString = connectionString.replace('sslmode=disable', 'sslmode=require');
+    }
+
+    // Dynamic imports — only loaded here, not at module top level
+    const pgModule = await import('postgres');
+    const pgClient = pgModule.default;
+    const { drizzle } = await import('drizzle-orm/postgres-js');
+
+    queryClient = pgClient(connectionString, {
+      prepare: true,
+      max: 10,
+      ssl: 'require',
+      idle_timeout: 20,
+      connect_timeout: 10,
+    });
+
+    dbInstance = drizzle(queryClient, { schema });
+    return dbInstance;
+  })();
+
+  return initPromise;
+}
+
+/**
+ * Synchronous DB accessor for backward compatibility.
+ *
+ * IMPORTANT: First access triggers async init via top-level await
+ * in the consuming module. On Edge Functions with PostgREST mode,
+ * this Proxy is imported but never accessed — postgres.js stays unloaded.
+ */
+export const getDB = (): DrizzleDB => {
   if (dbInstance) return dbInstance;
 
-  // Prioritize SUPABASE_DB_URL which is auto-injected by Supabase Edge Functions
-  // and correctly configured for the internal network.
-  let connectionString = getEnv('SUPABASE_DB_URL') || getEnv('DATABASE_URL');
-  if (!connectionString) {
-    // Fallback or error if neither is set
-    throw new Error('DATABASE_URL or SUPABASE_DB_URL environment variable is not set');
-  }
-
-  // Fix for Supabase Edge Runtime: Force SSL and avoid conflicts with sslmode=disable
-  // The native Deno driver handles DNS correctly, so we don't need manual host patching.
-  if (connectionString.includes('sslmode=disable')) {
-    connectionString = connectionString.replace('sslmode=disable', 'sslmode=require');
-  }
-
-  queryClient = postgres(connectionString, {
-    prepare: true, // Enable prepared statements for faster query execution
-    max: 10, // Allow up to 10 concurrent connections (was 1 - major bottleneck)
-    ssl: 'require',
-    idle_timeout: 20,
-    connect_timeout: 10,
-  });
-
-  dbInstance = drizzle(queryClient, { schema });
-  return dbInstance;
+  // Fallback: synchronous path for cases where initDB() wasn't awaited first
+  // This should not happen in normal flow — initDB() is called by repository middleware
+  throw new Error(
+    'Database not initialized. Call initDB() first, or use PostgREST repositories on Edge Functions.'
+  );
 };
 
-// Maintain compatibility with existing code while transitioning to lazy load
+/**
+ * Lazy Proxy — defers database connection until first property access.
+ * Throws if accessed before initDB() is called.
+ */
 export const db = new Proxy({} as DrizzleDB, {
   get(_, prop) {
-    const instance = getDB();
-    return (instance as any)[prop];
+    if (!dbInstance) {
+      throw new Error(
+        'Database not initialized. Accessing db before initDB() was called. ' +
+          'On Edge Functions, use PostgREST repositories (c.var.repos) instead.'
+      );
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (dbInstance as any)[prop];
   },
 });
 

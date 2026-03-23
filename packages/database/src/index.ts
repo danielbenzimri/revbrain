@@ -1,4 +1,4 @@
-export { db, client, getDB } from './client.ts';
+export { db, client, getDB, initDB } from './client.ts';
 export type { DrizzleDB } from './client.ts';
 export * from './schema.ts';
 

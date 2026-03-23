@@ -103,12 +103,17 @@ async function getPostgRESTRepos(): Promise<Repositories> {
 /**
  * Get or create Drizzle repositories (lazy singleton).
  * Dynamic import avoids loading postgres.js on Edge.
+ * Calls initDB() to ensure the database connection is established.
  */
 async function getDrizzleRepos(): Promise<Repositories> {
   if (drizzleRepos) return drizzleRepos;
 
+  // Initialize database connection (dynamic import of postgres.js)
+  const { initDB } = await import('@revbrain/database');
+  const dbInstance = await initDB();
+
   const { createDrizzleRepositories } = await import('./drizzle/index.ts');
-  drizzleRepos = createDrizzleRepositories();
+  drizzleRepos = createDrizzleRepositories(dbInstance);
 
   logger.info('Drizzle repositories initialized (TCP/postgres.js)');
   return drizzleRepos;
