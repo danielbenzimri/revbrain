@@ -1775,74 +1775,74 @@ All migrations backward-compatible. `pnpm drizzle-kit generate` per phase, test 
 
 ## Implementation Progress Tracker
 
-| Task  | Description                                   | Status         | Commit |
-| ----- | --------------------------------------------- | -------------- | ------ |
-| 1.1   | Salesforce ECA Registration (Manual)          | ⬜ Not Started | —      |
-| 1.2   | Encryption Utility                            | ⬜ Not Started | —      |
-| 1.3   | Database Schema — Core Salesforce Tables      | ⬜ Not Started | —      |
-| 1.4   | RLS Policies for Salesforce Tables            | ⬜ Not Started | —      |
-| 1.5   | Repository Interfaces — Contract Package      | ⬜ Not Started | —      |
-| 1.6   | Drizzle Repository Implementations            | ⬜ Not Started | —      |
-| 1.7   | Mock Repository Implementations               | ⬜ Not Started | —      |
-| 1.8   | OAuth Service                                 | ⬜ Not Started | —      |
-| 1.9   | Rate Limiting for Salesforce Endpoints        | ⬜ Not Started | —      |
-| 1.10  | OAuth Route — Connect Endpoint                | ⬜ Not Started | —      |
-| 1.11  | OAuth Route — Callback Endpoint               | ⬜ Not Started | —      |
-| 1.12  | Post-Connection Permission Audit              | ⬜ Not Started | —      |
-| 1.13  | Status, Test, Disconnect, Reconnect Endpoints | ⬜ Not Started | —      |
-| 1.14  | Client UI — Salesforce Connection Components  | ⬜ Not Started | —      |
-| 1.15  | Mock Mode Support                             | ⬜ Not Started | —      |
-| 1.16  | Environment Variables                         | ⬜ Not Started | —      |
-| 1.17  | Pending Flow Cleanup Job                      | ⬜ Not Started | —      |
-| 1.18  | Customer-Facing Setup Guide                   | ⬜ Not Started | —      |
-| 1.19  | Security Checklist Verification — Phase 1     | ⬜ Not Started | —      |
-| 2.0   | Worker App Foundation                         | ⬜ Not Started | —      |
-| 2.0.1 | Assessment Run Data Model                     | ⬜ Not Started | —      |
-| 2.0.2 | Internal Token-Mint Endpoint                  | ⬜ Not Started | —      |
-| 2.0.3 | Start Assessment Endpoint + UI                | ⬜ Not Started | —      |
-| 2.0.4 | Assessment Job Handler (Worker Side)          | ⬜ Not Started | —      |
-| 2.1   | Salesforce REST API Client                    | ⬜ Not Started | —      |
-| 2.2   | Bulk & Composite API Clients                  | ⬜ Not Started | —      |
-| 2.3   | CPQ Object Discovery Service                  | ⬜ Not Started | —      |
-| 2.4   | Extracted Data Schema + Repository            | ⬜ Not Started | —      |
-| 2.5   | Data Extraction Engine                        | ⬜ Not Started | —      |
-| 2.6   | CPQ Explorer UI                               | ⬜ Not Started | —      |
-| 2.7   | Extraction Monitoring UI                      | ⬜ Not Started | —      |
-| 2.8   | Structured API Logging                        | ⬜ Not Started | —      |
-| 3.1   | Token Refresh Service                         | ⬜ Not Started | —      |
-| 3.2   | Health Monitoring Job                         | ⬜ Not Started | —      |
-| 3.3   | In-App Notifications                          | ⬜ Not Started | —      |
-| 3.4   | Email Notifications                           | ⬜ Not Started | —      |
-| 3.5   | Reconnect Flow                                | ⬜ Not Started | —      |
-| 3.6   | Encryption Key Rotation                       | ⬜ Not Started | —      |
-| 3.7   | Connection Logs UI                            | ⬜ Not Started | —      |
-| 3.8   | Data Retention — Cleanup Job                  | ⬜ Not Started | —      |
-| 3.9   | Data Retention — On-Demand Deletion           | ⬜ Not Started | —      |
-| 3.10  | Storage Bucket Setup + Signed URL Service     | ⬜ Not Started | —      |
-| 4.0   | Phase 4/5 Persistence Schema                  | ⬜ Not Started | —      |
-| 4.1   | Mapping Rules Database                        | ⬜ Not Started | —      |
-| 4.2   | Mapping Engine                                | ⬜ Not Started | —      |
-| 4.3   | QCP Code Analyzer                             | ⬜ Not Started | —      |
-| 4.4   | Migration Plan Generator                      | ⬜ Not Started | —      |
-| 4.5   | Migration Analysis UI                         | ⬜ Not Started | —      |
-| 5.1   | Coexistence Detection Service                 | ⬜ Not Started | —      |
-| 5.2   | Deployment Plan Generator                     | ⬜ Not Started | —      |
-| 5.3   | RCA Object Creation Service                   | ⬜ Not Started | —      |
-| 5.4   | Metadata Artifact Generator                   | ⬜ Not Started | —      |
-| 5.5   | Validation & Comparison Engine                | ⬜ Not Started | —      |
-| 5.6   | Rollback Service                              | ⬜ Not Started | —      |
-| 5.7   | Write-Back UI                                 | ⬜ Not Started | —      |
-| 6.1   | Browser Automation Credentials Table + Repo   | ⬜ Not Started | —      |
-| 6.2   | Browser Credentials UI + Consent Flow         | ⬜ Not Started | —      |
-| 6.3   | Playwright Integration into Existing Worker   | ⬜ Not Started | —      |
-| 6.4   | Salesforce Login Automation                   | ⬜ Not Started | —      |
-| 6.5   | QLE Behavioral Capture                        | ⬜ Not Started | —      |
-| 6.6   | Configurator Behavioral Capture               | ⬜ Not Started | —      |
-| 6.7   | Behavioral Analysis Results + UI              | ⬜ Not Started | —      |
-| 7.1   | 2GP Package Setup                             | ⬜ Not Started | —      |
-| 7.2   | AppExchange Security Review                   | ⬜ Not Started | —      |
-| 7.3   | JWT Bearer Flow                               | ⬜ Not Started | —      |
-| 7.4   | API Usage Tracking Dashboard                  | ⬜ Not Started | —      |
-| 7.5   | RCA Feature Parity Tracking                   | ⬜ Not Started | —      |
-| 7.6   | Compliance Documentation                      | ⬜ Not Started | —      |
-| 7.7   | Security Checklist — Full System Verification | ⬜ Not Started | —      |
+| Task  | Description                                   | Status         | Commit    |
+| ----- | --------------------------------------------- | -------------- | --------- |
+| 1.1   | Salesforce ECA Registration (Manual)          | ⬜ Not Started | —         |
+| 1.2   | Encryption Utility                            | ✅ Done        | `7c94a81` |
+| 1.3   | Database Schema — Core Salesforce Tables      | ✅ Done        | `472fb28` |
+| 1.4   | RLS Policies for Salesforce Tables            | ⬜ Not Started | —         |
+| 1.5   | Repository Interfaces — Contract Package      | ✅ Done        | `e3f258f` |
+| 1.6   | Drizzle Repository Implementations            | ⬜ Not Started | —         |
+| 1.7   | Mock Repository Implementations               | ⬜ Not Started | —         |
+| 1.8   | OAuth Service                                 | ✅ Done        | `0e3625b` |
+| 1.9   | Rate Limiting for Salesforce Endpoints        | ⬜ Not Started | —         |
+| 1.10  | OAuth Route — Connect Endpoint                | ⬜ Not Started | —         |
+| 1.11  | OAuth Route — Callback Endpoint               | ⬜ Not Started | —         |
+| 1.12  | Post-Connection Permission Audit              | ⬜ Not Started | —         |
+| 1.13  | Status, Test, Disconnect, Reconnect Endpoints | ⬜ Not Started | —         |
+| 1.14  | Client UI — Salesforce Connection Components  | ⬜ Not Started | —         |
+| 1.15  | Mock Mode Support                             | ⬜ Not Started | —         |
+| 1.16  | Environment Variables                         | ✅ Done        | `87d3c4b` |
+| 1.17  | Pending Flow Cleanup Job                      | ⬜ Not Started | —         |
+| 1.18  | Customer-Facing Setup Guide                   | ⬜ Not Started | —         |
+| 1.19  | Security Checklist Verification — Phase 1     | ⬜ Not Started | —         |
+| 2.0   | Worker App Foundation                         | ⬜ Not Started | —         |
+| 2.0.1 | Assessment Run Data Model                     | ⬜ Not Started | —         |
+| 2.0.2 | Internal Token-Mint Endpoint                  | ⬜ Not Started | —         |
+| 2.0.3 | Start Assessment Endpoint + UI                | ⬜ Not Started | —         |
+| 2.0.4 | Assessment Job Handler (Worker Side)          | ⬜ Not Started | —         |
+| 2.1   | Salesforce REST API Client                    | ⬜ Not Started | —         |
+| 2.2   | Bulk & Composite API Clients                  | ⬜ Not Started | —         |
+| 2.3   | CPQ Object Discovery Service                  | ⬜ Not Started | —         |
+| 2.4   | Extracted Data Schema + Repository            | ⬜ Not Started | —         |
+| 2.5   | Data Extraction Engine                        | ⬜ Not Started | —         |
+| 2.6   | CPQ Explorer UI                               | ⬜ Not Started | —         |
+| 2.7   | Extraction Monitoring UI                      | ⬜ Not Started | —         |
+| 2.8   | Structured API Logging                        | ⬜ Not Started | —         |
+| 3.1   | Token Refresh Service                         | ⬜ Not Started | —         |
+| 3.2   | Health Monitoring Job                         | ⬜ Not Started | —         |
+| 3.3   | In-App Notifications                          | ⬜ Not Started | —         |
+| 3.4   | Email Notifications                           | ⬜ Not Started | —         |
+| 3.5   | Reconnect Flow                                | ⬜ Not Started | —         |
+| 3.6   | Encryption Key Rotation                       | ⬜ Not Started | —         |
+| 3.7   | Connection Logs UI                            | ⬜ Not Started | —         |
+| 3.8   | Data Retention — Cleanup Job                  | ⬜ Not Started | —         |
+| 3.9   | Data Retention — On-Demand Deletion           | ⬜ Not Started | —         |
+| 3.10  | Storage Bucket Setup + Signed URL Service     | ⬜ Not Started | —         |
+| 4.0   | Phase 4/5 Persistence Schema                  | ⬜ Not Started | —         |
+| 4.1   | Mapping Rules Database                        | ⬜ Not Started | —         |
+| 4.2   | Mapping Engine                                | ⬜ Not Started | —         |
+| 4.3   | QCP Code Analyzer                             | ⬜ Not Started | —         |
+| 4.4   | Migration Plan Generator                      | ⬜ Not Started | —         |
+| 4.5   | Migration Analysis UI                         | ⬜ Not Started | —         |
+| 5.1   | Coexistence Detection Service                 | ⬜ Not Started | —         |
+| 5.2   | Deployment Plan Generator                     | ⬜ Not Started | —         |
+| 5.3   | RCA Object Creation Service                   | ⬜ Not Started | —         |
+| 5.4   | Metadata Artifact Generator                   | ⬜ Not Started | —         |
+| 5.5   | Validation & Comparison Engine                | ⬜ Not Started | —         |
+| 5.6   | Rollback Service                              | ⬜ Not Started | —         |
+| 5.7   | Write-Back UI                                 | ⬜ Not Started | —         |
+| 6.1   | Browser Automation Credentials Table + Repo   | ⬜ Not Started | —         |
+| 6.2   | Browser Credentials UI + Consent Flow         | ⬜ Not Started | —         |
+| 6.3   | Playwright Integration into Existing Worker   | ⬜ Not Started | —         |
+| 6.4   | Salesforce Login Automation                   | ⬜ Not Started | —         |
+| 6.5   | QLE Behavioral Capture                        | ⬜ Not Started | —         |
+| 6.6   | Configurator Behavioral Capture               | ⬜ Not Started | —         |
+| 6.7   | Behavioral Analysis Results + UI              | ⬜ Not Started | —         |
+| 7.1   | 2GP Package Setup                             | ⬜ Not Started | —         |
+| 7.2   | AppExchange Security Review                   | ⬜ Not Started | —         |
+| 7.3   | JWT Bearer Flow                               | ⬜ Not Started | —         |
+| 7.4   | API Usage Tracking Dashboard                  | ⬜ Not Started | —         |
+| 7.5   | RCA Feature Parity Tracking                   | ⬜ Not Started | —         |
+| 7.6   | Compliance Documentation                      | ⬜ Not Started | —         |
+| 7.7   | Security Checklist — Full System Verification | ⬜ Not Started | —         |
