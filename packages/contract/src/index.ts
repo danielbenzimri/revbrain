@@ -330,3 +330,62 @@ export const GetProfileResponseSchema = ApiSuccessResponseSchema.extend({
 
 export type GetProfileRequest = z.infer<typeof GetProfileRequestSchema>;
 export type GetProfileResponse = z.infer<typeof GetProfileResponseSchema>;
+
+// ============================================================================
+// Salesforce Integration Schemas
+// ============================================================================
+
+/**
+ * Stakeholder schema for project migration context.
+ */
+export const StakeholderSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  role: z.string().min(1, 'Role is required'),
+  email: z.string().email('Invalid email format'),
+});
+
+export const StakeholdersSchema = z.array(StakeholderSchema).nullable();
+
+export type Stakeholder = z.infer<typeof StakeholderSchema>;
+
+/**
+ * Salesforce connection role — source org (CPQ) or target org (RCA).
+ */
+export const SalesforceConnectionRoleSchema = z.enum(['source', 'target']);
+export type SalesforceConnectionRole = z.infer<typeof SalesforceConnectionRoleSchema>;
+
+/**
+ * Salesforce instance type.
+ */
+export const SalesforceInstanceTypeSchema = z.enum(['production', 'sandbox']);
+export type SalesforceInstanceType = z.infer<typeof SalesforceInstanceTypeSchema>;
+
+/**
+ * Salesforce connection status values.
+ */
+export const SalesforceConnectionStatusSchema = z.enum([
+  'active',
+  'disconnected',
+  'refresh_failed',
+  'instance_unreachable',
+  'insufficient_permissions',
+]);
+export type SalesforceConnectionStatus = z.infer<typeof SalesforceConnectionStatusSchema>;
+
+/**
+ * Request schema for initiating a Salesforce OAuth connection.
+ */
+export const ConnectSalesforceRequestSchema = z.object({
+  instanceType: SalesforceInstanceTypeSchema,
+  connectionRole: SalesforceConnectionRoleSchema,
+  loginUrl: z.string().url().optional(),
+});
+
+export type ConnectSalesforceRequest = z.infer<typeof ConnectSalesforceRequestSchema>;
+
+/**
+ * Request schema for disconnect/test/reconnect operations.
+ */
+export const SalesforceConnectionRoleRequestSchema = z.object({
+  connectionRole: SalesforceConnectionRoleSchema,
+});

@@ -9,7 +9,32 @@ import {
   bigint,
   jsonb,
   decimal,
+  customType,
+  unique,
+  index,
 } from 'drizzle-orm/pg-core';
+
+/**
+ * Custom bytea column type for storing binary data (encrypted tokens, etc.).
+ * Handles Buffer ↔ bytea conversion at the driver level.
+ */
+const bytea = customType<{ data: Buffer; dpiData: string }>({
+  dataType() {
+    return 'bytea';
+  },
+  toDriver(value: Buffer): string {
+    return `\\x${value.toString('hex')}`;
+  },
+  fromDriver(value: unknown): Buffer {
+    if (Buffer.isBuffer(value)) return value;
+    if (typeof value === 'string') {
+      // Handle both \\x-prefixed hex strings and raw hex
+      const hex = value.startsWith('\\x') ? value.slice(2) : value;
+      return Buffer.from(hex, 'hex');
+    }
+    throw new Error(`Unexpected bytea value type: ${typeof value}`);
+  },
+});
 
 // ============================================================================
 // PLANS TABLE
@@ -213,6 +238,16 @@ export const projects = pgTable('projects', {
   // Additional metadata
   notes: text('notes'),
   metadata: jsonb('metadata').default({}),
+
+  // Salesforce migration context
+  clientCompanyName: text('client_company_name'),
+  contractReference: text('contract_reference'),
+  estimatedObjects: integer('estimated_objects'),
+  stakeholders: jsonb('stakeholders').$type<Array<{
+    name: string;
+    role: string;
+    email: string;
+  }> | null>(),
 
   // Timestamps
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
@@ -1037,3 +1072,166 @@ export const adminNotifications = pgTable('admin_notifications', {
 
 export type AdminNotification = typeof adminNotifications.$inferSelect;
 export type NewAdminNotification = typeof adminNotifications.$inferInsert;
+
+// ============================================================================
+// SALESFORCE CONNECTIONS TABLE
+// ============================================================================
+/**
+ * Salesforce org connections per project (source for CPQ, target for RCA).
+ * Stores connection metadata and state — tokens are in a separate secrets table.
+ */
+export const salesforceConnections = pgTable(
+  'salesforce_connections',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    projectId: uuid('project_id')
+      .references(() => projects.id, { onDelete: 'cascade' })
+      .notNull(),
+    organizationId: uuid('organization_id')
+      .references(() => organizations.id, { onDelete: 'cascade' })
+      .notNull(),
+    connectionRole: varchar('connection_role', { length: 10 }).notNull().default('source'), // 'source' | 'target'
+
+    // Salesforce org identity
+    salesforceOrgId: varchar('salesforce_org_id', { length: 18 }).notNull(),
+    salesforceInstanceUrl: text('salesforce_instance_url').notNull(),
+    customLoginUrl: text('custom_login_url'),
+    oauthBaseUrl: text('oauth_base_url').notNull(),
+    salesforceUserId: varchar('salesforce_user_id', { length: 18 }),
+    salesforceUsername: text('salesforce_username'),
+    instanceType: varchar('instance_type', { length: 10 }).notNull(), // 'production' | 'sandbox'
+    apiVersion: varchar('api_version', { length: 10 }),
+
+    // Connection audit metadata (captured during post-connection audit)
+    connectionMetadata: jsonb('connection_metadata').$type<Record<string, unknown> | null>(),
+
+    // Connection state
+    status: varchar('status', { length: 30 }).notNull().default('active'),
+    lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
+    lastSuccessfulApiCallAt: timestamp('last_successful_api_call_at', { withTimezone: true }),
+    lastError: text('last_error'),
+    lastErrorAt: timestamp('last_error_at', { withTimezone: true }),
+
+    // Audit
+    connectedBy: uuid('connected_by').references(() => users.id),
+    disconnectedBy: uuid('disconnected_by').references(() => users.id),
+    disconnectedAt: timestamp('disconnected_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    projectRoleUnique: unique('sf_conn_project_role_unique').on(
+      table.projectId,
+      table.connectionRole
+    ),
+    orgIdx: index('idx_sf_connections_org').on(table.organizationId),
+    statusIdx: index('idx_sf_connections_status').on(table.status),
+    sfOrgIdx: index('idx_sf_connections_sf_org').on(table.salesforceOrgId),
+  })
+);
+
+export type SalesforceConnection = typeof salesforceConnections.$inferSelect;
+export type NewSalesforceConnection = typeof salesforceConnections.$inferInsert;
+
+// ============================================================================
+// SALESFORCE CONNECTION SECRETS TABLE
+// ============================================================================
+/**
+ * Encrypted OAuth tokens for Salesforce connections. 1:1 with salesforce_connections.
+ * Separated from the connection table so tokens can be deleted on disconnect
+ * without losing connection metadata (status, logs, history).
+ * Each encrypted field = IV(12) || ciphertext || authTag(16) as a single bytea blob.
+ */
+export const salesforceConnectionSecrets = pgTable('salesforce_connection_secrets', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  connectionId: uuid('connection_id')
+    .references(() => salesforceConnections.id, { onDelete: 'cascade' })
+    .notNull()
+    .unique(),
+
+  // Encrypted tokens (AES-256-GCM, each = IV || ciphertext || authTag)
+  encryptedAccessToken: bytea('encrypted_access_token').notNull(),
+  encryptedRefreshToken: bytea('encrypted_refresh_token').notNull(),
+  encryptionKeyVersion: integer('encryption_key_version').notNull().default(1),
+  tokenVersion: integer('token_version').notNull().default(1), // Optimistic locking for refresh
+
+  // Token metadata
+  tokenIssuedAt: timestamp('token_issued_at', { withTimezone: true }),
+  tokenScopes: text('token_scopes'),
+  lastRefreshAt: timestamp('last_refresh_at', { withTimezone: true }),
+
+  // Timestamps
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+export type SalesforceConnectionSecret = typeof salesforceConnectionSecrets.$inferSelect;
+export type NewSalesforceConnectionSecret = typeof salesforceConnectionSecrets.$inferInsert;
+
+// ============================================================================
+// OAUTH PENDING FLOWS TABLE
+// ============================================================================
+/**
+ * Short-lived PKCE state for OAuth authorization flows.
+ * Created when a user initiates "Connect Salesforce", deleted after successful token exchange.
+ * TTL: 10 minutes. Cleanup job deletes expired rows hourly.
+ * Intentionally has NO RLS — accessed only via service role key from the server.
+ */
+export const oauthPendingFlows = pgTable(
+  'oauth_pending_flows',
+  {
+    nonce: uuid('nonce').primaryKey(), // Random UUID, lookup key from signed state JWT
+    projectId: uuid('project_id')
+      .references(() => projects.id)
+      .notNull(),
+    organizationId: uuid('organization_id')
+      .references(() => organizations.id)
+      .notNull(),
+    userId: uuid('user_id')
+      .references(() => users.id)
+      .notNull(),
+    connectionRole: varchar('connection_role', { length: 10 }).notNull(),
+    codeVerifier: text('code_verifier').notNull(), // PKCE verifier — never sent to browser
+    oauthBaseUrl: text('oauth_base_url').notNull(), // Validated Salesforce login URL
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    projectRoleUnique: unique('oauth_flow_project_role_unique').on(
+      table.projectId,
+      table.connectionRole
+    ),
+    expiresIdx: index('idx_oauth_pending_expires').on(table.expiresAt),
+  })
+);
+
+export type OauthPendingFlow = typeof oauthPendingFlows.$inferSelect;
+export type NewOauthPendingFlow = typeof oauthPendingFlows.$inferInsert;
+
+// ============================================================================
+// SALESFORCE CONNECTION LOGS TABLE
+// ============================================================================
+/**
+ * Append-only audit trail for Salesforce connection lifecycle events.
+ * Events: connected, refreshed, refresh_failed, disconnected, reconnected,
+ *         permission_audit, app_not_approved_error, api_limit_warning
+ */
+export const salesforceConnectionLogs = pgTable(
+  'salesforce_connection_logs',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    connectionId: uuid('connection_id')
+      .references(() => salesforceConnections.id, { onDelete: 'cascade' })
+      .notNull(),
+    event: varchar('event', { length: 50 }).notNull(),
+    details: jsonb('details').$type<Record<string, unknown> | null>(),
+    performedBy: uuid('performed_by').references(() => users.id),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    connectionIdx: index('idx_sf_conn_logs_connection').on(table.connectionId),
+  })
+);
+
+export type SalesforceConnectionLog = typeof salesforceConnectionLogs.$inferSelect;
+export type NewSalesforceConnectionLog = typeof salesforceConnectionLogs.$inferInsert;
