@@ -7,7 +7,8 @@
  */
 import { useState } from 'react';
 import { X, Sparkles } from 'lucide-react';
-import type { AssessmentItem } from '../../mocks/assessment-mock-data';
+import type { AssessmentItem, AssessmentData } from '../../mocks/assessment-mock-data';
+import { DependencyGraph } from './visualizations';
 
 // ---------------------------------------------------------------------------
 // Complexity / Status badges
@@ -32,11 +33,12 @@ const STATUS_COLORS: Record<string, string> = {
 
 interface ItemDetailPanelProps {
   item: AssessmentItem | null;
+  assessment?: AssessmentData | null;
   onClose: () => void;
   t: (key: string, opts?: Record<string, unknown>) => string;
 }
 
-export default function ItemDetailPanel({ item, onClose, t }: ItemDetailPanelProps) {
+export default function ItemDetailPanel({ item, assessment, onClose, t }: ItemDetailPanelProps) {
   const [noteText, setNoteText] = useState('');
 
   if (!item) return null;
@@ -149,10 +151,13 @@ export default function ItemDetailPanel({ item, onClose, t }: ItemDetailPanelPro
             </div>
           </section>
 
-          {/* Dependencies */}
+          {/* Dependencies — Graph + List */}
           {item.dependencies.length > 0 && (
             <section data-testid="dependencies">
-              <h3 className="text-sm font-semibold text-slate-900 mb-2">
+              {assessment && (
+                <DependencyGraph item={item} assessment={assessment} compact t={t} />
+              )}
+              <h3 className="text-sm font-semibold text-slate-900 mb-2 mt-3">
                 {t('assessment.itemDetail.dependencies')}
               </h3>
               <ul className="space-y-1">

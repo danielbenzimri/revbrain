@@ -11,6 +11,7 @@ import OverviewBottomSections from './OverviewBottomSections';
 import { DeltaSummary } from './RunDelta';
 import RiskRegister from './RiskRegister';
 import EffortEstimation from './EffortEstimation';
+import { MigrationTreemap, TransformationFlow, RiskBubbleScatter, DomainRadar, OrgHealthGauges } from './visualizations';
 
 // ---------------------------------------------------------------------------
 // Migration Readiness Cards
@@ -185,6 +186,22 @@ export default function OverviewTab({ assessment, onDomainClick, t }: OverviewTa
           })}
         </div>
       </section>
+      {/* Migration Treemap (visual weight = effort) */}
+      <MigrationTreemap
+        domains={assessment.domains}
+        onDomainClick={onDomainClick}
+        t={t}
+      />
+
+      {/* CPQ → RCA Transformation Flow */}
+      <TransformationFlow assessment={assessment} t={t} />
+
+      {/* Domain Complexity Radar + Risk Bubble Scatter */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <DomainRadar domains={assessment.domains} t={t} />
+        <RiskBubbleScatter risks={assessment.risks} t={t} />
+      </div>
+
       {/* Risks, Blockers & Key Findings */}
       <RiskBlockerCards
         risks={assessment.risks}
@@ -197,6 +214,9 @@ export default function OverviewTab({ assessment, onDomainClick, t }: OverviewTa
 
       {/* Delta Summary */}
       <DeltaSummary delta={assessment.runDelta} t={t} />
+
+      {/* Org Health Gauges */}
+      <OrgHealthGauges orgHealth={assessment.orgHealth} t={t} />
 
       {/* Prerequisites, Strategy, Completeness */}
       <OverviewBottomSections

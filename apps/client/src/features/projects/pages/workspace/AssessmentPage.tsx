@@ -207,6 +207,7 @@ export default function AssessmentPage() {
         {/* Item Detail Slide-Over */}
         <ItemDetailPanel
           item={selectedItem}
+          assessment={assessment}
           onClose={() => setSelectedItem(null)}
           t={t}
         />

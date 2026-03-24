@@ -8,6 +8,7 @@ import { useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import DomainTab from './DomainTab';
 import type { DomainData, DomainId, AssessmentData } from '../../mocks/assessment-mock-data';
+import { CodeWaterfall, ReportFreshness, SubscriptionCard, TwinFieldMatrix, GuidedSellingCards } from './visualizations';
 
 // ---------------------------------------------------------------------------
 // Stat card config per domain
@@ -117,15 +118,51 @@ export default function DomainTabWrapper({ domainId, assessment, onItemClick, t 
   if (!domain) return null;
 
   const statCards = getStatCards(domain, t);
+  const currentSub = activeSubTab || (domain.subTabs.length > 0 ? domain.subTabs[0].id : '');
+
+  // Render domain-specific visualizations for certain sub-tabs
+  const renderSubTabContent = () => {
+    // Products sub-tab visualizations
+    if (domainId === 'products' && currentSub === 'guided-selling' && domain.guidedSellingFlows) {
+      return <GuidedSellingCards flows={domain.guidedSellingFlows} t={t} />;
+    }
+    if (domainId === 'products' && currentSub === 'twin-fields' && domain.twinFields) {
+      return <TwinFieldMatrix pairs={domain.twinFields} t={t} />;
+    }
+
+    // Amendments sub-tab visualizations
+    if (domainId === 'amendments' && currentSub === 'subscription-management' && domain.subscriptionManagement) {
+      return <SubscriptionCard data={domain.subscriptionManagement} t={t} />;
+    }
+
+    // Code domain: waterfall is shown as extra content, not replacement
+    // (handled below via extraContent, not children)
+
+    return undefined; // Use default inventory table
+  };
+
+  const subTabContent = renderSubTabContent();
+
+  // Extra visualizations rendered above the domain tab (not replacing inventory)
+  const showCodeWaterfall = domainId === 'code' && (!currentSub || currentSub === 'code-inventory');
+  const showReportFreshness = domainId === 'dataReporting' && currentSub === 'reports-dashboards' && domain.reports;
 
   return (
-    <DomainTab
-      domain={domain}
-      statCards={statCards}
-      onItemClick={onItemClick}
-      onSubTabChange={handleSubTabChange}
-      activeSubTab={activeSubTab}
-      t={t}
-    />
+    <div className="space-y-4">
+      {/* Extra domain-specific visualizations (above the domain tab) */}
+      {showCodeWaterfall && <CodeWaterfall items={domain.items} t={t} />}
+      {showReportFreshness && domain.reports && <ReportFreshness reports={domain.reports} t={t} />}
+
+      <DomainTab
+        domain={domain}
+        statCards={statCards}
+        onItemClick={onItemClick}
+        onSubTabChange={handleSubTabChange}
+        activeSubTab={activeSubTab}
+        t={t}
+      >
+        {subTabContent}
+      </DomainTab>
+    </div>
   );
 }
