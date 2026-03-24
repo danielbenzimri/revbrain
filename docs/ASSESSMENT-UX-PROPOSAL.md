@@ -769,6 +769,88 @@ Hovering (?) shows the education popover inline. The standalone Translation Matr
 
 ---
 
+---
+
+## Implementation Roadmap
+
+> All tasks are mock-mode implementations: rich client-side mock data, translation-compliant, following existing patterns (mock services, `useTranslation()`, RTL-safe).
+
+### Phase A: Mock Data Foundation
+
+| Task | Description | Status |
+|---|---|---|
+| A.1 | Rich assessment mock data: 8 domains with realistic inventory (Products: 187 items, Pricing: 243 rules, Rules: 89, Code: 112, Integrations: 11, Amendments: 34, Approvals: 18, Data stats). Per-item: name, complexity, migration status, dependencies, AI description, triage state. | ⬜ Not Started |
+| A.2 | Mock risk register: 23 risks with category, severity, affected items, mitigation, owner fields | ⬜ Not Started |
+| A.3 | Mock run history: 3 assessment runs with delta data between runs | ⬜ Not Started |
+| A.4 | Translation files: `en/assessment.json` + `he/assessment.json` with ALL strings for every screen | ⬜ Not Started |
+
+### Phase B: Assessment Shell + Overview Tab
+
+| Task | Description | Status |
+|---|---|---|
+| B.1 | Assessment page with horizontal tab bar (Overview, Products, Pricing, Rules, Code, Integrations, Amendments, Approvals, Data). URL-persisted: `?tab=pricing`. Red dot badges on tabs with blockers. | ⬜ Not Started |
+| B.2 | Overview tab: 4-category breakdown cards (Auto/Guided/Manual/Blocked with bar charts) | ⬜ Not Started |
+| B.3 | Overview tab: complexity heatmap by domain (8 rows, clickable, verbal labels Low/Moderate/High, warning icons) | ⬜ Not Started |
+| B.4 | Overview tab: Top Risks + Blockers cards (side by side, "View all →" links) with enhanced blocker visual weight | ⬜ Not Started |
+| B.5 | Overview tab: Key Findings list with severity icons | ⬜ Not Started |
+| B.6 | Overview tab: Run selector dropdown (#3 · 12m ago) with history switching | ⬜ Not Started |
+| B.7 | Overview tab: Assessment completeness checklist (progress bar + item list) | ⬜ Not Started |
+| B.8 | Overview tab: Delta summary from last run (changes since Run #2) | ⬜ Not Started |
+
+### Phase C: Domain Tabs
+
+| Task | Description | Status |
+|---|---|---|
+| C.1 | Domain tab template: reusable component (stats strip + migration status bar + inventory table + insights panel + business context area) | ⬜ Not Started |
+| C.2 | Products domain tab: filled with mock product data (187 items, bundles, features, options) | ⬜ Not Started |
+| C.3 | Pricing domain tab: filled with mock pricing data (243 rules, discount schedules, calc plugins) — the showcase domain | ⬜ Not Started |
+| C.4 | Rules domain tab: product rules, validation rules, summary variables, lookup queries | ⬜ Not Started |
+| C.5 | Code domain tab: Apex classes, triggers, QCP JavaScript, Flows — with LOC counts | ⬜ Not Started |
+| C.6 | Remaining domains (Integrations, Amendments, Approvals, Data) — using template with domain-specific data | ⬜ Not Started |
+| C.7 | Inventory table features: sortable columns, filter dropdowns (complexity, status, active), search, pagination | ⬜ Not Started |
+| C.8 | "Why?" tooltips on Gap/Manual status in tables | ⬜ Not Started |
+| C.9 | Integrated RCA Target column in domain tables with (?) education popovers | ⬜ Not Started |
+
+### Phase D: Item Detail + Triage
+
+| Task | Description | Status |
+|---|---|---|
+| D.1 | Item detail slide-over: status block, AI description (✨ sparkle + Edit/Verify), CPQ→RCA mapping (stacked), dependencies list, recommendation, consultant notes | ⬜ Not Started |
+| D.2 | Full-page item detail view: expanded layout with local dependency graph, code view, full mapping | ⬜ Not Started |
+| D.3 | Item triage workflow: checkboxes on table rows, bulk actions (In Scope / Excluded / Needs Discussion), Overview stats update in real-time | ⬜ Not Started |
+| D.4 | Per-item effort estimate field: `Estimated Hours: [___]` on slide-over | ⬜ Not Started |
+
+### Phase E: Working Artifact Features
+
+| Task | Description | Status |
+|---|---|---|
+| E.1 | Risk register: dedicated view with full risk table (category, severity, affected items, mitigation, owner) — editable | ⬜ Not Started |
+| E.2 | Effort estimation table: domain × category grid with auto-sums, consultant-editable hours column | ⬜ Not Started |
+| E.3 | Business context sections: collapsible rich text area per domain tab + Overview business process summary | ⬜ Not Started |
+| E.4 | Translation Matrix: cross-domain CPQ→RCA mapping table with (?) education popovers, filterable | ⬜ Not Started |
+
+### Phase F: Export + Polish
+
+| Task | Description | Status |
+|---|---|---|
+| F.1 | PDF export configuration modal: section checkboxes, branding preview, estimated pages, consultant section nudges | ⬜ Not Started |
+| F.2 | CSV export on every inventory table + mapping table | ⬜ Not Started |
+| F.3 | Share a View: "Copy Link" button producing URL with current tab + filters | ⬜ Not Started |
+| F.4 | Accessibility: ARIA labels, keyboard navigation, screen reader support for all new components | ⬜ Not Started |
+| F.5 | RTL verification: all assessment pages render correctly in Hebrew | ⬜ Not Started |
+
+### Phase G: Testing
+
+| Task | Description | Status |
+|---|---|---|
+| G.1 | Component tests: all new React components (vitest + React Testing Library) | ⬜ Not Started |
+| G.2 | E2E: navigate to assessment, switch tabs, verify data loads per domain | ⬜ Not Started |
+| G.3 | E2E: item detail slide-over opens, shows correct data, triage actions work | ⬜ Not Started |
+| G.4 | E2E: search/filter in inventory tables, URL state persists | ⬜ Not Started |
+| G.5 | Visual review: screenshot all tabs, iterate on design quality | ⬜ Not Started |
+
+---
+
 ## 12. Terminology Consistency Note
 
 Two dimensions must be clearly distinguished everywhere:
