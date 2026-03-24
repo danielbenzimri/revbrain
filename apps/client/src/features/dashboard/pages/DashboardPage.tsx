@@ -1,4 +1,4 @@
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -272,6 +272,197 @@ const EmptyDashboard = memo(function EmptyDashboard({
   );
 });
 
+// ─── Pipeline Bar ────────────────────────────────────────────
+
+const PipelineBar = memo(function PipelineBar({
+  label,
+  count,
+  maxCount,
+  color,
+}: {
+  label: string;
+  count: number;
+  maxCount: number;
+  color: string;
+}) {
+  const colorMap: Record<string, string> = {
+    slate: 'bg-slate-400',
+    emerald: 'bg-emerald-500',
+    sky: 'bg-sky-500',
+    amber: 'bg-amber-500',
+    violet: 'bg-violet-500',
+    red: 'bg-red-500',
+  };
+  const widthPercent = maxCount > 0 ? Math.max((count / maxCount) * 100, 6) : 6;
+
+  return (
+    <div className="flex items-center gap-3">
+      <span className="text-xs text-slate-600 w-20 shrink-0 text-end">{label}</span>
+      <div className="flex-1 flex items-center gap-2">
+        <div
+          className={`h-6 rounded-md ${colorMap[color] || colorMap.slate} transition-all`}
+          style={{ width: `${widthPercent}%` }}
+        />
+        <span className="text-sm font-semibold text-slate-700">{count}</span>
+      </div>
+    </div>
+  );
+});
+
+// ─── Complexity Bar ─────────────────────────────────────────
+
+const ComplexityBar = memo(function ComplexityBar({
+  label,
+  count,
+  total,
+  color,
+}: {
+  label: string;
+  count: number;
+  total: number;
+  color: string;
+}) {
+  const colorMap: Record<string, string> = {
+    emerald: 'bg-emerald-500',
+    amber: 'bg-amber-500',
+    red: 'bg-red-500',
+    slate: 'bg-slate-400',
+  };
+  const widthPercent = total > 0 ? Math.max((count / total) * 100, 4) : 4;
+
+  return (
+    <div className="flex items-center gap-3">
+      <span className="text-xs text-slate-600 w-16 shrink-0 text-end">{label}</span>
+      <div className="flex-1 flex items-center gap-2">
+        <div className="flex-1 bg-slate-100 rounded-md h-6 overflow-hidden">
+          <div
+            className={`h-full rounded-md ${colorMap[color] || colorMap.slate} transition-all`}
+            style={{ width: `${widthPercent}%` }}
+          />
+        </div>
+        <span className="text-sm font-semibold text-slate-700 w-6 text-end">{count}</span>
+      </div>
+    </div>
+  );
+});
+
+// ─── Migration Charts ───────────────────────────────────────
+
+const MigrationCharts = memo(function MigrationCharts({
+  enrichedProjects,
+}: {
+  enrichedProjects: ProjectWithStage[];
+}) {
+  const { t } = useTranslation();
+
+  // Pipeline counts by stage
+  const stageCounts = useMemo(() => {
+    const counts = { setup: 0, connected: 0, extracted: 0, assessed: 0, deploying: 0, complete: 0 };
+    enrichedProjects.forEach((p) => {
+      const key = p.stageKey.replace('dashboard.stages.', '') as keyof typeof counts;
+      if (key in counts) counts[key]++;
+    });
+    return counts;
+  }, [enrichedProjects]);
+
+  const maxStageCount = Math.max(...Object.values(stageCounts), 1);
+
+  // Complexity distribution — aggregate assessment data from all projects
+  const complexityData = useMemo(() => {
+    let auto = 0,
+      guided = 0,
+      manual = 0,
+      blocked = 0;
+    enrichedProjects.forEach((p) => {
+      const workspace = getMockProjectWorkspaceData(p.id);
+      if (workspace.assessment) {
+        auto += workspace.assessment.autoMigrate;
+        guided += workspace.assessment.guidedMigrate;
+        manual += workspace.assessment.manualMigrate;
+        blocked += workspace.assessment.blocked;
+      }
+    });
+    return { auto, guided, manual, blocked, total: auto + guided + manual + blocked };
+  }, [enrichedProjects]);
+
+  const pipelineStages = [
+    { key: 'setup', color: 'slate' },
+    { key: 'connected', color: 'emerald' },
+    { key: 'extracted', color: 'sky' },
+    { key: 'assessed', color: 'amber' },
+    { key: 'deploying', color: 'violet' },
+    { key: 'complete', color: 'emerald' },
+  ] as const;
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-sm font-semibold text-slate-700 uppercase tracking-wider">
+          {t('dashboard.charts.migrationOverview')}
+        </h2>
+      </div>
+      <div className="grid gap-3 md:grid-cols-2">
+        {/* Chart 1: Migration Pipeline */}
+        <div className="rounded-2xl bg-white p-5">
+          <h3 className="text-sm font-semibold text-slate-900 mb-4">
+            {t('dashboard.charts.migrationPipeline')}
+          </h3>
+          <div className="space-y-2.5">
+            {pipelineStages.map((stage) => (
+              <PipelineBar
+                key={stage.key}
+                label={t(`dashboard.stages.${stage.key}`)}
+                count={stageCounts[stage.key]}
+                maxCount={maxStageCount}
+                color={stage.color}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Chart 2: Complexity Distribution */}
+        <div className="rounded-2xl bg-white p-5">
+          <h3 className="text-sm font-semibold text-slate-900 mb-4">
+            {t('dashboard.charts.complexityDistribution')}
+          </h3>
+          {complexityData.total === 0 ? (
+            <div className="flex items-center justify-center h-40 text-sm text-slate-400">
+              {t('dashboard.charts.noAssessmentData')}
+            </div>
+          ) : (
+            <div className="space-y-2.5">
+              <ComplexityBar
+                label={t('dashboard.charts.auto')}
+                count={complexityData.auto}
+                total={complexityData.total}
+                color="emerald"
+              />
+              <ComplexityBar
+                label={t('dashboard.charts.guided')}
+                count={complexityData.guided}
+                total={complexityData.total}
+                color="amber"
+              />
+              <ComplexityBar
+                label={t('dashboard.charts.manual')}
+                count={complexityData.manual}
+                total={complexityData.total}
+                color="red"
+              />
+              <ComplexityBar
+                label={t('dashboard.charts.blocked')}
+                count={complexityData.blocked}
+                total={complexityData.total}
+                color="slate"
+              />
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+});
+
 // ─── Main Dashboard ──────────────────────────────────────────
 
 export default function DashboardPage() {
@@ -360,6 +551,9 @@ export default function DashboardPage() {
           color="amber"
         />
       </div>
+
+      {/* Migration Overview Charts */}
+      <MigrationCharts enrichedProjects={enriched} />
 
       {/* Active Projects */}
       {active.length > 0 && (

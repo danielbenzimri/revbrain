@@ -42,6 +42,18 @@
     "deploying": "בפריסה",
     "complete": "הושלם"
   },
+  "charts": {
+    "migrationOverview": "סקירת הגירה",
+    "migrationPipeline": "צינור הגירה",
+    "complexityDistribution": "התפלגות מורכבות",
+    "projects": "פרויקטים",
+    "rules": "כללים",
+    "auto": "אוטומטי",
+    "guided": "מודרך",
+    "manual": "ידני",
+    "blocked": "חסום",
+    "noAssessmentData": "אין נתוני הערכה זמינים עדיין"
+  },
   "empty": {
     "title": "ברוכים הבאים ל-RevBrain",
     "description": "הפלטפורמה שלך להגירת CPQ לענן הכנסות. צור את הפרויקט הראשון שלך כדי להתחיל.",

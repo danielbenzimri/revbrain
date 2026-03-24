@@ -42,6 +42,18 @@
     "deploying": "Deploying",
     "complete": "Complete"
   },
+  "charts": {
+    "migrationOverview": "Migration Overview",
+    "migrationPipeline": "Migration Pipeline",
+    "complexityDistribution": "Complexity Distribution",
+    "projects": "projects",
+    "rules": "rules",
+    "auto": "Auto",
+    "guided": "Guided",
+    "manual": "Manual",
+    "blocked": "Blocked",
+    "noAssessmentData": "No assessment data available yet"
+  },
   "empty": {
     "title": "Welcome to RevBrain",
     "description": "Your platform for CPQ to Revenue Cloud migrations. Create your first project to get started.",
