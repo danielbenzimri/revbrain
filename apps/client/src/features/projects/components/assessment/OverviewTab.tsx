@@ -101,7 +101,7 @@ export default function OverviewTab({ assessment, onDomainClick, t }: OverviewTa
                 return (
                   <div
                     key={key}
-                    className={`text-center p-3 rounded-xl ${isBlocked && count > 0 ? 'bg-red-100 ring-2 ring-red-300' : ''}`}
+                    className={`text-center p-3 rounded-xl ${isBlocked && count > 0 ? 'bg-red-50 border border-red-200' : ''}`}
                   >
                     <div className="flex items-center justify-center gap-2 mb-1">
                       <div className={`h-2.5 w-2.5 rounded-full ${colorDot}`} />
@@ -109,7 +109,7 @@ export default function OverviewTab({ assessment, onDomainClick, t }: OverviewTa
                         {t(`assessment.migrationStatus.${key}`)}
                       </span>
                     </div>
-                    <p className={`text-2xl font-bold ${isBlocked && count > 0 ? 'text-red-700' : 'text-slate-900'}`}>{count}</p>
+                    <p className={`text-2xl font-bold ${isBlocked && count > 0 ? 'text-red-600' : 'text-slate-900'}`}>{count}</p>
                     <p className="text-xs text-slate-400 mt-0.5">
                       {total > 0 ? `${Math.round((count / total) * 100)}%` : '0%'}
                     </p>

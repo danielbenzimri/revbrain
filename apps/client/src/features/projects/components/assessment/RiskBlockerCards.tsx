@@ -88,7 +88,7 @@ export default function RiskBlockerCards({
 
         {/* Blockers */}
         <section
-          className="bg-red-50 rounded-2xl p-5 ring-2 ring-red-200"
+          className="bg-red-50/70 rounded-2xl p-5 border border-red-200"
           aria-label={t('assessment.overview.blockers')}
           data-testid="blockers-card"
         >

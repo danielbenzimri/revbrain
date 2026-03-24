@@ -35,7 +35,7 @@ export default function ExecutiveSummary({ assessment, t }: ExecutiveSummaryProp
   const domainCount = assessment.domains.length;
   const autoPercent = totalItems > 0 ? Math.round((totalAuto / totalItems) * 100) : 0;
   const guidedPercent = totalItems > 0 ? Math.round((totalGuided / totalItems) * 100) : 0;
-  const manualPercent = totalItems > 0 ? Math.round(((totalManual + totalBlocked) / totalItems) * 100) : 0;
+  const manualPercent = totalItems > 0 ? Math.round((totalManual / totalItems) * 100) : 0;
 
   const criticalRisks = assessment.risks.filter((r) => r.severity === 'critical');
   const readiness = getReadinessLevel(autoPercent);
@@ -70,11 +70,12 @@ export default function ExecutiveSummary({ assessment, t }: ExecutiveSummaryProp
 
       {/* Narrative paragraph */}
       <div className="space-y-3 mb-5" data-testid="executive-narrative">
-        <p className="text-sm text-slate-200 leading-relaxed">
+        <p className="text-[15px] text-slate-200 leading-relaxed">
           Your Salesforce CPQ org contains <span className="text-white font-semibold">{formatNumber(totalItems)} configuration items</span> across {domainCount} domains.{' '}
-          <span className="text-emerald-400 font-medium">{autoPercent}%</span> can be auto-migrated,{' '}
-          <span className="text-amber-400 font-medium">{guidedPercent}%</span> need guided setup, and{' '}
-          <span className="text-red-400 font-medium">{manualPercent}%</span> require custom development or have no RCA equivalent.
+          <span className="text-emerald-400 font-semibold">{autoPercent}%</span> can be auto-migrated,{' '}
+          <span className="text-amber-400 font-semibold">{guidedPercent}%</span> need guided setup,{' '}
+          <span className="text-red-400 font-semibold">{manualPercent}%</span> require custom development,{' '}
+          and <span className="text-red-300 font-semibold">{totalBlocked}</span> items are blocked with no RCA equivalent.
         </p>
 
         {criticalRisks.length > 0 && (

@@ -10,73 +10,16 @@ import type { DomainData, DomainId } from '../../../mocks/assessment-mock-data';
 // Color logic
 // ---------------------------------------------------------------------------
 
-function getDominantStatus(stats: DomainData['stats']): { status: string; color: string; textColor: string } {
+function getDominantColor(stats: DomainData['stats']): { bg: string; text: string; badge: string; badgeText: string; label: string } {
   const { auto, manual, blocked, total } = stats;
-  if (total === 0) return { status: 'empty', color: 'bg-slate-100', textColor: 'text-slate-600' };
+  if (total === 0) return { bg: 'bg-slate-50', text: 'text-slate-600', badge: 'bg-slate-200', badgeText: 'text-slate-600', label: '—' };
 
   const autoPercent = auto / total;
   const manualPercent = (manual + blocked) / total;
 
-  if (manualPercent > 0.5) return { status: 'manual', color: 'bg-red-100 border border-red-200', textColor: 'text-red-800' };
-  if (autoPercent > 0.5) return { status: 'auto', color: 'bg-emerald-100 border border-emerald-200', textColor: 'text-emerald-800' };
-  return { status: 'guided', color: 'bg-amber-100 border border-amber-200', textColor: 'text-amber-800' };
-}
-
-function getStatusBadge(status: string, t: (key: string) => string): { label: string; className: string } {
-  switch (status) {
-    case 'auto': return { label: t('assessment.migrationStatus.auto'), className: 'bg-emerald-200 text-emerald-800' };
-    case 'guided': return { label: t('assessment.migrationStatus.guided'), className: 'bg-amber-200 text-amber-800' };
-    case 'manual': return { label: t('assessment.migrationStatus.manual'), className: 'bg-red-200 text-red-800' };
-    default: return { label: '—', className: 'bg-slate-200 text-slate-600' };
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Layout algorithm (simple squarified treemap)
-// ---------------------------------------------------------------------------
-
-interface TreemapBlock {
-  domain: DomainData;
-  width: number; // percentage
-  height: number; // percentage
-}
-
-function calculateLayout(domains: DomainData[]): TreemapBlock[] {
-  const total = domains.reduce((s, d) => s + d.stats.total, 0);
-  if (total === 0) return [];
-
-  // Sort by size descending for better layout
-  const sorted = [...domains].sort((a, b) => b.stats.total - a.stats.total);
-
-  // Simple 2-row layout: top row = large domains, bottom row = small domains
-  const topRow = sorted.slice(0, 4);
-  const bottomRow = sorted.slice(4);
-
-  const topTotal = topRow.reduce((s, d) => s + d.stats.total, 0);
-  const bottomTotal = bottomRow.reduce((s, d) => s + d.stats.total, 0);
-
-  const topHeight = total > 0 ? Math.max(45, Math.min(70, (topTotal / total) * 100)) : 50;
-  const bottomHeight = 100 - topHeight;
-
-  const blocks: TreemapBlock[] = [];
-
-  for (const domain of topRow) {
-    blocks.push({
-      domain,
-      width: topTotal > 0 ? (domain.stats.total / topTotal) * 100 : 25,
-      height: topHeight,
-    });
-  }
-
-  for (const domain of bottomRow) {
-    blocks.push({
-      domain,
-      width: bottomTotal > 0 ? (domain.stats.total / bottomTotal) * 100 : 20,
-      height: bottomHeight,
-    });
-  }
-
-  return blocks;
+  if (manualPercent > 0.5) return { bg: 'bg-red-50', text: 'text-red-900', badge: 'bg-red-200', badgeText: 'text-red-800', label: 'Manual' };
+  if (autoPercent > 0.5) return { bg: 'bg-emerald-50', text: 'text-emerald-900', badge: 'bg-emerald-200', badgeText: 'text-emerald-800', label: 'Auto' };
+  return { bg: 'bg-amber-50', text: 'text-amber-900', badge: 'bg-amber-200', badgeText: 'text-amber-800', label: 'Guided' };
 }
 
 // ---------------------------------------------------------------------------
@@ -90,11 +33,16 @@ interface MigrationTreemapProps {
 }
 
 export default function MigrationTreemap({ domains, onDomainClick, t }: MigrationTreemapProps) {
-  const blocks = calculateLayout(domains);
   const totalItems = domains.reduce((s, d) => s + d.stats.total, 0);
 
-  const topBlocks = blocks.slice(0, 4);
-  const bottomBlocks = blocks.slice(4);
+  // Sort by size descending
+  const sorted = [...domains].sort((a, b) => b.stats.total - a.stats.total);
+
+  // Split into top row (large) and bottom row (small)
+  const topRow = sorted.slice(0, 4);
+  const bottomRow = sorted.slice(4);
+  const topTotal = topRow.reduce((s, d) => s + d.stats.total, 0);
+  // bottomRow uses equal widths, no need for total
 
   return (
     <div data-testid="migration-treemap">
@@ -104,45 +52,45 @@ export default function MigrationTreemap({ domains, onDomainClick, t }: Migratio
         </h2>
         <div className="flex items-center gap-3 text-xs">
           <span className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded bg-emerald-100 border border-emerald-200" />
+            <span className="w-3 h-3 rounded bg-emerald-50 border border-emerald-200" />
             {t('assessment.migrationStatus.auto')}
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded bg-amber-100 border border-amber-200" />
+            <span className="w-3 h-3 rounded bg-amber-50 border border-amber-200" />
             {t('assessment.migrationStatus.guided')}
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded bg-red-100 border border-red-200" />
+            <span className="w-3 h-3 rounded bg-red-50 border border-red-200" />
             {t('assessment.migrationStatus.manual')}
           </span>
         </div>
       </div>
 
-      <div className="rounded-2xl overflow-hidden" style={{ minHeight: 320 }}>
-        {/* Top row */}
-        <div className="flex" style={{ height: `${topBlocks[0]?.height || 60}%` }}>
-          {topBlocks.map((block) => {
-            const { color, textColor } = getDominantStatus(block.domain.stats);
-            const badge = getStatusBadge(getDominantStatus(block.domain.stats).status, t);
-            const pct = totalItems > 0 ? Math.round((block.domain.stats.total / totalItems) * 100) : 0;
+      <div className="rounded-2xl overflow-hidden border border-slate-200">
+        {/* Top row — large domains */}
+        <div className="flex">
+          {topRow.map((domain, i) => {
+            const { bg, text, badge, badgeText, label } = getDominantColor(domain.stats);
+            const pct = totalItems > 0 ? Math.round((domain.stats.total / totalItems) * 100) : 0;
+            const width = topTotal > 0 ? (domain.stats.total / topTotal) * 100 : 25;
 
             return (
               <button
-                key={block.domain.id}
-                onClick={() => onDomainClick(block.domain.id)}
-                className={`${color} p-4 flex flex-col justify-end transition-opacity hover:opacity-90`}
-                style={{ width: `${block.width}%`, minHeight: 140 }}
+                key={domain.id}
+                onClick={() => onDomainClick(domain.id)}
+                className={`${bg} p-4 flex flex-col justify-between transition-all hover:brightness-95 overflow-hidden ${i > 0 ? 'border-s border-slate-200' : ''}`}
+                style={{ width: `${width}%`, minHeight: 160 }}
               >
-                <span className={`text-xs font-medium px-1.5 py-0.5 rounded self-end mb-auto ${badge.className}`}>
-                  {badge.label}
+                <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded self-end ${badge} ${badgeText}`}>
+                  {label}
                 </span>
-                <div>
-                  <p className={`text-2xl font-bold ${textColor}`}>{pct}%</p>
-                  <p className={`text-sm font-semibold ${textColor}`}>
-                    {t(`assessment.tabs.${block.domain.id}`)}
+                <div className="mt-auto">
+                  <p className={`text-3xl font-bold ${text}`}>{pct}%</p>
+                  <p className={`text-sm font-semibold ${text} truncate`}>
+                    {t(`assessment.tabs.${domain.id}`)}
                   </p>
-                  <p className={`text-xs ${textColor} opacity-70`}>
-                    {block.domain.stats.total} {t('assessment.table.items')}
+                  <p className={`text-xs ${text} opacity-60`}>
+                    {domain.stats.total} {t('assessment.table.items')}
                   </p>
                 </div>
               </button>
@@ -150,22 +98,24 @@ export default function MigrationTreemap({ domains, onDomainClick, t }: Migratio
           })}
         </div>
 
-        {/* Bottom row */}
-        <div className="flex" style={{ height: `${bottomBlocks[0]?.height || 40}%` }}>
-          {bottomBlocks.map((block) => {
-            const { color, textColor } = getDominantStatus(block.domain.stats);
-            const pct = totalItems > 0 ? Math.round((block.domain.stats.total / totalItems) * 100) : 0;
+        {/* Bottom row — smaller domains */}
+        <div className="flex border-t border-slate-200">
+          {bottomRow.map((domain, i) => {
+            const { bg, text } = getDominantColor(domain.stats);
+            const pct = totalItems > 0 ? Math.round((domain.stats.total / totalItems) * 100) : 0;
+            // Use equal widths for bottom row to prevent tiny cells
+            const width = 100 / bottomRow.length;
 
             return (
               <button
-                key={block.domain.id}
-                onClick={() => onDomainClick(block.domain.id)}
-                className={`${color} p-3 flex flex-col justify-end transition-opacity hover:opacity-90`}
-                style={{ width: `${block.width}%`, minHeight: 100 }}
+                key={domain.id}
+                onClick={() => onDomainClick(domain.id)}
+                className={`${bg} p-3 flex flex-col justify-end transition-all hover:brightness-95 overflow-hidden ${i > 0 ? 'border-s border-slate-200' : ''}`}
+                style={{ width: `${width}%`, minHeight: 90 }}
               >
-                <p className={`text-lg font-bold ${textColor}`}>{pct}%</p>
-                <p className={`text-xs font-semibold ${textColor}`}>
-                  {t(`assessment.tabs.${block.domain.id}`)}
+                <p className={`text-xl font-bold ${text}`}>{pct}%</p>
+                <p className={`text-xs font-semibold ${text} truncate`}>
+                  {t(`assessment.tabs.${domain.id}`)}
                 </p>
               </button>
             );
