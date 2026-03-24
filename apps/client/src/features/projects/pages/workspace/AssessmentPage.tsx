@@ -4,7 +4,7 @@
  * Multi-tab assessment workspace replacing the traditional 100-page PDF.
  * Shows migration readiness assessment results or contextual empty state.
  */
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ClipboardCheck, ChevronDown } from 'lucide-react';
@@ -12,6 +12,8 @@ import { getMockAssessmentData, DOMAIN_TAB_ORDER } from '../../mocks/assessment-
 import type { DomainId, AssessmentData } from '../../mocks/assessment-mock-data';
 import OverviewTab from '../../components/assessment/OverviewTab';
 import DomainTabWrapper from '../../components/assessment/DomainTabWrapper';
+import ItemDetailPanel from '../../components/assessment/ItemDetailPanel';
+import type { AssessmentItem } from '../../mocks/assessment-mock-data';
 
 // ---------------------------------------------------------------------------
 // Tab configuration
@@ -98,10 +100,11 @@ interface TabContentProps {
   tabId: TabId;
   assessment: AssessmentData;
   onTabChange: (tab: TabId) => void;
+  onItemClick?: (itemId: string) => void;
   t: (key: string, opts?: Record<string, unknown>) => string;
 }
 
-function TabContent({ tabId, assessment, onTabChange, t }: TabContentProps) {
+function TabContent({ tabId, assessment, onTabChange, onItemClick, t }: TabContentProps) {
   return (
     <div
       id={`tabpanel-${tabId}`}
@@ -119,6 +122,7 @@ function TabContent({ tabId, assessment, onTabChange, t }: TabContentProps) {
         <DomainTabWrapper
           domainId={tabId as DomainId}
           assessment={assessment}
+          onItemClick={onItemClick}
           t={t}
         />
       )}
@@ -143,11 +147,27 @@ export default function AssessmentPage() {
     return getMockAssessmentData(id);
   }, [id]);
 
+  const [selectedItem, setSelectedItem] = useState<AssessmentItem | null>(null);
+
   const handleTabChange = useCallback(
     (tab: TabId) => {
       setSearchParams({ tab });
     },
     [setSearchParams],
+  );
+
+  const handleItemClick = useCallback(
+    (itemId: string) => {
+      if (!assessment) return;
+      for (const domain of assessment.domains) {
+        const found = domain.items.find((i) => i.id === itemId);
+        if (found) {
+          setSelectedItem(found);
+          return;
+        }
+      }
+    },
+    [assessment],
   );
 
   if (!id) return null;
@@ -190,6 +210,14 @@ export default function AssessmentPage() {
           tabId={activeTab}
           assessment={assessment}
           onTabChange={handleTabChange}
+          onItemClick={handleItemClick}
+          t={t}
+        />
+
+        {/* Item Detail Slide-Over */}
+        <ItemDetailPanel
+          item={selectedItem}
+          onClose={() => setSelectedItem(null)}
           t={t}
         />
       </div>
