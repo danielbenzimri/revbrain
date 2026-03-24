@@ -24,9 +24,7 @@ test.describe('Admin Dashboard', () => {
     await navigateAdmin(page, '/admin');
 
     // "פעילות אחרונה" or "Recent Activity" section
-    await expect(
-      page.getByText(/פעילות אחרונה|recent activity/i),
-    ).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(/פעילות אחרונה|recent activity/i)).toBeVisible({ timeout: 10_000 });
   });
 
   test('9 — stats API returns valid data', async () => {

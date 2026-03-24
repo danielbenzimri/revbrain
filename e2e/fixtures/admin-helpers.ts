@@ -78,38 +78,47 @@ export function mockToken(userId: string): string {
  */
 async function injectAuth(
   page: Page,
-  user: { id: string; name: string; email: string; role: string },
+  user: { id: string; name: string; email: string; role: string }
 ) {
   // Step 1: Navigate to the app origin to get localStorage access
   await page.goto('/login', { waitUntil: 'domcontentloaded' });
 
   // Step 2: Set localStorage — service config (offline mode) + auth session
-  await page.evaluate(({ user }) => {
-    // Force offline mode so the app uses LocalAuthAdapter (not RemoteAuthAdapter/Supabase)
-    localStorage.setItem(
-      'revbrain-service-config',
-      JSON.stringify({
-        state: {
-          mode: 'offline',
-          targets: { server: 'local', database: 'local', storage: 'local' },
-        },
-        version: 3,
-      }),
-    );
+  await page.evaluate(
+    ({ user }) => {
+      // Force offline mode so the app uses LocalAuthAdapter (not RemoteAuthAdapter/Supabase)
+      localStorage.setItem(
+        'revbrain-service-config',
+        JSON.stringify({
+          state: {
+            mode: 'offline',
+            targets: { server: 'local', database: 'local', storage: 'local' },
+          },
+          version: 3,
+        })
+      );
 
-    const userObj = { id: user.id, name: user.name, email: user.email, role: user.role, avatar: null };
-    const authUser = { ...userObj, metadata: { group: 'default' } };
-    const session = {
-      accessToken: `mock_token_${user.id}`,
-      refreshToken: `mock_refresh_${user.id}`,
-      expiresAt: Date.now() + 24 * 60 * 60 * 1000,
-    };
+      const userObj = {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        avatar: null,
+      };
+      const authUser = { ...userObj, metadata: { group: 'default' } };
+      const session = {
+        accessToken: `mock_token_${user.id}`,
+        refreshToken: `mock_refresh_${user.id}`,
+        expiresAt: Date.now() + 24 * 60 * 60 * 1000,
+      };
 
-    // revbrain_user: auth store reads this on init for fast display
-    localStorage.setItem('revbrain_user', JSON.stringify(userObj));
-    // revbrain_session: LocalAuthAdapter.getSession() and getCurrentUser() read this
-    localStorage.setItem('revbrain_session', JSON.stringify({ user: authUser, session }));
-  }, { user });
+      // revbrain_user: auth store reads this on init for fast display
+      localStorage.setItem('revbrain_user', JSON.stringify(userObj));
+      // revbrain_session: LocalAuthAdapter.getSession() and getCurrentUser() read this
+      localStorage.setItem('revbrain_session', JSON.stringify({ user: authUser, session }));
+    },
+    { user }
+  );
 
   // Step 3: Reload so the app initializes with the session in place
   // (The login page may have already started initializing without auth)
@@ -160,7 +169,7 @@ export async function apiFetch(
     method?: string;
     headers?: Record<string, string>;
     body?: unknown;
-  } = {},
+  } = {}
 ) {
   const { method = 'GET', headers = adminHeaders(), body } = options;
   const MAX_RETRIES = 3;
@@ -211,9 +220,8 @@ export async function navigateAdmin(page: Page, path: string) {
 export async function waitForApiResponse(page: Page, urlPattern: string | RegExp) {
   return page.waitForResponse(
     (r) =>
-      (typeof urlPattern === 'string'
-        ? r.url().includes(urlPattern)
-        : urlPattern.test(r.url())) && r.status() < 400,
+      (typeof urlPattern === 'string' ? r.url().includes(urlPattern) : urlPattern.test(r.url())) &&
+      r.status() < 400
   );
 }
 

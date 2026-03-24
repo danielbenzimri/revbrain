@@ -53,7 +53,7 @@ test.describe('Job Queue', () => {
   test('76 — retry non-idempotent job rejected', async () => {
     const { json } = await apiFetch('/v1/admin/jobs/dead?limit=50');
     const unsafeJob = json?.data?.find(
-      (j: { type: string }) => j.type !== 'email' && j.type !== 'webhook',
+      (j: { type: string }) => j.type !== 'email' && j.type !== 'webhook'
     );
 
     if (!unsafeJob) {

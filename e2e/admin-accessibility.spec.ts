@@ -93,7 +93,8 @@ test.describe('Admin Accessibility (WCAG 2.1 AA)', () => {
       const textContent = (await button.textContent())?.trim();
 
       // Icon-only button should have some form of accessible name
-      const hasAccessibleName = ariaLabel || ariaLabelledBy || title || (textContent && textContent.length > 0);
+      const hasAccessibleName =
+        ariaLabel || ariaLabelledBy || title || (textContent && textContent.length > 0);
 
       if (!hasAccessibleName) {
         const html = await button.evaluate((el) => el.outerHTML.substring(0, 100));

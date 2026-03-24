@@ -27,9 +27,7 @@ test.describe('Full Admin Workflow', () => {
     // =====================================================================
     await loginAsAdmin(page);
     await navigateAdmin(page, '/admin');
-    await expect(
-      page.getByText(/platform overview|מבט-על/i),
-    ).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(/platform overview|מבט-על/i)).toBeVisible({ timeout: 10_000 });
 
     // =====================================================================
     // Step 2: Onboard new org via API (faster, more reliable)
@@ -58,18 +56,14 @@ test.describe('Full Admin Workflow', () => {
     // Step 3: Verify new user exists (via API — more reliable than UI search)
     // =====================================================================
     const { json: usersCheck } = await apiFetch('/v1/admin/users?limit=50');
-    const createdUser = usersCheck?.data?.find(
-      (u: { email: string }) => u.email === adminEmail,
-    );
+    const createdUser = usersCheck?.data?.find((u: { email: string }) => u.email === adminEmail);
     expect(createdUser).toBeTruthy();
 
     // =====================================================================
     // Step 4: Verify new tenant exists (via API)
     // =====================================================================
     const { json: tenantsCheck } = await apiFetch('/v1/admin/tenants');
-    const createdTenant = tenantsCheck?.data?.find(
-      (t: { name: string }) => t.name === orgName,
-    );
+    const createdTenant = tenantsCheck?.data?.find((t: { name: string }) => t.name === orgName);
     expect(createdTenant).toBeTruthy();
 
     // =====================================================================
@@ -109,9 +103,7 @@ test.describe('Full Admin Workflow', () => {
         body: { content: 'Resolving your issue now.', isInternal: false },
       });
 
-      const { json: ticketDetail } = await apiFetch(
-        `/v1/admin/support/tickets/${ticketId}`,
-      );
+      const { json: ticketDetail } = await apiFetch(`/v1/admin/support/tickets/${ticketId}`);
       const updatedAt = ticketDetail?.updatedAt || ticketDetail?.data?.updatedAt;
 
       await apiFetch(`/v1/admin/support/tickets/${ticketId}`, {
@@ -135,7 +127,7 @@ test.describe('Full Admin Workflow', () => {
 
     // Check for onboarding audit entry
     const onboardEntry = auditJson?.data?.find(
-      (e: { action: string }) => e.action === 'tenant.onboarded',
+      (e: { action: string }) => e.action === 'tenant.onboarded'
     );
     expect(onboardEntry).toBeTruthy();
 

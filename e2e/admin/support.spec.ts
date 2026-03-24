@@ -1,11 +1,5 @@
 import { test, expect } from '@playwright/test';
-import {
-  loginAsAdmin,
-  navigateAdmin,
-  apiFetch,
-  sel,
-  MOCK_IDS,
-} from '../fixtures/admin-helpers';
+import { loginAsAdmin, navigateAdmin, apiFetch, sel, MOCK_IDS } from '../fixtures/admin-helpers';
 
 /**
  * Tests 30-44: Support Tickets
@@ -66,7 +60,9 @@ test.describe('Support Tickets', () => {
   test('32 — filter by priority', async ({ page }) => {
     await navigateAdmin(page, '/admin/support');
 
-    const priorityTrigger = page.getByRole('combobox').filter({ hasText: /כל העדיפויות|all priority/i });
+    const priorityTrigger = page
+      .getByRole('combobox')
+      .filter({ hasText: /כל העדיפויות|all priority/i });
     await expect(priorityTrigger).toBeVisible({ timeout: 10_000 });
     await priorityTrigger.click();
 
@@ -121,7 +117,9 @@ test.describe('Support Tickets', () => {
     await navigateAdmin(page, '/admin/support');
 
     // Wait for either table rows or empty state
-    const viewBtn = page.getByRole('link', { name: /view|צפייה/i }).first()
+    const viewBtn = page
+      .getByRole('link', { name: /view|צפייה/i })
+      .first()
       .or(page.getByRole('button', { name: /view|צפייה/i }).first());
 
     if (!(await viewBtn.isVisible({ timeout: 5_000 }).catch(() => false))) {
@@ -135,10 +133,16 @@ test.describe('Support Tickets', () => {
   });
 
   test('37 — change ticket status via API', async () => {
-    if (!(await checkSupportApi())) { test.skip(); return; }
+    if (!(await checkSupportApi())) {
+      test.skip();
+      return;
+    }
     const { json: tickets } = await apiFetch('/v1/admin/support/tickets?limit=1');
     const ticket = tickets?.data?.[0];
-    if (!ticket) { test.skip(); return; }
+    if (!ticket) {
+      test.skip();
+      return;
+    }
 
     const newStatus = ticket.status === 'open' ? 'in_progress' : 'open';
     const { status } = await apiFetch(`/v1/admin/support/tickets/${ticket.id}`, {
@@ -149,10 +153,16 @@ test.describe('Support Tickets', () => {
   });
 
   test('38 — assign ticket to admin', async () => {
-    if (!(await checkSupportApi())) { test.skip(); return; }
+    if (!(await checkSupportApi())) {
+      test.skip();
+      return;
+    }
     const { json: tickets } = await apiFetch('/v1/admin/support/tickets?limit=1');
     const ticket = tickets?.data?.[0];
-    if (!ticket) { test.skip(); return; }
+    if (!ticket) {
+      test.skip();
+      return;
+    }
 
     const { status } = await apiFetch(`/v1/admin/support/tickets/${ticket.id}/assign`, {
       method: 'PUT',
@@ -162,10 +172,16 @@ test.describe('Support Tickets', () => {
   });
 
   test('39 — unassign ticket', async () => {
-    if (!(await checkSupportApi())) { test.skip(); return; }
+    if (!(await checkSupportApi())) {
+      test.skip();
+      return;
+    }
     const { json: tickets } = await apiFetch('/v1/admin/support/tickets?limit=1');
     const ticket = tickets?.data?.[0];
-    if (!ticket) { test.skip(); return; }
+    if (!ticket) {
+      test.skip();
+      return;
+    }
 
     const { status } = await apiFetch(`/v1/admin/support/tickets/${ticket.id}/assign`, {
       method: 'PUT',
@@ -175,10 +191,16 @@ test.describe('Support Tickets', () => {
   });
 
   test('40 — reply to ticket (customer-visible)', async () => {
-    if (!(await checkSupportApi())) { test.skip(); return; }
+    if (!(await checkSupportApi())) {
+      test.skip();
+      return;
+    }
     const { json: tickets } = await apiFetch('/v1/admin/support/tickets?limit=1');
     const ticket = tickets?.data?.[0];
-    if (!ticket) { test.skip(); return; }
+    if (!ticket) {
+      test.skip();
+      return;
+    }
 
     const { status } = await apiFetch(`/v1/admin/support/tickets/${ticket.id}/messages`, {
       method: 'POST',
@@ -188,10 +210,16 @@ test.describe('Support Tickets', () => {
   });
 
   test('41 — add internal note', async () => {
-    if (!(await checkSupportApi())) { test.skip(); return; }
+    if (!(await checkSupportApi())) {
+      test.skip();
+      return;
+    }
     const { json: tickets } = await apiFetch('/v1/admin/support/tickets?limit=1');
     const ticket = tickets?.data?.[0];
-    if (!ticket) { test.skip(); return; }
+    if (!ticket) {
+      test.skip();
+      return;
+    }
 
     const { status } = await apiFetch(`/v1/admin/support/tickets/${ticket.id}/messages`, {
       method: 'POST',
@@ -201,10 +229,16 @@ test.describe('Support Tickets', () => {
   });
 
   test('42 — optimistic concurrency on ticket update', async () => {
-    if (!(await checkSupportApi())) { test.skip(); return; }
+    if (!(await checkSupportApi())) {
+      test.skip();
+      return;
+    }
     const { json: tickets } = await apiFetch('/v1/admin/support/tickets?limit=1');
     const ticket = tickets?.data?.[0];
-    if (!ticket) { test.skip(); return; }
+    if (!ticket) {
+      test.skip();
+      return;
+    }
 
     await apiFetch(`/v1/admin/support/tickets/${ticket.id}`, {
       method: 'PUT',
@@ -223,7 +257,10 @@ test.describe('Support Tickets', () => {
   // -----------------------------------------------------------------------
 
   test('43 — create ticket on behalf of user', async () => {
-    if (!(await checkSupportApi())) { test.skip(); return; }
+    if (!(await checkSupportApi())) {
+      test.skip();
+      return;
+    }
     const { status } = await apiFetch('/v1/admin/support/tickets', {
       method: 'POST',
       body: {

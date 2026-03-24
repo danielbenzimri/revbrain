@@ -1,11 +1,5 @@
 import { test, expect } from '@playwright/test';
-import {
-  apiFetch,
-  adminHeaders,
-  API_URL,
-  MOCK_IDS,
-  mockToken,
-} from '../fixtures/admin-helpers';
+import { apiFetch, adminHeaders, API_URL, MOCK_IDS, mockToken } from '../fixtures/admin-helpers';
 
 /**
  * Tests 85-92: Cross-Cutting Concerns
@@ -89,8 +83,8 @@ test.describe('Cross-Cutting Concerns', () => {
       Array.from({ length: 60 }, () =>
         fetch(`${API_URL}/v1/admin/stats`, {
           headers: adminHeaders(),
-        }).then((r) => r.status),
-      ),
+        }).then((r) => r.status)
+      )
     );
 
     const rateLimited = results.filter((s) => s === 429);

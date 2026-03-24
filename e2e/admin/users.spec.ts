@@ -68,7 +68,10 @@ test.describe('User Management', () => {
   // -----------------------------------------------------------------------
 
   test('22 — invite new user to org', async ({ page }) => {
-    if (!(await checkUserWriteApi())) { test.skip(); return; }
+    if (!(await checkUserWriteApi())) {
+      test.skip();
+      return;
+    }
 
     await navigateAdmin(page, '/admin/users');
 
@@ -94,7 +97,10 @@ test.describe('User Management', () => {
   });
 
   test('23 — invite with duplicate email fails', async () => {
-    if (!(await checkUserWriteApi())) { test.skip(); return; }
+    if (!(await checkUserWriteApi())) {
+      test.skip();
+      return;
+    }
 
     const { status } = await apiFetch('/v1/admin/users', {
       method: 'POST',
@@ -131,9 +137,12 @@ test.describe('User Management', () => {
     const { json } = await apiFetch('/v1/admin/users?limit=10');
     const user = json?.data?.find(
       (u: { id: string; role: string }) =>
-        u.id !== MOCK_IDS.USER_SYSTEM_ADMIN && u.role !== 'system_admin',
+        u.id !== MOCK_IDS.USER_SYSTEM_ADMIN && u.role !== 'system_admin'
     );
-    if (!user) { test.skip(); return; }
+    if (!user) {
+      test.skip();
+      return;
+    }
 
     const newRole = user.role === 'operator' ? 'admin' : 'operator';
     const { status } = await apiFetch(`/v1/admin/users/${user.id}`, {
@@ -175,10 +184,11 @@ test.describe('User Management', () => {
 
   test('27 — optimistic concurrency on user edit', async () => {
     const { json } = await apiFetch('/v1/admin/users?limit=10');
-    const user = json?.data?.find(
-      (u: { id: string }) => u.id !== MOCK_IDS.USER_SYSTEM_ADMIN,
-    );
-    if (!user) { test.skip(); return; }
+    const user = json?.data?.find((u: { id: string }) => u.id !== MOCK_IDS.USER_SYSTEM_ADMIN);
+    if (!user) {
+      test.skip();
+      return;
+    }
 
     // First update
     await apiFetch(`/v1/admin/users/${user.id}`, {
@@ -199,17 +209,26 @@ test.describe('User Management', () => {
   // -----------------------------------------------------------------------
 
   test('28 — soft-delete user via API', async () => {
-    if (!(await checkUserWriteApi())) { test.skip(); return; }
+    if (!(await checkUserWriteApi())) {
+      test.skip();
+      return;
+    }
 
     const email = uniqueEmail('del');
     const createRes = await apiFetch('/v1/admin/users', {
       method: 'POST',
       body: { email, fullName: 'To Delete', role: 'reviewer', organizationId: MOCK_IDS.ORG_ACME },
     });
-    if (![200, 201].includes(createRes.status)) { test.skip(); return; }
+    if (![200, 201].includes(createRes.status)) {
+      test.skip();
+      return;
+    }
 
     const userId = createRes.json?.id || createRes.json?.data?.id;
-    if (!userId) { test.skip(); return; }
+    if (!userId) {
+      test.skip();
+      return;
+    }
 
     const { status } = await apiFetch(`/v1/admin/users/${userId}`, { method: 'DELETE' });
     expect(status).toBe(200);

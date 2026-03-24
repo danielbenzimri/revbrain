@@ -1,11 +1,5 @@
 import { test, expect } from '@playwright/test';
-import {
-  loginAsAdmin,
-  navigateAdmin,
-  apiFetch,
-  sel,
-  MOCK_IDS,
-} from '../fixtures/admin-helpers';
+import { loginAsAdmin, navigateAdmin, apiFetch, sel, MOCK_IDS } from '../fixtures/admin-helpers';
 
 /**
  * Tests 63-72: Audit Log
@@ -24,9 +18,9 @@ test.describe('Audit Log', () => {
     test('63 — audit log page loads', async ({ page }) => {
       await navigateAdmin(page, '/admin/audit');
 
-      await expect(
-        page.getByRole('heading', { name: /audit log|יומן ביקורת/i }),
-      ).toBeVisible({ timeout: 10_000 });
+      await expect(page.getByRole('heading', { name: /audit log|יומן ביקורת/i })).toBeVisible({
+        timeout: 10_000,
+      });
 
       // Table or empty state
       const table = page.locator('table');
@@ -38,8 +32,10 @@ test.describe('Audit Log', () => {
       await navigateAdmin(page, '/admin/audit');
 
       // The action filter is a custom dropdown (not <select>) with label "פעולה"
-      const actionDropdown = page.locator('button, [role="combobox"]')
-        .filter({ hasText: /פעולה|action/i }).first();
+      const actionDropdown = page
+        .locator('button, [role="combobox"]')
+        .filter({ hasText: /פעולה|action/i })
+        .first();
       await expect(actionDropdown).toBeVisible({ timeout: 10_000 });
       await actionDropdown.click();
 
@@ -76,9 +72,7 @@ test.describe('Audit Log', () => {
     test('67 — export CSV button visible', async ({ page }) => {
       await navigateAdmin(page, '/admin/audit');
 
-      await expect(
-        page.getByRole('button', { name: sel.export }),
-      ).toBeVisible({ timeout: 10_000 });
+      await expect(page.getByRole('button', { name: sel.export })).toBeVisible({ timeout: 10_000 });
     });
   });
 
@@ -103,14 +97,14 @@ test.describe('Audit Log', () => {
 
   test('70 — filter by organization via API', async () => {
     const { status, json } = await apiFetch(
-      `/v1/admin/audit?organizationId=${MOCK_IDS.ORG_ACME}&limit=5`,
+      `/v1/admin/audit?organizationId=${MOCK_IDS.ORG_ACME}&limit=5`
     );
     expect(status).toBe(200);
   });
 
   test('71 — combined filters via API', async () => {
     const { status } = await apiFetch(
-      `/v1/admin/audit?action=user.created&organizationId=${MOCK_IDS.ORG_ACME}&limit=5`,
+      `/v1/admin/audit?action=user.created&organizationId=${MOCK_IDS.ORG_ACME}&limit=5`
     );
     expect(status).toBe(200);
   });
@@ -122,7 +116,7 @@ test.describe('Audit Log', () => {
         headers: {
           Authorization: `Bearer mock_token_${MOCK_IDS.USER_SYSTEM_ADMIN}`,
         },
-      },
+      }
     );
     expect(res.status).toBe(200);
 

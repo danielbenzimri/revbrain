@@ -68,7 +68,10 @@ test.describe('Coupon Management', () => {
   // -----------------------------------------------------------------------
 
   test('47 — create percentage coupon', async ({ page }) => {
-    if (!(await checkCouponWriteApi())) { test.skip(); return; }
+    if (!(await checkCouponWriteApi())) {
+      test.skip();
+      return;
+    }
 
     const code = uniqueCode('PCT');
     await navigateAdmin(page, '/admin/coupons');
@@ -91,7 +94,10 @@ test.describe('Coupon Management', () => {
   });
 
   test('48 — create fixed-amount coupon', async ({ page }) => {
-    if (!(await checkCouponWriteApi())) { test.skip(); return; }
+    if (!(await checkCouponWriteApi())) {
+      test.skip();
+      return;
+    }
 
     const code = uniqueCode('FIX');
     await navigateAdmin(page, '/admin/coupons');
@@ -114,13 +120,19 @@ test.describe('Coupon Management', () => {
   });
 
   test('49 — create coupon with plan restrictions via API', async () => {
-    if (!(await checkCouponWriteApi())) { test.skip(); return; }
+    if (!(await checkCouponWriteApi())) {
+      test.skip();
+      return;
+    }
 
     const code = uniqueCode('PLAN');
     const { status } = await apiFetch('/v1/admin/coupons', {
       method: 'POST',
       body: {
-        code, name: 'Plan-restricted', discountType: 'percent', discountValue: 15,
+        code,
+        name: 'Plan-restricted',
+        discountType: 'percent',
+        discountValue: 15,
         applicablePlanIds: [MOCK_IDS.PLAN_PRO],
       },
     });
@@ -128,18 +140,31 @@ test.describe('Coupon Management', () => {
   });
 
   test('50 — create coupon with usage limits via API', async () => {
-    if (!(await checkCouponWriteApi())) { test.skip(); return; }
+    if (!(await checkCouponWriteApi())) {
+      test.skip();
+      return;
+    }
 
     const code = uniqueCode('LIM');
     const { status } = await apiFetch('/v1/admin/coupons', {
       method: 'POST',
-      body: { code, name: 'Limited', discountType: 'percent', discountValue: 10, maxUses: 100, maxUsesPerUser: 1 },
+      body: {
+        code,
+        name: 'Limited',
+        discountType: 'percent',
+        discountValue: 10,
+        maxUses: 100,
+        maxUsesPerUser: 1,
+      },
     });
     expect([200, 201]).toContain(status);
   });
 
   test('51 — duplicate coupon code fails', async () => {
-    if (!(await checkCouponWriteApi())) { test.skip(); return; }
+    if (!(await checkCouponWriteApi())) {
+      test.skip();
+      return;
+    }
 
     const code = uniqueCode('DUP');
     await apiFetch('/v1/admin/coupons', {
@@ -160,7 +185,9 @@ test.describe('Coupon Management', () => {
 
   test('52 — edit coupon name and limits', async ({ page }) => {
     await navigateAdmin(page, '/admin/coupons');
-    await expect(page.locator('table').or(page.getByText(/אין קופונים/i))).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('table').or(page.getByText(/אין קופונים/i))).toBeVisible({
+      timeout: 10_000,
+    });
 
     const editBtn = page.getByRole('button', { name: /ערוך|edit/i }).first();
     if (!(await editBtn.isVisible({ timeout: 3_000 }).catch(() => false))) {
@@ -181,15 +208,23 @@ test.describe('Coupon Management', () => {
 
   test('53 — cannot change discount type/value after creation', async () => {
     const { json } = await apiFetch(`/v1/admin/coupons/${MOCK_IDS.COUPON_ACTIVE_PERCENT}`);
-    if (!json) { test.skip(); return; }
+    if (!json) {
+      test.skip();
+      return;
+    }
 
     const coupon = json?.data || json;
     const { status, json: updated } = await apiFetch(
       `/v1/admin/coupons/${MOCK_IDS.COUPON_ACTIVE_PERCENT}`,
       {
         method: 'PUT',
-        body: { name: coupon.name, discountType: 'fixed', discountValue: 999, updatedAt: coupon.updatedAt },
-      },
+        body: {
+          name: coupon.name,
+          discountType: 'fixed',
+          discountValue: 999,
+          updatedAt: coupon.updatedAt,
+        },
+      }
     );
 
     if (status === 200) {
@@ -202,7 +237,10 @@ test.describe('Coupon Management', () => {
   test('54 — optimistic concurrency on coupon edit', async () => {
     const { json } = await apiFetch(`/v1/admin/coupons/${MOCK_IDS.COUPON_ACTIVE_PERCENT}`);
     const coupon = json?.data || json;
-    if (!coupon?.updatedAt) { test.skip(); return; }
+    if (!coupon?.updatedAt) {
+      test.skip();
+      return;
+    }
 
     await apiFetch(`/v1/admin/coupons/${MOCK_IDS.COUPON_ACTIVE_PERCENT}`, {
       method: 'PUT',
@@ -221,7 +259,10 @@ test.describe('Coupon Management', () => {
   // -----------------------------------------------------------------------
 
   test('55 — deactivate coupon via API', async () => {
-    if (!(await checkCouponWriteApi())) { test.skip(); return; }
+    if (!(await checkCouponWriteApi())) {
+      test.skip();
+      return;
+    }
 
     const code = uniqueCode('DEACT');
     const createRes = await apiFetch('/v1/admin/coupons', {
@@ -229,17 +270,19 @@ test.describe('Coupon Management', () => {
       body: { code, name: 'To Deactivate', discountType: 'percent', discountValue: 5 },
     });
     const id = createRes.json?.id || createRes.json?.data?.id;
-    if (!id) { test.skip(); return; }
+    if (!id) {
+      test.skip();
+      return;
+    }
 
     const { status } = await apiFetch(`/v1/admin/coupons/${id}`, { method: 'DELETE' });
     expect(status).toBe(200);
   });
 
   test('56 — force sync coupon to Stripe via API', async () => {
-    const { status } = await apiFetch(
-      `/v1/admin/coupons/${MOCK_IDS.COUPON_ACTIVE_PERCENT}/sync`,
-      { method: 'POST' },
-    );
+    const { status } = await apiFetch(`/v1/admin/coupons/${MOCK_IDS.COUPON_ACTIVE_PERCENT}/sync`, {
+      method: 'POST',
+    });
     expect([200, 400, 500]).toContain(status);
   });
 
@@ -249,7 +292,9 @@ test.describe('Coupon Management', () => {
 
   test('57 — view coupon usage history', async () => {
     const { status, json } = await apiFetch(`/v1/admin/coupons/${MOCK_IDS.COUPON_ACTIVE_PERCENT}`);
-    if (status === 500) { return; } // DB required
+    if (status === 500) {
+      return;
+    } // DB required
     expect(status).toBe(200);
 
     const coupon = json?.data || json;

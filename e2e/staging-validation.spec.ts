@@ -19,9 +19,12 @@ import { test, expect, type Page } from '@playwright/test';
  * 5. Security — CORS, auth headers, RLS enforcement
  */
 
-const STAGING_API = process.env.VITE_API_URL || 'https://qutuivleheybnkbhpdbn.supabase.co/functions/v1/api';
+const STAGING_API =
+  process.env.VITE_API_URL || 'https://qutuivleheybnkbhpdbn.supabase.co/functions/v1/api';
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://qutuivleheybnkbhpdbn.supabase.co';
-const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1dHVpdmxlaGV5Ym5rYmhwZGJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTQxMzgsImV4cCI6MjA4OTY3MDEzOH0.Arjxw1r7DhD1LLGQBiNkPkqo1ycsQVBQqXPEjugPsPA';
+const SUPABASE_ANON_KEY =
+  process.env.VITE_SUPABASE_ANON_KEY ||
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1dHVpdmxlaGV5Ym5rYmhwZGJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTQxMzgsImV4cCI6MjA4OTY3MDEzOH0.Arjxw1r7DhD1LLGQBiNkPkqo1ycsQVBQqXPEjugPsPA';
 const ADMIN_EMAIL = 'admin@revbrain.io';
 const ADMIN_PASSWORD = process.env.SEED_PASSWORD || 'RevBrain-Dev-2026!';
 
@@ -73,7 +76,9 @@ test.describe('1. Backend Health & API', () => {
     expect(stats.data.tenantCount).toBeGreaterThanOrEqual(2);
     expect(stats.data.activeUserCount).toBeGreaterThanOrEqual(8);
     console.log(`  API response time: ${apiTime}ms`);
-    console.log(`  Stats: ${stats.data.tenantCount} tenants, ${stats.data.activeUserCount} users, $${stats.data.mrr} MRR`);
+    console.log(
+      `  Stats: ${stats.data.tenantCount} tenants, ${stats.data.activeUserCount} users, $${stats.data.mrr} MRR`
+    );
     expect(apiTime).toBeLessThan(10000); // Edge function cold start can be 5-8s on free tier
   });
 
@@ -135,11 +140,7 @@ test.describe('2. Auth & JWT', () => {
   });
 
   test('admin endpoints accessible with token', async ({ request }) => {
-    const endpoints = [
-      '/v1/admin/stats',
-      '/v1/admin/tenants',
-      '/v1/admin/users',
-    ];
+    const endpoints = ['/v1/admin/stats', '/v1/admin/tenants', '/v1/admin/users'];
 
     for (const endpoint of endpoints) {
       const start = Date.now();
@@ -276,7 +277,9 @@ test.describe('4. Performance', () => {
     const body = await res.json();
     expect(body.success).toBe(true);
     expect(body.data.tenantCount).toBeGreaterThanOrEqual(2);
-    console.log(`  Admin stats: ${time}ms, ${body.data.tenantCount} tenants, ${body.data.activeUserCount} users`);
+    console.log(
+      `  Admin stats: ${time}ms, ${body.data.tenantCount} tenants, ${body.data.activeUserCount} users`
+    );
     // Edge function free tier: cold starts are 3-8s, warn but don't fail
     if (time > 3000) {
       console.log(`  ⚠️ Slow response (${time}ms) — likely edge function cold start`);

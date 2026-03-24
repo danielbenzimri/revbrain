@@ -1,11 +1,5 @@
 import { test, expect } from '@playwright/test';
-import {
-  loginAsAdmin,
-  navigateAdmin,
-  apiFetch,
-  sel,
-  MOCK_IDS,
-} from '../fixtures/admin-helpers';
+import { loginAsAdmin, navigateAdmin, apiFetch, sel, MOCK_IDS } from '../fixtures/admin-helpers';
 
 /**
  * Tests 10-19: Tenant Management
@@ -42,7 +36,10 @@ test.describe('Tenant Management', () => {
     // Update tenant seat limit to match usage via API first
     const { json: tenants } = await apiFetch('/v1/admin/tenants');
     const acme = tenants?.data?.find((t: { id: string }) => t.id === MOCK_IDS.ORG_ACME);
-    if (!acme) { test.skip(); return; }
+    if (!acme) {
+      test.skip();
+      return;
+    }
 
     // Set seatLimit = seatUsed
     await apiFetch(`/v1/admin/tenants/${MOCK_IDS.ORG_ACME}`, {
@@ -71,7 +68,10 @@ test.describe('Tenant Management', () => {
     await actionsBtn.click();
 
     // Click "ערוך" (Edit) from dropdown
-    await page.getByText(/ערוך|edit/i).first().click();
+    await page
+      .getByText(/ערוך|edit/i)
+      .first()
+      .click();
 
     const drawer = page.locator(sel.drawer);
     await expect(drawer).toBeVisible({ timeout: 5_000 });
@@ -91,7 +91,10 @@ test.describe('Tenant Management', () => {
 
     const actionsBtn = page.locator('table tbody tr').first().locator('button').last();
     await actionsBtn.click();
-    await page.getByText(/ערוך|edit/i).first().click();
+    await page
+      .getByText(/ערוך|edit/i)
+      .first()
+      .click();
 
     const drawer = page.locator(sel.drawer);
     await expect(drawer).toBeVisible({ timeout: 5_000 });
@@ -112,7 +115,10 @@ test.describe('Tenant Management', () => {
 
     const actionsBtn = page.locator('table tbody tr').first().locator('button').last();
     await actionsBtn.click();
-    await page.getByText(/ערוך|edit/i).first().click();
+    await page
+      .getByText(/ערוך|edit/i)
+      .first()
+      .click();
 
     const drawer = page.locator(sel.drawer);
     await expect(drawer).toBeVisible({ timeout: 5_000 });
@@ -129,7 +135,10 @@ test.describe('Tenant Management', () => {
   test('16 — optimistic concurrency conflict', async () => {
     const { json: tenants } = await apiFetch('/v1/admin/tenants');
     const tenant = tenants?.data?.[0];
-    if (!tenant) { test.skip(); return; }
+    if (!tenant) {
+      test.skip();
+      return;
+    }
 
     // First update to advance updatedAt
     const first = await apiFetch(`/v1/admin/tenants/${tenant.id}`, {
@@ -190,7 +199,7 @@ test.describe('Tenant Management', () => {
 
   test('19 — view tenant access log via API', async () => {
     const { status, json } = await apiFetch(
-      `/v1/admin/tenants/${MOCK_IDS.ORG_ACME}/access-log?limit=10`,
+      `/v1/admin/tenants/${MOCK_IDS.ORG_ACME}/access-log?limit=10`
     );
     expect(status).toBe(200);
     expect(json).toHaveProperty('data');

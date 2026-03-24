@@ -44,9 +44,7 @@ function collectConsole(page: Page): ConsoleEntry[] {
 }
 
 // Pages to check — public
-const PUBLIC_PAGES = [
-  { name: 'Login', path: '/login' },
-];
+const PUBLIC_PAGES = [{ name: 'Login', path: '/login' }];
 
 // Pages to check — authenticated (system_admin)
 const ADMIN_PAGES = [
@@ -65,26 +63,26 @@ const ADMIN_PAGES = [
 // Known acceptable warnings (don't fail on these)
 const ACCEPTABLE_PATTERNS = [
   'Download the React DevTools',
-  'React does not recognize',            // Third-party component prop warnings
-  'findDOMNode is deprecated',           // Legacy library usage
-  '[HMR]',                               // Hot module replacement
-  '[vite]',                              // Vite dev server
-  'Lit is in dev mode',                  // Lit components
-  'Source map',                          // Source map warnings
-  'DevTools',                            // DevTools-related
-  'The resource',                        // Resource loading hints
-  '[LocalAPI]',                          // Our own LocalAPI warnings (expected in mock mode)
-  'MOCK',                                // Mock mode warnings
-  'AxeBuilder',                          // Accessibility test tooling
-  'Not implemented',                     // Supabase local stub
-  'Failed to load resource: net::ERR',   // Network errors in test
-  'Refused to apply style',             // CSP in test
-  'Failed to fetch',                    // Network errors during auth in mock mode
-  'AuthRetryableFetchError',            // Supabase auth retry in mock mode
-  'Login error',                        // Auth login error in mock mode
-  'Login failed',                       // Auth login failure
-  'AuthApiError',                       // Supabase auth API error
-  'supabase',                           // Supabase client warnings
+  'React does not recognize', // Third-party component prop warnings
+  'findDOMNode is deprecated', // Legacy library usage
+  '[HMR]', // Hot module replacement
+  '[vite]', // Vite dev server
+  'Lit is in dev mode', // Lit components
+  'Source map', // Source map warnings
+  'DevTools', // DevTools-related
+  'The resource', // Resource loading hints
+  '[LocalAPI]', // Our own LocalAPI warnings (expected in mock mode)
+  'MOCK', // Mock mode warnings
+  'AxeBuilder', // Accessibility test tooling
+  'Not implemented', // Supabase local stub
+  'Failed to load resource: net::ERR', // Network errors in test
+  'Refused to apply style', // CSP in test
+  'Failed to fetch', // Network errors during auth in mock mode
+  'AuthRetryableFetchError', // Supabase auth retry in mock mode
+  'Login error', // Auth login error in mock mode
+  'Login failed', // Auth login failure
+  'AuthApiError', // Supabase auth API error
+  'supabase', // Supabase client warnings
 ];
 
 function isAcceptable(text: string): boolean {
@@ -105,9 +103,7 @@ test.describe('Browser Console Health', () => {
         const errors = entries.filter(
           (e) => (e.type === 'error' || e.type === 'pageerror') && !isAcceptable(e.text)
         );
-        const warnings = entries.filter(
-          (e) => e.type === 'warning' && !isAcceptable(e.text)
-        );
+        const warnings = entries.filter((e) => e.type === 'warning' && !isAcceptable(e.text));
 
         if (warnings.length > 0) {
           console.log(`  [${page.name}] Warnings (${warnings.length}):`);
@@ -140,9 +136,7 @@ test.describe('Browser Console Health', () => {
         const errors = entries.filter(
           (e) => (e.type === 'error' || e.type === 'pageerror') && !isAcceptable(e.text)
         );
-        const warnings = entries.filter(
-          (e) => e.type === 'warning' && !isAcceptable(e.text)
-        );
+        const warnings = entries.filter((e) => e.type === 'warning' && !isAcceptable(e.text));
 
         // Report all
         if (warnings.length > 0) {
@@ -154,7 +148,9 @@ test.describe('Browser Console Health', () => {
           console.log(`  [${adminPage.name}] ERRORS (${errors.length}):`);
           errors.forEach((e) => console.log(`    ❌ ${e.text.substring(0, 200)}`));
         } else {
-          console.log(`  [${adminPage.name}] ✓ Clean (${entries.length} total console messages, ${warnings.length} warnings)`);
+          console.log(
+            `  [${adminPage.name}] ✓ Clean (${entries.length} total console messages, ${warnings.length} warnings)`
+          );
         }
 
         expect(errors, `${adminPage.name} has ${errors.length} console errors`).toHaveLength(0);

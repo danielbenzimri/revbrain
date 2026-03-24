@@ -7,41 +7,33 @@ import { apiFetch, MOCK_IDS } from '../fixtures/admin-helpers';
 
 test.describe('Feature Overrides', () => {
   test('80 — grant feature override', async () => {
-    const { status } = await apiFetch(
-      `/v1/admin/tenants/${MOCK_IDS.ORG_ACME}/overrides`,
-      {
-        method: 'POST',
-        body: {
-          feature: 'cpq_migration',
-          value: true,
-          reason: 'E2E test override',
-        },
+    const { status } = await apiFetch(`/v1/admin/tenants/${MOCK_IDS.ORG_ACME}/overrides`, {
+      method: 'POST',
+      body: {
+        feature: 'cpq_migration',
+        value: true,
+        reason: 'E2E test override',
       },
-    );
+    });
     expect([200, 201]).toContain(status);
   });
 
   test('81 — grant override with expiration', async () => {
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-    const { status, json } = await apiFetch(
-      `/v1/admin/tenants/${MOCK_IDS.ORG_ACME}/overrides`,
-      {
-        method: 'POST',
-        body: {
-          feature: 'data_validation',
-          value: true,
-          expiresAt,
-          reason: 'Temporary E2E test',
-        },
+    const { status, json } = await apiFetch(`/v1/admin/tenants/${MOCK_IDS.ORG_ACME}/overrides`, {
+      method: 'POST',
+      body: {
+        feature: 'data_validation',
+        value: true,
+        expiresAt,
+        reason: 'Temporary E2E test',
       },
-    );
+    });
     expect([200, 201]).toContain(status);
   });
 
   test('82 — list tenant overrides', async () => {
-    const { status, json } = await apiFetch(
-      `/v1/admin/tenants/${MOCK_IDS.ORG_ACME}/overrides`,
-    );
+    const { status, json } = await apiFetch(`/v1/admin/tenants/${MOCK_IDS.ORG_ACME}/overrides`);
     expect(status).toBe(200);
     expect(json).toHaveProperty('data');
     expect(Array.isArray(json.data)).toBe(true);
@@ -57,17 +49,14 @@ test.describe('Feature Overrides', () => {
 
   test('83 — revoke override', async () => {
     // Create one to revoke
-    const createRes = await apiFetch(
-      `/v1/admin/tenants/${MOCK_IDS.ORG_ACME}/overrides`,
-      {
-        method: 'POST',
-        body: {
-          feature: 'cpq_migration',
-          value: true,
-          reason: 'Will be revoked',
-        },
+    const createRes = await apiFetch(`/v1/admin/tenants/${MOCK_IDS.ORG_ACME}/overrides`, {
+      method: 'POST',
+      body: {
+        feature: 'cpq_migration',
+        value: true,
+        reason: 'Will be revoked',
       },
-    );
+    });
     const id = createRes.json?.id || createRes.json?.data?.id;
     if (!id) {
       test.skip();
@@ -95,7 +84,7 @@ test.describe('Feature Overrides', () => {
     const { json } = await apiFetch(`/v1/admin/tenants/${MOCK_IDS.ORG_BETA}/overrides`);
     const expired = json?.data?.filter(
       (o: { expiresAt: string | null }) =>
-        o.expiresAt && new Date(o.expiresAt).getTime() < Date.now(),
+        o.expiresAt && new Date(o.expiresAt).getTime() < Date.now()
     );
     expect(expired?.length ?? 0).toBe(0);
   });
