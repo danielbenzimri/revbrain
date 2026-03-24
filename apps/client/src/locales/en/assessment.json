@@ -1,0 +1,275 @@
+{
+  "title": "Assessment",
+  "header": {
+    "runInfo": "Run #{{number}} · {{timeAgo}}",
+    "export": "Export",
+    "generateReport": "Generate Report",
+    "exportCsv": "Export CSV",
+    "copyLink": "Copy Link"
+  },
+  "tabs": {
+    "overview": "Overview",
+    "products": "Products",
+    "pricing": "Pricing",
+    "rules": "Rules",
+    "code": "Code",
+    "integrations": "Integrations",
+    "amendments": "Amendments",
+    "approvals": "Approvals",
+    "documents": "Documents",
+    "dataReporting": "Data & Reporting"
+  },
+  "subTabs": {
+    "catalog": "Catalog",
+    "guidedSelling": "Guided Selling",
+    "qleCustomizations": "QLE Customizations",
+    "twinFields": "Twin Fields",
+    "priceRules": "Price Rules",
+    "contractedPricing": "Contracted Pricing",
+    "multiCurrency": "Multi-Currency",
+    "codeInventory": "Code Inventory",
+    "securityPermissions": "Security & Permissions",
+    "externalSystems": "External Systems",
+    "packageDependencies": "Package Dependencies",
+    "experienceCloud": "Experience Cloud",
+    "salesforceBilling": "Salesforce Billing",
+    "amendments": "Amendments",
+    "renewals": "Renewals",
+    "subscriptionManagement": "Subscription Management",
+    "dataVolumes": "Data Volumes",
+    "reportsDashboards": "Reports & Dashboards",
+    "orgHealth": "Org Health",
+    "licensesEdition": "Licenses & Edition"
+  },
+  "overview": {
+    "migrationReadiness": "Migration Readiness",
+    "complexityByDomain": "Complexity by Domain",
+    "topRisks": "Top Risks",
+    "blockers": "Blockers",
+    "keyFindings": "Key Findings",
+    "prerequisites": "Readiness Prerequisites",
+    "migrationStrategy": "Migration Strategy Summary",
+    "completeness": "Assessment Completeness",
+    "viewAllRisks": "View all {{count}} risks",
+    "viewAllBlockers": "View all {{count}} blockers",
+    "changesSinceLastRun": "Changes Since Last Run",
+    "consultantSections": "Consultant Sections"
+  },
+  "migrationStatus": {
+    "auto": "Auto",
+    "guided": "Guided",
+    "manual": "Manual",
+    "blocked": "Blocked",
+    "autoDescription": "Direct RCA mapping — RevBrain handles it",
+    "guidedDescription": "Needs operator review and decisions",
+    "manualDescription": "Requires custom development work",
+    "blockedDescription": "No RCA equivalent exists"
+  },
+  "complexity": {
+    "low": "Low",
+    "moderate": "Moderate",
+    "high": "High"
+  },
+  "triage": {
+    "untriaged": "Untriaged",
+    "inScope": "In Scope",
+    "excluded": "Excluded",
+    "needsDiscussion": "Needs Discussion",
+    "overridden": "Overridden",
+    "bulkAction": "Bulk Action",
+    "setInScope": "Set In Scope",
+    "setExcluded": "Exclude",
+    "setNeedsDiscussion": "Needs Discussion"
+  },
+  "domain": {
+    "statsStrip": "Domain Stats",
+    "migrationStatusBar": "RCA Migration Status",
+    "inventory": "Inventory",
+    "insights": "Insights",
+    "businessContext": "Business Context",
+    "businessContextPlaceholder": "Add business context notes for this domain...",
+    "lastEditedBy": "Last edited by {{name}} · {{timeAgo}}",
+    "collapse": "Collapse",
+    "expand": "Expand"
+  },
+  "table": {
+    "name": "Name",
+    "complexity": "Complexity",
+    "status": "Status",
+    "rcaTarget": "RCA Target",
+    "active": "Active",
+    "search": "Search items...",
+    "filterComplexity": "Complexity",
+    "filterStatus": "Status",
+    "filterAll": "All",
+    "noResults": "No items match your filters",
+    "showingItems": "Showing {{from}}-{{to}} of {{total}}",
+    "linesOfCode": "LOC",
+    "items": "items"
+  },
+  "itemDetail": {
+    "status": "Status",
+    "complexity": "Complexity",
+    "migrationStatus": "Migration",
+    "active": "Active",
+    "inactive": "Inactive",
+    "lastModified": "Last Modified",
+    "aiDescription": "AI-Generated Description",
+    "aiDisclaimer": "AI-generated from CPQ logic",
+    "viewRawFormula": "View raw formula",
+    "edit": "Edit",
+    "verify": "Verify",
+    "verified": "Verified by {{name}}",
+    "edited": "Edited by {{name}}",
+    "cpqRcaMapping": "CPQ → RCA Mapping",
+    "cpqCurrent": "CPQ (current)",
+    "rcaTargetState": "RCA (target)",
+    "dependencies": "Dependencies",
+    "referencedBy": "Referenced by",
+    "dependsOn": "Depends on",
+    "relatedRules": "Related rules",
+    "recommendation": "Recommendation",
+    "estimatedHours": "Estimated Hours",
+    "consultantNotes": "Consultant Notes",
+    "addNote": "Add a note...",
+    "viewInExplorer": "View in CPQ Explorer",
+    "viewCode": "View Code",
+    "openFullDetail": "Open Full Detail"
+  },
+  "riskRegister": {
+    "title": "Risk Register",
+    "description": "Risk Description",
+    "category": "Category",
+    "severity": "Severity",
+    "likelihood": "Likelihood",
+    "impact": "Impact",
+    "affectedItems": "Affected Items",
+    "mitigation": "Mitigation",
+    "owner": "Owner",
+    "unassigned": "Unassigned",
+    "heatMap": "Risk Heat Map",
+    "categories": {
+      "technical": "Technical",
+      "business": "Business",
+      "timeline": "Timeline",
+      "organizational": "Organizational"
+    },
+    "severities": {
+      "critical": "Critical",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    }
+  },
+  "effortEstimation": {
+    "title": "Effort Estimation",
+    "domain": "Domain",
+    "items": "Items",
+    "auto": "Auto",
+    "guided": "Guided",
+    "manual": "Manual",
+    "estHours": "Est. Hours",
+    "subtotal": "Subtotal",
+    "testingQa": "Testing & QA",
+    "projectMgmt": "Project Management",
+    "trainingCm": "Training / Change Mgmt",
+    "grandTotal": "Grand Total"
+  },
+  "prerequisites": {
+    "edition": "Salesforce Edition: {{edition}}",
+    "editionCompatible": "Compatible",
+    "rcaLicenses": "RCA Licenses",
+    "rcaNotDetected": "Not detected — required for deploy",
+    "rcaDetected": "{{count}} licenses active",
+    "orgHealth": "Org Health: API {{api}}% · Storage {{storage}}% · Apex {{apex}}%",
+    "billingDetected": "Salesforce Billing: Detected — expands scope",
+    "billingNotDetected": "Salesforce Billing: Not detected",
+    "governorLimits": "Governor Limits: No migration-blocking limits",
+    "governorLimitsWarning": "Governor Limits: Near capacity — plan migration carefully"
+  },
+  "strategy": {
+    "recommendedApproach": "Recommended Approach",
+    "phased": "Phased ({{count}} phases)",
+    "phase": "Phase {{number}}: {{name}}",
+    "weeks": "{{count}} wks",
+    "keyAssumptions": "Key Assumptions",
+    "editAssumptions": "Edit assumptions",
+    "openMigrationPlan": "Open Migration Plan tab"
+  },
+  "completeness": {
+    "orgScanned": "Org scanned",
+    "domainsInventoried": "All domains inventoried",
+    "gapAnalysis": "Gap analysis generated",
+    "triageComplete": "All items triaged",
+    "businessContext": "Business context notes added",
+    "effortEstimation": "Effort estimation filled in",
+    "riskMitigations": "Risk mitigations assigned",
+    "consultantSections": "Consultant sections complete",
+    "pdfGenerated": "PDF report generated"
+  },
+  "delta": {
+    "rulesRemoved": "31 inactive rules removed (cleanup)",
+    "newRulesDetected": "4 new rules detected",
+    "pricingUnchanged": "Pricing complexity: unchanged (High)",
+    "newApexTrigger": "1 new Apex trigger added on QuoteLine",
+    "complexityChanged": "8 items changed complexity level"
+  },
+  "findings": {
+    "bundleCompatible": "Bundle structure compatible with Product Selling Models",
+    "standardMappings": "Standard product mappings available in RCA",
+    "soqlLookups": "3 price rules use SOQL lookups — manual review needed",
+    "discountFormula": "Discount tiers use custom formula — partial RCA match",
+    "qcpCallout": "QCP onBeforeCalculate has external callout (142 LOC)",
+    "inactiveRules": "31 rules are inactive — consider retiring to reduce scope",
+    "reportsBreak": "85 reports reference CPQ objects — will break post-migration",
+    "mdqBlocker": "MDQ used for 23 products — partial RCA parity, potential blocker"
+  },
+  "insights": {
+    "products": {
+      "bundleDepth": "4 bundles have nesting depth > 3 — requires restructuring for Product Selling Models",
+      "inactiveProducts": "23 products are inactive. Consider retiring them to reduce migration scope.",
+      "qleWidgets": "12 QLE customizations detected — all require manual rebuild for RCA"
+    },
+    "pricing": {
+      "highComplexity": "47 rules have high complexity — they drive 78% of the estimated pricing migration effort",
+      "apexDependencies": "12 rules reference Apex classes — cannot be auto-mapped to Pricing Procedures",
+      "inactiveRules": "31 rules are inactive. Consider retiring them to reduce migration scope."
+    },
+    "rules": {
+      "validationRules": "42 validation rules — 89% map directly to Product Qualification Rules",
+      "summaryVariables": "8 summary variables used in conditions — need manual Pricing Procedure integration",
+      "inactiveRules": "12 rules are inactive. Consider excluding from scope."
+    },
+    "code": {
+      "totalLoc": "Total custom code: 4,200+ lines of Apex across 34 classes and triggers",
+      "cpqDependencies": "78% of Apex classes reference CPQ objects — require field remapping",
+      "testCoverage": "Average test coverage: 72%. 8 classes below 75% threshold."
+    },
+    "integrations": {
+      "cpqReferences": "12 of 11 integration touchpoints reference CPQ objects directly",
+      "middleware": "3 integrations use MuleSoft middleware — field mapping changes propagate to middleware layer"
+    },
+    "amendments": {
+      "coTermination": "Co-termination enabled with master contract alignment — RCA has native support but different config",
+      "mdqProducts": "23 products use Multi-Dimensional Quoting — known partial-parity area in RCA",
+      "customProration": "Custom proration calculator (93 LOC) — evaluate RCA native proration first"
+    },
+    "approvals": {
+      "advancedApprovals": "Advanced Approvals detected with 12 approval variables — most map to standard Approval Process",
+      "smartApprovals": "1 Smart Approval chain uses custom Apex condition evaluator — requires custom development"
+    },
+    "documents": {
+      "mergeFields": "42 merge fields across 7 templates — need mapping to RCA DocGen equivalents",
+      "conditionalSections": "12 conditional sections use complex visibility rules — manual DocGen template creation"
+    },
+    "data": {
+      "historicalQuotes": "450,000 historical quotes — 89% older than 2 years. Define retention policy before migration.",
+      "reportCount": "85 reports and 12 dashboards reference CPQ objects — all need rebuilding on RCA objects",
+      "staleReports": "15 reports haven't been run in 60+ days — consider excluding from rebuild scope"
+    }
+  },
+  "empty": {
+    "noAssessment": "No assessment data available",
+    "runAssessment": "Run an assessment to see results"
+  }
+}

@@ -1,0 +1,275 @@
+{
+  "title": "הערכה",
+  "header": {
+    "runInfo": "ריצה #{{number}} · {{timeAgo}}",
+    "export": "ייצוא",
+    "generateReport": "הפקת דוח",
+    "exportCsv": "ייצוא CSV",
+    "copyLink": "העתקת קישור"
+  },
+  "tabs": {
+    "overview": "סקירה כללית",
+    "products": "מוצרים",
+    "pricing": "תמחור",
+    "rules": "כללים",
+    "code": "קוד",
+    "integrations": "אינטגרציות",
+    "amendments": "תיקונים",
+    "approvals": "אישורים",
+    "documents": "מסמכים",
+    "dataReporting": "נתונים ודוחות"
+  },
+  "subTabs": {
+    "catalog": "קטלוג",
+    "guidedSelling": "מכירה מונחית",
+    "qleCustomizations": "התאמות QLE",
+    "twinFields": "שדות תאומים",
+    "priceRules": "כללי תמחור",
+    "contractedPricing": "תמחור חוזי",
+    "multiCurrency": "ריבוי מטבעות",
+    "codeInventory": "מלאי קוד",
+    "securityPermissions": "אבטחה והרשאות",
+    "externalSystems": "מערכות חיצוניות",
+    "packageDependencies": "תלויות חבילות",
+    "experienceCloud": "Experience Cloud",
+    "salesforceBilling": "Salesforce Billing",
+    "amendments": "תיקונים",
+    "renewals": "חידושים",
+    "subscriptionManagement": "ניהול מנויים",
+    "dataVolumes": "נפחי נתונים",
+    "reportsDashboards": "דוחות ולוחות מחוונים",
+    "orgHealth": "בריאות הארגון",
+    "licensesEdition": "רישיונות ומהדורה"
+  },
+  "overview": {
+    "migrationReadiness": "מוכנות להגירה",
+    "complexityByDomain": "מורכבות לפי תחום",
+    "topRisks": "סיכונים מובילים",
+    "blockers": "חוסמים",
+    "keyFindings": "ממצאים עיקריים",
+    "prerequisites": "תנאים מקדימים",
+    "migrationStrategy": "סיכום אסטרטגיית הגירה",
+    "completeness": "שלמות ההערכה",
+    "viewAllRisks": "צפייה בכל {{count}} הסיכונים",
+    "viewAllBlockers": "צפייה בכל {{count}} החוסמים",
+    "changesSinceLastRun": "שינויים מאז הריצה האחרונה",
+    "consultantSections": "חלקי יועץ"
+  },
+  "migrationStatus": {
+    "auto": "אוטומטי",
+    "guided": "מונחה",
+    "manual": "ידני",
+    "blocked": "חסום",
+    "autoDescription": "מיפוי ישיר ל-RCA — RevBrain מטפל בכך",
+    "guidedDescription": "דורש סקירה והחלטות של המפעיל",
+    "manualDescription": "דורש עבודת פיתוח מותאמת",
+    "blockedDescription": "אין מקבילה ב-RCA"
+  },
+  "complexity": {
+    "low": "נמוכה",
+    "moderate": "בינונית",
+    "high": "גבוהה"
+  },
+  "triage": {
+    "untriaged": "לא מסווג",
+    "inScope": "בטווח",
+    "excluded": "לא נכלל",
+    "needsDiscussion": "דורש דיון",
+    "overridden": "נדרס",
+    "bulkAction": "פעולה קבוצתית",
+    "setInScope": "הגדר בטווח",
+    "setExcluded": "הוצא מטווח",
+    "setNeedsDiscussion": "דורש דיון"
+  },
+  "domain": {
+    "statsStrip": "סטטיסטיקות תחום",
+    "migrationStatusBar": "סטטוס הגירה ל-RCA",
+    "inventory": "מלאי",
+    "insights": "תובנות",
+    "businessContext": "הקשר עסקי",
+    "businessContextPlaceholder": "הוסף הערות הקשר עסקי לתחום זה...",
+    "lastEditedBy": "נערך לאחרונה על ידי {{name}} · {{timeAgo}}",
+    "collapse": "כווץ",
+    "expand": "הרחב"
+  },
+  "table": {
+    "name": "שם",
+    "complexity": "מורכבות",
+    "status": "סטטוס",
+    "rcaTarget": "יעד RCA",
+    "active": "פעיל",
+    "search": "חיפוש פריטים...",
+    "filterComplexity": "מורכבות",
+    "filterStatus": "סטטוס",
+    "filterAll": "הכל",
+    "noResults": "אין פריטים התואמים למסננים",
+    "showingItems": "מציג {{from}}-{{to}} מתוך {{total}}",
+    "linesOfCode": "שורות קוד",
+    "items": "פריטים"
+  },
+  "itemDetail": {
+    "status": "סטטוס",
+    "complexity": "מורכבות",
+    "migrationStatus": "הגירה",
+    "active": "פעיל",
+    "inactive": "לא פעיל",
+    "lastModified": "שינוי אחרון",
+    "aiDescription": "תיאור מחולל AI",
+    "aiDisclaimer": "נוצר באמצעות AI מלוגיקת CPQ",
+    "viewRawFormula": "הצגת נוסחה גולמית",
+    "edit": "עריכה",
+    "verify": "אימות",
+    "verified": "אומת על ידי {{name}}",
+    "edited": "נערך על ידי {{name}}",
+    "cpqRcaMapping": "מיפוי CPQ → RCA",
+    "cpqCurrent": "CPQ (נוכחי)",
+    "rcaTargetState": "RCA (יעד)",
+    "dependencies": "תלויות",
+    "referencedBy": "מופנה על ידי",
+    "dependsOn": "תלוי ב",
+    "relatedRules": "כללים קשורים",
+    "recommendation": "המלצה",
+    "estimatedHours": "שעות מוערכות",
+    "consultantNotes": "הערות יועץ",
+    "addNote": "הוסף הערה...",
+    "viewInExplorer": "הצגה ב-CPQ Explorer",
+    "viewCode": "הצגת קוד",
+    "openFullDetail": "פתיחת פירוט מלא"
+  },
+  "riskRegister": {
+    "title": "רישום סיכונים",
+    "description": "תיאור הסיכון",
+    "category": "קטגוריה",
+    "severity": "חומרה",
+    "likelihood": "סבירות",
+    "impact": "השפעה",
+    "affectedItems": "פריטים מושפעים",
+    "mitigation": "הפחתה",
+    "owner": "אחראי",
+    "unassigned": "לא שויך",
+    "heatMap": "מפת חום סיכונים",
+    "categories": {
+      "technical": "טכני",
+      "business": "עסקי",
+      "timeline": "לוח זמנים",
+      "organizational": "ארגוני"
+    },
+    "severities": {
+      "critical": "קריטי",
+      "high": "גבוה",
+      "medium": "בינוני",
+      "low": "נמוך"
+    }
+  },
+  "effortEstimation": {
+    "title": "הערכת מאמץ",
+    "domain": "תחום",
+    "items": "פריטים",
+    "auto": "אוטומטי",
+    "guided": "מונחה",
+    "manual": "ידני",
+    "estHours": "שעות מוערכות",
+    "subtotal": "סכום ביניים",
+    "testingQa": "בדיקות ו-QA",
+    "projectMgmt": "ניהול פרויקט",
+    "trainingCm": "הדרכה / ניהול שינוי",
+    "grandTotal": "סך הכל"
+  },
+  "prerequisites": {
+    "edition": "מהדורת Salesforce: {{edition}}",
+    "editionCompatible": "תואם",
+    "rcaLicenses": "רישיונות RCA",
+    "rcaNotDetected": "לא זוהו — נדרשים לפריסה",
+    "rcaDetected": "{{count}} רישיונות פעילים",
+    "orgHealth": "בריאות הארגון: API {{api}}% · אחסון {{storage}}% · Apex {{apex}}%",
+    "billingDetected": "Salesforce Billing: זוהה — מרחיב את הטווח",
+    "billingNotDetected": "Salesforce Billing: לא זוהה",
+    "governorLimits": "מגבלות Governor: אין מגבלות החוסמות הגירה",
+    "governorLimitsWarning": "מגבלות Governor: קרוב לקיבולת — תכנן הגירה בזהירות"
+  },
+  "strategy": {
+    "recommendedApproach": "גישה מומלצת",
+    "phased": "שלבי ({{count}} שלבים)",
+    "phase": "שלב {{number}}: {{name}}",
+    "weeks": "{{count}} שבועות",
+    "keyAssumptions": "הנחות מפתח",
+    "editAssumptions": "עריכת הנחות",
+    "openMigrationPlan": "פתיחת לשונית תוכנית הגירה"
+  },
+  "completeness": {
+    "orgScanned": "הארגון נסרק",
+    "domainsInventoried": "כל התחומים נספרו",
+    "gapAnalysis": "ניתוח פערים הופק",
+    "triageComplete": "כל הפריטים סווגו",
+    "businessContext": "הערות הקשר עסקי נוספו",
+    "effortEstimation": "הערכת מאמץ מולאה",
+    "riskMitigations": "הפחתות סיכון שויכו",
+    "consultantSections": "חלקי יועץ הושלמו",
+    "pdfGenerated": "דוח PDF הופק"
+  },
+  "delta": {
+    "rulesRemoved": "31 כללים לא פעילים הוסרו (ניקוי)",
+    "newRulesDetected": "4 כללים חדשים זוהו",
+    "pricingUnchanged": "מורכבות תמחור: ללא שינוי (גבוהה)",
+    "newApexTrigger": "טריגר Apex חדש נוסף על QuoteLine",
+    "complexityChanged": "8 פריטים שינו רמת מורכבות"
+  },
+  "findings": {
+    "bundleCompatible": "מבנה חבילות תואם ל-Product Selling Models",
+    "standardMappings": "מיפויי מוצר סטנדרטיים זמינים ב-RCA",
+    "soqlLookups": "3 כללי תמחור משתמשים בשאילתות SOQL — נדרשת סקירה ידנית",
+    "discountFormula": "שכבות הנחה משתמשות בנוסחה מותאמת — התאמה חלקית ל-RCA",
+    "qcpCallout": "QCP onBeforeCalculate מבצע קריאה חיצונית (142 שורות קוד)",
+    "inactiveRules": "31 כללים לא פעילים — שקול הוצאה מטווח לצמצום",
+    "reportsBreak": "85 דוחות מפנים לאובייקטי CPQ — ישברו לאחר ההגירה",
+    "mdqBlocker": "MDQ בשימוש ב-23 מוצרים — תאימות חלקית ב-RCA, חוסם פוטנציאלי"
+  },
+  "insights": {
+    "products": {
+      "bundleDepth": "4 חבילות עם עומק קינון > 3 — דורש מבנה מחדש ל-Product Selling Models",
+      "inactiveProducts": "23 מוצרים לא פעילים. שקול הוצאה מטווח לצמצום הגירה.",
+      "qleWidgets": "12 התאמות QLE זוהו — כולן דורשות בנייה מחדש ל-RCA"
+    },
+    "pricing": {
+      "highComplexity": "47 כללים במורכבות גבוהה — הם מהווים 78% ממאמץ הגירת התמחור המוערך",
+      "apexDependencies": "12 כללים מפנים למחלקות Apex — לא ניתנים למיפוי אוטומטי ל-Pricing Procedures",
+      "inactiveRules": "31 כללים לא פעילים. שקול הוצאה מטווח לצמצום הגירה."
+    },
+    "rules": {
+      "validationRules": "42 כללי אימות — 89% ממופים ישירות ל-Product Qualification Rules",
+      "summaryVariables": "8 משתני סיכום משמשים בתנאים — דורשים אינטגרציה ידנית ל-Pricing Procedure",
+      "inactiveRules": "12 כללים לא פעילים. שקול הוצאה מטווח."
+    },
+    "code": {
+      "totalLoc": "סך קוד מותאם: 4,200+ שורות Apex ב-34 מחלקות וטריגרים",
+      "cpqDependencies": "78% ממחלקות Apex מפנות לאובייקטי CPQ — דורשות מיפוי שדות מחדש",
+      "testCoverage": "כיסוי בדיקות ממוצע: 72%. 8 מחלקות מתחת לסף 75%."
+    },
+    "integrations": {
+      "cpqReferences": "12 מתוך 11 נקודות אינטגרציה מפנות לאובייקטי CPQ ישירות",
+      "middleware": "3 אינטגרציות משתמשות ב-MuleSoft — שינויי מיפוי שדות מתפשטים לשכבת ה-middleware"
+    },
+    "amendments": {
+      "coTermination": "שיתוף סיום מופעל עם התאמת חוזה מאסטר — ל-RCA תמיכה מקורית אך תצורה שונה",
+      "mdqProducts": "23 מוצרים משתמשים ב-Multi-Dimensional Quoting — אזור תאימות חלקית ידוע ב-RCA",
+      "customProration": "מחשבון חלוקה יחסית מותאם (93 שורות קוד) — בדוק תחילה חלוקה מקורית של RCA"
+    },
+    "approvals": {
+      "advancedApprovals": "אישורים מתקדמים זוהו עם 12 משתני אישור — רובם ממופים לתהליך אישור סטנדרטי",
+      "smartApprovals": "שרשרת Smart Approval אחת משתמשת ב-Apex מותאם — דורשת פיתוח מותאם"
+    },
+    "documents": {
+      "mergeFields": "42 שדות מיזוג ב-7 תבניות — דורשים מיפוי למקבילות DocGen של RCA",
+      "conditionalSections": "12 חלקים מותנים משתמשים בכללי נראות מורכבים — יצירת תבנית DocGen ידנית"
+    },
+    "data": {
+      "historicalQuotes": "450,000 הצעות מחיר היסטוריות — 89% ישנות מ-2 שנים. הגדר מדיניות שמירה לפני ההגירה.",
+      "reportCount": "85 דוחות ו-12 לוחות מחוונים מפנים לאובייקטי CPQ — כולם דורשים בנייה מחדש",
+      "staleReports": "15 דוחות לא הורצו 60+ ימים — שקול הוצאה מטווח הבנייה מחדש"
+    }
+  },
+  "empty": {
+    "noAssessment": "אין נתוני הערכה זמינים",
+    "runAssessment": "הרץ הערכה כדי לראות תוצאות"
+  }
+}
