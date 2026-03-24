@@ -1,6 +1,6 @@
-import { memo, useCallback, useState } from 'react';
+import { memo, useCallback, useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Loader2,
   Plus,
@@ -10,6 +10,7 @@ import {
   AlertTriangle,
   ArrowRight,
   Zap,
+  Search,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useProjectsList, useCreateProjectAPI } from '../hooks/use-project-api';
@@ -163,9 +164,21 @@ const EmptyProjects = memo(function EmptyProjects({ onCreate }: { onCreate: () =
 
 // ─── Main Page ───────────────────────────────────────────────
 
+// ─── Search/Filter Hook ─────────────────────────────────────
+
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+  return debouncedValue;
+}
+
 export default function ProjectsPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [formOpen, setFormOpen] = useState(false);
   const formatTimeAgo = useFormatTimeAgo();
 
@@ -175,6 +188,71 @@ export default function ProjectsPage() {
   const prefetchWorkspace = usePrefetchProjectWorkspace();
 
   const projects = data?.projects || [];
+
+  // Filter state from URL params
+  const searchInput = searchParams.get('search') || '';
+  const statusFilter = searchParams.get('status') || '';
+  const customerFilter = searchParams.get('customer') || '';
+
+  const [localSearch, setLocalSearch] = useState(searchInput);
+  const debouncedSearch = useDebounce(localSearch, 300);
+
+  // Sync debounced search to URL params
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams);
+    if (debouncedSearch) {
+      params.set('search', debouncedSearch);
+    } else {
+      params.delete('search');
+    }
+    setSearchParams(params, { replace: true });
+  }, [debouncedSearch]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const updateFilter = useCallback(
+    (key: string, value: string) => {
+      const params = new URLSearchParams(searchParams);
+      if (value) {
+        params.set(key, value);
+      } else {
+        params.delete(key);
+      }
+      setSearchParams(params, { replace: true });
+    },
+    [searchParams, setSearchParams]
+  );
+
+  // Derive unique customer names from project metadata
+  const uniqueCustomers = useMemo(() => {
+    const names = new Set<string>();
+    projects.forEach((p) => {
+      const companyName = (p.metadata as Record<string, unknown>)?.clientCompanyName as
+        | string
+        | undefined;
+      if (companyName) names.add(companyName);
+    });
+    return Array.from(names).sort();
+  }, [projects]);
+
+  // Apply filters
+  const filteredProjects = useMemo(() => {
+    let result = projects;
+    const search = (searchParams.get('search') || '').toLowerCase();
+
+    if (search) {
+      result = result.filter((p) => p.name.toLowerCase().includes(search));
+    }
+    if (statusFilter) {
+      result = result.filter((p) => p.status === statusFilter);
+    }
+    if (customerFilter) {
+      result = result.filter(
+        (p) => (p.metadata as Record<string, unknown>)?.clientCompanyName === customerFilter
+      );
+    }
+    return result;
+  }, [projects, searchParams, statusFilter, customerFilter]);
+
+  const isFiltering = !!(searchParams.get('search') || statusFilter || customerFilter);
 
   const handleSave = async (formData: CreateProjectInput | UpdateProjectInput) => {
     await createMutation.mutateAsync(formData as CreateProjectInput);
@@ -233,6 +311,52 @@ export default function ProjectsPage() {
         <EmptyProjects onCreate={() => setFormOpen(true)} />
       ) : (
         <>
+          {/* Search & Filters */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <input
+                type="text"
+                value={localSearch}
+                onChange={(e) => setLocalSearch(e.target.value)}
+                placeholder={t('projects.filters.searchPlaceholder')}
+                className="w-full ps-10 pe-4 py-2.5 rounded-xl bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500"
+              />
+            </div>
+            <select
+              value={statusFilter}
+              onChange={(e) => updateFilter('status', e.target.value)}
+              className="px-3 py-2.5 rounded-xl bg-white text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500 min-w-35"
+            >
+              <option value="">{t('projects.filters.allStatuses')}</option>
+              <option value="active">{t('projects.status.active')}</option>
+              <option value="completed">{t('projects.status.completed')}</option>
+              <option value="on_hold">{t('projects.status.on_hold')}</option>
+              <option value="draft">{t('projects.status.draft')}</option>
+            </select>
+            {uniqueCustomers.length > 0 && (
+              <select
+                value={customerFilter}
+                onChange={(e) => updateFilter('customer', e.target.value)}
+                className="px-3 py-2.5 rounded-xl bg-white text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500 min-w-35"
+              >
+                <option value="">{t('projects.filters.allCustomers')}</option>
+                {uniqueCustomers.map((name) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+
+          {/* Results count when filtering */}
+          {isFiltering && (
+            <p className="text-sm text-slate-500">
+              {t('projects.filters.resultsCount', { count: filteredProjects.length })}
+            </p>
+          )}
+
           {/* Stats Strip */}
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
             <StatCard
@@ -263,7 +387,7 @@ export default function ProjectsPage() {
 
           {/* Project Grid */}
           <div className="grid gap-3 md:grid-cols-2">
-            {projects.map((project) => (
+            {filteredProjects.map((project) => (
               <ProjectCard
                 key={project.id}
                 project={project}
@@ -273,6 +397,12 @@ export default function ProjectsPage() {
               />
             ))}
           </div>
+
+          {isFiltering && filteredProjects.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-sm text-slate-500">{t('customers.noResults')}</p>
+            </div>
+          )}
         </>
       )}
 

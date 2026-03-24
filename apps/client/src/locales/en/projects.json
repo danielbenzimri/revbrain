@@ -89,7 +89,13 @@
     "all": "All Projects",
     "byStatus": "Filter by Status",
     "dateRange": "Date Range",
-    "clearFilters": "Clear Filters"
+    "clearFilters": "Clear Filters",
+    "searchPlaceholder": "Search projects...",
+    "statusFilter": "Status",
+    "customerFilter": "Customer",
+    "allStatuses": "All Statuses",
+    "allCustomers": "All Customers",
+    "resultsCount": "{{count}} results"
   },
 
   "toast": {

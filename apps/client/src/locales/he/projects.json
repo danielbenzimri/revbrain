@@ -90,7 +90,13 @@
     "all": "כל הפרויקטים",
     "byStatus": "סינון לפי סטטוס",
     "dateRange": "טווח תאריכים",
-    "clearFilters": "נקה מסננים"
+    "clearFilters": "נקה מסננים",
+    "searchPlaceholder": "חיפוש פרויקטים...",
+    "statusFilter": "סטטוס",
+    "customerFilter": "לקוח",
+    "allStatuses": "כל הסטטוסים",
+    "allCustomers": "כל הלקוחות",
+    "resultsCount": "{{count}} תוצאות"
   },
 
   "toast": {
