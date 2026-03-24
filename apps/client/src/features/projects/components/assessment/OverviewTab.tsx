@@ -4,10 +4,13 @@
  * Top section: 4 migration readiness stat cards + stacked bar
  * Bottom section: complexity heatmap by domain (9 rows)
  */
+import { useState } from 'react';
 import type { AssessmentData, DomainId } from '../../mocks/assessment-mock-data';
 import RiskBlockerCards from './RiskBlockerCards';
 import OverviewBottomSections from './OverviewBottomSections';
 import { DeltaSummary } from './RunDelta';
+import RiskRegister from './RiskRegister';
+import EffortEstimation from './EffortEstimation';
 
 // ---------------------------------------------------------------------------
 // Migration Readiness Cards
@@ -27,7 +30,35 @@ interface OverviewTabProps {
 }
 
 export default function OverviewTab({ assessment, onDomainClick, t }: OverviewTabProps) {
+  const [showRiskRegister, setShowRiskRegister] = useState(false);
+  const [showEffortEstimation, setShowEffortEstimation] = useState(false);
   const total = assessment.totalItems;
+
+  // Show Risk Register as expanded section
+  if (showRiskRegister) {
+    return (
+      <RiskRegister
+        risks={assessment.risks}
+        onClose={() => setShowRiskRegister(false)}
+        t={t}
+      />
+    );
+  }
+
+  // Show Effort Estimation as expanded section
+  if (showEffortEstimation) {
+    return (
+      <div className="space-y-4">
+        <button
+          onClick={() => setShowEffortEstimation(false)}
+          className="text-sm text-violet-600 hover:text-violet-700 font-medium"
+        >
+          ← Back to Overview
+        </button>
+        <EffortEstimation assessment={assessment} t={t} />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -159,6 +190,8 @@ export default function OverviewTab({ assessment, onDomainClick, t }: OverviewTa
         risks={assessment.risks}
         findings={assessment.keyFindings}
         blockedCount={assessment.totalBlocked}
+        onViewAllRisks={() => setShowRiskRegister(true)}
+        onViewAllBlockers={() => setShowRiskRegister(true)}
         t={t}
       />
 

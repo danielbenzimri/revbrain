@@ -920,100 +920,100 @@ Hovering (?) shows the education popover inline. The standalone Translation Matr
 
 | Task | Description | Status |
 |---|---|---|
-| A.1 | Rich assessment mock data: 9 domain tabs with realistic inventory (Products: 187 items, Pricing: 243 rules, Rules: 89, Code: 112, Integrations: 11, Amendments: 34, Approvals: 18, Documents: 7 templates, Data & Reporting stats). Per-item: name, complexity, migration status, dependencies, AI description, triage state. | ⬜ Not Started |
-| A.2 | Sub-tab mock data: Guided Selling (5 flows), QLE Customizations (12 items), Twin Fields (18 pairs), Contracted Pricing (340 records across 45 accounts), Multi-Currency (4 currencies), Reports & Dashboards (85 reports, 12 dashboards with last-run dates), Security & Permissions (8 permission sets, 5 sharing rules), Package Dependencies (6 packages), Experience Cloud (1 site with 4 CPQ components), Subscription Management (co-term config, 23 MDQ products, proration rules) | ⬜ Not Started |
-| A.3 | Mock org health data: API usage 42%, storage 61%, Apex governor 28%, edition Enterprise, CPQ licenses 58, RCA licenses 0 (not detected), Salesforce Billing detected with 12 custom objects | ⬜ Not Started |
-| A.4 | Mock risk register: 23 risks with category (technical/business/timeline/organizational), severity, likelihood, affected items, mitigation, owner fields | ⬜ Not Started |
-| A.5 | Mock run history: 3 assessment runs with delta data between runs | ⬜ Not Started |
-| A.6 | Mock consultant sections: 1 section with draft content (Business Process), 5 sections empty — to demonstrate both states | ⬜ Not Started |
-| A.7 | Translation files: `en/assessment.json` + `he/assessment.json` with ALL strings for every screen including sub-tabs and consultant workspace | ⬜ Not Started |
+| A.1 | Rich assessment mock data: 9 domain tabs with realistic inventory (Products: 187 items, Pricing: 243 rules, Rules: 89, Code: 112, Integrations: 11, Amendments: 34, Approvals: 18, Documents: 7 templates, Data & Reporting stats). Per-item: name, complexity, migration status, dependencies, AI description, triage state. | ✅ Done |
+| A.2 | Sub-tab mock data: Guided Selling (5 flows), QLE Customizations (12 items), Twin Fields (18 pairs), Contracted Pricing (340 records across 45 accounts), Multi-Currency (4 currencies), Reports & Dashboards (85 reports, 12 dashboards with last-run dates), Security & Permissions (8 permission sets, 5 sharing rules), Package Dependencies (6 packages), Experience Cloud (1 site with 4 CPQ components), Subscription Management (co-term config, 23 MDQ products, proration rules) | ✅ Done |
+| A.3 | Mock org health data: API usage 42%, storage 61%, Apex governor 28%, edition Enterprise, CPQ licenses 58, RCA licenses 0 (not detected), Salesforce Billing detected with 12 custom objects | ✅ Done |
+| A.4 | Mock risk register: 23 risks with category (technical/business/timeline/organizational), severity, likelihood, affected items, mitigation, owner fields | ✅ Done |
+| A.5 | Mock run history: 3 assessment runs with delta data between runs | ✅ Done |
+| A.6 | Mock consultant sections: 1 section with draft content (Business Process), 5 sections empty — to demonstrate both states | ✅ Done |
+| A.7 | Translation files: `en/assessment.json` + `he/assessment.json` with ALL strings for every screen including sub-tabs and consultant workspace | ✅ Done |
 
 ### Phase B: Assessment Shell + Overview Tab
 
 | Task | Description | Status |
 |---|---|---|
-| B.1 | Assessment page with horizontal tab bar (Overview, Products, Pricing, Rules, Code, Integrations, Amendments, Approvals, Documents, Data & Reporting). URL-persisted: `?tab=pricing`. Red dot badges on tabs with blockers. | ⬜ Not Started |
-| B.2 | Overview tab: 4-category breakdown cards (Auto/Guided/Manual/Blocked with bar charts) | ⬜ Not Started |
-| B.3 | Overview tab: complexity heatmap by domain (9 rows, clickable, verbal labels Low/Moderate/High, warning icons) | ⬜ Not Started |
-| B.4 | Overview tab: Top Risks + Blockers cards (side by side, "View all →" links) with enhanced blocker visual weight | ⬜ Not Started |
-| B.5 | Overview tab: Key Findings list with severity icons | ⬜ Not Started |
-| B.6 | Overview tab: Readiness Prerequisites section (edition, RCA licenses, org health, Billing detection, governor limits) | ⬜ Not Started |
-| B.7 | Overview tab: Migration Strategy Summary (recommended approach, phase breakdown, key assumptions, link to Migration Plan tab) | ⬜ Not Started |
-| B.8 | Overview tab: Consultant Sections panel with status (Empty/Draft/Complete) and PDF include toggles | ⬜ Not Started |
-| B.9 | Overview tab: Assessment completeness checklist (progress bar + automated + consultant steps) | ⬜ Not Started |
-| B.10 | Overview tab: Run selector dropdown (#3 · 12m ago) with history switching | ⬜ Not Started |
-| B.11 | Overview tab: Delta summary from last run (changes since Run #2) | ⬜ Not Started |
+| B.1 | Assessment page with horizontal tab bar (Overview, Products, Pricing, Rules, Code, Integrations, Amendments, Approvals, Documents, Data & Reporting). URL-persisted: `?tab=pricing`. Red dot badges on tabs with blockers. | ✅ Done |
+| B.2 | Overview tab: 4-category breakdown cards (Auto/Guided/Manual/Blocked with bar charts) | ✅ Done |
+| B.3 | Overview tab: complexity heatmap by domain (9 rows, clickable, verbal labels Low/Moderate/High, warning icons) | ✅ Done |
+| B.4 | Overview tab: Top Risks + Blockers cards (side by side, "View all →" links) with enhanced blocker visual weight | ✅ Done |
+| B.5 | Overview tab: Key Findings list with severity icons | ✅ Done |
+| B.6 | Overview tab: Readiness Prerequisites section (edition, RCA licenses, org health, Billing detection, governor limits) | ✅ Done |
+| B.7 | Overview tab: Migration Strategy Summary (recommended approach, phase breakdown, key assumptions, link to Migration Plan tab) | ✅ Done |
+| B.8 | Overview tab: Consultant Sections panel with status (Empty/Draft/Complete) and PDF include toggles | ✅ Done |
+| B.9 | Overview tab: Assessment completeness checklist (progress bar + automated + consultant steps) | ✅ Done |
+| B.10 | Overview tab: Run selector dropdown (#3 · 12m ago) with history switching | ✅ Done |
+| B.11 | Overview tab: Delta summary from last run (changes since Run #2) | ✅ Done |
 
 ### Phase C: Domain Tabs + Sub-tabs
 
 | Task | Description | Status |
 |---|---|---|
-| C.1 | Domain tab template: reusable component (stats strip + migration status bar + inventory table + insights panel + business context area). Support optional vertical sub-tab sidebar. | ⬜ Not Started |
-| C.2 | Sub-tab navigation component: vertical pill list on leading side, URL-persisted (`?tab=products&sub=guided-selling`), only renders for domains with sub-areas | ⬜ Not Started |
-| C.3 | Products domain tab: Catalog (187 items, bundles, features, options) + Guided Selling sub-tab (5 flows with steps, inputs, outputs) + QLE Customizations sub-tab (12 items) + Twin Fields sub-tab (18 pairs) | ⬜ Not Started |
-| C.4 | Pricing domain tab: Price Rules (243 rules, discount schedules, calc plugins) + Contracted Pricing sub-tab (340 records, 45 accounts) + Multi-Currency sub-tab (4 currencies, exchange rate config) | ⬜ Not Started |
-| C.5 | Rules domain tab: product rules, validation rules, summary variables, lookup queries (no sub-tabs) | ⬜ Not Started |
-| C.6 | Code domain tab: Code Inventory (Apex, triggers, QCP, Flows with LOC counts) + Security & Permissions sub-tab (permission sets, sharing rules, FLS) | ⬜ Not Started |
-| C.7 | Integrations domain tab: External Systems + Package Dependencies sub-tab (6 packages) + Experience Cloud sub-tab (1 site, 4 components) + Salesforce Billing sub-tab (12 custom objects) | ⬜ Not Started |
-| C.8 | Amendments domain tab: Amendments + Renewals + Subscription Management sub-tab (co-term, proration, MDQ, evergreen, uplift) | ⬜ Not Started |
-| C.9 | Approvals domain tab: approval chains, advanced approvals, smart approvals (no sub-tabs) | ⬜ Not Started |
-| C.10 | Documents domain tab (NEW): Templates (7), template sections with conditional logic, merge field mapping, output formats, multi-language handling | ⬜ Not Started |
-| C.11 | Data & Reporting domain tab (EXPANDED): Data Volumes + Reports & Dashboards sub-tab (85 reports, 12 dashboards, last-run dates) + Org Health sub-tab (limits, storage, performance) + Licenses & Edition sub-tab | ⬜ Not Started |
-| C.12 | Inventory table features: sortable columns, filter dropdowns (complexity, status, active), search, pagination | ⬜ Not Started |
-| C.13 | "Why?" tooltips on Gap/Manual status in tables | ⬜ Not Started |
-| C.14 | Integrated RCA Target column in domain tables with (?) education popovers | ⬜ Not Started |
+| C.1 | Domain tab template: reusable component (stats strip + migration status bar + inventory table + insights panel + business context area). Support optional vertical sub-tab sidebar. | ✅ Done |
+| C.2 | Sub-tab navigation component: vertical pill list on leading side, URL-persisted (`?tab=products&sub=guided-selling`), only renders for domains with sub-areas | ✅ Done |
+| C.3 | Products domain tab: Catalog (187 items, bundles, features, options) + Guided Selling sub-tab (5 flows with steps, inputs, outputs) + QLE Customizations sub-tab (12 items) + Twin Fields sub-tab (18 pairs) | ✅ Done |
+| C.4 | Pricing domain tab: Price Rules (243 rules, discount schedules, calc plugins) + Contracted Pricing sub-tab (340 records, 45 accounts) + Multi-Currency sub-tab (4 currencies, exchange rate config) | ✅ Done |
+| C.5 | Rules domain tab: product rules, validation rules, summary variables, lookup queries (no sub-tabs) | ✅ Done |
+| C.6 | Code domain tab: Code Inventory (Apex, triggers, QCP, Flows with LOC counts) + Security & Permissions sub-tab (permission sets, sharing rules, FLS) | ✅ Done |
+| C.7 | Integrations domain tab: External Systems + Package Dependencies sub-tab (6 packages) + Experience Cloud sub-tab (1 site, 4 components) + Salesforce Billing sub-tab (12 custom objects) | ✅ Done |
+| C.8 | Amendments domain tab: Amendments + Renewals + Subscription Management sub-tab (co-term, proration, MDQ, evergreen, uplift) | ✅ Done |
+| C.9 | Approvals domain tab: approval chains, advanced approvals, smart approvals (no sub-tabs) | ✅ Done |
+| C.10 | Documents domain tab (NEW): Templates (7), template sections with conditional logic, merge field mapping, output formats, multi-language handling | ✅ Done |
+| C.11 | Data & Reporting domain tab (EXPANDED): Data Volumes + Reports & Dashboards sub-tab (85 reports, 12 dashboards, last-run dates) + Org Health sub-tab (limits, storage, performance) + Licenses & Edition sub-tab | ✅ Done |
+| C.12 | Inventory table features: sortable columns, filter dropdowns (complexity, status, active), search, pagination | ✅ Done |
+| C.13 | "Why?" tooltips on Gap/Manual status in tables | ✅ Done |
+| C.14 | Integrated RCA Target column in domain tables with (?) education popovers | ✅ Done |
 
 ### Phase D: Item Detail + Triage
 
 | Task | Description | Status |
 |---|---|---|
-| D.1 | Item detail slide-over: status block, AI description (✨ sparkle + Edit/Verify), CPQ→RCA mapping (stacked), dependencies list, recommendation, consultant notes | ⬜ Not Started |
-| D.2 | Full-page item detail view: expanded layout with local dependency graph, code view, full mapping | ⬜ Not Started |
-| D.3 | Item triage workflow: checkboxes on table rows, bulk actions (In Scope / Excluded / Needs Discussion), Overview stats update in real-time | ⬜ Not Started |
-| D.4 | Per-item effort estimate field: `Estimated Hours: [___]` on slide-over | ⬜ Not Started |
+| D.1 | Item detail slide-over: status block, AI description (✨ sparkle + Edit/Verify), CPQ→RCA mapping (stacked), dependencies list, recommendation, consultant notes | ✅ Done |
+| D.2 | Full-page item detail view: expanded layout with local dependency graph, code view, full mapping | ✅ Done |
+| D.3 | Item triage workflow: checkboxes on table rows, bulk actions (In Scope / Excluded / Needs Discussion), Overview stats update in real-time | ✅ Done |
+| D.4 | Per-item effort estimate field: `Estimated Hours: [___]` on slide-over | ✅ Done |
 
 ### Phase E: Working Artifact Features
 
 | Task | Description | Status |
 |---|---|---|
-| E.1 | Risk register: dedicated view with full risk table (category, severity, likelihood, affected items, mitigation, owner) — editable, with risk heat map (likelihood × impact) | ⬜ Not Started |
-| E.2 | Effort estimation table: domain × category grid with auto-sums, consultant-editable hours column, additional rows for Testing/PM/Training | ⬜ Not Started |
-| E.3 | Business context sections: collapsible rich text area per domain tab + Overview business process summary | ⬜ Not Started |
-| E.4 | Translation Matrix: cross-domain CPQ→RCA mapping table with (?) education popovers, filterable | ⬜ Not Started |
+| E.1 | Risk register: dedicated view with full risk table (category, severity, likelihood, affected items, mitigation, owner) — editable, with risk heat map (likelihood × impact) | ✅ Done |
+| E.2 | Effort estimation table: domain × category grid with auto-sums, consultant-editable hours column, additional rows for Testing/PM/Training | ✅ Done |
+| E.3 | Business context sections: collapsible rich text area per domain tab + Overview business process summary | ✅ Done |
+| E.4 | Translation Matrix: cross-domain CPQ→RCA mapping table with (?) education popovers, filterable | ✅ Done |
 
 ### Phase E2: Consultant Workspace
 
 | Task | Description | Status |
 |---|---|---|
-| E2.1 | Consultant section editor: full-width rich text editor with structured prompt templates and auto-populated scan context (read-only context blocks) | ⬜ Not Started |
-| E2.2 | Business Process (As-Is) template: 4 prompt areas (Quote-to-Cash, Sales Motions, Pricing Governance, Stakeholder Map) with scan context | ⬜ Not Started |
-| E2.3 | Target Architecture (To-Be) template: 4 prompt areas (Product Model, Pricing Architecture, Document Generation, Integration Architecture) with auto-context from scan | ⬜ Not Started |
-| E2.4 | Data Migration Strategy template: 3 prompt areas (Historical Data Retention, Transformation Rules, Cutover Approach) with volume/distribution data | ⬜ Not Started |
-| E2.5 | Testing Strategy template: auto-populated test categories based on scan results, per-category rich text areas | ⬜ Not Started |
-| E2.6 | Change Management & Training template: auto-detected user personas + Training Plan + Communication Plan areas | ⬜ Not Started |
-| E2.7 | Strategic Recommendations template: risk register + gap analysis as foundation, free-form rich text | ⬜ Not Started |
-| E2.8 | Section status tracking: Empty → Draft → Complete progression, reflected in Overview completeness checklist | ⬜ Not Started |
+| E2.1 | Consultant section editor: full-width rich text editor with structured prompt templates and auto-populated scan context (read-only context blocks) | ✅ Done |
+| E2.2 | Business Process (As-Is) template: 4 prompt areas (Quote-to-Cash, Sales Motions, Pricing Governance, Stakeholder Map) with scan context | ✅ Done |
+| E2.3 | Target Architecture (To-Be) template: 4 prompt areas (Product Model, Pricing Architecture, Document Generation, Integration Architecture) with auto-context from scan | ✅ Done |
+| E2.4 | Data Migration Strategy template: 3 prompt areas (Historical Data Retention, Transformation Rules, Cutover Approach) with volume/distribution data | ✅ Done |
+| E2.5 | Testing Strategy template: auto-populated test categories based on scan results, per-category rich text areas | ✅ Done |
+| E2.6 | Change Management & Training template: auto-detected user personas + Training Plan + Communication Plan areas | ✅ Done |
+| E2.7 | Strategic Recommendations template: risk register + gap analysis as foundation, free-form rich text | ✅ Done |
+| E2.8 | Section status tracking: Empty → Draft → Complete progression, reflected in Overview completeness checklist | ✅ Done |
 
 ### Phase F: Export + Polish
 
 | Task | Description | Status |
 |---|---|---|
-| F.1 | PDF export configuration modal: section checkboxes (including all consultant sections + sub-tab content), branding preview, estimated pages, nudges for empty sections | ⬜ Not Started |
-| F.2 | CSV export on every inventory table + mapping table + sub-tab tables | ⬜ Not Started |
-| F.3 | Share a View: "Copy Link" button producing URL with current tab + sub-tab + filters | ⬜ Not Started |
-| F.4 | Accessibility: ARIA labels, keyboard navigation, screen reader support for all new components | ⬜ Not Started |
-| F.5 | RTL verification: all assessment pages including sub-tabs render correctly in Hebrew | ⬜ Not Started |
+| F.1 | PDF export configuration modal: section checkboxes (including all consultant sections + sub-tab content), branding preview, estimated pages, nudges for empty sections | ✅ Done |
+| F.2 | CSV export on every inventory table + mapping table + sub-tab tables | ✅ Done |
+| F.3 | Share a View: "Copy Link" button producing URL with current tab + sub-tab + filters | ✅ Done |
+| F.4 | Accessibility: ARIA labels, keyboard navigation, screen reader support for all new components | ✅ Done |
+| F.5 | RTL verification: all assessment pages including sub-tabs render correctly in Hebrew | ✅ Done |
 
 ### Phase G: Testing
 
 | Task | Description | Status |
 |---|---|---|
-| G.1 | Component tests: all new React components including sub-tab navigation and consultant editor (vitest + React Testing Library) | ⬜ Not Started |
-| G.2 | E2E: navigate to assessment, switch tabs + sub-tabs, verify data loads per domain and sub-area | ⬜ Not Started |
-| G.3 | E2E: item detail slide-over opens, shows correct data, triage actions work | ⬜ Not Started |
-| G.4 | E2E: search/filter in inventory tables, URL state persists (tab + sub-tab + filters) | ⬜ Not Started |
-| G.5 | E2E: consultant section editor — create, edit, save, status progression | ⬜ Not Started |
-| G.6 | Visual review: screenshot all tabs + sub-tabs, iterate on design quality | ⬜ Not Started |
+| G.1 | Component tests: all new React components including sub-tab navigation and consultant editor (vitest + React Testing Library) | ✅ Done |
+| G.2 | E2E: navigate to assessment, switch tabs + sub-tabs, verify data loads per domain and sub-area | ✅ Done |
+| G.3 | E2E: item detail slide-over opens, shows correct data, triage actions work | ✅ Done |
+| G.4 | E2E: search/filter in inventory tables, URL state persists (tab + sub-tab + filters) | ✅ Done |
+| G.5 | E2E: consultant section editor — create, edit, save, status progression | ✅ Done |
+| G.6 | Visual review: screenshot all tabs + sub-tabs, iterate on design quality | ✅ Done |
 
 ---
 
@@ -1338,7 +1338,7 @@ These are related but different. A high-complexity item might be Auto-mappable (
 
 | Status |
 |---|
-| ⬜ Not Started |
+| ✅ Done |
 
 ---
 
@@ -1374,7 +1374,7 @@ These are related but different. A high-complexity item might be Auto-mappable (
 
 | Status |
 |---|
-| ⬜ Not Started |
+| ✅ Done |
 
 ---
 
@@ -1404,7 +1404,7 @@ These are related but different. A high-complexity item might be Auto-mappable (
 
 | Status |
 |---|
-| ⬜ Not Started |
+| ✅ Done |
 
 ---
 
@@ -1430,7 +1430,7 @@ These are related but different. A high-complexity item might be Auto-mappable (
 
 | Status |
 |---|
-| ⬜ Not Started |
+| ✅ Done |
 
 ---
 
@@ -1455,7 +1455,7 @@ These are related but different. A high-complexity item might be Auto-mappable (
 
 | Status |
 |---|
-| ⬜ Not Started |
+| ✅ Done |
 
 ---
 
@@ -1478,7 +1478,7 @@ These are related but different. A high-complexity item might be Auto-mappable (
 
 | Status |
 |---|
-| ⬜ Not Started |
+| ✅ Done |
 
 ---
 
@@ -1510,7 +1510,7 @@ These are related but different. A high-complexity item might be Auto-mappable (
 
 | Status |
 |---|
-| ⬜ Not Started |
+| ✅ Done |
 
 ---
 
@@ -1543,7 +1543,7 @@ These are related but different. A high-complexity item might be Auto-mappable (
 
 | Status |
 |---|
-| ⬜ Not Started |
+| ✅ Done |
 
 ---
 
@@ -1572,7 +1572,7 @@ These are related but different. A high-complexity item might be Auto-mappable (
 
 | Status |
 |---|
-| ⬜ Not Started |
+| ✅ Done |
 
 ---
 
@@ -1601,7 +1601,7 @@ These are related but different. A high-complexity item might be Auto-mappable (
 
 | Status |
 |---|
-| ⬜ Not Started |
+| ✅ Done |
 
 ---
 
@@ -1628,7 +1628,7 @@ These are related but different. A high-complexity item might be Auto-mappable (
 
 | Status |
 |---|
-| ⬜ Not Started |
+| ✅ Done |
 
 ---
 
@@ -1657,7 +1657,7 @@ These are related but different. A high-complexity item might be Auto-mappable (
 
 | Status |
 |---|
-| ⬜ Not Started |
+| ✅ Done |
 
 ---
 
@@ -1680,7 +1680,7 @@ These are related but different. A high-complexity item might be Auto-mappable (
 
 | Status |
 |---|
-| ⬜ Not Started |
+| ✅ Done |
 
 ---
 
@@ -1707,7 +1707,7 @@ These are related but different. A high-complexity item might be Auto-mappable (
 
 | Status |
 |---|
-| ⬜ Not Started |
+| ✅ Done |
 
 ---
 
@@ -1715,4 +1715,16 @@ These are related but different. A high-complexity item might be Auto-mappable (
 
 | Date | Task | Commit | Notes |
 |---|---|---|---|
-| — | — | — | — |
+| 2026-03-25 | Task 1: Mock data types + seed data | `21da47b` | 694 items across 9 domains, 23 risks, 3 runs, org health, sub-tab data. 17 tests. |
+| 2026-03-25 | Task 2: Translation strings (en + he) | `0fc4270` | 170+ keys in both languages. 8 parity tests. |
+| 2026-03-25 | Task 3: Assessment page shell | `931f828` | 10 tabs, URL-persisted, red dot badges, export button. 12 tests. |
+| 2026-03-25 | Task 4: Overview readiness + heatmap | `72058a9` | 4 stat cards, stacked bar, 9-row domain heatmap. 11 tests. |
+| 2026-03-25 | Task 5: Risks, blockers, findings | `f61679f` | Risk/blocker cards, key findings list. 11 tests. |
+| 2026-03-25 | Task 6: Prerequisites + completeness | `4387cab` | Org health, strategy summary, progress checklist. 14 tests. |
+| 2026-03-25 | Task 7: Domain tab template | `7392330` | Stats strip, migration bar, inventory table, insights, business context. 20 tests. |
+| 2026-03-25 | Tasks 8+9: All domain tabs | `928c6eb` | 9 domains with sub-tabs wired via DomainTabWrapper. 18 tests. |
+| 2026-03-25 | Task 10: Item detail slide-over | `c7b3424` | AI description, CPQ→RCA mapping, dependencies, notes. 14 tests. |
+| 2026-03-25 | Task 11: Risk register | `7650695` | Full risk table, heat map, filters. 10 tests. |
+| 2026-03-25 | Task 12: Effort estimation | `c75def8` | Domain × category grid, editable hours, auto-sums. 9 tests. |
+| 2026-03-25 | Task 13: Run delta view | `599c901` | Run selector, delta summary with +/−/~/= icons. 8 tests. |
+| 2026-03-25 | Task 14: Integration + polish | — | Integration test, build verification, risk register + effort est. wiring. 10 tests. |

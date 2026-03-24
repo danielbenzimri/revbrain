@@ -37,7 +37,6 @@ describe('getMockAssessmentData', () => {
 
   it('total items equals sum of domain stats', () => {
     const data = getMockAssessmentData(Q1_PROJECT_ID)!;
-    const sumFromDomains = data.domains.reduce((s, d) => s + d.stats.total, 0);
     expect(data.totalItems).toBe(data.totalAuto + data.totalGuided + data.totalManual + data.totalBlocked);
     // totalItems should equal sum of auto+guided+manual+blocked across domains
     const autoSum = data.domains.reduce((s, d) => s + d.stats.auto, 0);
