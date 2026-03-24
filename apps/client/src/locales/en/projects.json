@@ -22,7 +22,8 @@
     "active": "Active",
     "on_hold": "On Hold",
     "completed": "Completed",
-    "cancelled": "Cancelled"
+    "cancelled": "Cancelled",
+    "draft": "Draft"
   },
 
   "form": {
