@@ -133,7 +133,8 @@ async function main() {
   // Step 5: Summary
   const warmResults = results.slice(1); // skip first cold auth
   const avgWarm = Math.round(warmResults.reduce((s, r) => s + r.ms, 0) / warmResults.length);
-  const p95 = warmResults.sort((a, b) => a.ms - b.ms)[Math.floor(warmResults.length * 0.95)]?.ms ?? 0;
+  const p95 =
+    warmResults.sort((a, b) => a.ms - b.ms)[Math.floor(warmResults.length * 0.95)]?.ms ?? 0;
 
   console.log('\n  ── Summary ──\n');
   console.log(`  Health cold start:    ${colorMs(cold1.ms)}`);
