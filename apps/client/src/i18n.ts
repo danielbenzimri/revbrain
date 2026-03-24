@@ -45,9 +45,36 @@ const resources = {
   },
 };
 
+const LANGUAGE_STORAGE_KEY = 'revbrain_language';
+
+/**
+ * Get the saved language from localStorage.
+ * Always defaults to English — ignores browser language detection.
+ */
+function getSavedLanguage(): string {
+  try {
+    const saved = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+    if (saved && (saved === 'en' || saved === 'he')) return saved;
+  } catch {
+    // localStorage may be unavailable
+  }
+  return 'en';
+}
+
+/**
+ * Save language preference to localStorage.
+ */
+export function saveLanguage(lang: string): void {
+  try {
+    localStorage.setItem(LANGUAGE_STORAGE_KEY, lang);
+  } catch {
+    // Ignore storage errors
+  }
+}
+
 i18n.use(initReactI18next).init({
   resources,
-  lng: 'he',
+  lng: getSavedLanguage(),
   fallbackLng: 'en',
   interpolation: {
     escapeValue: false,
@@ -56,5 +83,10 @@ i18n.use(initReactI18next).init({
   defaultNS: 'translation',
   fallbackNS: 'translation',
 });
+
+// Set document direction on init
+const initialLang = i18n.language;
+document.documentElement.setAttribute('dir', initialLang === 'he' ? 'rtl' : 'ltr');
+document.documentElement.setAttribute('lang', initialLang);
 
 export default i18n;
