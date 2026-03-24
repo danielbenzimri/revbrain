@@ -11,6 +11,7 @@ import { ClipboardCheck, ChevronDown } from 'lucide-react';
 import { getMockAssessmentData, DOMAIN_TAB_ORDER } from '../../mocks/assessment-mock-data';
 import type { DomainId, AssessmentData } from '../../mocks/assessment-mock-data';
 import OverviewTab from '../../components/assessment/OverviewTab';
+import DomainTabWrapper from '../../components/assessment/DomainTabWrapper';
 
 // ---------------------------------------------------------------------------
 // Tab configuration
@@ -115,11 +116,11 @@ function TabContent({ tabId, assessment, onTabChange, t }: TabContentProps) {
           t={t}
         />
       ) : (
-        <div className="bg-white rounded-2xl p-8 text-center">
-          <p className="text-sm text-slate-500">
-            {t(`assessment.tabs.${tabId}`)} — content coming in next tasks
-          </p>
-        </div>
+        <DomainTabWrapper
+          domainId={tabId as DomainId}
+          assessment={assessment}
+          t={t}
+        />
       )}
     </div>
   );
