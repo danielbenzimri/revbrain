@@ -7,6 +7,7 @@
 import type { AssessmentData, DomainId } from '../../mocks/assessment-mock-data';
 import RiskBlockerCards from './RiskBlockerCards';
 import OverviewBottomSections from './OverviewBottomSections';
+import { DeltaSummary } from './RunDelta';
 
 // ---------------------------------------------------------------------------
 // Migration Readiness Cards
@@ -160,6 +161,9 @@ export default function OverviewTab({ assessment, onDomainClick, t }: OverviewTa
         blockedCount={assessment.totalBlocked}
         t={t}
       />
+
+      {/* Delta Summary */}
+      <DeltaSummary delta={assessment.runDelta} t={t} />
 
       {/* Prerequisites, Strategy, Completeness */}
       <OverviewBottomSections

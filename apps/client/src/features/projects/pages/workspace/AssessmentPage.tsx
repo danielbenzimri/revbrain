@@ -13,6 +13,7 @@ import type { DomainId, AssessmentData } from '../../mocks/assessment-mock-data'
 import OverviewTab from '../../components/assessment/OverviewTab';
 import DomainTabWrapper from '../../components/assessment/DomainTabWrapper';
 import ItemDetailPanel from '../../components/assessment/ItemDetailPanel';
+import { RunSelector } from '../../components/assessment/RunDelta';
 import type { AssessmentItem } from '../../mocks/assessment-mock-data';
 
 // ---------------------------------------------------------------------------
@@ -22,17 +23,6 @@ import type { AssessmentItem } from '../../mocks/assessment-mock-data';
 type TabId = 'overview' | DomainId;
 
 const ALL_TABS: TabId[] = ['overview', ...DOMAIN_TAB_ORDER];
-
-function formatTimeAgo(isoDate: string): string {
-  const diff = Date.now() - new Date(isoDate).getTime();
-  const mins = Math.floor(diff / 60_000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins}m ago`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
-}
 
 // ---------------------------------------------------------------------------
 // Tab Bar
@@ -174,9 +164,6 @@ export default function AssessmentPage() {
 
   // Full assessment workspace
   if (assessment) {
-    const currentRun = assessment.runs[assessment.currentRunIndex];
-    const timeAgo = formatTimeAgo(currentRun.completedAt);
-
     return (
       <div className="max-w-7xl mx-auto">
         {/* Header */}
@@ -185,9 +172,12 @@ export default function AssessmentPage() {
             <h1 className="text-xl font-semibold text-slate-900">
               {t('assessment.title')}
             </h1>
-            <p className="text-sm text-slate-500 mt-0.5">
-              {t('assessment.header.runInfo', { number: currentRun.number, timeAgo })}
-            </p>
+            <RunSelector
+              runs={assessment.runs}
+              currentIndex={assessment.currentRunIndex}
+              onRunChange={() => {/* Run switching not implemented in mock */}}
+              t={t}
+            />
           </div>
           <button
             className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
