@@ -12,6 +12,7 @@ import { DeltaSummary } from './RunDelta';
 import RiskRegister from './RiskRegister';
 import EffortEstimation from './EffortEstimation';
 import { MigrationTreemap, RiskBubbleScatter, DomainRadar, OrgHealthGauges } from './visualizations';
+import ExecutiveSummary from './ExecutiveSummary';
 
 // ---------------------------------------------------------------------------
 // Migration Readiness Cards
@@ -63,6 +64,9 @@ export default function OverviewTab({ assessment, onDomainClick, t }: OverviewTa
 
   return (
     <div className="space-y-6">
+      {/* Executive Summary — the first thing a VP sees */}
+      <ExecutiveSummary assessment={assessment} t={t} />
+
       {/* Migration Readiness */}
       <section aria-label={t('assessment.overview.migrationReadiness')}>
         <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">
