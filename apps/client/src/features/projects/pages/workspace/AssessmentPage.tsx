@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { ClipboardCheck, ChevronDown } from 'lucide-react';
 import { getMockAssessmentData, DOMAIN_TAB_ORDER } from '../../mocks/assessment-mock-data';
 import type { DomainId, AssessmentData } from '../../mocks/assessment-mock-data';
+import OverviewTab from '../../components/assessment/OverviewTab';
 
 // ---------------------------------------------------------------------------
 // Tab configuration
@@ -95,10 +96,11 @@ function TabBar({ activeTab, onTabChange, assessment, t }: TabBarProps) {
 interface TabContentProps {
   tabId: TabId;
   assessment: AssessmentData;
+  onTabChange: (tab: TabId) => void;
   t: (key: string, opts?: Record<string, unknown>) => string;
 }
 
-function TabContent({ tabId, t }: TabContentProps) {
+function TabContent({ tabId, assessment, onTabChange, t }: TabContentProps) {
   return (
     <div
       id={`tabpanel-${tabId}`}
@@ -106,11 +108,19 @@ function TabContent({ tabId, t }: TabContentProps) {
       aria-labelledby={`tab-${tabId}`}
       className="py-6"
     >
-      <div className="bg-white rounded-2xl p-8 text-center">
-        <p className="text-sm text-slate-500">
-          {t(`assessment.tabs.${tabId}`)} — content coming in next tasks
-        </p>
-      </div>
+      {tabId === 'overview' ? (
+        <OverviewTab
+          assessment={assessment}
+          onDomainClick={(domainId) => onTabChange(domainId)}
+          t={t}
+        />
+      ) : (
+        <div className="bg-white rounded-2xl p-8 text-center">
+          <p className="text-sm text-slate-500">
+            {t(`assessment.tabs.${tabId}`)} — content coming in next tasks
+          </p>
+        </div>
+      )}
     </div>
   );
 }
@@ -178,6 +188,7 @@ export default function AssessmentPage() {
         <TabContent
           tabId={activeTab}
           assessment={assessment}
+          onTabChange={handleTabChange}
           t={t}
         />
       </div>
