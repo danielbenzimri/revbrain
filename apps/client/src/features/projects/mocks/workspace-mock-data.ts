@@ -31,6 +31,7 @@ export interface HealthStripItem {
   status: HealthStatus;
   statusText: string;
   statusTextKey: string;
+  statusTextParams?: Record<string, string | number>;
   route: string;
 }
 
@@ -174,6 +175,7 @@ function getQ1MigrationData(projectId: string): WorkspaceData {
         status: 'done',
         statusText: '12,847 records',
         statusTextKey: 'workspace.health.recordCount',
+        statusTextParams: { count: '12,847' },
         route: 'cpq-explorer',
       },
       {
@@ -183,6 +185,7 @@ function getQ1MigrationData(projectId: string): WorkspaceData {
         status: 'done',
         statusText: '24 rules analyzed',
         statusTextKey: 'workspace.health.rulesAnalyzed',
+        statusTextParams: { count: 24 },
         route: 'assessment',
       },
       {

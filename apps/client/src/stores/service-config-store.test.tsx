@@ -4,6 +4,9 @@
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
+
+// In mock auth mode (.env.local), default is 'offline'. In jwt mode, default is 'online'.
+const expectedDefaultMode = import.meta.env.VITE_AUTH_MODE === 'mock' ? 'offline' : 'online';
 import {
   useServiceConfigStore,
   useAppMode,
@@ -22,9 +25,9 @@ describe('useServiceConfigStore', () => {
   });
 
   describe('initial state', () => {
-    it('should start with online mode', () => {
+    it('should start with the expected default mode based on env', () => {
       const { result } = renderHook(() => useServiceConfigStore());
-      expect(result.current.mode).toBe('online');
+      expect(result.current.mode).toBe(expectedDefaultMode);
     });
 
     it('should have service targets defined', () => {
@@ -158,7 +161,7 @@ describe('useServiceConfigStore', () => {
         result.current.resetToDefaults();
       });
 
-      expect(result.current.mode).toBe('online');
+      expect(result.current.mode).toBe(expectedDefaultMode);
     });
 
     it('should reset targets to defaults', () => {
@@ -189,14 +192,14 @@ describe('convenience hooks', () => {
   describe('useAppMode', () => {
     it('should return the current mode', () => {
       const { result } = renderHook(() => useAppMode());
-      expect(result.current).toBe('online');
+      expect(result.current).toBe(expectedDefaultMode);
     });
   });
 
   describe('useIsOffline', () => {
-    it('should return false when online', () => {
+    it('should reflect the default mode', () => {
       const { result } = renderHook(() => useIsOffline());
-      expect(result.current).toBe(false);
+      expect(result.current).toBe(expectedDefaultMode === 'offline');
     });
 
     it('should return true when offline', () => {
@@ -211,9 +214,9 @@ describe('convenience hooks', () => {
   });
 
   describe('useIsOnline', () => {
-    it('should return true when online', () => {
+    it('should reflect the default mode', () => {
       const { result } = renderHook(() => useIsOnline());
-      expect(result.current).toBe(true);
+      expect(result.current).toBe(expectedDefaultMode === 'online');
     });
 
     it('should return false when offline', () => {

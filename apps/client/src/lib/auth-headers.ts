@@ -11,6 +11,27 @@ export class AuthenticationError extends Error {
   }
 }
 
+/**
+ * Check if running in mock auth mode.
+ * Evaluated at call time (not module load) so tests can override.
+ */
+function isMockMode(): boolean {
+  try {
+    return import.meta.env.VITE_AUTH_MODE === 'mock';
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Mock mode headers — skip ALL auth ceremony.
+ * The server accepts any mock_token_* in mock mode.
+ */
+const MOCK_HEADERS: HeadersInit = {
+  Authorization: 'Bearer mock_token_00000000-0000-4000-a000-000000000302',
+  'Content-Type': 'application/json',
+};
+
 // ── In-memory session cache ──────────────────────────────
 // Avoids calling adapter.getSession() (localStorage read) on every API request.
 // Invalidated on SIGNED_OUT and logout. See speedup_tasks.md Task 1.3.
@@ -41,6 +62,9 @@ export function invalidateAuthCache(): void {
  * @throws {AuthenticationError} if no valid session exists
  */
 export async function getAuthHeaders(): Promise<HeadersInit> {
+  // Mock mode: skip all auth ceremony — instant, no refreshing, no sessions
+  if (isMockMode()) return MOCK_HEADERS;
+
   const now = Date.now();
 
   // Check cache first — if valid and not within buffer of expiry, use it
@@ -111,6 +135,14 @@ export async function getAuthHeaders(): Promise<HeadersInit> {
  * Redirects to login if authentication fails.
  */
 export async function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
+  // Mock mode: simple fetch with mock token, no refresh/redirect logic
+  if (isMockMode()) {
+    return dedupFetch(url, {
+      ...options,
+      headers: { ...MOCK_HEADERS, ...options.headers },
+    });
+  }
+
   const headers = await getAuthHeaders();
 
   const response = await dedupFetch(url, {

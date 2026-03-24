@@ -71,7 +71,13 @@
       "noSourceDescription": "חבר את ארגון Salesforce CPQ שלך כדי להתחיל בניתוח המיגרציה.",
       "healthy": "תקין",
       "degraded": "ירוד",
-      "disconnected": "מנותק"
+      "disconnected": "מנותק",
+      "orgTypes": {
+        "production": "ייצור",
+        "sandbox": "סביבת ניסוי",
+        "developer": "פיתוח",
+        "scratch": "זמנית"
+      }
     },
     "whatsNext": {
       "title": "מה הלאה"

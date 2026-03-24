@@ -22,7 +22,8 @@
     "active": "פעיל",
     "on_hold": "בהמתנה",
     "completed": "הושלם",
-    "cancelled": "בוטל"
+    "cancelled": "בוטל",
+    "draft": "טיוטה"
   },
 
   "form": {

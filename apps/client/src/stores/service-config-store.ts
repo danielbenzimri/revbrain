@@ -47,7 +47,8 @@ interface ServiceConfigState {
 
 // Smart defaults based on environment
 const isRemote = import.meta.env.MODE === 'dev'; // "dev:remote" runs "vite --mode dev"
-const DEFAULT_MODE: AppMode = 'online';
+const isMockAuth = import.meta.env.VITE_AUTH_MODE === 'mock';
+const DEFAULT_MODE: AppMode = isMockAuth ? 'offline' : 'online';
 const DEFAULT_TARGETS: ServiceTargets = {
   server: isRemote ? 'remote' : 'local',
   database: isRemote ? 'remote' : 'local',
@@ -90,7 +91,7 @@ export const useServiceConfigStore = create<ServiceConfigState>()(
     }),
     {
       name: 'revbrain-service-config',
-      version: 3, // Bump version to force reset and use correct targets
+      version: 4, // Bumped: auto-detect mock mode from VITE_AUTH_MODE
       migrate: () => {
         // Always return fresh defaults based on current MODE
         // This ensures dev:remote always uses 'remote' targets

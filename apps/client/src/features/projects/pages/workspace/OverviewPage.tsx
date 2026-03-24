@@ -43,15 +43,18 @@ import {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function formatTimeAgo(isoDate: string): string {
-  const diff = Date.now() - new Date(isoDate).getTime();
-  const minutes = Math.floor(diff / 60000);
-  if (minutes < 1) return 'Just now';
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
+function useFormatTimeAgo() {
+  const { t } = useTranslation();
+  return (isoDate: string): string => {
+    const diff = Date.now() - new Date(isoDate).getTime();
+    const minutes = Math.floor(diff / 60000);
+    if (minutes < 1) return t('workspace.timeAgo.justNow');
+    if (minutes < 60) return t('workspace.timeAgo.minutesAgo', { count: minutes });
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return t('workspace.timeAgo.hoursAgo', { count: hours });
+    const days = Math.floor(hours / 24);
+    return t('workspace.timeAgo.daysAgo', { count: days });
+  };
 }
 
 function formatNumber(n: number): string {
@@ -124,7 +127,7 @@ const HealthPill = memo(function HealthPill({
               healthStatusTextColor[item.status]
             )}
           >
-            {item.statusText}
+            {t(item.statusTextKey, { ...item.statusTextParams, defaultValue: item.statusText })}
           </span>
         </div>
       </div>
@@ -153,10 +156,12 @@ const ConnectionCard = memo(function ConnectionCard({
   type,
   connection,
   projectId,
+  formatTimeAgo,
 }: {
   type: 'source' | 'target';
   connection: ConnectionCardData | null;
   projectId: string;
+  formatTimeAgo: (date: string) => string;
 }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -228,7 +233,7 @@ const ConnectionCard = memo(function ConnectionCard({
           <p className="text-[11px] text-slate-400">
             {t('workspace.overview.connectionCards.orgType')}
           </p>
-          <p className="text-sm font-medium text-slate-700">{connection.orgType}</p>
+          <p className="text-sm font-medium text-slate-700">{t(`workspace.overview.connectionCards.orgTypes.${connection.orgType.toLowerCase()}`)}</p>
         </div>
         {connection.cpqVersion && (
           <div>
@@ -396,7 +401,7 @@ const severityConfig: Record<
   info: { icon: Info, color: 'text-blue-500' },
 };
 
-const IssueRow = memo(function IssueRow({ issue }: { issue: IssueItem }) {
+const IssueRow = memo(function IssueRow({ issue, formatTimeAgo }: { issue: IssueItem; formatTimeAgo: (date: string) => string }) {
   const config = severityConfig[issue.severity];
   const Icon = config.icon;
 
@@ -412,7 +417,7 @@ const IssueRow = memo(function IssueRow({ issue }: { issue: IssueItem }) {
   );
 });
 
-function TopIssues({ issues, projectId }: { issues: IssueItem[]; projectId: string }) {
+function TopIssues({ issues, projectId, formatTimeAgo }: { issues: IssueItem[]; projectId: string; formatTimeAgo: (date: string) => string }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
@@ -436,7 +441,7 @@ function TopIssues({ issues, projectId }: { issues: IssueItem[]; projectId: stri
       {issues.length > 0 ? (
         <div className="divide-y divide-slate-100">
           {issues.map((issue) => (
-            <IssueRow key={issue.id} issue={issue} />
+            <IssueRow key={issue.id} issue={issue} formatTimeAgo={formatTimeAgo} />
           ))}
         </div>
       ) : (
@@ -468,7 +473,8 @@ const activityTypeIcons: Record<
   settings: Circle,
 };
 
-const ActivityRow = memo(function ActivityRow({ item }: { item: ActivityItem }) {
+const ActivityRow = memo(function ActivityRow({ item, formatTimeAgo }: { item: ActivityItem; formatTimeAgo: (date: string) => string }) {
+  const { t } = useTranslation();
   const Icon = activityTypeIcons[item.type] || Circle;
 
   return (
@@ -477,7 +483,7 @@ const ActivityRow = memo(function ActivityRow({ item }: { item: ActivityItem }) 
         <Icon size={13} className="text-slate-500" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-slate-800 leading-snug">{item.message}</p>
+        <p className="text-sm text-slate-800 leading-snug">{t(item.messageKey, { defaultValue: item.message })}</p>
         <p className="text-xs text-slate-400 mt-0.5">{item.user}</p>
       </div>
       <span className="text-[11px] text-slate-400 shrink-0">{formatTimeAgo(item.timestamp)}</span>
@@ -485,7 +491,7 @@ const ActivityRow = memo(function ActivityRow({ item }: { item: ActivityItem }) 
   );
 });
 
-function RecentActivity({ items, projectId }: { items: ActivityItem[]; projectId: string }) {
+function RecentActivity({ items, projectId, formatTimeAgo }: { items: ActivityItem[]; projectId: string; formatTimeAgo: (date: string) => string }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
@@ -509,7 +515,7 @@ function RecentActivity({ items, projectId }: { items: ActivityItem[]; projectId
       {items.length > 0 ? (
         <div className="divide-y divide-slate-100">
           {items.map((item) => (
-            <ActivityRow key={item.id} item={item} />
+            <ActivityRow key={item.id} item={item} formatTimeAgo={formatTimeAgo} />
           ))}
         </div>
       ) : (
@@ -532,6 +538,7 @@ function RecentActivity({ items, projectId }: { items: ActivityItem[]; projectId
 
 export default function OverviewPage() {
   const { id } = useParams<{ id: string }>();
+  const formatTimeAgo = useFormatTimeAgo();
 
   const data = useMemo(() => {
     if (!id) return null;
@@ -549,8 +556,8 @@ export default function OverviewPage() {
 
       {/* Connection Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <ConnectionCard type="source" connection={data.sourceConnection} projectId={id} />
-        <ConnectionCard type="target" connection={data.targetConnection} projectId={id} />
+        <ConnectionCard type="source" connection={data.sourceConnection} projectId={id} formatTimeAgo={formatTimeAgo} />
+        <ConnectionCard type="target" connection={data.targetConnection} projectId={id} formatTimeAgo={formatTimeAgo} />
       </div>
 
       {/* What's Next */}
@@ -558,8 +565,8 @@ export default function OverviewPage() {
 
       {/* Bottom Row: Issues + Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <TopIssues issues={data.topIssues} projectId={id} />
-        <RecentActivity items={data.recentActivity} projectId={id} />
+        <TopIssues issues={data.topIssues} projectId={id} formatTimeAgo={formatTimeAgo} />
+        <RecentActivity items={data.recentActivity} projectId={id} formatTimeAgo={formatTimeAgo} />
       </div>
     </div>
   );

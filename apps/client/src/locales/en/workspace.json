@@ -71,7 +71,13 @@
       "noSourceDescription": "Connect your Salesforce CPQ org to begin the migration analysis.",
       "healthy": "Healthy",
       "degraded": "Degraded",
-      "disconnected": "Disconnected"
+      "disconnected": "Disconnected",
+      "orgTypes": {
+        "production": "Production",
+        "sandbox": "Sandbox",
+        "developer": "Developer",
+        "scratch": "Scratch"
+      }
     },
     "whatsNext": {
       "title": "What's Next"

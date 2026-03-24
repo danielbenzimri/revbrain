@@ -1,6 +1,50 @@
 {
   "title": "דשבורד ראשי",
   "subtitle": "סקירה כללית של הפרויקטים",
-  "welcome": "ברוכים הבאים לגיאומטריקס",
-  "selectProject": "בחר פרויקט מהתפריט או צור פרויקט חדש להתחלה"
+  "welcome": "ברוכים הבאים ל-RevBrain",
+  "selectProject": "בחר פרויקט מהתפריט או צור פרויקט חדש להתחלה",
+  "stats": {
+    "totalProjects": "סה\"כ פרויקטים",
+    "activeProjects": "פרויקטים פעילים",
+    "completedProjects": "הושלמו",
+    "needsAttention": "דורשים תשומת לב"
+  },
+  "sections": {
+    "activeProjects": "פרויקטים פעילים",
+    "needsAttention": "דורשים תשומת לב",
+    "recentActivity": "פעילות אחרונה",
+    "completedProjects": "פרויקטים שהושלמו",
+    "quickStart": "התחלה מהירה"
+  },
+  "projectCard": {
+    "source": "מקור",
+    "target": "יעד",
+    "connected": "מחובר",
+    "notConnected": "לא מחובר",
+    "issues": "בעיות",
+    "lastActivity": "פעילות אחרונה",
+    "viewProject": "צפה בפרויקט",
+    "noActiveProjects": "אין פרויקטים פעילים",
+    "createFirst": "צור פרויקט חדש כדי להתחיל במסע ההגירה שלך"
+  },
+  "attention": {
+    "connectionLost": "חיבור אבד",
+    "apiLimitWarning": "אזהרת מגבלת API",
+    "openBlockers": "חוסמים פתוחים",
+    "failedRun": "ריצה נכשלה",
+    "noIssues": "הכל תקין! אין פריטים הדורשים תשומת לב."
+  },
+  "stages": {
+    "setup": "הקמה",
+    "connected": "מחובר",
+    "extracted": "נשלף",
+    "assessed": "הוערך",
+    "deploying": "בפריסה",
+    "complete": "הושלם"
+  },
+  "empty": {
+    "title": "ברוכים הבאים ל-RevBrain",
+    "description": "הפלטפורמה שלך להגירת CPQ לענן הכנסות. צור את הפרויקט הראשון שלך כדי להתחיל.",
+    "createProject": "צור פרויקט חדש"
+  }
 }

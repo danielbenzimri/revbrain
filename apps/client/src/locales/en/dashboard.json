@@ -2,5 +2,49 @@
   "title": "Main Dashboard",
   "subtitle": "General overview of projects",
   "welcome": "Welcome to RevBrain",
-  "selectProject": "Select a project from the menu or create a new one to get started"
+  "selectProject": "Select a project from the menu or create a new one to get started",
+  "stats": {
+    "totalProjects": "Total Projects",
+    "activeProjects": "Active Migrations",
+    "completedProjects": "Completed",
+    "needsAttention": "Needs Attention"
+  },
+  "sections": {
+    "activeProjects": "Active Projects",
+    "needsAttention": "Needs Attention",
+    "recentActivity": "Recent Activity",
+    "completedProjects": "Completed Projects",
+    "quickStart": "Quick Start"
+  },
+  "projectCard": {
+    "source": "Source",
+    "target": "Target",
+    "connected": "Connected",
+    "notConnected": "Not connected",
+    "issues": "issues",
+    "lastActivity": "Last activity",
+    "viewProject": "View Project",
+    "noActiveProjects": "No active projects",
+    "createFirst": "Create a new project to start your migration journey"
+  },
+  "attention": {
+    "connectionLost": "Connection lost",
+    "apiLimitWarning": "API limit warning",
+    "openBlockers": "open blockers",
+    "failedRun": "Failed run",
+    "noIssues": "All clear! No items need your attention."
+  },
+  "stages": {
+    "setup": "Setup",
+    "connected": "Connected",
+    "extracted": "Extracted",
+    "assessed": "Assessed",
+    "deploying": "Deploying",
+    "complete": "Complete"
+  },
+  "empty": {
+    "title": "Welcome to RevBrain",
+    "description": "Your platform for CPQ to Revenue Cloud migrations. Create your first project to get started.",
+    "createProject": "Create New Project"
+  }
 }

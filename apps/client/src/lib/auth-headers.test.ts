@@ -19,6 +19,9 @@ vi.mock('@/lib/services', () => ({
   }),
 }));
 
+// Force non-mock auth mode for these tests (they test real auth flow)
+vi.stubEnv('VITE_AUTH_MODE', 'jwt');
+
 // Mock global fetch
 const mockFetch = vi.fn();
 vi.stubGlobal('fetch', mockFetch);
