@@ -6,6 +6,7 @@
  */
 import type { AssessmentData, DomainId } from '../../mocks/assessment-mock-data';
 import RiskBlockerCards from './RiskBlockerCards';
+import OverviewBottomSections from './OverviewBottomSections';
 
 // ---------------------------------------------------------------------------
 // Migration Readiness Cards
@@ -157,6 +158,13 @@ export default function OverviewTab({ assessment, onDomainClick, t }: OverviewTa
         risks={assessment.risks}
         findings={assessment.keyFindings}
         blockedCount={assessment.totalBlocked}
+        t={t}
+      />
+
+      {/* Prerequisites, Strategy, Completeness */}
+      <OverviewBottomSections
+        orgHealth={assessment.orgHealth}
+        completeness={assessment.completeness}
         t={t}
       />
     </div>
