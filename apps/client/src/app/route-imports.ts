@@ -13,6 +13,7 @@ export const routeLazyImports: Record<string, () => Promise<any>> = {
   '/set-password': () => import('@/features/auth/pages/SetPasswordPage'),
   '/': () => import('@/features/dashboard/pages/DashboardPage'),
   '/projects': () => import('@/features/projects/pages/ProjectsPage'),
+  '/customers': () => import('@/features/customers/pages/CustomersPage'),
   '/billing': () => import('@/features/billing/pages/BillingPage'),
   '/settings': () => import('@/features/settings/pages/SettingsPage'),
   '/settings/profile': () => import('@/features/settings/pages/ProfilePage'),

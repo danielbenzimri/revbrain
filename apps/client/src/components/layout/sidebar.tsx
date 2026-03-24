@@ -48,6 +48,7 @@ export function Sidebar({ className }: SidebarProps) {
   const mainItems = [
     { nameKey: 'nav.dashboard', href: '/', icon: LayoutDashboard },
     { nameKey: 'nav.projects', href: '/projects', icon: FolderKanban },
+    { nameKey: 'nav.customers', href: '/customers', icon: Building2 },
     { nameKey: 'nav.billing', href: '/billing', icon: FileText },
     { nameKey: 'nav.settings', href: '/settings', icon: Settings },
     { nameKey: 'nav.help', href: '/help', icon: HelpCircle },

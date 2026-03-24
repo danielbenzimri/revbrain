@@ -10,7 +10,7 @@
  */
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Loader2, X, Trash2, AlertTriangle, Calendar } from 'lucide-react';
+import { Loader2, X, Trash2, AlertTriangle, Calendar, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import type {
@@ -18,6 +18,7 @@ import type {
   CreateProjectInput,
   UpdateProjectInput,
 } from '../hooks/use-project-api';
+import { MOCK_CUSTOMERS } from '@/features/customers/mocks/customer-mock-data';
 
 interface ProjectFormSheetProps {
   open: boolean;
@@ -49,6 +50,9 @@ export function ProjectFormSheet({
   // Form state
   const [formData, setFormData] = useState<CreateProjectInput>(DEFAULT_PROJECT);
   const [status, setStatus] = useState<'active' | 'on_hold' | 'completed' | 'cancelled'>('active');
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
+  const [isCreatingNewCustomer, setIsCreatingNewCustomer] = useState(false);
+  const [newCustomerName, setNewCustomerName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -71,6 +75,9 @@ export function ProjectFormSheet({
         setFormData(DEFAULT_PROJECT);
         setStatus('active');
       }
+      setSelectedCustomerId('');
+      setIsCreatingNewCustomer(false);
+      setNewCustomerName('');
       setShowDeleteConfirm(false);
       setError(null);
       setValidationErrors({});
@@ -208,6 +215,61 @@ export function ProjectFormSheet({
                 <AlertTriangle className="h-4 w-4" />
                 {error}
               </div>
+            )}
+
+            {/* Customer Selection */}
+            {!isEditMode && (
+              <section className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <div className="h-7 w-7 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center text-sm font-bold">
+                    <Building2 className="h-4 w-4" />
+                  </div>
+                  <h3 className="font-semibold text-slate-900">{t('customers.form.customer')}</h3>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                    {t('customers.form.selectCustomer')}
+                  </label>
+                  <select
+                    value={isCreatingNewCustomer ? '__new__' : selectedCustomerId}
+                    onChange={(e) => {
+                      if (e.target.value === '__new__') {
+                        setIsCreatingNewCustomer(true);
+                        setSelectedCustomerId('');
+                      } else {
+                        setIsCreatingNewCustomer(false);
+                        setNewCustomerName('');
+                        setSelectedCustomerId(e.target.value);
+                      }
+                    }}
+                    className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none text-sm bg-white"
+                  >
+                    <option value="">{t('customers.form.selectCustomer')}</option>
+                    {MOCK_CUSTOMERS.map((customer) => (
+                      <option key={customer.id} value={customer.id}>
+                        {customer.name}
+                      </option>
+                    ))}
+                    <option value="__new__">{t('customers.form.createNew')}</option>
+                  </select>
+                </div>
+
+                {isCreatingNewCustomer && (
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                      {t('customers.form.newCustomerName')}
+                    </label>
+                    <input
+                      type="text"
+                      value={newCustomerName}
+                      onChange={(e) => setNewCustomerName(e.target.value)}
+                      placeholder={t('customers.form.newCustomerPlaceholder')}
+                      className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none text-sm"
+                    />
+                  </div>
+                )}
+              </section>
             )}
 
             {/* Section 1: Basic Information */}

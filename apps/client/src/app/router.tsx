@@ -21,6 +21,7 @@ const ResetPasswordPage = lazy(routeLazyImports['/reset-password']);
 const SetPasswordPage = lazy(routeLazyImports['/set-password']);
 const DashboardPage = lazy(routeLazyImports['/']);
 const ProjectsPage = lazy(routeLazyImports['/projects']);
+const CustomersPage = lazy(routeLazyImports['/customers']);
 const BillingPage = lazy(routeLazyImports['/billing']);
 const SettingsPage = lazy(routeLazyImports['/settings']);
 const ProfilePage = lazy(routeLazyImports['/settings/profile']);
@@ -115,6 +116,14 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<ProjectsSkeleton />}>
             <ProjectsPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'customers',
+        element: (
+          <Suspense fallback={<PageSkeleton />}>
+            <CustomersPage />
           </Suspense>
         ),
       },

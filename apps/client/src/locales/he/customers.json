@@ -1,0 +1,31 @@
+{
+  "title": "לקוחות",
+  "subtitle": "ניהול חשבונות הלקוחות",
+  "addCustomer": "הוסף לקוח",
+  "searchPlaceholder": "חיפוש לקוחות...",
+  "stats": {
+    "totalCustomers": "סה\"כ לקוחות",
+    "activeCustomers": "לקוחות פעילים",
+    "industries": "תעשיות"
+  },
+  "card": {
+    "contact": "איש קשר",
+    "projects": "פרויקטים",
+    "activeProjects": "פעילים",
+    "viewProjects": "צפה בפרויקטים",
+    "noProjects": "אין פרויקטים"
+  },
+  "empty": {
+    "title": "אין לקוחות עדיין",
+    "description": "הוסף את הלקוח הראשון שלך כדי להתחיל לנהל פרויקטי הגירה.",
+    "addCustomer": "הוסף לקוח"
+  },
+  "noResults": "לא נמצאו לקוחות התואמים את החיפוש",
+  "form": {
+    "customer": "לקוח",
+    "selectCustomer": "בחר לקוח",
+    "createNew": "או צור לקוח חדש...",
+    "newCustomerName": "שם לקוח חדש",
+    "newCustomerPlaceholder": "הזן שם חברה"
+  }
+}

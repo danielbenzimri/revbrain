@@ -11,6 +11,7 @@ import admin from './admin.json';
 import files from './files.json';
 import docs from './docs.json';
 import workspace from './workspace.json';
+import customers from './customers.json';
 
 export default {
   nav,
@@ -26,4 +27,5 @@ export default {
   files,
   docs,
   workspace,
+  customers,
 };

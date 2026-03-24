@@ -1,0 +1,31 @@
+{
+  "title": "Customers",
+  "subtitle": "Manage your customer accounts",
+  "addCustomer": "Add Customer",
+  "searchPlaceholder": "Search customers...",
+  "stats": {
+    "totalCustomers": "Total Customers",
+    "activeCustomers": "Active Customers",
+    "industries": "Industries"
+  },
+  "card": {
+    "contact": "Contact",
+    "projects": "Projects",
+    "activeProjects": "active",
+    "viewProjects": "View Projects",
+    "noProjects": "No projects"
+  },
+  "empty": {
+    "title": "No customers yet",
+    "description": "Add your first customer to start managing their migration projects.",
+    "addCustomer": "Add Customer"
+  },
+  "noResults": "No customers match your search",
+  "form": {
+    "customer": "Customer",
+    "selectCustomer": "Select a customer",
+    "createNew": "Or create new customer...",
+    "newCustomerName": "New customer name",
+    "newCustomerPlaceholder": "Enter company name"
+  }
+}
