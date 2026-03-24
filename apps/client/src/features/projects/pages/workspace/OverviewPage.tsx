@@ -109,7 +109,7 @@ const HealthPill = memo(function HealthPill({
         }
       }}
       className={cn(
-        'flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white transition-all hover:shadow-sm',
+        'flex items-center gap-2 px-3 py-2 rounded-xl bg-white transition-all hover:shadow-sm shrink-0',
         item.route ? 'cursor-pointer hover:bg-slate-50' : 'cursor-default'
       )}
       aria-label={`${t(item.translationKey)}: ${item.statusText}`}
@@ -137,11 +137,11 @@ const HealthPill = memo(function HealthPill({
 
 function HealthStrip({ items, projectId }: { items: HealthStripItem[]; projectId: string }) {
   return (
-    <div className="flex items-stretch gap-2 overflow-x-auto pb-1">
+    <div className="flex items-stretch gap-1.5 overflow-x-auto pb-1 scrollbar-none">
       {items.map((item, i) => (
         <div key={item.id} className="flex items-center gap-2">
           <HealthPill item={item} projectId={projectId} />
-          {i < items.length - 1 && <ChevronRight size={14} className="text-slate-300 shrink-0" />}
+          {i < items.length - 1 && <ChevronRight size={14} className="text-slate-300 shrink-0 rtl:rotate-180" />}
         </div>
       ))}
     </div>
@@ -365,7 +365,7 @@ function WhatsNextCard({
               aria-label={t(data.ctaLabelKey)}
             >
               {t(data.ctaLabelKey)}
-              <ArrowRight size={14} />
+              <ArrowRight size={14} className="rtl:rotate-180" />
             </button>
             {data.secondaryLabelKey && data.secondaryRoute !== null && (
               <button
@@ -434,7 +434,7 @@ function TopIssues({ issues, projectId, formatTimeAgo }: { issues: IssueItem[]; 
             aria-label={t('workspace.overview.topIssues.viewAll')}
           >
             {t('workspace.overview.topIssues.viewAll')}
-            <ArrowRight size={12} />
+            <ArrowRight size={12} className="rtl:rotate-180" />
           </button>
         )}
       </div>
@@ -508,7 +508,7 @@ function RecentActivity({ items, projectId, formatTimeAgo }: { items: ActivityIt
             aria-label={t('workspace.overview.recentActivity.viewAll')}
           >
             {t('workspace.overview.recentActivity.viewAll')}
-            <ArrowRight size={12} />
+            <ArrowRight size={12} className="rtl:rotate-180" />
           </button>
         )}
       </div>
