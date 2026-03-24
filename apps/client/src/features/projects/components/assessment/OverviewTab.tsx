@@ -5,6 +5,7 @@
  * Bottom section: complexity heatmap by domain (9 rows)
  */
 import type { AssessmentData, DomainId } from '../../mocks/assessment-mock-data';
+import RiskBlockerCards from './RiskBlockerCards';
 
 // ---------------------------------------------------------------------------
 // Migration Readiness Cards
@@ -151,6 +152,13 @@ export default function OverviewTab({ assessment, onDomainClick, t }: OverviewTa
           })}
         </div>
       </section>
+      {/* Risks, Blockers & Key Findings */}
+      <RiskBlockerCards
+        risks={assessment.risks}
+        findings={assessment.keyFindings}
+        blockedCount={assessment.totalBlocked}
+        t={t}
+      />
     </div>
   );
 }
