@@ -88,21 +88,24 @@ export default function RiskBlockerCards({
 
         {/* Blockers */}
         <section
-          className="bg-white rounded-2xl p-5 ring-1 ring-red-200"
+          className="bg-red-50 rounded-2xl p-5 ring-2 ring-red-200"
           aria-label={t('assessment.overview.blockers')}
           data-testid="blockers-card"
         >
-          <h3 className="text-sm font-semibold text-red-700 mb-3">
-            {t('assessment.overview.blockers')}
-          </h3>
+          <div className="flex items-center gap-2 mb-3">
+            <span className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center text-red-600 text-xs font-bold">!</span>
+            <h3 className="text-sm font-semibold text-red-800">
+              {t('assessment.overview.blockers')}
+            </h3>
+          </div>
           <div className="space-y-3">
             {sortedRisks
               .filter((r) => r.severity === 'critical')
               .slice(0, 3)
               .map((risk) => (
                 <div key={risk.id} className="flex items-start gap-2">
-                  <span className="text-red-500 mt-0.5">🚫</span>
-                  <p className="text-sm text-slate-700 leading-snug">{risk.description}</p>
+                  <span className="text-red-500 mt-0.5 shrink-0">🚫</span>
+                  <p className="text-sm text-red-900 leading-snug">{risk.description}</p>
                 </div>
               ))}
             {blockedCount > 0 && (
@@ -122,27 +125,29 @@ export default function RiskBlockerCards({
         </section>
       </div>
 
-      {/* Key Findings */}
-      <section aria-label={t('assessment.overview.keyFindings')} data-testid="key-findings">
-        <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">
-          {t('assessment.overview.keyFindings')}
-        </h2>
-        <div className="bg-white rounded-2xl p-5 space-y-2.5">
-          {findings.map((finding) => {
-            const { icon, color } = FINDING_ICONS[finding.severity] || FINDING_ICONS.warning;
-            return (
-              <div key={finding.id} className="flex items-start gap-3">
-                <span
-                  className={`w-5 h-5 rounded-full ${color} flex items-center justify-center text-xs font-bold shrink-0 mt-0.5`}
-                >
-                  {icon}
-                </span>
-                <p className="text-sm text-slate-700">{t(finding.text)}</p>
-              </div>
-            );
-          })}
-        </div>
-      </section>
+      {/* Key Findings — only shown when findings provided */}
+      {findings.length > 0 && (
+        <section aria-label={t('assessment.overview.keyFindings')} data-testid="key-findings">
+          <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">
+            {t('assessment.overview.keyFindings')}
+          </h2>
+          <div className="bg-white rounded-2xl p-5 space-y-2.5">
+            {findings.map((finding) => {
+              const { icon, color } = FINDING_ICONS[finding.severity] || FINDING_ICONS.warning;
+              return (
+                <div key={finding.id} className="flex items-start gap-3">
+                  <span
+                    className={`w-5 h-5 rounded-full ${color} flex items-center justify-center text-xs font-bold shrink-0 mt-0.5`}
+                  >
+                    {icon}
+                  </span>
+                  <p className="text-sm text-slate-700">{t(finding.text)}</p>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

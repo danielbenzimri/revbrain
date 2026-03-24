@@ -56,7 +56,7 @@ describe('OverviewTab', () => {
       const cards = screen.getByTestId('readiness-cards');
       // Find the blocked card container
       const blockedLabel = within(cards).getByText('assessment.migrationStatus.blocked');
-      const blockedCard = blockedLabel.closest('[class*="bg-red-50"]');
+      const blockedCard = blockedLabel.closest('[class*="bg-red-1"]');
       expect(blockedCard).toBeTruthy();
     });
   });

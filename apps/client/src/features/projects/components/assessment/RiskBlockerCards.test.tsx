@@ -62,9 +62,10 @@ describe('RiskBlockerCards', () => {
   });
 
   describe('Blockers', () => {
-    it('renders blockers card with red ring', () => {
+    it('renders blockers card with red background and ring', () => {
       renderComponent();
       const card = screen.getByTestId('blockers-card');
+      expect(card.className).toContain('bg-red-50');
       expect(card.className).toContain('ring-red-200');
     });
 
