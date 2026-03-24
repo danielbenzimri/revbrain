@@ -8,7 +8,6 @@ import { getMockAssessmentData } from '../../../mocks/assessment-mock-data';
 import {
   DependencyGraph,
   MigrationTreemap,
-  TransformationFlow,
   RiskBubbleScatter,
   CodeWaterfall,
   ReportFreshness,
@@ -86,27 +85,6 @@ describe('MigrationTreemap', () => {
     expect(screen.getAllByText('assessment.migrationStatus.auto').length).toBeGreaterThan(0);
     expect(screen.getAllByText('assessment.migrationStatus.guided').length).toBeGreaterThan(0);
     expect(screen.getAllByText('assessment.migrationStatus.manual').length).toBeGreaterThan(0);
-  });
-});
-
-describe('TransformationFlow', () => {
-  afterEach(() => cleanup());
-
-  it('renders flow diagram', () => {
-    render(<TransformationFlow assessment={assessment} t={mockT} />);
-    expect(screen.getByTestId('transformation-flow')).toBeTruthy();
-  });
-
-  it('renders SVG', () => {
-    render(<TransformationFlow assessment={assessment} t={mockT} />);
-    const svg = screen.getByRole('img');
-    expect(svg).toBeTruthy();
-  });
-
-  it('shows source and target labels', () => {
-    render(<TransformationFlow assessment={assessment} t={mockT} />);
-    expect(screen.getByText('CPQ Source')).toBeTruthy();
-    expect(screen.getByText('RCA Target')).toBeTruthy();
   });
 });
 

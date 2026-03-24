@@ -11,7 +11,7 @@ import OverviewBottomSections from './OverviewBottomSections';
 import { DeltaSummary } from './RunDelta';
 import RiskRegister from './RiskRegister';
 import EffortEstimation from './EffortEstimation';
-import { MigrationTreemap, TransformationFlow, RiskBubbleScatter, DomainRadar, OrgHealthGauges } from './visualizations';
+import { MigrationTreemap, RiskBubbleScatter, DomainRadar, OrgHealthGauges } from './visualizations';
 
 // ---------------------------------------------------------------------------
 // Migration Readiness Cards
@@ -192,9 +192,6 @@ export default function OverviewTab({ assessment, onDomainClick, t }: OverviewTa
         onDomainClick={onDomainClick}
         t={t}
       />
-
-      {/* CPQ → RCA Transformation Flow */}
-      <TransformationFlow assessment={assessment} t={t} />
 
       {/* Domain Complexity Radar + Risk Bubble Scatter */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
