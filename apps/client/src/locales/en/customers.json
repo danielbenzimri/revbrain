@@ -31,7 +31,20 @@
     "licenses": "licenses",
     "connected": "Connected",
     "notConnected": "Not connected",
-    "noProjects": "No projects yet"
+    "noProjects": "No projects yet",
+    "edit": "Edit",
+    "done": "Done",
+    "branding": "Branding",
+    "companyLogo": "Company Logo",
+    "logoDescription": "Used in exported reports and assessments",
+    "uploadLogo": "Upload logo",
+    "brandColors": "Brand Colors",
+    "brandColorsDescription": "Applied to exported PDF reports and assessment documents",
+    "primaryColorLabel": "Primary",
+    "secondaryColorLabel": "Background",
+    "accentColorLabel": "Accent",
+    "brandPreview": "Report header preview",
+    "assessmentReport": "Migration Assessment"
   },
   "empty": {
     "title": "No customers yet",

@@ -1,10 +1,11 @@
 /**
  * Customer Detail Drawer
  *
- * Side drawer showing full customer details: company info, contacts,
- * Salesforce orgs, projects, engagement summary, and notes.
+ * Wide side drawer showing full customer details: company info, branding,
+ * contacts, Salesforce orgs, projects, engagement summary, and notes.
+ * Supports view and edit modes.
  */
-import { memo } from 'react';
+import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -13,15 +14,18 @@ import {
   Mail,
   Phone,
   User,
-  Building2,
   Cloud,
   CloudOff,
-  ArrowRight,
   FolderKanban,
   Users,
   Calendar,
   StickyNote,
+  Pencil,
+  Palette,
+  ImagePlus,
+  Check,
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import type {
   Customer,
   CustomerContact,
@@ -63,7 +67,7 @@ const companySizeLabels: Record<string, string> = {
   enterprise: 'Enterprise',
 };
 
-// ─── Sub-components ──────────────────────────────────────────
+// ─── Section Header ──────────────────────────────────────────
 
 const SectionHeader = memo(function SectionHeader({
   icon: Icon,
@@ -73,12 +77,14 @@ const SectionHeader = memo(function SectionHeader({
   label: string;
 }) {
   return (
-    <div className="flex items-center gap-2 mb-3 mt-6 first:mt-0">
+    <div className="flex items-center gap-2 mb-3 mt-8 first:mt-0">
       <Icon className="h-4 w-4 text-slate-400" />
       <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{label}</h3>
     </div>
   );
 });
+
+// ─── Contact Card ────────────────────────────────────────────
 
 const ContactCard = memo(function ContactCard({
   contact,
@@ -90,7 +96,7 @@ const ContactCard = memo(function ContactCard({
   const { t } = useTranslation();
 
   return (
-    <div className="flex items-start gap-3 py-2.5">
+    <div className="flex items-start gap-3 py-3">
       <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 shrink-0">
         <User className="h-4 w-4 text-slate-500" />
       </div>
@@ -124,11 +130,13 @@ const ContactCard = memo(function ContactCard({
   );
 });
 
+// ─── Salesforce Org Card ─────────────────────────────────────
+
 const SalesforceOrgCard = memo(function SalesforceOrgCard({ org }: { org: SalesforceOrgInfo }) {
   const { t } = useTranslation();
 
   return (
-    <div className="flex items-center gap-3 py-2.5">
+    <div className="flex items-center gap-3 py-3">
       {org.connected ? (
         <Cloud className="h-4 w-4 text-emerald-500 shrink-0" />
       ) : (
@@ -164,6 +172,8 @@ const SalesforceOrgCard = memo(function SalesforceOrgCard({ org }: { org: Salesf
     </div>
   );
 });
+
+// ─── Project Row ─────────────────────────────────────────────
 
 function stageColorClasses(color: string) {
   const map: Record<string, { bg: string; text: string; dot: string }> = {
@@ -210,6 +220,111 @@ const ProjectRow = memo(function ProjectRow({
   );
 });
 
+// ─── Branding Section ────────────────────────────────────────
+
+const BrandingSection = memo(function BrandingSection({
+  customer,
+  isEditing,
+}: {
+  customer: Customer;
+  isEditing: boolean;
+}) {
+  const { t } = useTranslation();
+  const { branding } = customer;
+
+  return (
+    <div>
+      <SectionHeader icon={Palette} label={t('customers.drawer.branding')} />
+
+      {/* Logo */}
+      <div className="flex items-center gap-4 mb-4">
+        <div
+          className="flex h-16 w-16 items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 shrink-0 overflow-hidden"
+          style={branding.logoUrl ? undefined : { borderColor: branding.primaryColor + '40' }}
+        >
+          {branding.logoUrl ? (
+            <img
+              src={branding.logoUrl}
+              alt={customer.name}
+              className="h-full w-full object-contain"
+            />
+          ) : (
+            <ImagePlus className="h-6 w-6 text-slate-300" />
+          )}
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-medium text-slate-700">{t('customers.drawer.companyLogo')}</p>
+          <p className="text-xs text-slate-400 mt-0.5">{t('customers.drawer.logoDescription')}</p>
+          {isEditing && (
+            <button className="text-xs font-medium text-violet-600 hover:text-violet-800 mt-1">
+              {t('customers.drawer.uploadLogo')}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Brand Colors */}
+      <p className="text-sm font-medium text-slate-700 mb-2">{t('customers.drawer.brandColors')}</p>
+      <p className="text-xs text-slate-400 mb-3">{t('customers.drawer.brandColorsDescription')}</p>
+
+      <div className="flex items-center gap-3">
+        {/* Primary */}
+        <div className="flex items-center gap-2">
+          <div
+            className="h-8 w-8 rounded-lg shadow-inner ring-1 ring-black/5"
+            style={{ backgroundColor: branding.primaryColor }}
+          />
+          <div>
+            <p className="text-[11px] text-slate-400">{t('customers.drawer.primaryColorLabel')}</p>
+            <p className="text-xs font-mono text-slate-600">{branding.primaryColor}</p>
+          </div>
+        </div>
+
+        {/* Secondary */}
+        {branding.secondaryColor && (
+          <div className="flex items-center gap-2">
+            <div
+              className="h-8 w-8 rounded-lg shadow-inner ring-1 ring-black/5"
+              style={{ backgroundColor: branding.secondaryColor }}
+            />
+            <div>
+              <p className="text-[11px] text-slate-400">
+                {t('customers.drawer.secondaryColorLabel')}
+              </p>
+              <p className="text-xs font-mono text-slate-600">{branding.secondaryColor}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Accent */}
+        {branding.accentColor && (
+          <div className="flex items-center gap-2">
+            <div
+              className="h-8 w-8 rounded-lg shadow-inner ring-1 ring-black/5"
+              style={{ backgroundColor: branding.accentColor }}
+            />
+            <div>
+              <p className="text-[11px] text-slate-400">{t('customers.drawer.accentColorLabel')}</p>
+              <p className="text-xs font-mono text-slate-600">{branding.accentColor}</p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Preview */}
+      <div className="mt-4 rounded-lg overflow-hidden ring-1 ring-slate-200">
+        <div className="h-2" style={{ backgroundColor: branding.primaryColor }} />
+        <div className="p-3" style={{ backgroundColor: branding.secondaryColor || '#f8fafc' }}>
+          <p className="text-xs text-slate-500">{t('customers.drawer.brandPreview')}</p>
+          <p className="text-sm font-semibold mt-1" style={{ color: branding.primaryColor }}>
+            {customer.name} — {t('customers.drawer.assessmentReport')}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+});
+
 // ─── Main Drawer ─────────────────────────────────────────────
 
 interface CustomerDetailDrawerProps {
@@ -227,6 +342,7 @@ export const CustomerDetailDrawer = memo(function CustomerDetailDrawer({
   const navigate = useNavigate();
   const formatDate = useFormatDate();
   const formatTimeAgo = useFormatTimeAgo();
+  const [isEditing, setIsEditing] = useState(false);
 
   if (!open || !customer) return null;
 
@@ -240,130 +356,191 @@ export const CustomerDetailDrawer = memo(function CustomerDetailDrawer({
       {/* Backdrop */}
       <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40" onClick={onClose} />
 
-      {/* Drawer */}
-      <div className="fixed inset-y-0 end-0 w-full max-w-lg bg-white shadow-2xl z-50 flex flex-col animate-in slide-in-from-end duration-200">
+      {/* Drawer — wide */}
+      <div className="fixed inset-y-0 end-0 w-full max-w-2xl bg-white shadow-2xl z-50 flex flex-col">
         {/* Header */}
-        <div className="flex items-start justify-between p-6 pb-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-violet-50 shrink-0">
-              <Building2 className="h-6 w-6 text-violet-600" />
+        <div className="flex items-start justify-between p-6 pb-4 border-b border-slate-100">
+          <div className="flex items-center gap-4">
+            {/* Company avatar with brand color */}
+            <div
+              className="flex h-14 w-14 items-center justify-center rounded-2xl shrink-0 text-white font-bold text-lg"
+              style={{ backgroundColor: customer.branding.primaryColor }}
+            >
+              {customer.name
+                .split(' ')
+                .map((w) => w[0])
+                .join('')
+                .slice(0, 2)}
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-slate-900">{customer.name}</h2>
-              <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-xs text-slate-500">{customer.industry}</span>
+              <h2 className="text-xl font-semibold text-slate-900">{customer.name}</h2>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-sm text-slate-500">{customer.industry}</span>
                 <span className="text-slate-300">·</span>
-                <span className="text-xs text-slate-500">
+                <span className="text-sm text-slate-500">
                   {companySizeLabels[customer.companySize] || customer.companySize}
                 </span>
+                {customer.website && (
+                  <>
+                    <span className="text-slate-300">·</span>
+                    <a
+                      href={customer.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-sm text-violet-600 hover:text-violet-800"
+                    >
+                      <Globe className="h-3.5 w-3.5" />
+                      {customer.website.replace('https://', '')}
+                    </a>
+                  </>
+                )}
               </div>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
-            aria-label={t('common.close', 'Close')}
-          >
-            <X className="h-5 w-5" />
-          </button>
+
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsEditing(!isEditing)}
+              className={
+                isEditing
+                  ? 'text-emerald-600 hover:text-emerald-700'
+                  : 'text-slate-500 hover:text-slate-700'
+              }
+            >
+              {isEditing ? (
+                <>
+                  <Check className="h-4 w-4 me-1" />
+                  {t('customers.drawer.done')}
+                </>
+              ) : (
+                <>
+                  <Pencil className="h-4 w-4 me-1" />
+                  {t('customers.drawer.edit')}
+                </>
+              )}
+            </Button>
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+              aria-label="Close"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
         </div>
 
         {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto px-6 pb-6">
-          {/* Website */}
-          {customer.website && (
-            <a
-              href={customer.website}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-sm text-violet-600 hover:text-violet-800 mb-4"
-            >
-              <Globe className="h-3.5 w-3.5" />
-              {customer.website.replace('https://', '')}
-              <ArrowRight className="h-3 w-3 rtl:rotate-180" />
-            </a>
-          )}
-
-          {/* Engagement Summary */}
-          <div className="grid grid-cols-3 gap-3 mb-2">
-            <div className="rounded-xl bg-slate-50 p-3 text-center">
-              <p className="text-xl font-semibold text-slate-900">{customer.projectCount}</p>
-              <p className="text-[11px] text-slate-500">{t('customers.drawer.projects')}</p>
-            </div>
-            <div className="rounded-xl bg-slate-50 p-3 text-center">
-              <p className="text-xl font-semibold text-slate-900">
-                {customer.totalObjectsMigrated || '—'}
-              </p>
-              <p className="text-[11px] text-slate-500">{t('customers.drawer.objectsMigrated')}</p>
-            </div>
-            <div className="rounded-xl bg-slate-50 p-3 text-center">
-              <p className="text-xl font-semibold text-slate-900">
-                {customer.totalRecordsMigrated
-                  ? customer.totalRecordsMigrated.toLocaleString()
-                  : '—'}
-              </p>
-              <p className="text-[11px] text-slate-500">{t('customers.drawer.recordsMigrated')}</p>
-            </div>
-          </div>
-
-          {/* Contacts */}
-          <SectionHeader icon={Users} label={t('customers.drawer.contacts')} />
-          <div className="divide-y divide-slate-100">
-            <ContactCard contact={customer.primaryContact} isPrimary />
-            {customer.additionalContacts?.map((contact, i) => (
-              <ContactCard key={i} contact={contact} />
-            ))}
-          </div>
-
-          {/* Salesforce Orgs */}
-          <SectionHeader icon={Cloud} label={t('customers.drawer.salesforceOrgs')} />
-          <div className="divide-y divide-slate-100">
-            {customer.salesforceOrgs.map((org, i) => (
-              <SalesforceOrgCard key={i} org={org} />
-            ))}
-          </div>
-
-          {/* Projects */}
-          <SectionHeader icon={FolderKanban} label={t('customers.drawer.projectsList')} />
-          {customer.projects.length > 0 ? (
-            <div className="space-y-0.5">
-              {customer.projects.map((project) => (
-                <ProjectRow
-                  key={project.id}
-                  project={project}
-                  onNavigate={handleNavigateToProject}
-                  formatTimeAgo={formatTimeAgo}
-                />
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-slate-400 py-3">{t('customers.drawer.noProjects')}</p>
-          )}
-
-          {/* Notes */}
-          {customer.notes && (
-            <>
-              <SectionHeader icon={StickyNote} label={t('customers.drawer.notes')} />
-              <div className="rounded-xl bg-amber-50/50 p-4">
-                <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
-                  {customer.notes}
-                </p>
+        <div className="flex-1 overflow-y-auto">
+          {/* Two-column layout for wider drawer */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 p-6">
+            {/* Left Column */}
+            <div>
+              {/* Engagement Summary */}
+              <div className="grid grid-cols-3 gap-3 mb-2">
+                <div className="rounded-xl bg-slate-50 p-3 text-center">
+                  <p className="text-xl font-semibold text-slate-900">{customer.projectCount}</p>
+                  <p className="text-[11px] text-slate-500">{t('customers.drawer.projects')}</p>
+                </div>
+                <div className="rounded-xl bg-slate-50 p-3 text-center">
+                  <p className="text-xl font-semibold text-slate-900">
+                    {customer.totalObjectsMigrated || '—'}
+                  </p>
+                  <p className="text-[11px] text-slate-500">
+                    {t('customers.drawer.objectsMigrated')}
+                  </p>
+                </div>
+                <div className="rounded-xl bg-slate-50 p-3 text-center">
+                  <p className="text-xl font-semibold text-slate-900">
+                    {customer.totalRecordsMigrated
+                      ? customer.totalRecordsMigrated.toLocaleString()
+                      : '—'}
+                  </p>
+                  <p className="text-[11px] text-slate-500">
+                    {t('customers.drawer.recordsMigrated')}
+                  </p>
+                </div>
               </div>
-            </>
-          )}
 
-          {/* Dates */}
-          <SectionHeader icon={Calendar} label={t('customers.drawer.timeline')} />
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-[11px] text-slate-400">{t('customers.drawer.customerSince')}</p>
-              <p className="text-sm font-medium text-slate-700">{formatDate(customer.createdAt)}</p>
+              {/* Contacts */}
+              <SectionHeader icon={Users} label={t('customers.drawer.contacts')} />
+              <div className="divide-y divide-slate-100">
+                <ContactCard contact={customer.primaryContact} isPrimary />
+                {customer.additionalContacts?.map((contact, i) => (
+                  <ContactCard key={i} contact={contact} />
+                ))}
+              </div>
+
+              {/* Salesforce Orgs */}
+              <SectionHeader icon={Cloud} label={t('customers.drawer.salesforceOrgs')} />
+              <div className="divide-y divide-slate-100">
+                {customer.salesforceOrgs.map((org, i) => (
+                  <SalesforceOrgCard key={i} org={org} />
+                ))}
+              </div>
+
+              {/* Timeline */}
+              <SectionHeader icon={Calendar} label={t('customers.drawer.timeline')} />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-[11px] text-slate-400">
+                    {t('customers.drawer.customerSince')}
+                  </p>
+                  <p className="text-sm font-medium text-slate-700">
+                    {formatDate(customer.createdAt)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[11px] text-slate-400">{t('customers.drawer.lastActivity')}</p>
+                  <p className="text-sm font-medium text-slate-700">
+                    {formatTimeAgo(customer.lastActivityAt)}
+                  </p>
+                </div>
+              </div>
             </div>
+
+            {/* Right Column */}
             <div>
-              <p className="text-[11px] text-slate-400">{t('customers.drawer.lastActivity')}</p>
-              <p className="text-sm font-medium text-slate-700">
-                {formatTimeAgo(customer.lastActivityAt)}
-              </p>
+              {/* Branding */}
+              <BrandingSection customer={customer} isEditing={isEditing} />
+
+              {/* Projects */}
+              <SectionHeader icon={FolderKanban} label={t('customers.drawer.projectsList')} />
+              {customer.projects.length > 0 ? (
+                <div className="space-y-0.5">
+                  {customer.projects.map((project) => (
+                    <ProjectRow
+                      key={project.id}
+                      project={project}
+                      onNavigate={handleNavigateToProject}
+                      formatTimeAgo={formatTimeAgo}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-slate-400 py-3">{t('customers.drawer.noProjects')}</p>
+              )}
+
+              {/* Notes */}
+              {customer.notes && (
+                <>
+                  <SectionHeader icon={StickyNote} label={t('customers.drawer.notes')} />
+                  {isEditing ? (
+                    <textarea
+                      defaultValue={customer.notes}
+                      className="w-full rounded-xl bg-slate-50 p-4 text-sm text-slate-700 leading-relaxed focus:outline-none focus:ring-2 focus:ring-violet-500 resize-none"
+                      rows={5}
+                    />
+                  ) : (
+                    <div className="rounded-xl bg-amber-50/50 p-4">
+                      <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
+                        {customer.notes}
+                      </p>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           </div>
         </div>

@@ -29,12 +29,20 @@ export interface SalesforceOrgInfo {
   connected: boolean;
 }
 
+export interface CustomerBranding {
+  logoUrl?: string;
+  primaryColor: string;
+  secondaryColor?: string;
+  accentColor?: string;
+}
+
 export interface Customer {
   id: string;
   name: string;
   industry: string;
   website?: string;
   companySize: 'startup' | 'smb' | 'mid-market' | 'enterprise';
+  branding: CustomerBranding;
   primaryContact: CustomerContact;
   additionalContacts?: CustomerContact[];
   salesforceOrgs: SalesforceOrgInfo[];
@@ -63,6 +71,11 @@ export const MOCK_CUSTOMERS: Customer[] = [
     industry: 'Technology',
     website: 'https://acme.com',
     companySize: 'enterprise',
+    branding: {
+      primaryColor: '#1a56db',
+      secondaryColor: '#f0f5ff',
+      accentColor: '#e02424',
+    },
     primaryContact: {
       name: 'John Smith',
       email: 'john.smith@acme.com',
@@ -136,6 +149,10 @@ export const MOCK_CUSTOMERS: Customer[] = [
     industry: 'Financial Services',
     website: 'https://globalcorp.com',
     companySize: 'enterprise',
+    branding: {
+      primaryColor: '#047857',
+      secondaryColor: '#ecfdf5',
+    },
     primaryContact: {
       name: 'Sarah Johnson',
       email: 'sarah.johnson@globalcorp.com',
@@ -176,6 +193,9 @@ export const MOCK_CUSTOMERS: Customer[] = [
     industry: 'Manufacturing',
     website: 'https://beta-ind.com',
     companySize: 'mid-market',
+    branding: {
+      primaryColor: '#7c3aed',
+    },
     primaryContact: {
       name: 'Mike Chen',
       email: 'mike.chen@beta-ind.com',

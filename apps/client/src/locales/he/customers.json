@@ -31,7 +31,20 @@
     "licenses": "רישיונות",
     "connected": "מחובר",
     "notConnected": "לא מחובר",
-    "noProjects": "אין פרויקטים עדיין"
+    "noProjects": "אין פרויקטים עדיין",
+    "edit": "עריכה",
+    "done": "סיום",
+    "branding": "מיתוג",
+    "companyLogo": "לוגו חברה",
+    "logoDescription": "משמש בדוחות ובהערכות מיוצאים",
+    "uploadLogo": "העלה לוגו",
+    "brandColors": "צבעי מותג",
+    "brandColorsDescription": "מיושמים בדוחות PDF מיוצאים ומסמכי הערכה",
+    "primaryColorLabel": "ראשי",
+    "secondaryColorLabel": "רקע",
+    "accentColorLabel": "דגש",
+    "brandPreview": "תצוגה מקדימה של כותרת דוח",
+    "assessmentReport": "הערכת הגירה"
   },
   "empty": {
     "title": "אין לקוחות עדיין",
