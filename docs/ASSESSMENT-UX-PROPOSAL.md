@@ -463,16 +463,333 @@ This is deferred from v1 but the UI should reserve space for it (collapsible rig
 
 ---
 
-## 10. Open Questions for Design Review
+## 10. Design Review — Resolved Questions
 
-1. **Should the domain heatmap use numeric scores (6/10) or verbal labels (Moderate/High)?** Both auditors previously rejected single numeric scores, but per-domain scores may be more defensible since they're relative within a domain, not cross-project.
+These were open questions in v1. Both external reviewers agreed on the answers.
 
-2. **How should the "Plain English" AI description be visually differentiated from human-written content?** It needs to be clear that the description is AI-generated (may be imperfect) vs. consultant-verified.
+### Q1: Numeric Scores vs. Verbal Labels → **Verbal Labels**
 
-3. **Should the split-view (CPQ ↔ RCA) be always visible or only on demand?** In the item detail panel, showing both sides is useful but space-constrained in a slide-over.
+Kill numeric scores (6/10). Without cross-project benchmarks, numbers are arbitrary and invite arguments ("Why is our pricing a 9 and not a 7?"). Use three verbal levels:
 
-4. **How much of the AI Chat assistant UI should we design now** even if implementation is v1.1? Reserving space (collapsible right panel) affects the entire layout.
+- 🟢 **Low** (emerald) — straightforward migration
+- 🟡 **Moderate** (amber) — needs attention but manageable
+- 🔴 **High** (red) — significant complexity, major effort
 
-5. **Should domain tabs have badge counts?** E.g., "Pricing ⚠️ 47" (47 high-complexity items). Useful for quick scanning but visually noisy with 8+ tabs.
+The 4-category item counts (Auto/Guided/Manual/Blocked) are the quantitative layer — they're based on actual data. Domain-level assessment stays verbal.
 
-6. **How should the branded PDF export be previewed?** A full preview before generation, or just a "Generating..." progress bar? The preview is expensive to render but prevents "I didn't mean to include that section" complaints.
+### Q2: AI-Generated Content Differentiation → **Sparkle Icon + Edit/Verify**
+
+```
+┌─ AI-GENERATED ─────────────────────────────────────────┐
+│ ✨ "If the customer is in EMEA and orders more than    │
+│    100 units of any Hardware product, apply a 15%      │
+│    volume discount on the entire quote line group."     │
+│                                                        │
+│    [✏️ Edit]  [✓ Verify]                                │
+│                                                        │
+│    ✨ AI-generated from CPQ logic · [View raw formula]  │
+└────────────────────────────────────────────────────────┘
+```
+
+- Faint `bg-violet-50` background, ✨ sparkle icon
+- "Edit" → inline edit mode. Once edited: "✏️ Edited by @name"
+- "Verify" → consultant-reviewed stamp: "✓ Verified by @name"
+- Unverified descriptions get a disclaimer in PDF export
+- The goal: transparency without undermining trust
+
+### Q3: CPQ ↔ RCA Split View → **On Demand (Stacked Vertically)**
+
+The slide-over is too narrow for side-by-side. Two options, both valid:
+
+- **Stacked vertically:** `[CPQ Current State]` → arrow → `[Target RCA State]`
+- **Tab/toggle within detail:** `[ Current (CPQ) | Target (RCA) ]` pill toggle
+
+For full-page detail view (see Section 11 below), both can be visible. For the slide-over quick preview, use tabs.
+
+### Q4: AI Chat UI → **Design the Container Now, Build Later**
+
+- Reserve a 48px vertical strip on the trailing edge
+- Show a chat bubble icon (💬) with "Coming Soon" tooltip
+- The main content area must work at both full width AND with ~320-400px removed
+- Test every layout at both widths during development
+- Don't design the chat conversation UI yet — that's a separate sprint
+
+### Q5: Tab Badge Counts → **Red Dots for Blockers Only**
+
+```
+[Overview] [Products] [Pricing 🔴] [Rules] [Code 🔴] [Integrations] ...
+```
+
+A red dot means "this domain has blocked items." No numbers — just a signal to look. Numbers invite counting and comparison arguments. The Overview heatmap has the detailed counts.
+
+### Q6: PDF Export Preview → **Configuration Modal, Not WYSIWYG**
+
+```
+┌─ GENERATE ASSESSMENT REPORT ─────────────────────────┐
+│                                                       │
+│  BRANDING                                             │
+│  Customer: Acme Corp                                  │
+│  Logo: [acme-logo.png]  Colors: [■ ■ ■]              │
+│                                                       │
+│  SECTIONS TO INCLUDE               Est. Pages         │
+│  ☑ Executive Summary                  3-5             │
+│  ☑ Products Assessment                8-12            │
+│  ☑ Pricing Assessment                 10-15           │
+│  ☑ Rules Assessment                   5-8             │
+│  ☑ Custom Code Assessment             8-12            │
+│  ☑ Integrations Assessment            4-6             │
+│  ☑ Amendments & Renewals              5-8             │
+│  ☑ Approvals Assessment               3-5             │
+│  ☑ Data Assessment                    3-5             │
+│  ☑ Gap Analysis Matrix                5-8             │
+│  ☑ Risk Summary                       3-5             │
+│  ☐ Full Inventory Appendices          15-25           │
+│                                                       │
+│  CONSULTANT SECTIONS                                  │
+│  ☐ Business Process Notes    [empty — add content ↗]  │
+│  ☐ Strategic Recommendations [empty — add content ↗]  │
+│  ☐ Effort Estimation         [empty — add content ↗]  │
+│                                                       │
+│  Estimated total: 65-90 pages                         │
+│                                                       │
+│  [Cancel]                      [Generate PDF]         │
+│                                                       │
+│  PDF generation takes 1-3 minutes.                    │
+│  You'll be notified when ready.                       │
+└───────────────────────────────────────────────────────┘
+```
+
+Checkboxes for section inclusion, estimated page counts, nudges for empty consultant sections. No WYSIWYG preview — that's massive scope for minimal value.
+
+---
+
+## 11. Design Review — New Requirements (from Reviewer Feedback)
+
+Both reviewers identified critical gaps that must be addressed before implementation.
+
+### 11.1 Dependency Visualization (The Killer Feature)
+
+**Why:** This is what makes a GUI fundamentally superior to any PDF. A consultant can never manually draw the dependency web for 500+ interrelated objects.
+
+**Two forms:**
+
+**Local dependency graph (v1 — on item detail):** When viewing "Enterprise Volume Discount," show a small directed graph (1-2 hops) of immediate dependencies. More useful than the flat list in the current slide-over design.
+
+```
+┌─ DEPENDENCIES ──────────────────────────────────────┐
+│                                                      │
+│              ┌──────────────┐                        │
+│              │ Enterprise   │                        │
+│              │ Vol. Discount│                        │
+│              └──────┬───────┘                        │
+│         ┌───────────┼───────────┐                    │
+│    ┌────▼────┐ ┌────▼────┐ ┌───▼────┐              │
+│    │ Summary │ │ Apex:   │ │ 23     │              │
+│    │ Var: Q  │ │ VolCalc │ │Products│              │
+│    │ Total   │ │ .cls    │ │affected│              │
+│    └─────────┘ └────┬────┘ └────────┘              │
+│                ┌────▼────┐                           │
+│                │ Trigger:│                           │
+│                │ QuoteLn │                           │
+│                └─────────┘                           │
+│                                                      │
+│  [Expand to full explorer →]                         │
+└──────────────────────────────────────────────────────┘
+```
+
+**Global dependency explorer (v1.1):** A dedicated view, filterable by domain, migration status, risk level. "If I migrate this one Apex class, it affects 47 downstream rules."
+
+### 11.2 Item Triage Workflow
+
+**Why:** This turns the tool from a read-only report into a **working scoping artifact.** Without it, consultants export to spreadsheets.
+
+Every item in every inventory table gets a triage state:
+
+| State | Meaning | Visual | Who Sets It |
+|---|---|---|---|
+| Untriaged | Not yet reviewed | No indicator (default) | — |
+| In Scope | Confirmed for migration | ✅ subtle checkmark | Consultant |
+| Excluded | Intentionally out of scope | ~~dimmed row~~ | Consultant |
+| Needs Discussion | Requires client conversation | 💬 flag | Consultant |
+| Overridden | Disagrees with auto-assessment | ✏️ with original visible | Consultant |
+
+**Bulk triage:** Checkboxes on table rows → "Bulk Action" dropdown → `Set In Scope`, `Exclude`, `Needs Discussion`. This instantly updates Overview stats: "243 pricing rules → 31 excluded → 212 in scope."
+
+**Why this is critical:** The SI's deliverable isn't "here's what exists in your CPQ." It's "here's what's IN SCOPE for migration." Triage defines scope. Scope defines budget.
+
+### 11.3 Effort Estimation Interface
+
+**Why:** Even though RevBrain doesn't auto-generate hours, it should provide the structured form that bridges scanning and SOW creation.
+
+```
+EFFORT ESTIMATION                                    [Export to CSV]
+┌───────────────┬───────┬──────┬────────┬────────┬──────────────┐
+│ Domain        │ Items │ Auto │ Guided │ Manual │ Est. Hours   │
+├───────────────┼───────┼──────┼────────┼────────┼──────────────┤
+│ Products      │  187  │  120 │   45   │   22   │ [________]   │
+│ Pricing       │  243  │   82 │  100   │   61   │ [________]   │
+│ Rules         │   89  │   34 │   38   │   17   │ [________]   │
+│ Custom Code   │  112  │    0 │   67   │   45   │ [________]   │
+│ Integrations  │   11  │    2 │    5   │    4   │ [________]   │
+│ Amendments    │   34  │    8 │   14   │   12   │ [________]   │
+│ Approvals     │   18  │   10 │    6   │    2   │ [________]   │
+│ Data          │    —  │    — │     —  │     —  │ [________]   │
+├───────────────┼───────┼──────┼────────┼────────┼──────────────┤
+│ Subtotal      │  694  │  256 │  275   │  163   │ [auto-sum]   │
+│ Testing & QA  │       │      │        │        │ [________]   │
+│ Project Mgmt  │       │      │        │        │ [________]   │
+│ Training / CM │       │      │        │        │ [________]   │
+├───────────────┼───────┼──────┼────────┼────────┼──────────────┤
+│ GRAND TOTAL   │       │      │        │        │ [auto-sum]   │
+└───────────────┴───────┴──────┴────────┴────────┴──────────────┘
+```
+
+Item counts auto-populated. Hours column consultant-editable. Auto-sums. This is the bridge to SOW creation. SIs will love being able to sum the column directly.
+
+Additionally, on each **item detail slide-over**, add: `Estimated Hours to Migrate: [___] hrs`. When exporting CSV, include this column — SIs price their SOW directly from these numbers.
+
+### 11.4 Business Context Areas
+
+**Why:** Section 8 says business process documentation is "NOT automated — consultant adds via notes/annotations." But WHERE?
+
+Each domain tab gets a collapsible **"Business Context"** section at the top:
+
+```
+┌─ BUSINESS CONTEXT (Pricing) ──────────── [Collapse ▴] ┐
+│                                                        │
+│  [Rich text area — consultant documents pricing        │
+│   governance, discount authority matrix, sales          │
+│   motion types, business rules that can't be           │
+│   extracted from configuration...]                     │
+│                                                        │
+│  Last edited by Sarah Chen · 2 days ago                │
+└────────────────────────────────────────────────────────┘
+```
+
+Additionally, the Overview tab gets a "Business Process Summary" section — a structured area for the consultant to document the quote-to-cash process, stakeholder map, and known pain points.
+
+This isn't glamorous, but without it, the consultant writes in Google Docs separately and the "single source of truth" value proposition breaks.
+
+### 11.5 Risk Register
+
+**Why:** "Top Risks + Blockers cards on Overview" isn't enough. The PDF equivalent has a full risk register.
+
+Dedicated risk view (accessible from Overview's "View all N risks →" link):
+
+| Risk | Category | Severity | Affected Items | Mitigation | Owner |
+|---|---|---|---|---|---|
+| Calculator plugins require full rewrite | Technical | 🔴 Critical | 3 plugins, ~4200 LOC | Phase 2 dedicated sprint | [___] |
+| 12 integrations reference CPQ objects | Technical | 🔴 High | 12 systems | Integration audit in Phase 1 | [___] |
+| User adoption risk during transition | Business | 🟡 Medium | All users | Training plan + parallel run | [___] |
+
+Auto-detected risks are the starting point. Consultant adds business risks, adjusts severity, writes mitigation plans, assigns owners. Another "working artifact" that makes the tool sticky.
+
+### 11.6 Run Comparison (Delta View)
+
+**Why:** The client cleans up 40 inactive rules between scans. The consultant needs to see what changed.
+
+After re-running the assessment, show a delta summary on Overview:
+
+```
+CHANGES SINCE LAST RUN (Run #3 vs Run #2)
+┌──────────────────────────────────────────────────┐
+│  ✅ 31 rules removed (inactive cleanup)          │
+│  ⚠️  4 new rules detected                        │
+│  ─  Pricing complexity: unchanged (High)         │
+│  ⚠️  1 new Apex trigger added on QuoteLine       │
+│                                                   │
+│  [View detailed comparison →]                     │
+└──────────────────────────────────────────────────┘
+```
+
+This validates that cleanup work happened and catches regressions. A simple diff summary on Overview is sufficient for v1 — full visual diff is v1.1.
+
+### 11.7 Assessment Completeness Checklist
+
+**Why:** The consultant needs to know when the assessment is "done enough" to deliver.
+
+```
+ASSESSMENT COMPLETENESS
+━━━━━━━━━━━━━━━━━━━░░░░░  78%
+
+✅ Org scanned (Run #3, Jan 15)
+✅ All domains inventoried
+✅ Gap analysis generated
+⬜ 23 items untriaged in Pricing
+⬜ Business process notes not added
+⬜ Effort estimation not filled in
+⬜ Risk mitigations not assigned
+⬜ PDF not yet generated
+```
+
+This turns the assessment from "view scan results" into "complete the assessment." Keeps the consultant inside the tool instead of tracking progress elsewhere.
+
+### 11.8 Slide-Over vs. Full-Page Detail
+
+**Why:** The `max-w-2xl` slide-over works for quick preview but is too narrow for complex items (200+ LOC calculator plugins, 8 dependencies, multi-paragraph recommendations).
+
+**Solution:** Slide-over for quick preview → "Open Full Detail →" link for full-page view. Same pattern as Linear/Notion — hover for preview, click for full.
+
+Full-page detail view has room for:
+- Local dependency graph
+- Full CPQ ↔ RCA mapping (both visible, not tabbed)
+- Code view with syntax highlighting
+- All dependencies with clickable links
+- Consultant notes + effort estimate
+
+### 11.9 "Why?" Tooltips on Migration Status
+
+**Why:** When a rule shows `🔴 Gap / Manual`, the consultant's immediate thought is "why?"
+
+In the inventory table, hover over a Gap/Manual status → tooltip: *"Relies on QCP JavaScript callout which is not supported in RCA Pricing Procedures."*
+
+This eliminates one click per item for the most common question. Small detail, big time savings across 243 rules.
+
+### 11.10 Blocker Visual Weight
+
+The 4-category model treats Blocked as one of four equal categories. But blockers are qualitatively different — they're potential go/no-go decisions.
+
+- Blocked card in stats strip gets a red tint or border (others stay neutral)
+- Dedicated "Blockers" callout on Overview (not just a number in the stats)
+- In the heatmap, blocked items called out per domain with a 🚫 icon
+
+5 blockers might kill the entire migration. They must be impossible to miss.
+
+### 11.11 Integrated RCA Mapping in Domain Tables
+
+The Translation Matrix shouldn't require a separate click. Add a subtle "RCA Target" column directly in each domain's inventory table:
+
+```
+│ Name           │ Complexity │ Status  │ RCA Target              │ → │
+│ Enterprise Vol │ 🔴 High    │ ⚠️ Gap  │ PricingProcedure (?)    │ → │
+│ Partner Tier   │ 🔴 High    │ 🔄 Gui. │ PricingProcedure (?)    │ → │
+```
+
+Hovering (?) shows the education popover inline. The standalone Translation Matrix still exists as a cross-domain summary for architects.
+
+---
+
+## 12. Terminology Consistency Note
+
+Two dimensions must be clearly distinguished everywhere:
+
+| Dimension | What It Measures | Values |
+|---|---|---|
+| **Complexity** | How hard is this item to understand/deal with? (intrinsic to CPQ config) | Low / Moderate / High |
+| **Migration Status** | What's the path to RCA? | Auto / Guided / Manual / Blocked |
+
+These are related but different. A high-complexity item might be Auto-mappable (complex in CPQ but has a direct RCA equivalent). A low-complexity item might be Blocked (simple in CPQ but no RCA equivalent exists). Both must be visible and filterable in every inventory table.
+
+---
+
+## 13. Updated Design Principles
+
+1. **Progressive disclosure** — executive summary first, drill down to raw code last
+2. **Interactive over static** — filter, sort, search, click through. A PDF is read; this is explored.
+3. **Translation, not just inventory** — explain what CPQ objects mean and how they map to RCA
+4. **Insights over data** — auto-generated observations save consultants from pattern-spotting
+5. **Consultant workflow, not just viewer** — triage, notes, effort estimates, branded export
+6. **Working artifact, not one-time scan** — triage states, business context, effort estimation make it a living document
+7. **Same design language** — rounded-2xl cards, no borders, emerald/amber/red/violet tokens, RTL-safe
+8. **Dependency visualization** — the feature that makes GUI fundamentally superior to PDF
+9. **Trust through transparency** — AI content clearly marked, editable, verifiable
