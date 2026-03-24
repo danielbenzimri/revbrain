@@ -5,7 +5,7 @@
  * → inventory table → insights panel → business context area
  */
 import { useState, useMemo } from 'react';
-import type { DomainData, AssessmentItem, SubTab, Complexity, MigrationStatus } from '../../mocks/assessment-mock-data';
+import type { DomainData, AssessmentItem, SubTab, Complexity, MigrationStatus, TriageState } from '../../mocks/assessment-mock-data';
 
 // ---------------------------------------------------------------------------
 // Stat Card
@@ -118,6 +118,13 @@ const COMPLEXITY_BADGE: Record<Complexity, string> = {
   high: 'text-red-700 bg-red-50',
 };
 
+const TRIAGE_INDICATOR: Record<TriageState, { icon: string; cls: string }> = {
+  untriaged: { icon: '○', cls: 'text-slate-300' },
+  in_scope: { icon: '✓', cls: 'text-emerald-500' },
+  excluded: { icon: '—', cls: 'text-slate-300 line-through' },
+  needs_discussion: { icon: '?', cls: 'text-amber-500' },
+};
+
 const STATUS_BADGE: Record<MigrationStatus, string> = {
   auto: 'text-emerald-700 bg-emerald-50',
   guided: 'text-amber-700 bg-amber-50',
@@ -203,8 +210,19 @@ function InventoryTable({ items, onItemClick, t }: InventoryTableProps) {
                 role="row"
               >
                 <td className="px-4 py-3">
-                  <p className="text-sm font-medium text-slate-900">{item.name}</p>
-                  <p className="text-xs text-slate-400">{item.apiName}</p>
+                  <div className="flex items-start gap-2">
+                    <span
+                      className={`mt-1 text-sm ${TRIAGE_INDICATOR[item.triageState].cls}`}
+                      title={t(`assessment.triage.${item.triageState}`)}
+                      data-testid="triage-indicator"
+                    >
+                      {TRIAGE_INDICATOR[item.triageState].icon}
+                    </span>
+                    <div>
+                      <p className={`text-sm font-medium ${item.triageState === 'excluded' ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{item.name}</p>
+                      <p className="text-xs text-slate-400">{item.apiName}</p>
+                    </div>
+                  </div>
                 </td>
                 <td className="px-4 py-3">
                   <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${COMPLEXITY_BADGE[item.complexity]}`}>

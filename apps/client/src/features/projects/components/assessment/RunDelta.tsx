@@ -49,9 +49,10 @@ export function RunSelector({ runs, currentIndex, onRunChange, t }: RunSelectorP
     <div className="relative" data-testid="run-selector">
       <button
         onClick={() => setOpen(!open)}
-        className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700"
+        className="inline-flex items-center gap-2 px-3 py-1.5 text-sm bg-violet-50 text-violet-700 hover:bg-violet-100 rounded-full font-medium transition-colors"
         aria-label="Select run"
       >
+        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
         {t('assessment.header.runInfo', { number: current.number, timeAgo: formatTimeAgo(current.completedAt) })}
         <ChevronDown size={14} />
       </button>

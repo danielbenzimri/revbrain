@@ -14,6 +14,7 @@ import OverviewTab from '../../components/assessment/OverviewTab';
 import DomainTabWrapper from '../../components/assessment/DomainTabWrapper';
 import ItemDetailPanel from '../../components/assessment/ItemDetailPanel';
 import { RunSelector } from '../../components/assessment/RunDelta';
+import ChatStub from '../../components/assessment/ChatStub';
 import type { AssessmentItem } from '../../mocks/assessment-mock-data';
 
 // ---------------------------------------------------------------------------
@@ -203,6 +204,9 @@ export default function AssessmentPage() {
           onItemClick={handleItemClick}
           t={t}
         />
+
+        {/* Chat UI Stub */}
+        <ChatStub />
 
         {/* Item Detail Slide-Over */}
         <ItemDetailPanel
