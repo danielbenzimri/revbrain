@@ -19,7 +19,8 @@ export function ProjectLayout() {
   const { id } = useParams<{ id: string }>();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { isCollapsed } = useSidebarStore();
-  useTranslation(); // Keep hook for re-render on language change
+  const { i18n } = useTranslation();
+  const isRTL = i18n.language === 'he';
 
   // Fetch project data via React Query (benefits from prefetch on hover)
   const { data: project, isLoading, error } = useProject(id);
@@ -57,7 +58,7 @@ export function ProjectLayout() {
 
   return (
     <ProjectProvider projectId={project.id} projectName={project.name}>
-      <div className="flex h-screen bg-slate-100">
+      <div className="flex h-screen bg-slate-100" dir={isRTL ? 'rtl' : 'ltr'}>
         <ProjectSidebar
           project={project}
           isOpen={isSidebarOpen}
