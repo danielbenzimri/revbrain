@@ -19,8 +19,7 @@ export function ProjectLayout() {
   const { id } = useParams<{ id: string }>();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { isCollapsed } = useSidebarStore();
-  const { i18n } = useTranslation();
-  const isRTL = i18n.language === 'he';
+  useTranslation(); // Keep hook for re-render on language change
 
   // Fetch project data via React Query (benefits from prefetch on hover)
   const { data: project, isLoading, error } = useProject(id);
@@ -58,7 +57,7 @@ export function ProjectLayout() {
 
   return (
     <ProjectProvider projectId={project.id} projectName={project.name}>
-      <div className="flex h-screen bg-slate-100" dir={isRTL ? 'rtl' : 'ltr'}>
+      <div className="flex h-screen bg-slate-100">
         <ProjectSidebar
           project={project}
           isOpen={isSidebarOpen}
@@ -67,10 +66,8 @@ export function ProjectLayout() {
 
         {/* Main Content Area with Header */}
         <div
-          className={`flex flex-col flex-1 overflow-hidden transition-all duration-300 ${
-            isRTL
-              ? `mr-0 ${isCollapsed ? 'md:mr-16' : 'md:mr-64'}`
-              : `ml-0 ${isCollapsed ? 'md:ml-16' : 'md:ml-64'}`
+          className={`flex flex-col flex-1 overflow-hidden transition-all duration-300 ms-0 ${
+            isCollapsed ? 'md:ms-16' : 'md:ms-64'
           }`}
         >
           <Header />
@@ -88,7 +85,7 @@ export function ProjectLayout() {
         {/* Mobile Hamburger Button */}
         <button
           onClick={() => setIsSidebarOpen(true)}
-          className={`md:hidden fixed top-4 ${isRTL ? 'right-4' : 'left-4'} z-40 p-2 bg-slate-900 text-white rounded-lg shadow-lg`}
+          className="md:hidden fixed top-4 start-4 z-40 p-2 bg-slate-900 text-white rounded-lg shadow-lg"
         >
           <svg
             width="24"

@@ -170,12 +170,11 @@ const SidebarNavItem = memo(function SidebarNavItem({
 
 const ProjectSwitcherDropdown = memo(function ProjectSwitcherDropdown({
   currentProjectId,
-  isRTL,
   onSelect,
   onClose,
 }: {
   currentProjectId: string;
-  isRTL: boolean;
+  isRTL?: boolean;
   onSelect: (projectId: string) => void;
   onClose: () => void;
 }) {
@@ -201,7 +200,7 @@ const ProjectSwitcherDropdown = memo(function ProjectSwitcherDropdown({
       ref={dropdownRef}
       className={cn(
         'absolute top-full mt-1 bg-slate-800 rounded-lg shadow-xl border border-slate-700 overflow-hidden z-50',
-        isRTL ? 'end-0' : 'start-0',
+        'start-0',
         'w-64'
       )}
     >
@@ -432,7 +431,7 @@ export function ProjectSidebar({
         className={cn(
           isCollapsed ? 'md:w-16 w-64' : 'w-64',
           'bg-gradient-to-b from-[#1e293b] to-[#0f172a] text-white flex flex-col h-screen fixed top-0 shadow-xl z-50 print:hidden overflow-hidden transition-all duration-300 ease-in-out',
-          isRTL ? 'end-0' : 'start-0',
+          'start-0',
           isOpen
             ? 'translate-x-0'
             : isRTL
