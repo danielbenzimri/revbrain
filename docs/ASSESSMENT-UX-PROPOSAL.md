@@ -80,7 +80,7 @@ The assessment should be structured as a **layer cake** — progressive disclosu
 │  → What is the migration complexity? What are the risks? │
 │  → How much effort? What approach?                       │
 ├─────────────────────────────────────────────────────────┤
-│  LAYER 1: Domain Dashboards (8 domains)                 │
+│  LAYER 1: Domain Dashboards (9 domains)                 │
 │  "Show me everything about pricing"                     │
 │  → Per-domain: stats, inventory, migration status,      │
 │    insights, drill-down tables                           │
@@ -109,7 +109,7 @@ The assessment should be structured as a **layer cake** — progressive disclosu
 
 ### The Question
 
-The assessment covers 8+ domains (Products, Pricing, Rules, Custom Code, Integrations, Amendments/Renewals, Approvals, Documents/Data). Should these be:
+The assessment covers 9 domains (Products, Pricing, Rules, Custom Code, Integrations, Amendments/Renewals, Approvals, Documents, Data & Reporting). Should these be:
 
 **Option A:** Tabs within the existing Assessment page (keeping the sidebar unchanged)
 **Option B:** Sub-pages under Assessment in the project sidebar
@@ -117,14 +117,15 @@ The assessment covers 8+ domains (Products, Pricing, Rules, Custom Code, Integra
 
 ### Recommendation: Option A — Horizontal Tabs + Vertical Sub-tabs
 
-**Why:** The project sidebar already has 10 items across 3 groups. Adding 8+ Assessment sub-items would make the sidebar scroll-heavy and dilute the project-level navigation. Instead, the Assessment page becomes a **mini-app within the workspace** with its own tab-based navigation.
+**Why:** The project sidebar already has 10 items across 3 groups. Adding 9+ Assessment sub-items would make the sidebar scroll-heavy and dilute the project-level navigation. Instead, the Assessment page becomes a **mini-app within the workspace** with its own tab-based navigation.
 
 ```
 ┌─ PROJECT SIDEBAR ─┐  ┌─────────────────────────────────────────────────┐
 │                    │  │  Assessment                        [Export ▾]   │
 │  MIGRATION         │  │                                                 │
 │  ◉ Overview        │  │  [Overview][Products][Pricing][Rules][Code]     │
-│  ○ CPQ Explorer    │  │  [Integrations][Amendments][Approvals][Data]    │
+│  ○ CPQ Explorer    │  │  [Integrations][Amendments][Approvals]         │
+│                    │  │  [Documents][Data & Reporting]                  │
 │  ● Assessment  ←── │  │                                                 │
 │  ○ Deployment      │  │  ┌─────────────────────────────────────────┐   │
 │                    │  │  │                                         │   │
@@ -161,7 +162,7 @@ This is what the VP of Revenue Ops opens. In 30 seconds, they know the migration
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │  Assessment                               Run #3 · 12m ago  │
-│  [Overview] [Products] [Pricing] ...              [Export ▾] │
+│  [Overview] [Products] [Pricing] ... [Documents] [Data & Rpt] [Export ▾] │
 ├──────────────────────────────────────────────────────────────┤
 │                                                              │
 │  MIGRATION READINESS                                         │
@@ -173,14 +174,15 @@ This is what the VP of Revenue Ops opens. In 30 seconds, they know the migration
 │                                                              │
 │  COMPLEXITY BY DOMAIN                                        │
 │  ┌───────────────────────────────────────────────────────┐   │
-│  │ Products     ██████░░░░  6/10   187 items   →         │   │
-│  │ Pricing      █████████░  9/10   243 rules   → ⚠️      │   │
-│  │ Rules        ███████░░░  7/10    89 rules   →         │   │
-│  │ Custom Code  ████████░░  8/10   112 items   → ⚠️      │   │
-│  │ Integrations ██████░░░░  6/10    11 systems →         │   │
-│  │ Amendments   ████████░░  8/10    34 flows   → ⚠️      │   │
-│  │ Approvals    █████░░░░░  5/10    18 chains  →         │   │
-│  │ Documents    ████░░░░░░  4/10     7 templ.  →         │   │
+│  │ Products     ██████░░░░  Mod.   187 items   →         │   │
+│  │ Pricing      █████████░  High   243 rules   → ⚠️      │   │
+│  │ Rules        ███████░░░  High    89 rules   →         │   │
+│  │ Custom Code  ████████░░  High   112 items   → ⚠️      │   │
+│  │ Integrations ██████░░░░  Mod.    11 systems →         │   │
+│  │ Amendments   ████████░░  High    34 flows   → ⚠️      │   │
+│  │ Approvals    █████░░░░░  Mod.    18 chains  →         │   │
+│  │ Documents    ████░░░░░░  Low      7 templ.  →         │   │
+│  │ Data & Rpt.  ███████░░░  Mod.   450K recs   →         │   │
 │  └───────────────────────────────────────────────────────┘   │
 │  (each row clickable → navigates to that domain tab)         │
 │                                                              │
@@ -205,6 +207,49 @@ This is what the VP of Revenue Ops opens. In 30 seconds, they know the migration
 └──────────────────────────────────────────────────────────────┘
 ```
 
+**Additional Overview sections (below the current layout):**
+
+```
+│                                                              │
+│  READINESS PREREQUISITES                                     │
+│  ┌──────────────────────────────────────────────────────┐    │
+│  │ ✅ Salesforce Edition: Enterprise (compatible)        │    │
+│  │ ⚠️ RCA Licenses: Not detected — required for deploy  │    │
+│  │ ✅ Org Health: API 42% · Storage 61% · Apex 28%      │    │
+│  │ ⚠️ Salesforce Billing: Detected — expands scope      │    │
+│  │ ✅ Governor Limits: No migration-blocking limits      │    │
+│  └──────────────────────────────────────────────────────┘    │
+│                                                              │
+│  MIGRATION STRATEGY SUMMARY                                  │
+│  ┌──────────────────────────────────────────────────────┐    │
+│  │ Recommended Approach: Phased (3 phases)               │    │
+│  │                                                       │    │
+│  │  Phase 1: Core (Products + Pricing)     → 8-12 wks   │    │
+│  │  Phase 2: Extensions (Rules + Code)     → 6-10 wks   │    │
+│  │  Phase 3: Integrations + Cutover        → 4-6 wks    │    │
+│  │                                                       │    │
+│  │  Key Assumptions:                                     │    │
+│  │  · Parallel run period included                       │    │
+│  │  · Inactive items excluded from scope                 │    │
+│  │  · [Edit assumptions →]                               │    │
+│  │                                                       │    │
+│  │  [Open Migration Plan tab →]                          │    │
+│  └──────────────────────────────────────────────────────┘    │
+│                                                              │
+│  ASSESSMENT COMPLETENESS                                     │
+│  ━━━━━━━━━━━━━━━━━━━░░░░░  78%                              │
+│  ✅ Org scanned (Run #3, Jan 15)                             │
+│  ✅ All domains inventoried                                   │
+│  ✅ Gap analysis generated                                    │
+│  ⬜ 23 items untriaged in Pricing                            │
+│  ⬜ Business process notes not added                          │
+│  ⬜ Effort estimation not filled in                           │
+│  ⬜ Risk mitigations not assigned                             │
+│  ⬜ Consultant sections incomplete (3 of 5 empty)            │
+│  ⬜ PDF not yet generated                                     │
+│                                                              │
+```
+
 **Design notes:**
 - Complexity heatmap bars use the same color system: low (emerald→amber→red) high
 - Each heatmap row is clickable — navigates to that domain's tab
@@ -213,6 +258,9 @@ This is what the VP of Revenue Ops opens. In 30 seconds, they know the migration
 - No single "complexity score" number — auditors rejected this (no benchmark data to make it meaningful). The 4-category breakdown IS the honest representation.
 - Key findings use severity icons with colors: ✅ emerald, ⚠️ amber, 🔴 red
 - "Run #3 · 12m ago" dropdown allows switching between historical assessment snapshots
+- Readiness Prerequisites: auto-detected from org metadata scan. License and Billing items are go/no-go flags — use amber/red for missing/detected items that expand scope.
+- Migration Strategy Summary: initially auto-suggested based on scan complexity, consultant edits. Links to the existing Migration Plan tab for detailed phase planning.
+- Assessment Completeness: tracks both automated steps (scan, inventory, gap analysis) and consultant steps (triage, business context, effort estimation, consultant sections). Keeps the consultant inside the tool instead of tracking progress elsewhere.
 
 ### 5.2 Domain Dashboard (Example: Pricing)
 
@@ -341,18 +389,90 @@ When the user clicks a specific item (e.g., "Enterprise Volume Discount" price r
 
 ### 5.4 The Domains
 
-Each domain tab follows the same pattern: stats strip → migration status bar → inventory table → insights. The domains are:
+Each domain tab follows the same pattern: stats strip → migration status bar → inventory table → insights → business context area. Domains with significant sub-areas use **vertical sub-tabs** within the tab content area.
 
-| Tab | What It Covers | Key Metrics |
-|---|---|---|
-| **Products** | Product catalog, bundles, features, options, configuration attributes | Product count, bundle depth, option complexity |
-| **Pricing** | Price rules, discount schedules, price books, calculator plugins, contracted pricing | Rule count, complexity distribution, Apex dependencies |
-| **Rules** | Product rules, validation rules, summary variables, lookup queries | Rule count by type (validation/alert/selection/filter) |
-| **Code** | Apex classes, triggers, LWC/Aura, QCP (JavaScript), Flows | LOC count, CPQ dependency %, code complexity |
-| **Integrations** | External systems connected to CPQ, middleware, data flows | System count, integration direction, risk level |
-| **Amendments** | Amendment behavior, renewal models, subscription management | Process count, customization depth |
-| **Approvals** | Approval chains, advanced approvals, smart approvals | Chain count, approval variables, custom logic |
-| **Data** | Data volumes, historical data, data quality, migration requirements | Record counts, data quality score |
+```
+┌──────────────────────────────────────────────────────────────┐
+│  Assessment > Products                         [Export CSV]  │
+│  [Overview] [●Products] [Pricing] [Rules] ...                │
+├──────────────────────────────────────────────────────────────┤
+│  ┌──────────────────┐ ┌────────────────────────────────────┐ │
+│  │ Sub-tabs:        │ │                                    │ │
+│  │ ● Catalog        │ │  Sub-tab content area              │ │
+│  │ ○ Guided Selling │ │  (stats, table, insights)          │ │
+│  │ ○ QLE Customs.   │ │                                    │ │
+│  │ ○ Twin Fields    │ │                                    │ │
+│  └──────────────────┘ └────────────────────────────────────┘ │
+└──────────────────────────────────────────────────────────────┘
+```
+
+Sub-tabs appear as a vertical pill list on the leading side of the tab content. Domains without sub-areas show content directly (no sub-tab sidebar). Sub-tab selection persists in URL: `?tab=products&sub=guided-selling`.
+
+#### Domain Tab Reference
+
+| Tab | Sub-tabs | What It Covers | Key Metrics |
+|---|---|---|---|
+| **Products** | Catalog, Guided Selling, QLE Customizations, Twin Fields | Product catalog, bundles, features, options, configuration attributes, guided selling flows, QLE customizations, twin field mappings | Product count, bundle depth, option complexity, guided flow count, QLE custom components, twin field pairs |
+| **Pricing** | Price Rules, Contracted Pricing, Multi-Currency | Price rules, discount schedules, price books, calculator plugins, contracted/special pricing, multi-currency configuration | Rule count, complexity distribution, Apex dependencies, contracted price records, active currencies |
+| **Rules** | *(no sub-tabs)* | Product rules, validation rules, summary variables, lookup queries | Rule count by type (validation/alert/selection/filter) |
+| **Code** | Code Inventory, Security & Permissions | Apex classes, triggers, LWC/Aura, QCP (JavaScript), Flows, permission sets referencing CPQ, sharing rules, FLS configurations | LOC count, CPQ dependency %, code complexity, permission set count, sharing rule count |
+| **Integrations** | External Systems, Package Dependencies, Experience Cloud, Salesforce Billing | External systems connected to CPQ, middleware, data flows, managed packages referencing CPQ objects, Experience Cloud CPQ components, Salesforce Billing objects | System count, integration direction, risk level, package count, billing object count |
+| **Amendments** | Amendments, Renewals, Subscription Management | Amendment behavior, renewal models, co-termination, proration, MDQ, evergreen vs end-dated, uplift/escalation | Process count, customization depth, MDQ product count, subscription model type |
+| **Approvals** | *(no sub-tabs)* | Approval chains, advanced approvals, smart approvals | Chain count, approval variables, custom logic |
+| **Documents** | Templates, Merge Fields, Output Formats | Quote templates, template sections, conditional logic, merge field mapping (CPQ → RCA DocGen), output formats, multi-language handling | Template count, section count, merge field count, conditional rules |
+| **Data & Reporting** | Data Volumes, Reports & Dashboards, Org Health, Licenses & Edition | Record counts, data quality, historical data analysis, reports/dashboards referencing CPQ objects, governor limits, storage, current edition, license inventory | Record counts, data quality score, report count, dashboard count, limits usage %, license types |
+
+#### New Sub-tab Details
+
+**Products → Guided Selling Flows:**
+Inventory of wizard-like flows that auto-configure product selections for sales reps. Must be rebuilt in OmniStudio (FlexCards/OmniScripts) for RCA. Each flow shows: name, step count, input fields, output product mappings, conditional branching, and RCA equivalent approach.
+
+**Products → QLE Customizations:**
+The Quote Line Editor is the primary CPQ UI for sales reps. Many orgs customize it extensively: custom columns, buttons, JavaScript, lookup fields, page layout overrides, QLE plugins. All break in RCA (completely different configuration UI). Each customization shows: type, description, affected UI area, and migration approach.
+
+**Products → Twin Fields:**
+CPQ twin fields automatically sync values between related objects (e.g., Quote ↔ Opportunity, Quote Line ↔ Order Product). These are configured via CPQ settings, not visible in Apex/Flow. Missing a twin field causes post-migration data inconsistencies. Each pair shows: source object.field, target object.field, sync direction, and RCA recreation approach.
+
+**Pricing → Contracted Pricing:**
+Customer-specific pricing agreements (contracted prices, special prices). Shows: number of contracted price records, accounts with special pricing, expiration handling, override logic, and RCA mapping (which works differently).
+
+**Pricing → Multi-Currency:**
+Active currencies, exchange rate management approach, dated exchange rates usage, and impact on pricing/templates/reporting/integrations. Flags RCA multi-currency compatibility issues.
+
+**Code → Security & Permissions:**
+Permission sets referencing CPQ objects, sharing rules on CPQ objects, field-level security configurations, profile-level access, record type assignments. These must be mapped to RCA's object model. Feeds effort estimate for "security model migration."
+
+**Integrations → Package Dependencies:**
+Managed packages installed alongside CPQ (DocuSign, Conga, DealHub, LeanData, nCino, etc.) that reference CPQ objects. Shows: package name, version, CPQ object references, and impact assessment for post-migration.
+
+**Integrations → Experience Cloud:**
+Detection of CPQ components exposed through Experience Cloud (partner quoting, self-service). Shows: site name, exposed CPQ components, guest user access, partner-specific pricing/product visibility rules.
+
+**Integrations → Salesforce Billing:**
+If detected, inventories Salesforce Billing objects, billing-specific customizations, and impact on billing pipeline post-CPQ removal. If Billing is present, this sub-tab gets prominent visual treatment (it doubles migration complexity).
+
+**Amendments → Subscription Management:**
+Granular breakdown of subscription-specific complexities:
+- **Co-termination** — how new subscriptions align to existing contract end dates
+- **Proration rules** — partial period calculation methods
+- **Evergreen vs. end-dated** — subscription model in use
+- **MDQ (Multi-Dimensional Quoting)** — products quoted across time segments (known partial-parity area, frequent blocker)
+- **Uplift/escalation** — automatic price increases on renewals
+- **Subscription term handling** — term calculation, defaults, overrides
+
+Each has a different RCA equivalent (or gap). MDQ items flagged with blocker status if detected.
+
+**Documents (full tab):**
+Quote templates are deceptively complex — often 5-8 pages in professional assessments. Template inventory with section-level detail, merge field mapping (CPQ merge fields → RCA document generation equivalents), conditional section logic, grouping behavior, multi-language handling, and per-template migration status.
+
+**Data & Reporting → Reports & Dashboards:**
+Reports and dashboards built on CPQ objects (SBQQ__Quote__c, SBQQ__QuoteLine__c, etc.) all break when CPQ is decommissioned. Shows: report count, dashboard count, folders/ownership, last run date (actively used vs. stale), and which need rebuilding on RCA objects. This is often the surprise scope that blows timelines.
+
+**Data & Reporting → Org Health:**
+Current API consumption, Apex execution time budget, storage usage, and whether the org is near governor limits that could affect migration activities (bulk data loads, deployments). Flags risks if limits are tight.
+
+**Data & Reporting → Licenses & Edition:**
+Current Salesforce edition, CPQ license count/type, whether required RCA licenses (Industry Cloud) are in place, and cost implications. This is a go/no-go consideration — if additional licenses are needed, that cost belongs in the assessment.
 
 ### 5.5 CPQ → RCA Translation Matrix
 
@@ -435,20 +555,35 @@ This is deferred from v1 but the UI should reserve space for it (collapsible rig
 
 ## 8. How This Replaces the PDF
 
-| PDF Section | RevBrain Equivalent |
-|---|---|
-| Executive Summary (5-10 pages) | Assessment Overview tab — 30-second scan |
-| Current State — Business Process (10-15 pages) | NOT automated — consultant adds via notes/annotations |
-| Current State — Technical Inventory (15-25 pages) | 8 domain tabs with auto-generated inventories |
-| RCA Target Architecture (8-12 pages) | Translation Matrix with (?) education popovers |
-| Gap Analysis (8-12 pages) | Migration status bars + per-item status in every table |
-| Risk Assessment (5-8 pages) | Top Risks + Blockers cards on Overview |
-| Migration Strategy (5-8 pages) | Migration Plan tab (user-owned phases from UX spec) |
-| Effort Estimation (5-8 pages) | NOT auto-generated (consultant fills in, per UX spec decision) |
-| Appendices (10-20 pages) | CSV exports + full inventory tables in each domain tab |
+| PDF Section | RevBrain Equivalent | Coverage |
+|---|---|---|
+| Executive Summary (5-10 pages) | Overview tab — readiness cards, heatmap, risks, blockers, prerequisites, migration strategy summary | ✅ Auto + consultant review |
+| Current State — Business Process (10-15 pages) | Business Context sections per domain tab + Consultant Workspace templates (see §12) | 🟡 Structured templates, consultant-authored |
+| Current State — Technical Inventory (15-25 pages) | 9 domain tabs with auto-generated inventories and sub-tabs | ✅ Fully automated |
+| Guided Selling / QLE / Twin Fields | Products tab sub-tabs (Guided Selling, QLE Customizations, Twin Fields) | ✅ Auto-scanned |
+| Contracted Pricing / Multi-Currency | Pricing tab sub-tabs (Contracted Pricing, Multi-Currency) | ✅ Auto-scanned |
+| Quote Templates / Document Generation | Documents tab — templates, sections, merge fields, conditional logic, output formats | ✅ Auto-scanned |
+| Subscription Management Details | Amendments tab → Subscription Management sub-tab (co-term, proration, MDQ, evergreen, uplift) | ✅ Auto-scanned + consultant context |
+| Reports & Dashboards Impact | Data & Reporting tab → Reports & Dashboards sub-tab | ✅ Auto-scanned |
+| Security / Permissions / Sharing | Code tab → Security & Permissions sub-tab | ✅ Auto-scanned |
+| Package Dependencies | Integrations tab → Package Dependencies sub-tab | ✅ Auto-scanned |
+| Experience Cloud / Portal Impact | Integrations tab → Experience Cloud sub-tab | ✅ Auto-detected |
+| Salesforce Billing | Integrations tab → Salesforce Billing sub-tab (if detected) | ✅ Auto-detected |
+| Org Health / Governor Limits | Data & Reporting tab → Org Health sub-tab + Overview prerequisites | ✅ Auto-scanned |
+| Licenses & Edition | Data & Reporting tab → Licenses & Edition sub-tab + Overview prerequisites | ✅ Auto-detected |
+| RCA Target Architecture (8-12 pages) | Translation Matrix + Consultant Workspace → Target Architecture template (see §12) | 🟡 Auto-mapping + consultant design |
+| Gap Analysis (8-12 pages) | Migration status bars + per-item status + RCA Target column in every table | ✅ Fully automated |
+| Risk Assessment (5-8 pages) | Full Risk Register (§11.5) with category, severity, affected items, mitigation, owner | ✅ Auto-detected + consultant-enriched |
+| Migration Strategy (5-8 pages) | Overview → Migration Strategy Summary + Migration Plan tab | 🟡 Auto-suggested + consultant-authored |
+| Effort Estimation (5-8 pages) | Effort Estimation table (§11.3) with auto-populated counts + consultant hours | 🟡 Auto-populated structure + consultant hours |
+| Testing Strategy (5-8 pages) | Consultant Workspace → Testing Strategy template (see §12) | 🟡 Pre-populated categories + consultant plan |
+| Change Management & Training (3-5 pages) | Consultant Workspace → Change Management template (see §12) | 🟡 User persona detection + consultant plan |
+| Performance Baseline | Data & Reporting tab → Org Health sub-tab (performance metrics section) | ✅ Auto-measured |
+| Appendices (10-20 pages) | CSV exports + full inventory tables in each domain tab | ✅ Fully automated |
 
-**What RevBrain automates:** ~60-70% (inventory, scanning, gap mapping, risk detection, insights)
-**What the consultant adds:** ~30-40% (business context, strategic recommendations, effort estimates, interview notes)
+**What RevBrain automates:** ~70-80% (inventory, scanning, gap mapping, risk detection, insights, org health, license detection, report/dashboard inventory, package dependencies, subscription details, guided selling detection)
+**What the consultant adds with structured templates:** ~15-20% (business context, target architecture, testing strategy, change management, effort hours)
+**Pure human judgment:** ~5-10% (strategic recommendations, organizational risk assessment, political considerations)
 
 ---
 
@@ -531,8 +666,9 @@ A red dot means "this domain has blocked items." No numbers — just a signal to
 │  Customer: Acme Corp                                  │
 │  Logo: [acme-logo.png]  Colors: [■ ■ ■]              │
 │                                                       │
-│  SECTIONS TO INCLUDE               Est. Pages         │
+│  SCAN-GENERATED SECTIONS           Est. Pages         │
 │  ☑ Executive Summary                  3-5             │
+│  ☑ Readiness Prerequisites            1-2             │
 │  ☑ Products Assessment                8-12            │
 │  ☑ Pricing Assessment                 10-15           │
 │  ☑ Rules Assessment                   5-8             │
@@ -540,17 +676,22 @@ A red dot means "this domain has blocked items." No numbers — just a signal to
 │  ☑ Integrations Assessment            4-6             │
 │  ☑ Amendments & Renewals              5-8             │
 │  ☑ Approvals Assessment               3-5             │
-│  ☑ Data Assessment                    3-5             │
+│  ☑ Documents Assessment               5-8             │
+│  ☑ Data & Reporting Assessment        5-8             │
 │  ☑ Gap Analysis Matrix                5-8             │
-│  ☑ Risk Summary                       3-5             │
+│  ☑ Risk Register                      5-8             │
+│  ☑ Effort Estimation Table            2-3             │
 │  ☐ Full Inventory Appendices          15-25           │
 │                                                       │
 │  CONSULTANT SECTIONS                                  │
-│  ☐ Business Process Notes    [empty — add content ↗]  │
+│  ☐ Business Process (As-Is)  [empty — add content ↗]  │
+│  ☐ Target Architecture       [empty — add content ↗]  │
+│  ☐ Data Migration Strategy   [empty — add content ↗]  │
+│  ☐ Testing Strategy          [empty — add content ↗]  │
+│  ☐ Change Mgmt & Training    [empty — add content ↗]  │
 │  ☐ Strategic Recommendations [empty — add content ↗]  │
-│  ☐ Effort Estimation         [empty — add content ↗]  │
 │                                                       │
-│  Estimated total: 65-90 pages                         │
+│  Estimated total: 80-120 pages                        │
 │                                                       │
 │  [Cancel]                      [Generate PDF]         │
 │                                                       │
@@ -779,37 +920,48 @@ Hovering (?) shows the education popover inline. The standalone Translation Matr
 
 | Task | Description | Status |
 |---|---|---|
-| A.1 | Rich assessment mock data: 8 domains with realistic inventory (Products: 187 items, Pricing: 243 rules, Rules: 89, Code: 112, Integrations: 11, Amendments: 34, Approvals: 18, Data stats). Per-item: name, complexity, migration status, dependencies, AI description, triage state. | ⬜ Not Started |
-| A.2 | Mock risk register: 23 risks with category, severity, affected items, mitigation, owner fields | ⬜ Not Started |
-| A.3 | Mock run history: 3 assessment runs with delta data between runs | ⬜ Not Started |
-| A.4 | Translation files: `en/assessment.json` + `he/assessment.json` with ALL strings for every screen | ⬜ Not Started |
+| A.1 | Rich assessment mock data: 9 domain tabs with realistic inventory (Products: 187 items, Pricing: 243 rules, Rules: 89, Code: 112, Integrations: 11, Amendments: 34, Approvals: 18, Documents: 7 templates, Data & Reporting stats). Per-item: name, complexity, migration status, dependencies, AI description, triage state. | ⬜ Not Started |
+| A.2 | Sub-tab mock data: Guided Selling (5 flows), QLE Customizations (12 items), Twin Fields (18 pairs), Contracted Pricing (340 records across 45 accounts), Multi-Currency (4 currencies), Reports & Dashboards (85 reports, 12 dashboards with last-run dates), Security & Permissions (8 permission sets, 5 sharing rules), Package Dependencies (6 packages), Experience Cloud (1 site with 4 CPQ components), Subscription Management (co-term config, 23 MDQ products, proration rules) | ⬜ Not Started |
+| A.3 | Mock org health data: API usage 42%, storage 61%, Apex governor 28%, edition Enterprise, CPQ licenses 58, RCA licenses 0 (not detected), Salesforce Billing detected with 12 custom objects | ⬜ Not Started |
+| A.4 | Mock risk register: 23 risks with category (technical/business/timeline/organizational), severity, likelihood, affected items, mitigation, owner fields | ⬜ Not Started |
+| A.5 | Mock run history: 3 assessment runs with delta data between runs | ⬜ Not Started |
+| A.6 | Mock consultant sections: 1 section with draft content (Business Process), 5 sections empty — to demonstrate both states | ⬜ Not Started |
+| A.7 | Translation files: `en/assessment.json` + `he/assessment.json` with ALL strings for every screen including sub-tabs and consultant workspace | ⬜ Not Started |
 
 ### Phase B: Assessment Shell + Overview Tab
 
 | Task | Description | Status |
 |---|---|---|
-| B.1 | Assessment page with horizontal tab bar (Overview, Products, Pricing, Rules, Code, Integrations, Amendments, Approvals, Data). URL-persisted: `?tab=pricing`. Red dot badges on tabs with blockers. | ⬜ Not Started |
+| B.1 | Assessment page with horizontal tab bar (Overview, Products, Pricing, Rules, Code, Integrations, Amendments, Approvals, Documents, Data & Reporting). URL-persisted: `?tab=pricing`. Red dot badges on tabs with blockers. | ⬜ Not Started |
 | B.2 | Overview tab: 4-category breakdown cards (Auto/Guided/Manual/Blocked with bar charts) | ⬜ Not Started |
-| B.3 | Overview tab: complexity heatmap by domain (8 rows, clickable, verbal labels Low/Moderate/High, warning icons) | ⬜ Not Started |
+| B.3 | Overview tab: complexity heatmap by domain (9 rows, clickable, verbal labels Low/Moderate/High, warning icons) | ⬜ Not Started |
 | B.4 | Overview tab: Top Risks + Blockers cards (side by side, "View all →" links) with enhanced blocker visual weight | ⬜ Not Started |
 | B.5 | Overview tab: Key Findings list with severity icons | ⬜ Not Started |
-| B.6 | Overview tab: Run selector dropdown (#3 · 12m ago) with history switching | ⬜ Not Started |
-| B.7 | Overview tab: Assessment completeness checklist (progress bar + item list) | ⬜ Not Started |
-| B.8 | Overview tab: Delta summary from last run (changes since Run #2) | ⬜ Not Started |
+| B.6 | Overview tab: Readiness Prerequisites section (edition, RCA licenses, org health, Billing detection, governor limits) | ⬜ Not Started |
+| B.7 | Overview tab: Migration Strategy Summary (recommended approach, phase breakdown, key assumptions, link to Migration Plan tab) | ⬜ Not Started |
+| B.8 | Overview tab: Consultant Sections panel with status (Empty/Draft/Complete) and PDF include toggles | ⬜ Not Started |
+| B.9 | Overview tab: Assessment completeness checklist (progress bar + automated + consultant steps) | ⬜ Not Started |
+| B.10 | Overview tab: Run selector dropdown (#3 · 12m ago) with history switching | ⬜ Not Started |
+| B.11 | Overview tab: Delta summary from last run (changes since Run #2) | ⬜ Not Started |
 
-### Phase C: Domain Tabs
+### Phase C: Domain Tabs + Sub-tabs
 
 | Task | Description | Status |
 |---|---|---|
-| C.1 | Domain tab template: reusable component (stats strip + migration status bar + inventory table + insights panel + business context area) | ⬜ Not Started |
-| C.2 | Products domain tab: filled with mock product data (187 items, bundles, features, options) | ⬜ Not Started |
-| C.3 | Pricing domain tab: filled with mock pricing data (243 rules, discount schedules, calc plugins) — the showcase domain | ⬜ Not Started |
-| C.4 | Rules domain tab: product rules, validation rules, summary variables, lookup queries | ⬜ Not Started |
-| C.5 | Code domain tab: Apex classes, triggers, QCP JavaScript, Flows — with LOC counts | ⬜ Not Started |
-| C.6 | Remaining domains (Integrations, Amendments, Approvals, Data) — using template with domain-specific data | ⬜ Not Started |
-| C.7 | Inventory table features: sortable columns, filter dropdowns (complexity, status, active), search, pagination | ⬜ Not Started |
-| C.8 | "Why?" tooltips on Gap/Manual status in tables | ⬜ Not Started |
-| C.9 | Integrated RCA Target column in domain tables with (?) education popovers | ⬜ Not Started |
+| C.1 | Domain tab template: reusable component (stats strip + migration status bar + inventory table + insights panel + business context area). Support optional vertical sub-tab sidebar. | ⬜ Not Started |
+| C.2 | Sub-tab navigation component: vertical pill list on leading side, URL-persisted (`?tab=products&sub=guided-selling`), only renders for domains with sub-areas | ⬜ Not Started |
+| C.3 | Products domain tab: Catalog (187 items, bundles, features, options) + Guided Selling sub-tab (5 flows with steps, inputs, outputs) + QLE Customizations sub-tab (12 items) + Twin Fields sub-tab (18 pairs) | ⬜ Not Started |
+| C.4 | Pricing domain tab: Price Rules (243 rules, discount schedules, calc plugins) + Contracted Pricing sub-tab (340 records, 45 accounts) + Multi-Currency sub-tab (4 currencies, exchange rate config) | ⬜ Not Started |
+| C.5 | Rules domain tab: product rules, validation rules, summary variables, lookup queries (no sub-tabs) | ⬜ Not Started |
+| C.6 | Code domain tab: Code Inventory (Apex, triggers, QCP, Flows with LOC counts) + Security & Permissions sub-tab (permission sets, sharing rules, FLS) | ⬜ Not Started |
+| C.7 | Integrations domain tab: External Systems + Package Dependencies sub-tab (6 packages) + Experience Cloud sub-tab (1 site, 4 components) + Salesforce Billing sub-tab (12 custom objects) | ⬜ Not Started |
+| C.8 | Amendments domain tab: Amendments + Renewals + Subscription Management sub-tab (co-term, proration, MDQ, evergreen, uplift) | ⬜ Not Started |
+| C.9 | Approvals domain tab: approval chains, advanced approvals, smart approvals (no sub-tabs) | ⬜ Not Started |
+| C.10 | Documents domain tab (NEW): Templates (7), template sections with conditional logic, merge field mapping, output formats, multi-language handling | ⬜ Not Started |
+| C.11 | Data & Reporting domain tab (EXPANDED): Data Volumes + Reports & Dashboards sub-tab (85 reports, 12 dashboards, last-run dates) + Org Health sub-tab (limits, storage, performance) + Licenses & Edition sub-tab | ⬜ Not Started |
+| C.12 | Inventory table features: sortable columns, filter dropdowns (complexity, status, active), search, pagination | ⬜ Not Started |
+| C.13 | "Why?" tooltips on Gap/Manual status in tables | ⬜ Not Started |
+| C.14 | Integrated RCA Target column in domain tables with (?) education popovers | ⬜ Not Started |
 
 ### Phase D: Item Detail + Triage
 
@@ -824,34 +976,307 @@ Hovering (?) shows the education popover inline. The standalone Translation Matr
 
 | Task | Description | Status |
 |---|---|---|
-| E.1 | Risk register: dedicated view with full risk table (category, severity, affected items, mitigation, owner) — editable | ⬜ Not Started |
-| E.2 | Effort estimation table: domain × category grid with auto-sums, consultant-editable hours column | ⬜ Not Started |
+| E.1 | Risk register: dedicated view with full risk table (category, severity, likelihood, affected items, mitigation, owner) — editable, with risk heat map (likelihood × impact) | ⬜ Not Started |
+| E.2 | Effort estimation table: domain × category grid with auto-sums, consultant-editable hours column, additional rows for Testing/PM/Training | ⬜ Not Started |
 | E.3 | Business context sections: collapsible rich text area per domain tab + Overview business process summary | ⬜ Not Started |
 | E.4 | Translation Matrix: cross-domain CPQ→RCA mapping table with (?) education popovers, filterable | ⬜ Not Started |
+
+### Phase E2: Consultant Workspace
+
+| Task | Description | Status |
+|---|---|---|
+| E2.1 | Consultant section editor: full-width rich text editor with structured prompt templates and auto-populated scan context (read-only context blocks) | ⬜ Not Started |
+| E2.2 | Business Process (As-Is) template: 4 prompt areas (Quote-to-Cash, Sales Motions, Pricing Governance, Stakeholder Map) with scan context | ⬜ Not Started |
+| E2.3 | Target Architecture (To-Be) template: 4 prompt areas (Product Model, Pricing Architecture, Document Generation, Integration Architecture) with auto-context from scan | ⬜ Not Started |
+| E2.4 | Data Migration Strategy template: 3 prompt areas (Historical Data Retention, Transformation Rules, Cutover Approach) with volume/distribution data | ⬜ Not Started |
+| E2.5 | Testing Strategy template: auto-populated test categories based on scan results, per-category rich text areas | ⬜ Not Started |
+| E2.6 | Change Management & Training template: auto-detected user personas + Training Plan + Communication Plan areas | ⬜ Not Started |
+| E2.7 | Strategic Recommendations template: risk register + gap analysis as foundation, free-form rich text | ⬜ Not Started |
+| E2.8 | Section status tracking: Empty → Draft → Complete progression, reflected in Overview completeness checklist | ⬜ Not Started |
 
 ### Phase F: Export + Polish
 
 | Task | Description | Status |
 |---|---|---|
-| F.1 | PDF export configuration modal: section checkboxes, branding preview, estimated pages, consultant section nudges | ⬜ Not Started |
-| F.2 | CSV export on every inventory table + mapping table | ⬜ Not Started |
-| F.3 | Share a View: "Copy Link" button producing URL with current tab + filters | ⬜ Not Started |
+| F.1 | PDF export configuration modal: section checkboxes (including all consultant sections + sub-tab content), branding preview, estimated pages, nudges for empty sections | ⬜ Not Started |
+| F.2 | CSV export on every inventory table + mapping table + sub-tab tables | ⬜ Not Started |
+| F.3 | Share a View: "Copy Link" button producing URL with current tab + sub-tab + filters | ⬜ Not Started |
 | F.4 | Accessibility: ARIA labels, keyboard navigation, screen reader support for all new components | ⬜ Not Started |
-| F.5 | RTL verification: all assessment pages render correctly in Hebrew | ⬜ Not Started |
+| F.5 | RTL verification: all assessment pages including sub-tabs render correctly in Hebrew | ⬜ Not Started |
 
 ### Phase G: Testing
 
 | Task | Description | Status |
 |---|---|---|
-| G.1 | Component tests: all new React components (vitest + React Testing Library) | ⬜ Not Started |
-| G.2 | E2E: navigate to assessment, switch tabs, verify data loads per domain | ⬜ Not Started |
+| G.1 | Component tests: all new React components including sub-tab navigation and consultant editor (vitest + React Testing Library) | ⬜ Not Started |
+| G.2 | E2E: navigate to assessment, switch tabs + sub-tabs, verify data loads per domain and sub-area | ⬜ Not Started |
 | G.3 | E2E: item detail slide-over opens, shows correct data, triage actions work | ⬜ Not Started |
-| G.4 | E2E: search/filter in inventory tables, URL state persists | ⬜ Not Started |
-| G.5 | Visual review: screenshot all tabs, iterate on design quality | ⬜ Not Started |
+| G.4 | E2E: search/filter in inventory tables, URL state persists (tab + sub-tab + filters) | ⬜ Not Started |
+| G.5 | E2E: consultant section editor — create, edit, save, status progression | ⬜ Not Started |
+| G.6 | Visual review: screenshot all tabs + sub-tabs, iterate on design quality | ⬜ Not Started |
 
 ---
 
-## 12. Terminology Consistency Note
+## 12. Consultant Workspace
+
+### The Problem
+
+Professional assessment PDFs contain 20-30 pages of purely consultant-authored content: business process documentation, target state architecture, testing strategy, change management plans. The earlier version of this proposal acknowledged these areas but provided no design for where or how consultants create this content.
+
+Without structured space inside the tool, consultants write in Google Docs separately and the "single source of truth" value proposition breaks.
+
+### Design: Structured Templates with Context
+
+The Consultant Workspace is not a separate tab — it's a **concept** that manifests in two places:
+
+**1. Per-domain Business Context sections** (designed in §11.4) — collapsible rich text areas at the top of each domain tab where consultants document domain-specific business processes and context.
+
+**2. Assessment-wide Consultant Sections** — accessible from a "Consultant Sections" area on the Overview tab and from the PDF export modal. Each section has a structured template with prompts (not a blank text box), pre-populated context from scan results, rich text editing, and an inclusion toggle for PDF export.
+
+### Consultant Sections
+
+```
+┌─ CONSULTANT SECTIONS ──────────────────────────────────────────┐
+│                                                                 │
+│  These sections require human expertise. Templates and scan     │
+│  context are provided to accelerate your work.                  │
+│                                                                 │
+│  ┌─────────────────────────────────┬──────────┬──────────────┐ │
+│  │ Section                         │ Status   │ PDF Include  │ │
+│  ├─────────────────────────────────┼──────────┼──────────────┤ │
+│  │ Business Process (As-Is)        │ ⬜ Empty  │ ☐           │ │
+│  │ Target Architecture (To-Be)     │ ⬜ Empty  │ ☐           │ │
+│  │ Data Migration Strategy         │ ⬜ Empty  │ ☐           │ │
+│  │ Testing Strategy                │ ⬜ Empty  │ ☐           │ │
+│  │ Change Management & Training    │ ⬜ Empty  │ ☐           │ │
+│  │ Strategic Recommendations       │ ⬜ Empty  │ ☐           │ │
+│  └─────────────────────────────────┴──────────┴──────────────┘ │
+│                                                                 │
+│  Click any section to open editor with template prompts.        │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+Status progression: ⬜ Empty → ✏️ Draft → ✅ Complete. Status is shown in the Assessment Completeness checklist on Overview.
+
+### Section Templates
+
+Each section opens a full-width editor with structured prompts and auto-populated context. The consultant fills in the human-judgment parts while the tool provides the data foundation.
+
+**Business Process (As-Is):**
+```
+┌─ BUSINESS PROCESS DOCUMENTATION ────────────────────────────┐
+│                                                              │
+│  QUOTE-TO-CASH PROCESS                                       │
+│  Template prompt: "Describe the end-to-end process from      │
+│  opportunity creation through quote generation, approval,     │
+│  order, and invoicing."                                      │
+│  [Rich text editor area...]                                  │
+│                                                              │
+│  SALES MOTIONS                                               │
+│  Template prompt: "Describe the different sales motions      │
+│  (new business, renewal, amendment, upsell). How does each   │
+│  flow through CPQ?"                                          │
+│  Context: Your org has 34 amendment flows and 3 renewal      │
+│  models detected.                                            │
+│  [Rich text editor area...]                                  │
+│                                                              │
+│  PRICING GOVERNANCE                                          │
+│  Template prompt: "Describe the discount authority matrix,   │
+│  deal desk governance, and pricing approval routing."        │
+│  Context: 18 approval chains detected, 3 use custom logic.  │
+│  [Rich text editor area...]                                  │
+│                                                              │
+│  STAKEHOLDER MAP                                             │
+│  Template prompt: "Who are the key stakeholders affected     │
+│  by this migration? (Sales ops, deal desk, finance, IT)"     │
+│  [Rich text editor area...]                                  │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+```
+
+**Target Architecture (To-Be):**
+```
+┌─ TARGET STATE ARCHITECTURE ─────────────────────────────────┐
+│                                                              │
+│  PRODUCT MODEL DESIGN                                        │
+│  Auto-context: "Your org has 187 products including 23      │
+│  bundles with avg. 8 options. 82% map to Product Selling    │
+│  Models. 4 bundles have nested depth > 3."                  │
+│  Template prompt: "Describe the proposed Product Selling     │
+│  Model structure in RCA."                                    │
+│  [Rich text editor area...]                                  │
+│                                                              │
+│  PRICING ARCHITECTURE                                        │
+│  Auto-context: "243 price rules, 3 calculator plugins       │
+│  (4,200 LOC). 34% auto-mappable to Pricing Procedures."     │
+│  Template prompt: "Describe the proposed Pricing Procedure   │
+│  design pattern for RCA."                                    │
+│  [Rich text editor area...]                                  │
+│                                                              │
+│  DOCUMENT GENERATION ARCHITECTURE                            │
+│  Auto-context: "7 quote templates, 42 merge fields, 12     │
+│  conditional sections."                                      │
+│  Template prompt: "Describe the proposed OmniStudio DocGen  │
+│  approach."                                                  │
+│  [Rich text editor area...]                                  │
+│                                                              │
+│  INTEGRATION ARCHITECTURE                                    │
+│  Auto-context: "11 external systems, 3 middleware layers.   │
+│  12 integrations reference CPQ objects directly."            │
+│  Template prompt: "Describe the integration refactoring     │
+│  approach post-migration."                                   │
+│  [Rich text editor area...]                                  │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+```
+
+**Data Migration Strategy:**
+```
+┌─ DATA MIGRATION STRATEGY ───────────────────────────────────┐
+│                                                              │
+│  HISTORICAL DATA RETENTION                                   │
+│  Auto-context: "450,000 historical quotes. 89% older than   │
+│  2 years. 12,000 in 'Draft' status. 3,200 active            │
+│  subscriptions."                                             │
+│  Template prompt: "Define retention policy — migrate all,    │
+│  last N years, or active only?"                              │
+│  [Rich text editor area...]                                  │
+│                                                              │
+│  DATA TRANSFORMATION RULES                                   │
+│  Auto-context: "47 picklist fields on CPQ objects. 12 have  │
+│  values that don't exist in RCA equivalents."                │
+│  Template prompt: "Document field value mappings, picklist   │
+│  value changes, and record type migrations."                 │
+│  [Rich text editor area...]                                  │
+│                                                              │
+│  CUTOVER APPROACH                                            │
+│  Template prompt: "Define the cutover approach: big bang     │
+│  vs. phased? How are in-flight quotes handled during         │
+│  transition? Is a parallel run period needed?"               │
+│  [Rich text editor area...]                                  │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+```
+
+**Testing Strategy:**
+```
+┌─ TESTING STRATEGY ──────────────────────────────────────────┐
+│                                                              │
+│  Auto-populated test categories based on scan results:       │
+│                                                              │
+│  ☑ Unit Testing — 112 custom code items to validate          │
+│  ☑ Integration Testing — 11 external systems                 │
+│  ☑ Pricing Validation — 243 rules to verify output parity   │
+│  ☑ Document Generation — 7 templates to validate             │
+│  ☑ Approval Routing — 18 chains to verify                   │
+│  ☑ Data Migration Validation — record count reconciliation   │
+│  ☑ UAT — user acceptance for [consultant defines scope]      │
+│  ☑ Performance Testing — baseline metrics available          │
+│  ☐ Regression Testing — [consultant defines scope]           │
+│                                                              │
+│  Template prompt: "For each category, describe the testing   │
+│  approach, responsible team, estimated effort, and success   │
+│  criteria."                                                  │
+│  [Rich text editor area per category...]                     │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+```
+
+**Change Management & Training:**
+```
+┌─ CHANGE MANAGEMENT & TRAINING ──────────────────────────────┐
+│                                                              │
+│  USER IMPACT ASSESSMENT                                      │
+│  Auto-context: "Detected CPQ user personas: 45 Sales Rep    │
+│  profiles, 8 Sales Ops profiles, 3 Deal Desk profiles,      │
+│  2 Admin profiles with CPQ access."                          │
+│  Template prompt: "Describe impact on each user group.       │
+│  RCA has a fundamentally different UI than CPQ — all users   │
+│  need retraining."                                           │
+│  [Rich text editor area...]                                  │
+│                                                              │
+│  TRAINING PLAN                                               │
+│  Template prompt: "Who needs training, on what, how much,    │
+│  and in what format? (classroom, self-paced, sandbox)"       │
+│  [Rich text editor area...]                                  │
+│                                                              │
+│  COMMUNICATION PLAN                                          │
+│  Template prompt: "How and when will affected users be       │
+│  informed about the migration? Key milestones to             │
+│  communicate?"                                               │
+│  [Rich text editor area...]                                  │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+```
+
+### Design Notes
+
+- Templates use the same `bg-violet-50` background as AI-generated content (they're AI-assisted starting points)
+- Auto-context blocks are read-only, pulled live from the latest scan data
+- Rich text editor supports markdown, tables, and image upload (for process flow diagrams)
+- Each section has a "Last edited by @name · date" footer
+- Sections included in PDF export render as full pages with appropriate formatting
+- Empty sections show a nudge in the PDF export modal: "empty — add content ↗"
+
+---
+
+## 13. Coverage Analysis
+
+### What the scanner should auto-detect (add to existing domain tabs)
+
+These 8 areas are metadata-scannable and should be added as sub-sections within existing domain tabs:
+
+| Area | Where It Lives | Detection Method |
+|---|---|---|
+| Guided Selling Flows | Products → Guided Selling | OmniStudio/CPQ guided selling metadata |
+| QLE Customizations | Products → QLE Customizations | QLE plugin configs, custom JS, page layouts |
+| Twin Fields | Products → Twin Fields | CPQ twin field setting records |
+| Contracted Pricing | Pricing → Contracted Pricing | SBQQ__ContractedPrice__c records |
+| Multi-Currency Details | Pricing → Multi-Currency | CurrencyType metadata, dated exchange rates |
+| Reports & Dashboards | Data & Reporting → Reports & Dashboards | Report/Dashboard metadata referencing SBQQ objects |
+| Security / Permissions | Code → Security & Permissions | PermissionSet/Profile metadata referencing CPQ objects |
+| Package Dependencies | Integrations → Package Dependencies | InstalledPackage metadata + cross-reference to CPQ objects |
+
+### What is partially scannable (tool detects, consultant interprets)
+
+| Area | What Tool Auto-Detects | What Consultant Adds |
+|---|---|---|
+| Subscription Management | Co-term settings, MDQ usage, proration config | Business process context, edge cases |
+| Experience Cloud / Portal | CPQ components in Experience sites | User journey impact, partner workflow |
+| Salesforce Billing | Billing objects and customizations | Billing workflow impact, scope decision |
+| Org Health / Governor Limits | Limits API data, current usage | Risk assessment for migration activities |
+| Performance Baseline | Page load times, calculation times | Acceptability thresholds, user expectations |
+
+### What is purely consultant-authored (tool provides structure)
+
+| Area | How Tool Helps |
+|---|---|
+| Business Process (As-Is) | Structured prompts per domain + scan context |
+| Target State Architecture | Auto-suggested starting point from scan + structured templates |
+| Data Migration Strategy | Volume/distribution data pre-populated + retention/cutover templates |
+| Testing Strategy | Pre-populated test categories based on scan results |
+| Change Management & Training | User persona detection + structured template |
+| Strategic Recommendations | Risk register + gap analysis as foundation |
+
+### Coverage Summary
+
+| Dimension | Professional PDF | RevBrain (with this proposal) |
+|---|---|---|
+| Technical inventory depth | 100% | ~95% (8 scannable areas added) |
+| Business process coverage | 100% | ~55% (structured templates, consultant writes) |
+| Gap analysis completeness | 100% | ~90% (sub-tab expansion + RCA column) |
+| Risk assessment depth | 100% | ~80% (full risk register + auto-detection) |
+| Migration strategy & planning | 100% | ~70% (auto-suggested + consultant-authored) |
+| Effort estimation | 100% | ~60% (auto-populated counts + consultant hours) |
+| Target state architecture | 100% | ~50% (auto-context + consultant design) |
+| Appendices & evidence | 100% | 100% (CSV exports + full inventory tables) |
+
+**Overall: ~80-85% of professional PDF content**, with the remaining 15-20% being genuinely human-judgment content that no tool should try to automate. That coverage at dramatically lower effort (hours instead of weeks) is the value proposition.
+
+---
+
+## 14. Terminology Consistency Note
 
 Two dimensions must be clearly distinguished everywhere:
 
@@ -864,7 +1289,7 @@ These are related but different. A high-complexity item might be Auto-mappable (
 
 ---
 
-## 13. Updated Design Principles
+## 15. Updated Design Principles
 
 1. **Progressive disclosure** — executive summary first, drill down to raw code last
 2. **Interactive over static** — filter, sort, search, click through. A PDF is read; this is explored.
@@ -872,6 +1297,422 @@ These are related but different. A high-complexity item might be Auto-mappable (
 4. **Insights over data** — auto-generated observations save consultants from pattern-spotting
 5. **Consultant workflow, not just viewer** — triage, notes, effort estimates, branded export
 6. **Working artifact, not one-time scan** — triage states, business context, effort estimation make it a living document
-7. **Same design language** — rounded-2xl cards, no borders, emerald/amber/red/violet tokens, RTL-safe
-8. **Dependency visualization** — the feature that makes GUI fundamentally superior to PDF
-9. **Trust through transparency** — AI content clearly marked, editable, verifiable
+7. **Structured guidance for human judgment** — templates with prompts and auto-context, not blank text boxes. Consultants write faster when they're filling in structure, not staring at empty pages.
+8. **Complete coverage** — every section of a professional assessment PDF has a home in the tool, whether auto-generated, consultant-authored, or hybrid
+9. **Same design language** — rounded-2xl cards, no borders, emerald/amber/red/violet tokens, RTL-safe
+10. **Dependency visualization** — the feature that makes GUI fundamentally superior to PDF
+11. **Trust through transparency** — AI content clearly marked, editable, verifiable
+
+---
+
+## 16. Implementation Progress
+
+> **Goal:** Build a premium assessment demo on the Q1 Migration mock project that showcases how RevBrain's interactive workspace is superior to a 100-page PDF. All mock-mode, following existing patterns (client-side mock data, `useTranslation()`, RTL-safe, co-located tests).
+>
+> **Target project:** Q1 Migration (`MOCK_IDS.PROJECT_Q1_MIGRATION`) — mid-journey project with source connected and data extracted.
+>
+> **Workflow per task:** implement → write co-located tests → `pnpm lint && pnpm test && pnpm build` → commit → push → verify CI.
+
+### Task 1: Assessment mock data types and seed data
+
+**Objective:** Create rich, realistic assessment mock data for the Q1 Migration project representing a complex enterprise CPQ org (694 items across 9 domains).
+
+**What to build:**
+- `apps/client/src/features/projects/mocks/assessment-mock-data.ts` — TypeScript types + mock data
+- Types: `AssessmentDomain`, `AssessmentItem`, `AssessmentRisk`, `AssessmentRun`, `DomainStats`, `MigrationStatus` (`auto` | `guided` | `manual` | `blocked`), `Complexity` (`low` | `moderate` | `high`), `TriageState` (`untriaged` | `in_scope` | `excluded` | `needs_discussion`), `SubTab`, plus per-domain sub-tab types
+- Data: 9 domains with realistic item counts from proposal (Products: 187, Pricing: 243, Rules: 89, Code: 112, Integrations: 11, Amendments: 34, Approvals: 18, Documents: 7, Data: volume stats). Per-item: id, name, apiName, complexity, migrationStatus, triageState, rcaTarget, dependencies array, aiDescription, whyStatus tooltip. Only 5-8 representative items per domain (not all 694 — enough for UI fidelity).
+- 23 risks with category/severity/affected items/mitigation/owner
+- 3 run history entries with delta data
+- Sub-tab data: Guided Selling (3 flows), QLE (4 items), Twin Fields (5 pairs), Contracted Pricing (summary stats), Multi-Currency (3 currencies), Reports (12 reports), Security (3 permission sets), Package Dependencies (4 packages), Subscription Management (co-term/MDQ config)
+- Org health data: API %, storage %, limits, edition, licenses
+- Assessment completeness checklist items
+- Export function: `getMockAssessmentData(projectId: string)` — returns data for Q1 Migration, null for others
+
+**Tests** (`assessment-mock-data.test.ts`):
+- All domain counts sum to expected totals
+- Every item has required fields (id, name, migrationStatus, complexity)
+- Risk register has 23 entries with valid categories
+- Run history is chronologically ordered
+- Function returns null for non-Q1 projects
+- No duplicate IDs across all domains
+
+| Status |
+|---|
+| ⬜ Not Started |
+
+---
+
+### Task 2: Assessment translation strings (en + he)
+
+**Objective:** Add all assessment UI strings in both languages, following existing locale patterns.
+
+**What to build:**
+- `apps/client/src/locales/en/assessment.json` — English strings
+- `apps/client/src/locales/he/assessment.json` — Hebrew strings
+- Register in i18n config (add to resource imports)
+
+**Key string groups:**
+- Tab names: overview, products, pricing, rules, code, integrations, amendments, approvals, documents, dataReporting
+- Overview sections: migrationReadiness (auto/guided/manual/blocked labels), complexityByDomain, topRisks, blockers, keyFindings, prerequisites, migrationStrategy, completeness
+- Domain template: stats labels, migrationStatus bar labels, inventory table headers (name, complexity, status, rcaTarget), insights heading, businessContext heading
+- Sub-tab names per domain
+- Item detail: statusBlock, aiDescription (sparkle label, edit, verify), cpqRcaMapping, dependencies, recommendation, consultantNotes
+- Risk register: column headers, category labels, severity labels
+- Effort estimation: domain column, items, auto, guided, manual, estHours, subtotal, grandTotal
+- Triage states: untriaged, inScope, excluded, needsDiscussion, overridden
+- Complexity labels: low, moderate, high
+- Migration status: auto, guided, manual, blocked (with descriptions)
+- Export: generateReport, exportCsv, copyLink
+- Empty states per section
+
+**Tests** (`assessment-translations.test.ts` in client):
+- Every key in en/assessment.json exists in he/assessment.json
+- Every key in he/assessment.json exists in en/assessment.json
+- No empty string values
+- Tab name keys match domain list
+- Hebrew strings are non-empty and different from English
+
+| Status |
+|---|
+| ⬜ Not Started |
+
+---
+
+### Task 3: Assessment page shell with tab navigation
+
+**Objective:** Replace the current placeholder AssessmentPage with a tabbed workspace shell. URL-persisted tabs, empty state preserved for projects without assessment data.
+
+**What to build:**
+- Rewrite `AssessmentPage.tsx` with horizontal tab bar
+- Tabs: Overview, Products, Pricing, Rules, Code, Integrations, Amendments, Approvals, Documents, Data & Reporting
+- URL persistence: `?tab=pricing` via `useSearchParams`
+- Default to Overview tab
+- Red dot badge on tabs whose domains have blocked items
+- Header: "Assessment" title + run info ("Run #3 · 12m ago") + Export dropdown placeholder
+- Preserve empty state (no assessment data) using existing translation keys
+- Each tab renders a placeholder `<div>` with tab name (content built in later tasks)
+- Use `useTranslation('assessment')` for all strings
+
+**Tests** (`AssessmentPage.test.tsx`):
+- Renders empty state when no assessment data
+- Renders tab bar when assessment data exists
+- All 10 tabs visible
+- Default tab is overview
+- Clicking a tab updates URL searchParam
+- Tab with blocked items shows red dot indicator
+- Header shows run info from mock data
+
+| Status |
+|---|
+| ⬜ Not Started |
+
+---
+
+### Task 4: Overview tab — migration readiness + complexity heatmap
+
+**Objective:** Build the top half of the Overview tab: the 4 stat cards and domain complexity heatmap.
+
+**What to build:**
+- `apps/client/src/features/projects/components/assessment/OverviewTab.tsx`
+- Migration Readiness section: 4 cards (Auto/Guided/Manual/Blocked) with counts, percentage bars, color-coded dots (emerald/amber/amber/red)
+- Stacked horizontal bar showing proportions
+- Complexity by Domain section: 9 rows, each with domain name, complexity bar (colored by level), verbal label (Low/Moderate/High), item count, arrow, warning icon if blockers exist
+- Rows clickable — call `onDomainClick(tabName)` to switch tabs
+- All strings from assessment translations
+
+**Tests** (`OverviewTab.test.tsx`):
+- Renders 4 stat cards with correct counts from mock data
+- Renders 9 domain rows in heatmap
+- Domain rows show correct complexity labels
+- Warning icon appears on domains with blocked items
+- Clicking a domain row calls onDomainClick with correct tab name
+- Stacked bar widths sum to 100%
+
+| Status |
+|---|
+| ⬜ Not Started |
+
+---
+
+### Task 5: Overview tab — risks, blockers, key findings
+
+**Objective:** Build the middle section of the Overview tab: risk/blocker cards and key findings list.
+
+**What to build:**
+- `apps/client/src/features/projects/components/assessment/RiskBlockerCards.tsx`
+- Top Risks card: shows top 3 risks with severity icon + description, "View all N risks →" link
+- Blockers card: shows blocked items with 🚫 icon, "View all N blockers →" link. Red-tinted border for visual weight.
+- Key Findings list: auto-generated observations with severity icons (✅ emerald, ⚠️ amber, 🔴 red)
+- Side-by-side layout (risks | blockers), findings below
+
+**Tests** (`RiskBlockerCards.test.tsx`):
+- Renders top 3 risks from mock data
+- Renders blocked items
+- "View all" links show correct counts
+- Blocker card has red visual treatment
+- Key findings show correct severity icons
+- Correct number of findings rendered
+
+| Status |
+|---|
+| ⬜ Not Started |
+
+---
+
+### Task 6: Overview tab — prerequisites + completeness + strategy
+
+**Objective:** Build the bottom section of the Overview tab: readiness prerequisites, migration strategy summary, and assessment completeness checklist.
+
+**What to build:**
+- `apps/client/src/features/projects/components/assessment/OverviewBottomSections.tsx`
+- Readiness Prerequisites: checklist items (edition ✅, RCA licenses ⚠️, org health ✅, billing detection ⚠️, governor limits ✅) from mock org health data
+- Migration Strategy Summary: recommended approach (Phased), phase breakdown with week ranges, key assumptions list
+- Assessment Completeness: progress bar (%) + checklist of done/pending items (scan ✅, inventory ✅, gap analysis ✅, triage ⬜, business context ⬜, effort estimation ⬜, consultant sections ⬜, PDF ⬜)
+- Wire all three into OverviewTab
+
+**Tests** (`OverviewBottomSections.test.tsx`):
+- Prerequisites render all items with correct status icons
+- Strategy shows phase count and approach
+- Completeness progress bar percentage matches completed/total items
+- Completed items show ✅, pending show ⬜
+
+| Status |
+|---|
+| ⬜ Not Started |
+
+---
+
+### Task 7: Domain tab template component
+
+**Objective:** Build the reusable domain tab template that all 9 domain tabs share: stats strip, migration status bar, inventory table, insights panel, business context area.
+
+**What to build:**
+- `apps/client/src/features/projects/components/assessment/DomainTab.tsx` — accepts domain data, optional sub-tabs config
+- Stats strip: 3-4 stat cards specific to domain (total items, high complexity count, with Apex count, etc.) — configurable via props
+- Migration status bar: horizontal stacked bar (Auto %/Guided %/Manual %) with legend
+- Inventory table: columns (Name, Complexity badge, Migration Status badge + "why?" tooltip, RCA Target with (?) popover, arrow). Sortable headers, filter dropdowns (complexity, status), search input, pagination (10 per page)
+- Insights panel: list of auto-generated observations with 💡 icon
+- Business context area: collapsible section with placeholder text area, "Last edited by..." footer
+- Sub-tab sidebar: if domain has sub-tabs, render vertical pill list on leading side with sub-tab content area
+- Row click emits `onItemClick(itemId)` for slide-over (wired later)
+
+**Tests** (`DomainTab.test.tsx`):
+- Renders stats strip with provided stat cards
+- Migration status bar shows correct percentages
+- Inventory table renders items with correct badges
+- Search filters table rows by name
+- Complexity filter reduces visible rows
+- Sort by complexity reorders rows
+- Pagination shows correct page of items
+- "Why?" tooltip appears on hover for Gap/Manual items
+- Sub-tab sidebar renders when sub-tabs provided
+- Business context section is collapsible
+
+| Status |
+|---|
+| ⬜ Not Started |
+
+---
+
+### Task 8: Products + Pricing domain tabs (showcase domains)
+
+**Objective:** Wire the domain template to Products and Pricing tabs with full mock data and sub-tabs. These are the two showcase domains with the richest data.
+
+**What to build:**
+- `apps/client/src/features/projects/components/assessment/domains/ProductsTab.tsx`
+  - Sub-tabs: Catalog (default), Guided Selling, QLE Customizations, Twin Fields
+  - Stats: 187 products, 23 bundles, 4 guided flows, 12 QLE customs
+  - 5-8 representative product items in table
+  - Sub-tab content shows sub-tab-specific items
+- `apps/client/src/features/projects/components/assessment/domains/PricingTab.tsx`
+  - Sub-tabs: Price Rules (default), Contracted Pricing, Multi-Currency
+  - Stats: 243 rules, 47 high complexity, 12 with Apex, 3 calc plugins
+  - 5-8 representative pricing items in table
+  - Contracted Pricing sub-tab: summary cards (340 records, 45 accounts, expiration stats)
+  - Multi-Currency sub-tab: currency list with exchange rate info
+- Wire both into AssessmentPage tab content
+
+**Tests** (`ProductsTab.test.tsx`, `PricingTab.test.tsx`):
+- Products renders 4 sub-tabs, default to Catalog
+- Products stats show correct counts
+- Pricing renders 3 sub-tabs, default to Price Rules
+- Pricing stats show correct counts
+- Sub-tab click switches content
+- URL updates with sub-tab: `?tab=products&sub=guided-selling`
+- Items render in inventory table
+
+| Status |
+|---|
+| ⬜ Not Started |
+
+---
+
+### Task 9: Remaining 7 domain tabs
+
+**Objective:** Wire the domain template to all remaining domain tabs with mock data and sub-tabs where applicable.
+
+**What to build:**
+- `domains/RulesTab.tsx` — no sub-tabs, 89 rules, 4 types
+- `domains/CodeTab.tsx` — sub-tabs: Code Inventory, Security & Permissions
+- `domains/IntegrationsTab.tsx` — sub-tabs: External Systems, Package Dependencies, Experience Cloud, Salesforce Billing
+- `domains/AmendmentsTab.tsx` — sub-tabs: Amendments, Renewals, Subscription Management
+- `domains/ApprovalsTab.tsx` — no sub-tabs, 18 chains
+- `domains/DocumentsTab.tsx` — no sub-tabs, 7 templates with sections
+- `domains/DataReportingTab.tsx` — sub-tabs: Data Volumes, Reports & Dashboards, Org Health, Licenses & Edition
+- Wire all into AssessmentPage tab content
+
+**Tests** (`DomainTabs.test.tsx` — shared test file):
+- Each of the 7 tabs renders without errors
+- Tabs with sub-tabs show correct sub-tab count
+- Data volumes shows record counts
+- Reports sub-tab shows report/dashboard counts
+- Org Health shows limits percentages
+- Code tab shows LOC counts
+- Integrations shows system count
+
+| Status |
+|---|
+| ⬜ Not Started |
+
+---
+
+### Task 10: Item detail slide-over panel
+
+**Objective:** Build the slide-over that opens when clicking an item in any inventory table. Shows full item detail with CPQ→RCA mapping.
+
+**What to build:**
+- `apps/client/src/features/projects/components/assessment/ItemDetailPanel.tsx`
+- Uses existing `Sheet` component from `@/components/ui/sheet`
+- Sections: Status block (complexity badge, migration status, active, last modified) → AI description with ✨ sparkle icon, Edit/Verify buttons, "View raw" toggle → CPQ→RCA mapping (stacked vertically, CPQ objects top, RCA objects bottom, with gap/warning callouts) → Dependencies list (clickable items) → Recommendation text with effort estimate → Consultant Notes text area
+- AI description block: faint `bg-violet-50` background, ✨ prefix
+- "Open Full Detail →" link placeholder (full-page view deferred)
+- Wired to DomainTab's `onItemClick` — opens panel with selected item data
+
+**Tests** (`ItemDetailPanel.test.tsx`):
+- Panel opens when item selected
+- Shows correct item name and API name
+- Status block shows complexity and migration status
+- AI description renders with sparkle icon
+- CPQ→RCA mapping shows source and target objects
+- Dependencies list renders items
+- Recommendation text is visible
+- Notes area is editable
+- Panel closes on close button click
+
+| Status |
+|---|
+| ⬜ Not Started |
+
+---
+
+### Task 11: Risk register dedicated view
+
+**Objective:** Build the full risk register table accessible from Overview's "View all risks →" link.
+
+**What to build:**
+- `apps/client/src/features/projects/components/assessment/RiskRegister.tsx`
+- Full-width table: Risk description, Category (Technical/Business/Timeline/Organizational), Severity (Critical/High/Medium/Low with color badges), Affected Items (linked count), Mitigation text, Owner field
+- Filterable by category and severity
+- Searchable
+- Both auto-detected risks (from scan) and placeholder for consultant-added risks
+- Accessible as a modal/overlay from Overview or as inline content when "View all" clicked
+- Risk heat map: simple 2D scatter showing likelihood × impact (CSS grid, no charting library)
+
+**Tests** (`RiskRegister.test.tsx`):
+- Renders all 23 risks from mock data
+- Category filter reduces visible risks
+- Severity filter works
+- Search filters by description text
+- Risk heat map renders with correct quadrant placement
+- Severity badges use correct colors (red for Critical, amber for High, etc.)
+
+| Status |
+|---|
+| ⬜ Not Started |
+
+---
+
+### Task 12: Effort estimation table
+
+**Objective:** Build the effort estimation table bridging scan data and SOW creation.
+
+**What to build:**
+- `apps/client/src/features/projects/components/assessment/EffortEstimation.tsx`
+- Table: Domain | Items | Auto | Guided | Manual | Est. Hours (editable input)
+- 9 domain rows with auto-populated counts from assessment data
+- Additional rows: Testing & QA, Project Management, Training / Change Management (hours-only, no item counts)
+- Subtotal row with auto-sum
+- Grand Total row with auto-sum
+- Export CSV button
+- Accessible from Overview's completeness checklist or as a section within the workspace
+
+**Tests** (`EffortEstimation.test.tsx`):
+- Renders all 9 domain rows with correct item counts
+- Auto/Guided/Manual columns show correct breakdowns
+- Hours input accepts numeric input
+- Subtotal auto-sums domain hours
+- Additional rows (Testing, PM, Training) are editable
+- Grand total sums subtotal + additional rows
+- Export CSV button is present
+
+| Status |
+|---|
+| ⬜ Not Started |
+
+---
+
+### Task 13: Run comparison delta view
+
+**Objective:** Show what changed between assessment runs on the Overview tab.
+
+**What to build:**
+- `apps/client/src/features/projects/components/assessment/RunDelta.tsx`
+- Run selector dropdown in page header: "Run #3 · 12m ago" with dropdown showing run history
+- Delta summary card on Overview: "Changes since last run" with added/removed/unchanged item counts, per-domain delta, severity-coded entries
+- Uses mock run history data (3 runs)
+
+**Tests** (`RunDelta.test.tsx`):
+- Run selector shows current run info
+- Dropdown lists all historical runs
+- Delta summary shows correct change counts
+- Added items show ✅ icon, removed show 🔴
+- Switching runs updates delta display
+
+| Status |
+|---|
+| ⬜ Not Started |
+
+---
+
+### Task 14: Integration, polish + RTL verification
+
+**Objective:** Wire everything together, ensure consistent styling, verify RTL rendering, add accessibility attributes.
+
+**What to build:**
+- Full integration of all components into AssessmentPage
+- Navigation flows: Overview heatmap row click → domain tab, domain table row click → slide-over, "View all risks" → risk register, completeness item click → relevant section
+- ARIA labels on all interactive elements
+- Keyboard navigation: Tab through domain tabs, Enter to select, Escape to close slide-over
+- RTL verification: test all pages in Hebrew, ensure `start-*`/`end-*` CSS throughout
+- Visual polish: ensure consistent `rounded-2xl`, `bg-white` on `bg-slate-50`, proper spacing
+
+**Tests** (`AssessmentIntegration.test.tsx`):
+- Full page renders without errors with Q1 Migration data
+- Tab navigation works end-to-end
+- Heatmap click navigates to correct domain tab
+- Table row click opens slide-over with correct item
+- "View all risks" opens risk register
+- All text uses translation keys (no hardcoded English)
+- Key interactive elements have aria-labels
+
+| Status |
+|---|
+| ⬜ Not Started |
+
+---
+
+### Implementation Log
+
+| Date | Task | Commit | Notes |
+|---|---|---|---|
+| — | — | — | — |
