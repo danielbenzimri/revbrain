@@ -65,7 +65,9 @@ function LanguageSelector() {
         aria-label="Select language"
       >
         <span className="text-base leading-none">{currentLang.flag}</span>
-        <span className="text-xs font-medium hidden sm:inline">{currentLang.code.toUpperCase()}</span>
+        <span className="text-xs font-medium hidden sm:inline">
+          {currentLang.code.toUpperCase()}
+        </span>
       </button>
 
       {open && (
@@ -86,11 +88,11 @@ function LanguageSelector() {
               <span className="text-base leading-none">{lang.flag}</span>
               <span className="flex-1">{lang.label}</span>
               {!lang.enabled && (
-                <span className="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">Soon</span>
+                <span className="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
+                  Soon
+                </span>
               )}
-              {lang.code === currentLang.code && (
-                <span className="text-violet-500 text-xs">✓</span>
-              )}
+              {lang.code === currentLang.code && <span className="text-violet-500 text-xs">✓</span>}
             </button>
           ))}
         </div>

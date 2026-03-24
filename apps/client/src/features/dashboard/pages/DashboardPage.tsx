@@ -76,12 +76,59 @@ function getProjectStage(projectId: string): {
   const issueCount = workspace.topIssues.length;
   const sourceOrg = workspace.sourceConnection?.instanceUrl?.replace('https://', '') || null;
 
-  if (healthDone >= 6) return { stageKey: 'dashboard.stages.complete', stageColor: 'emerald', sourceConnected, targetConnected, issueCount, sourceOrg };
-  if (healthDone >= 4) return { stageKey: 'dashboard.stages.deploying', stageColor: 'violet', sourceConnected, targetConnected, issueCount, sourceOrg };
-  if (healthDone >= 3) return { stageKey: 'dashboard.stages.assessed', stageColor: 'amber', sourceConnected, targetConnected, issueCount, sourceOrg };
-  if (healthDone >= 2) return { stageKey: 'dashboard.stages.extracted', stageColor: 'sky', sourceConnected, targetConnected, issueCount, sourceOrg };
-  if (healthDone >= 1) return { stageKey: 'dashboard.stages.connected', stageColor: 'emerald', sourceConnected, targetConnected, issueCount, sourceOrg };
-  return { stageKey: 'dashboard.stages.setup', stageColor: 'slate', sourceConnected, targetConnected, issueCount, sourceOrg };
+  if (healthDone >= 6)
+    return {
+      stageKey: 'dashboard.stages.complete',
+      stageColor: 'emerald',
+      sourceConnected,
+      targetConnected,
+      issueCount,
+      sourceOrg,
+    };
+  if (healthDone >= 4)
+    return {
+      stageKey: 'dashboard.stages.deploying',
+      stageColor: 'violet',
+      sourceConnected,
+      targetConnected,
+      issueCount,
+      sourceOrg,
+    };
+  if (healthDone >= 3)
+    return {
+      stageKey: 'dashboard.stages.assessed',
+      stageColor: 'amber',
+      sourceConnected,
+      targetConnected,
+      issueCount,
+      sourceOrg,
+    };
+  if (healthDone >= 2)
+    return {
+      stageKey: 'dashboard.stages.extracted',
+      stageColor: 'sky',
+      sourceConnected,
+      targetConnected,
+      issueCount,
+      sourceOrg,
+    };
+  if (healthDone >= 1)
+    return {
+      stageKey: 'dashboard.stages.connected',
+      stageColor: 'emerald',
+      sourceConnected,
+      targetConnected,
+      issueCount,
+      sourceOrg,
+    };
+  return {
+    stageKey: 'dashboard.stages.setup',
+    stageColor: 'slate',
+    sourceConnected,
+    targetConnected,
+    issueCount,
+    sourceOrg,
+  };
 }
 
 function stageColorClasses(color: string) {
@@ -119,7 +166,9 @@ const StatCard = memo(function StatCard({
   return (
     <div className="rounded-2xl bg-white p-5 transition-shadow hover:shadow-sm">
       <div className="flex items-center gap-3">
-        <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${colorMap[color] || colorMap.slate}`}>
+        <div
+          className={`flex h-10 w-10 items-center justify-center rounded-xl ${colorMap[color] || colorMap.slate}`}
+        >
           <Icon className="h-5 w-5" />
         </div>
         <div>
@@ -157,7 +206,9 @@ const ProjectCard = memo(function ProjectCard({
             <p className="text-xs text-slate-400 mt-0.5 truncate">{project.sourceOrg}</p>
           )}
         </div>
-        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${colors.bg} ${colors.text}`}>
+        <span
+          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${colors.bg} ${colors.text}`}
+        >
           <span className={`h-1.5 w-1.5 rounded-full ${colors.dot}`} />
           {t(project.stageKey)}
         </span>
@@ -197,7 +248,11 @@ const ProjectCard = memo(function ProjectCard({
   );
 });
 
-const EmptyDashboard = memo(function EmptyDashboard({ onCreateProject }: { onCreateProject: () => void }) {
+const EmptyDashboard = memo(function EmptyDashboard({
+  onCreateProject,
+}: {
+  onCreateProject: () => void;
+}) {
   const { t } = useTranslation();
 
   return (
@@ -206,7 +261,9 @@ const EmptyDashboard = memo(function EmptyDashboard({ onCreateProject }: { onCre
         <Zap className="h-10 w-10 text-violet-500" />
       </div>
       <h2 className="text-xl font-semibold text-slate-900 mb-2">{t('dashboard.empty.title')}</h2>
-      <p className="text-sm text-slate-500 text-center max-w-md mb-6">{t('dashboard.empty.description')}</p>
+      <p className="text-sm text-slate-500 text-center max-w-md mb-6">
+        {t('dashboard.empty.description')}
+      </p>
       <Button onClick={onCreateProject} className="bg-violet-600 hover:bg-violet-700">
         <Plus className="h-4 w-4 me-2" />
         {t('dashboard.empty.createProject')}
@@ -230,10 +287,7 @@ export default function DashboardPage() {
     [navigate]
   );
 
-  const handleCreateProject = useCallback(
-    () => navigate('/projects'),
-    [navigate]
-  );
+  const handleCreateProject = useCallback(() => navigate('/projects'), [navigate]);
 
   if (isLoading) {
     return (
@@ -314,7 +368,9 @@ export default function DashboardPage() {
             <h2 className="text-sm font-semibold text-slate-700 uppercase tracking-wider">
               {t('dashboard.sections.activeProjects')}
             </h2>
-            <span className="text-xs text-slate-400">{active.length} {t('dashboard.stats.totalProjects').toLowerCase()}</span>
+            <span className="text-xs text-slate-400">
+              {active.length} {t('dashboard.stats.totalProjects').toLowerCase()}
+            </span>
           </div>
           <div className="grid gap-3 md:grid-cols-2">
             {active.map((project) => (

@@ -783,8 +783,8 @@ The principle throughout: **reduce cognitive load, increase confidence.** At eve
 
 ### Foundation
 
-| Task | Description                                                                                                                                | Status         |
-| ---- | ------------------------------------------------------------------------------------------------------------------------------------------ | -------------- |
+| Task | Description                                                                                                                                | Status            |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------ | ----------------- |
 | F.1  | Mock data: multiple projects at different journey stages + all entity seed data                                                            | ✅ Done `3c9cfef` |
 | F.2  | Project workspace layout: new sidebar with 3 groups (Migration/Operations/Project), connection status panel, API budget, notification bell | ✅ Done `3c9cfef` |
 | F.3  | Locked sidebar items with tooltips + navigation to contextual empty states                                                                 | ✅ Done `3c9cfef` |
@@ -794,42 +794,42 @@ The principle throughout: **reduce cognitive load, increase confidence.** At eve
 
 ### Pages
 
-| Task | Description                                                                                           | Status         |
-| ---- | ----------------------------------------------------------------------------------------------------- | -------------- |
+| Task | Description                                                                                           | Status            |
+| ---- | ----------------------------------------------------------------------------------------------------- | ----------------- |
 | P.1  | Overview: health strip (6 pills with status + click navigation)                                       | ✅ Done `3c9cfef` |
 | P.2  | Overview: connection cards (source + target) with inline connect flow                                 | ✅ Done `3c9cfef` |
 | P.3  | Overview: "What's Next" card with primary + secondary action, state progression table                 | ✅ Done `3c9cfef` |
 | P.4  | Overview: top issues panel + recent activity feed                                                     | ✅ Done `3c9cfef` |
-| P.5  | CPQ Explorer: category sidebar + data table with search + extraction toolbar                          | ⬜ Not Started |
-| P.6  | CPQ Explorer: first extraction ceremony card vs compact subsequent toolbar                            | ⬜ Not Started |
-| P.7  | CPQ Explorer: detail panel (slide-over sheet for v1) with dependencies list                           | ⬜ Not Started |
-| P.8  | Assessment: Tab 1 — Report view with complexity breakdown (Auto/Guided/Manual/Blocked) + key findings | ⬜ Not Started |
-| P.9  | Assessment: Tab 2 — Mapping detail table with expandable rows + RCA education popovers                | ⬜ Not Started |
-| P.10 | Assessment: Tab 3 — User-owned migration plan with drag-and-drop phases                               | ⬜ Not Started |
-| P.11 | Assessment: history dropdown (switch between past assessment runs)                                    | ⬜ Not Started |
-| P.12 | Deployment: grouped checklist wizard (pre-checks / metadata / data / validation / sign-off)           | ⬜ Not Started |
-| P.13 | Deployment: coexistence check expanded view (5 scenarios)                                             | ⬜ Not Started |
-| P.14 | Deployment: data migration progress (inline, per-object bars)                                         | ⬜ Not Started |
-| P.15 | Deployment: validation results (pass/fail per scenario, field diffs)                                  | ⬜ Not Started |
-| P.16 | Deployment: multi-step rollback flow (impact → type-to-confirm → progress → summary)                  | ⬜ Not Started |
-| P.17 | Deployment: target environment switcher                                                               | ⬜ Not Started |
-| P.18 | Runs: operations history list with filter + run detail expand                                         | ⬜ Not Started |
-| P.19 | Runs: live progress for running operations                                                            | ⬜ Not Started |
-| P.20 | Issues: aggregated view with severity grouping (Blocker/Warning/Info)                                 | ⬜ Not Started |
-| P.21 | Issues: lifecycle buttons (Acknowledge / Won't Fix / Re-verify Fix)                                   | ⬜ Not Started |
-| P.22 | Issues: comment thread per issue                                                                      | ⬜ Not Started |
-| P.23 | Team: project-scoped team view with activity counts as links + resend invite                          | ⬜ Not Started |
-| P.24 | Activity: chronological feed with person/type/date filters + URL-based filtering                      | ⬜ Not Started |
-| P.25 | Artifacts & Docs: auto-generated reports section + user uploads                                       | ⬜ Not Started |
-| P.26 | Settings: extended with Salesforce connections, extraction settings, data & privacy, danger zone      | ⬜ Not Started |
+| P.5  | CPQ Explorer: category sidebar + data table with search + extraction toolbar                          | ⬜ Not Started    |
+| P.6  | CPQ Explorer: first extraction ceremony card vs compact subsequent toolbar                            | ⬜ Not Started    |
+| P.7  | CPQ Explorer: detail panel (slide-over sheet for v1) with dependencies list                           | ⬜ Not Started    |
+| P.8  | Assessment: Tab 1 — Report view with complexity breakdown (Auto/Guided/Manual/Blocked) + key findings | ⬜ Not Started    |
+| P.9  | Assessment: Tab 2 — Mapping detail table with expandable rows + RCA education popovers                | ⬜ Not Started    |
+| P.10 | Assessment: Tab 3 — User-owned migration plan with drag-and-drop phases                               | ⬜ Not Started    |
+| P.11 | Assessment: history dropdown (switch between past assessment runs)                                    | ⬜ Not Started    |
+| P.12 | Deployment: grouped checklist wizard (pre-checks / metadata / data / validation / sign-off)           | ⬜ Not Started    |
+| P.13 | Deployment: coexistence check expanded view (5 scenarios)                                             | ⬜ Not Started    |
+| P.14 | Deployment: data migration progress (inline, per-object bars)                                         | ⬜ Not Started    |
+| P.15 | Deployment: validation results (pass/fail per scenario, field diffs)                                  | ⬜ Not Started    |
+| P.16 | Deployment: multi-step rollback flow (impact → type-to-confirm → progress → summary)                  | ⬜ Not Started    |
+| P.17 | Deployment: target environment switcher                                                               | ⬜ Not Started    |
+| P.18 | Runs: operations history list with filter + run detail expand                                         | ⬜ Not Started    |
+| P.19 | Runs: live progress for running operations                                                            | ⬜ Not Started    |
+| P.20 | Issues: aggregated view with severity grouping (Blocker/Warning/Info)                                 | ⬜ Not Started    |
+| P.21 | Issues: lifecycle buttons (Acknowledge / Won't Fix / Re-verify Fix)                                   | ⬜ Not Started    |
+| P.22 | Issues: comment thread per issue                                                                      | ⬜ Not Started    |
+| P.23 | Team: project-scoped team view with activity counts as links + resend invite                          | ⬜ Not Started    |
+| P.24 | Activity: chronological feed with person/type/date filters + URL-based filtering                      | ⬜ Not Started    |
+| P.25 | Artifacts & Docs: auto-generated reports section + user uploads                                       | ⬜ Not Started    |
+| P.26 | Settings: extended with Salesforce connections, extraction settings, data & privacy, danger zone      | ⬜ Not Started    |
 
 ### Empty States & Connection Flow
 
-| Task | Description                                                                                  | Status         |
-| ---- | -------------------------------------------------------------------------------------------- | -------------- |
+| Task | Description                                                                                  | Status            |
+| ---- | -------------------------------------------------------------------------------------------- | ----------------- |
 | E.1  | All empty states per the empty state table (10 contextual empty states with CTAs)            | ✅ Done `3c9cfef` |
-| E.2  | Connection flow: inline in Overview with instance type selector → popup → success transition | ⬜ Not Started |
-| E.3  | Connection flow: popup blocked fallback (redirect + toast + `?sf_connected=true` detection)  | ⬜ Not Started |
+| E.2  | Connection flow: inline in Overview with instance type selector → popup → success transition | ⬜ Not Started    |
+| E.3  | Connection flow: popup blocked fallback (redirect + toast + `?sf_connected=true` detection)  | ⬜ Not Started    |
 
 ### Notifications
 

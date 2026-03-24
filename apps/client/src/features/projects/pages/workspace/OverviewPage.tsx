@@ -141,7 +141,9 @@ function HealthStrip({ items, projectId }: { items: HealthStripItem[]; projectId
       {items.map((item, i) => (
         <div key={item.id} className="flex items-center gap-2">
           <HealthPill item={item} projectId={projectId} />
-          {i < items.length - 1 && <ChevronRight size={14} className="text-slate-300 shrink-0 rtl:rotate-180" />}
+          {i < items.length - 1 && (
+            <ChevronRight size={14} className="text-slate-300 shrink-0 rtl:rotate-180" />
+          )}
         </div>
       ))}
     </div>
@@ -233,7 +235,9 @@ const ConnectionCard = memo(function ConnectionCard({
           <p className="text-[11px] text-slate-400">
             {t('workspace.overview.connectionCards.orgType')}
           </p>
-          <p className="text-sm font-medium text-slate-700">{t(`workspace.overview.connectionCards.orgTypes.${connection.orgType.toLowerCase()}`)}</p>
+          <p className="text-sm font-medium text-slate-700">
+            {t(`workspace.overview.connectionCards.orgTypes.${connection.orgType.toLowerCase()}`)}
+          </p>
         </div>
         {connection.cpqVersion && (
           <div>
@@ -401,7 +405,13 @@ const severityConfig: Record<
   info: { icon: Info, color: 'text-blue-500' },
 };
 
-const IssueRow = memo(function IssueRow({ issue, formatTimeAgo }: { issue: IssueItem; formatTimeAgo: (date: string) => string }) {
+const IssueRow = memo(function IssueRow({
+  issue,
+  formatTimeAgo,
+}: {
+  issue: IssueItem;
+  formatTimeAgo: (date: string) => string;
+}) {
   const config = severityConfig[issue.severity];
   const Icon = config.icon;
 
@@ -417,7 +427,15 @@ const IssueRow = memo(function IssueRow({ issue, formatTimeAgo }: { issue: Issue
   );
 });
 
-function TopIssues({ issues, projectId, formatTimeAgo }: { issues: IssueItem[]; projectId: string; formatTimeAgo: (date: string) => string }) {
+function TopIssues({
+  issues,
+  projectId,
+  formatTimeAgo,
+}: {
+  issues: IssueItem[];
+  projectId: string;
+  formatTimeAgo: (date: string) => string;
+}) {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
@@ -473,7 +491,13 @@ const activityTypeIcons: Record<
   settings: Circle,
 };
 
-const ActivityRow = memo(function ActivityRow({ item, formatTimeAgo }: { item: ActivityItem; formatTimeAgo: (date: string) => string }) {
+const ActivityRow = memo(function ActivityRow({
+  item,
+  formatTimeAgo,
+}: {
+  item: ActivityItem;
+  formatTimeAgo: (date: string) => string;
+}) {
   const { t } = useTranslation();
   const Icon = activityTypeIcons[item.type] || Circle;
 
@@ -483,7 +507,9 @@ const ActivityRow = memo(function ActivityRow({ item, formatTimeAgo }: { item: A
         <Icon size={13} className="text-slate-500" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-slate-800 leading-snug">{t(item.messageKey, { defaultValue: item.message })}</p>
+        <p className="text-sm text-slate-800 leading-snug">
+          {t(item.messageKey, { defaultValue: item.message })}
+        </p>
         <p className="text-xs text-slate-400 mt-0.5">{item.user}</p>
       </div>
       <span className="text-[11px] text-slate-400 shrink-0">{formatTimeAgo(item.timestamp)}</span>
@@ -491,7 +517,15 @@ const ActivityRow = memo(function ActivityRow({ item, formatTimeAgo }: { item: A
   );
 });
 
-function RecentActivity({ items, projectId, formatTimeAgo }: { items: ActivityItem[]; projectId: string; formatTimeAgo: (date: string) => string }) {
+function RecentActivity({
+  items,
+  projectId,
+  formatTimeAgo,
+}: {
+  items: ActivityItem[];
+  projectId: string;
+  formatTimeAgo: (date: string) => string;
+}) {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
@@ -556,8 +590,18 @@ export default function OverviewPage() {
 
       {/* Connection Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <ConnectionCard type="source" connection={data.sourceConnection} projectId={id} formatTimeAgo={formatTimeAgo} />
-        <ConnectionCard type="target" connection={data.targetConnection} projectId={id} formatTimeAgo={formatTimeAgo} />
+        <ConnectionCard
+          type="source"
+          connection={data.sourceConnection}
+          projectId={id}
+          formatTimeAgo={formatTimeAgo}
+        />
+        <ConnectionCard
+          type="target"
+          connection={data.targetConnection}
+          projectId={id}
+          formatTimeAgo={formatTimeAgo}
+        />
       </div>
 
       {/* What's Next */}
