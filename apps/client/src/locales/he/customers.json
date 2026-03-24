@@ -13,7 +13,25 @@
     "projects": "פרויקטים",
     "activeProjects": "פעילים",
     "viewProjects": "צפה בפרויקטים",
+    "viewDetails": "צפה בפרטים",
     "noProjects": "אין פרויקטים"
+  },
+  "drawer": {
+    "primaryContact": "ראשי",
+    "contacts": "אנשי קשר",
+    "salesforceOrgs": "ארגוני Salesforce",
+    "projectsList": "פרויקטים",
+    "notes": "הערות",
+    "timeline": "ציר זמן",
+    "customerSince": "לקוח מאז",
+    "lastActivity": "פעילות אחרונה",
+    "projects": "פרויקטים",
+    "objectsMigrated": "אובייקטים שהוגרו",
+    "recordsMigrated": "רשומות שהוגרו",
+    "licenses": "רישיונות",
+    "connected": "מחובר",
+    "notConnected": "לא מחובר",
+    "noProjects": "אין פרויקטים עדיין"
   },
   "empty": {
     "title": "אין לקוחות עדיין",

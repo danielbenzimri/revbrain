@@ -13,7 +13,25 @@
     "projects": "Projects",
     "activeProjects": "active",
     "viewProjects": "View Projects",
+    "viewDetails": "View Details",
     "noProjects": "No projects"
+  },
+  "drawer": {
+    "primaryContact": "Primary",
+    "contacts": "Contacts",
+    "salesforceOrgs": "Salesforce Orgs",
+    "projectsList": "Projects",
+    "notes": "Notes",
+    "timeline": "Timeline",
+    "customerSince": "Customer since",
+    "lastActivity": "Last activity",
+    "projects": "Projects",
+    "objectsMigrated": "Objects migrated",
+    "recordsMigrated": "Records migrated",
+    "licenses": "licenses",
+    "connected": "Connected",
+    "notConnected": "Not connected",
+    "noProjects": "No projects yet"
   },
   "empty": {
     "title": "No customers yet",
