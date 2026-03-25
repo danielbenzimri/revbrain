@@ -720,10 +720,10 @@ All three URLs must be registered as valid callback URLs in the Salesforce Conne
 
 | Task | Objective | Status | Commit |
 |---|---|---|---|
-| B.1 | Salesforce connection React Query hooks | ⬜ Not Started | — |
-| B.2 | Connect flow UI (OAuth popup/redirect with postMessage) | ⬜ Not Started | — |
-| B.3 | Connection status card on workspace Overview | ⬜ Not Started | — |
-| B.4 | Connection health polling (5-min interval) | ⬜ Not Started | — |
+| B.1 | Salesforce connection React Query hooks | ✅ Done | `af3ac74` |
+| B.2 | Connect flow UI (OAuth popup/redirect with postMessage) | ✅ Done | `d2d5db7` |
+| B.3 | Connection status card on workspace Overview | ✅ Done | `d2d5db7` |
+| B.4 | Connection health polling (5-min interval) | ✅ Done | `af3ac74` (refetchInterval built into hook) |
 
 ### Phase C: Real Credentials & End-to-End Testing (Step 2)
 
