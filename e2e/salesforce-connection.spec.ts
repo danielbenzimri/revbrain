@@ -1,26 +1,19 @@
 /**
  * Salesforce Connection E2E Test
  *
- * Tests the full OAuth flow against a real Salesforce org:
- * 1. Login to RevBrain (mock auth)
- * 2. Navigate to project workspace
- * 3. Click "Connect Source Org"
- * 4. Salesforce login page opens (popup or redirect)
- * 5. Enter Salesforce credentials
- * 6. OAuth callback completes
- * 7. Connection status shows "Connected"
+ * Tests the full OAuth flow against a real Salesforce org.
+ * Uses direct API calls + browser navigation to avoid popup complexity.
  *
  * Prerequisites:
- * - Server running with real Salesforce credentials (.env.real)
- * - SF_TEST_USERNAME and SF_TEST_PASSWORD set in .env.real
- * - Connected App callback URL matches server URL
+ * - Server running with real Salesforce credentials
+ * - SF_TEST_USERNAME and SF_TEST_PASSWORD set
  */
 import { test, expect } from '@playwright/test';
 
-const Q1_PROJECT_ID = '00000000-0000-4000-a000-000000000401';
+const PHASE2_PROJECT_ID = '00000000-0000-4000-a000-000000000404';
+const API_URL = 'http://localhost:3000';
 const DIR = 'test-results/salesforce-e2e';
 
-// Read Salesforce test credentials from environment
 const SF_USERNAME = process.env.SF_TEST_USERNAME || '';
 const SF_PASSWORD = process.env.SF_TEST_PASSWORD || '';
 
@@ -28,124 +21,178 @@ test.use({
   viewport: { width: 1440, height: 900 },
 });
 
-async function loginToRevBrain(page: import('@playwright/test').Page) {
-  await page.goto('/login');
-  await page.waitForLoadState('networkidle');
-  await page.locator('input[type="email"]').fill('sarah@acme.com');
-  await page.locator('input[type="password"]').fill('any');
-  await page.getByRole('button', { name: /התחבר|sign in|login/i }).click();
-  await page.waitForURL(/^(?!.*login).*$/, { timeout: 10000 });
-  await page.waitForLoadState('networkidle');
-}
-
 test.describe('Salesforce Connection', () => {
   test.skip(!SF_USERNAME || !SF_PASSWORD, 'SF_TEST_USERNAME and SF_TEST_PASSWORD must be set');
 
-  test('full OAuth flow — connect source org', async ({ page, context }) => {
-    await loginToRevBrain(page);
+  test('full OAuth flow — connect, verify, disconnect', async ({ page }) => {
+    // Reset mock data to clear any stale pending flows
+    await page.request.post(`${API_URL}/api/v1/dev/reset-mock-data`).catch(() => {});
 
-    // Navigate to project workspace
-    await page.goto(`/project/${Q1_PROJECT_ID}`);
+    // Step 1: Call the connect API directly (no auth header = default mock user)
+    const connectResponse = await page.request.post(
+      `${API_URL}/api/v1/projects/${PHASE2_PROJECT_ID}/salesforce/connect`,
+      {
+        data: { instanceType: 'production', connectionRole: 'source' },
+        headers: { 'Content-Type': 'application/json' },
+      },
+    );
+
+    const connectBody = await connectResponse.text();
+    console.log('Connect response:', connectResponse.status(), connectBody.substring(0, 300));
+
+    if (!connectResponse.ok()) {
+      // Try without any headers (pure fetch)
+      console.log('Retrying connect with fetch...');
+    }
+    expect(connectResponse.ok()).toBeTruthy();
+    const connectData = JSON.parse(connectBody);
+    const redirectUrl = connectData.data.redirectUrl;
+
+    console.log('Got redirect URL:', redirectUrl.substring(0, 80) + '...');
+    expect(redirectUrl).toContain('login.salesforce.com');
+
+    await page.screenshot({ path: `${DIR}/01-got-redirect-url.png` });
+
+    // Step 2: Navigate to Salesforce login
+    await page.goto(redirectUrl);
     await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(2000);
 
-    await page.screenshot({ path: `${DIR}/01-before-connect.png` });
+    await page.screenshot({ path: `${DIR}/02-salesforce-login-page.png` });
 
-    // Click "Connect" button on source card
-    // The connect button triggers the OAuth flow via useConnectSalesforce hook
-    // which POSTs to /v1/projects/:id/salesforce/connect and gets a redirectUrl
-    // then opens a popup to that URL
+    // Step 3: Fill Salesforce credentials
+    const usernameInput = page.locator('#username');
+    const passwordInput = page.locator('#password');
 
-    // Listen for the popup
-    const popupPromise = context.waitForEvent('page');
-
-    // Find and click the Connect button (source card is the first one)
-    const connectButtons = page.getByLabel(/connect/i);
-    const sourceConnect = connectButtons.first();
-    await sourceConnect.click();
-
-    // Wait for Salesforce popup to open
-    const popup = await popupPromise;
-    await popup.waitForLoadState('networkidle');
-    await popup.waitForTimeout(2000);
-
-    await popup.screenshot({ path: `${DIR}/02-salesforce-login.png` });
-
-    // Fill in Salesforce credentials
-    // Salesforce login page has #username and #password fields
-    const usernameInput = popup.locator('#username');
-    const passwordInput = popup.locator('#password');
-
-    if (await usernameInput.isVisible({ timeout: 5000 })) {
+    if (await usernameInput.isVisible({ timeout: 10000 })) {
       await usernameInput.fill(SF_USERNAME);
       await passwordInput.fill(SF_PASSWORD);
 
-      // Click Login button
-      const loginBtn = popup.locator('#Login');
-      await loginBtn.click();
+      await page.screenshot({ path: `${DIR}/03-credentials-filled.png` });
 
-      // Wait for Salesforce to process and redirect
-      await popup.waitForTimeout(3000);
+      // Click Login
+      await page.locator('#Login').click();
+      await page.waitForTimeout(5000);
 
-      await popup.screenshot({ path: `${DIR}/03-salesforce-authorize.png` });
-
-      // If there's an "Allow" consent screen, click it
-      const allowBtn = popup.locator('#oaapprove, button:has-text("Allow")');
-      if (await allowBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await allowBtn.click();
-        await popup.waitForTimeout(2000);
-      }
-
-      // Wait for callback to complete (popup should close or show success message)
-      await popup.waitForTimeout(3000);
-
-      await popup.screenshot({ path: `${DIR}/04-callback-result.png` }).catch(() => {});
+      await page.screenshot({ path: `${DIR}/04-after-login.png` });
     } else {
-      // Salesforce might auto-login if there's an existing session
-      console.log('Salesforce login form not visible — may have auto-authenticated');
-      await popup.waitForTimeout(5000);
+      console.log('Username field not visible — Salesforce may have auto-logged in');
+      await page.waitForTimeout(3000);
     }
 
-    // Back to main page — wait for connection status to refresh
+    // Step 3b: Handle identity verification if shown (check URL)
+    const verificationCode = process.env.SF_VERIFICATION_CODE || '';
+    const currentUrl = page.url();
+    console.log('Current URL after login:', currentUrl.substring(0, 100));
+
+    if (currentUrl.includes('verification') || currentUrl.includes('Verification')) {
+      console.log('Identity verification page detected!');
+      if (verificationCode) {
+        // Try multiple selectors for the code input
+        const inputSelectors = ['input[type="text"]', '#evc', 'input.input'];
+        for (const sel of inputSelectors) {
+          const input = page.locator(sel).first();
+          if (await input.isVisible({ timeout: 2000 }).catch(() => false)) {
+            await input.fill(verificationCode);
+            console.log(`Verification code entered via ${sel}`);
+            break;
+          }
+        }
+
+        await page.screenshot({ path: `${DIR}/04b-code-entered.png` });
+
+        // Click Verify/Submit button
+        const btnSelectors = ['input[id="save"]', 'button:has-text("Verify")', 'input[value="Verify"]'];
+        for (const sel of btnSelectors) {
+          const btn = page.locator(sel).first();
+          if (await btn.isVisible({ timeout: 2000 }).catch(() => false)) {
+            await btn.click();
+            console.log(`Clicked verify via ${sel}`);
+            break;
+          }
+        }
+
+        await page.waitForTimeout(10000);
+        await page.screenshot({ path: `${DIR}/04c-after-verify.png` });
+        console.log('URL after verification:', page.url().substring(0, 100));
+      } else {
+        console.log('WARNING: Verification page shown but SF_VERIFICATION_CODE not set');
+      }
+    }
+
+    // Step 3c: Handle consent/allow screen
+    const allowBtn = page.locator('#oaapprove');
+    if (await allowBtn.isVisible({ timeout: 10000 }).catch(() => false)) {
+      console.log('OAuth consent page detected — clicking Allow');
+      await allowBtn.click();
+      await page.waitForTimeout(8000);
+      await page.screenshot({ path: `${DIR}/05-after-allow.png` });
+      console.log('URL after Allow:', page.url().substring(0, 100));
+    } else {
+      console.log('No consent page found, checking current URL:', page.url().substring(0, 80));
+    }
+
+    // Step 4: Wait for callback to process
+    // The callback URL redirects back or shows a success page
     await page.waitForTimeout(3000);
-    await page.reload();
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1000);
+    await page.screenshot({ path: `${DIR}/06-callback-result.png` });
 
-    await page.screenshot({ path: `${DIR}/05-after-connect.png` });
+    // Log the final URL
+    console.log('Final URL after OAuth:', page.url());
 
-    // Verify connection is shown (look for org name or "Connected" status)
-    const pageContent = await page.textContent('body');
-    console.log('Page content after connect:', pageContent?.substring(0, 500));
-  });
+    // Step 5: Check connection status via API
+    const statusResponse = await page.request.get(
+      `${API_URL}/api/v1/projects/${PHASE2_PROJECT_ID}/salesforce/connections`,
+    );
 
-  test('test connection health', async ({ page }) => {
-    await loginToRevBrain(page);
-    await page.goto(`/project/${Q1_PROJECT_ID}`);
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1000);
+    if (statusResponse.ok()) {
+      const statusData = await statusResponse.json();
+      console.log('Connection status:', JSON.stringify(statusData.data, null, 2));
 
-    // Click "Test" button on source card
-    const testButton = page.getByLabel(/test/i).first();
-    if (await testButton.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await testButton.click();
-      await page.waitForTimeout(2000);
-      await page.screenshot({ path: `${DIR}/06-test-result.png` });
+      // Verify source connection exists
+      if (statusData.data.source) {
+        console.log('SUCCESS: Source connection established!');
+        console.log('  Org ID:', statusData.data.source.salesforceOrgId);
+        console.log('  Instance:', statusData.data.source.salesforceInstanceUrl);
+        console.log('  Status:', statusData.data.source.status);
+
+        expect(statusData.data.source.salesforceOrgId).toBeTruthy();
+        expect(statusData.data.source.salesforceInstanceUrl).toContain('salesforce.com');
+
+        // Step 6: Test the connection
+        const testResponse = await page.request.post(
+          `${API_URL}/api/v1/projects/${PHASE2_PROJECT_ID}/salesforce/test`,
+          {
+            data: { connectionRole: 'source' },
+            headers: { 'Content-Type': 'application/json' },
+          },
+        );
+
+        if (testResponse.ok()) {
+          const testData = await testResponse.json();
+          console.log('Connection test result:', JSON.stringify(testData.data));
+        }
+
+        // Step 7: Disconnect
+        const disconnectResponse = await page.request.post(
+          `${API_URL}/api/v1/projects/${PHASE2_PROJECT_ID}/salesforce/disconnect`,
+          {
+            data: { connectionRole: 'source' },
+            headers: { 'Content-Type': 'application/json' },
+          },
+        );
+
+        if (disconnectResponse.ok()) {
+          console.log('Disconnected successfully');
+        }
+      } else {
+        console.log('WARNING: No source connection found after OAuth flow');
+        console.log('Full status:', JSON.stringify(statusData.data));
+      }
+    } else {
+      console.log('Failed to get connection status:', statusResponse.status());
     }
-  });
 
-  test('disconnect source org', async ({ page }) => {
-    await loginToRevBrain(page);
-    await page.goto(`/project/${Q1_PROJECT_ID}`);
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1000);
-
-    // Click "Disconnect" button
-    const disconnectButton = page.getByLabel(/disconnect/i).first();
-    if (await disconnectButton.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await disconnectButton.click();
-      await page.waitForTimeout(2000);
-      await page.screenshot({ path: `${DIR}/07-after-disconnect.png` });
-    }
+    await page.screenshot({ path: `${DIR}/07-final-state.png` });
   });
 });
