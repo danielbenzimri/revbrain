@@ -79,8 +79,8 @@ export default function OverviewTab({ assessment, onDomainClick, t }: OverviewTa
           <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">
             {t('assessment.overview.migrationReadiness')}
           </h2>
-          <div className="bg-white rounded-2xl p-6 h-full">
-            <div className="flex items-center gap-0.5 h-3 rounded-full overflow-hidden bg-slate-100 mb-6">
+          <div className="bg-white rounded-2xl p-5">
+            <div className="flex items-center gap-0.5 h-3 rounded-full overflow-hidden bg-slate-100 mb-4">
               {STATUS_CONFIG.map(({ key, colorBar }) => {
                 const count = assessment[`total${key.charAt(0).toUpperCase()}${key.slice(1)}` as keyof AssessmentData] as number;
                 if (count <= 0) return null;
@@ -125,7 +125,7 @@ export default function OverviewTab({ assessment, onDomainClick, t }: OverviewTa
           <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">
             {t('assessment.overview.keyFindings')}
           </h2>
-          <div className="bg-white rounded-2xl p-5 h-full space-y-2.5" data-testid="key-findings">
+          <div className="bg-white rounded-2xl p-5 space-y-2.5" data-testid="key-findings">
             {assessment.keyFindings.slice(0, 6).map((finding) => {
               const icons = { success: { icon: '✓', cls: 'text-emerald-600 bg-emerald-50' }, warning: { icon: '!', cls: 'text-amber-600 bg-amber-50' }, error: { icon: '✕', cls: 'text-red-600 bg-red-50' } };
               const { icon, cls } = icons[finding.severity] || icons.warning;
