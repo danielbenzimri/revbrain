@@ -1,0 +1,42 @@
+{
+  "name": "@revbrain/worker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "exports": {
+    ".": {
+      "import": "./src/index.ts",
+      "types": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "lint": "eslint . && tsc --noEmit",
+    "test": "vitest run",
+    "test:unit": "vitest run tests/unit/",
+    "test:integration": "vitest run tests/integration/"
+  },
+  "dependencies": {
+    "@revbrain/contract": "workspace:*",
+    "@revbrain/database": "workspace:*",
+    "csv-parse": "^5.6.0",
+    "fast-xml-parser": "^4.5.1",
+    "p-limit": "^6.2.0",
+    "pino": "^9.6.0",
+    "postgres": "^3.4.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@types/node": "^20.10.6",
+    "eslint": "^9.39.1",
+    "globals": "^16.5.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3",
+    "typescript-eslint": "^8.46.4",
+    "vitest": "^1.1.0"
+  }
+}

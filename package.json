@@ -64,6 +64,10 @@
       "prettier --write",
       "eslint --fix --max-warnings 30"
     ],
+    "apps/worker/**/*.{ts,tsx}": [
+      "prettier --write",
+      "eslint --fix --max-warnings 30"
+    ],
     "packages/**/*.{ts,tsx}": [
       "prettier --write"
     ],
