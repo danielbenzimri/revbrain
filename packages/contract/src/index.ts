@@ -11,6 +11,9 @@ export * from './ports/alerting.port.ts';
 // Re-export assessment extraction types
 export * from './assessment.ts';
 
+// Re-export encryption utilities (shared by server + worker)
+export * from './encryption.ts';
+
 /**
  * Standardized Application Error
  * Used across the entire application for consistent error handling
