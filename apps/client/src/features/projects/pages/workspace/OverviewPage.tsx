@@ -38,6 +38,11 @@ import {
   type ActivityItem,
   type IssueSeverity,
 } from '../../mocks/workspace-mock-data';
+import {
+  useConnectSalesforce,
+  useDisconnectSalesforce,
+  useTestConnection,
+} from '../../hooks/use-salesforce-connection';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -159,11 +164,19 @@ const ConnectionCard = memo(function ConnectionCard({
   connection,
   projectId,
   formatTimeAgo,
+  onConnect,
+  onDisconnect,
+  onTest,
+  isConnecting,
 }: {
   type: 'source' | 'target';
   connection: ConnectionCardData | null;
   projectId: string;
   formatTimeAgo: (date: string) => string;
+  onConnect?: () => void;
+  onDisconnect?: () => void;
+  onTest?: () => void;
+  isConnecting?: boolean;
 }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -186,12 +199,17 @@ const ConnectionCard = memo(function ConnectionCard({
             : t('workspace.overview.connectionCards.noTargetDescription')}
         </p>
         <button
-          onClick={() => navigate(`/project/${projectId}`)}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-violet-600 text-white text-sm font-medium rounded-lg hover:bg-violet-700 transition-colors"
+          onClick={onConnect || (() => navigate(`/project/${projectId}`))}
+          disabled={isConnecting}
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-violet-600 text-white text-sm font-medium rounded-lg hover:bg-violet-700 transition-colors disabled:opacity-50"
           aria-label={t('workspace.overview.connectionCards.connect')}
         >
-          <Plus size={16} />
-          {t('workspace.overview.connectionCards.connect')}
+          {isConnecting ? (
+            <RefreshCw size={16} className="animate-spin" />
+          ) : (
+            <Plus size={16} />
+          )}
+          {isConnecting ? 'Connecting...' : t('workspace.overview.connectionCards.connect')}
         </button>
       </div>
     );
@@ -287,6 +305,7 @@ const ConnectionCard = memo(function ConnectionCard({
 
       <div className="flex items-center gap-2 pt-4 border-t border-slate-100">
         <button
+          onClick={onTest}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-md transition-colors"
           aria-label={t('workspace.overview.connectionCards.test')}
         >
@@ -303,6 +322,7 @@ const ConnectionCard = memo(function ConnectionCard({
           </button>
         )}
         <button
+          onClick={onDisconnect}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-500 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors ms-auto"
           aria-label={t('workspace.overview.connectionCards.disconnect')}
         >
@@ -579,6 +599,12 @@ export default function OverviewPage() {
     return getMockProjectWorkspaceData(id);
   }, [id]);
 
+  // Salesforce connection hooks
+  const { connect: connectSource, isConnecting: isConnectingSource } = useConnectSalesforce(id);
+  const { connect: connectTarget, isConnecting: isConnectingTarget } = useConnectSalesforce(id);
+  const disconnectMutation = useDisconnectSalesforce(id);
+  const testMutation = useTestConnection(id);
+
   if (!id || !data) {
     return null;
   }
@@ -595,12 +621,20 @@ export default function OverviewPage() {
           connection={data.sourceConnection}
           projectId={id}
           formatTimeAgo={formatTimeAgo}
+          onConnect={() => connectSource({ instanceType: 'production', connectionRole: 'source' })}
+          onDisconnect={() => disconnectMutation.mutate('source')}
+          onTest={() => testMutation.mutate('source')}
+          isConnecting={isConnectingSource}
         />
         <ConnectionCard
           type="target"
           connection={data.targetConnection}
           projectId={id}
           formatTimeAgo={formatTimeAgo}
+          onConnect={() => connectTarget({ instanceType: 'production', connectionRole: 'target' })}
+          onDisconnect={() => disconnectMutation.mutate('target')}
+          onTest={() => testMutation.mutate('target')}
+          isConnecting={isConnectingTarget}
         />
       </div>
 
