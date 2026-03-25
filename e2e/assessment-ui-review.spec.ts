@@ -81,4 +81,40 @@ test.describe('UI Review', () => {
     await page.waitForTimeout(500);
     await page.screenshot({ path: `${DIR}/07-code-waterfall.png` });
   });
+
+  test('08 — chat panel open + conversation', async ({ page }) => {
+    await page.goto(BASE);
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    // Close TanStack devtools if visible (it covers the bottom of the page)
+    const devtoolsClose = page.locator('button[aria-label="Close React Query Devtools"]');
+    if (await devtoolsClose.isVisible({ timeout: 1000 }).catch(() => false)) {
+      await devtoolsClose.click();
+      await page.waitForTimeout(300);
+    }
+    // Also try hiding the devtools panel by clicking the toggle button
+    await page.evaluate(() => {
+      const devPanel = document.querySelector('.tsqd-parent-container') as HTMLElement;
+      if (devPanel) devPanel.style.display = 'none';
+    });
+    await page.waitForTimeout(300);
+
+    // Click the chat FAB
+    const fab = page.getByLabel('Open AI Chat Assistant');
+    await fab.click();
+    await page.waitForTimeout(800);
+
+    await page.screenshot({ path: `${DIR}/08-chat-open.png` });
+
+    // Type a message and send
+    const chatInput = page.getByLabel('Chat message');
+    if (await chatInput.isVisible()) {
+      await chatInput.fill('What are the critical risks?');
+      await page.getByLabel('Send message').click();
+      await page.waitForTimeout(2000);
+    }
+
+    await page.screenshot({ path: `${DIR}/09-chat-conversation.png` });
+  });
 });
