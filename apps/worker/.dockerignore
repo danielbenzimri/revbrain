@@ -1,0 +1,21 @@
+# Ignore everything by default
+*
+
+# Allow only what the build needs
+!pnpm-workspace.yaml
+!package.json
+!pnpm-lock.yaml
+!packages/contract/
+!packages/database/
+!packages/seed-data/
+!apps/worker/
+
+# Exclude build artifacts and dev files within allowed dirs
+**/node_modules
+**/dist
+**/.env*
+**/coverage
+**/*.test.ts
+**/*.spec.ts
+**/tests/
+**/.git
