@@ -13,6 +13,7 @@ import { devRouter } from './dev.ts';
 import { projectsRouter } from './projects.ts';
 import { salesforceRouter } from './salesforce.ts';
 import { internalRouter } from './internal.ts';
+import { assessmentRouter } from './assessment.ts';
 import { type AppEnv } from '../../types/index.ts';
 
 /**
@@ -68,3 +69,6 @@ v1Router.route('/dev', devRouter);
 
 // Internal routes (called by extraction worker, protected by shared secret)
 v1Router.route('/internal', internalRouter);
+
+// Assessment extraction routes (project-scoped)
+v1Router.route('/projects', assessmentRouter);
