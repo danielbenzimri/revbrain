@@ -1,0 +1,31 @@
+# Local development setup for the extraction worker.
+# Provides a PostgreSQL instance with the extraction tables.
+#
+# Usage:
+#   docker-compose up -d    # Start PostgreSQL
+#   pnpm worker:dev         # Run worker against local DB
+#   docker-compose down     # Stop
+
+services:
+  worker-db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    ports:
+      - '54322:5432'
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: revbrain_worker_dev
+    volumes:
+      - worker-db-data:/var/lib/postgresql/data
+      # Auto-run SQL migrations on first start
+      - ../../packages/database/sql/create_assessment_tables.sql:/docker-entrypoint-initdb.d/01_assessment_tables.sql
+      - ../../packages/database/sql/create_extractor_worker_role.sql:/docker-entrypoint-initdb.d/02_worker_role.sql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  worker-db-data:
