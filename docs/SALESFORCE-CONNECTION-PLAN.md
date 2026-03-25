@@ -264,7 +264,23 @@ CREATE TABLE salesforce_pkce_state (
 
 ---
 
-## 8. Implementation Tasks
+## 8. Implementation Approach — Two Steps
+
+### Step 1: Replicate the exact prototype flow
+
+First, we port the Python prototype logic to our TypeScript stack **without changing anything in the Salesforce Connected App**. Same callback URL (`http://localhost:3000/api/v1/salesforce/oauth/callback`), same credentials, same PKCE flow, same SOQL queries. The goal is to confirm the identical OAuth flow works from Node/Hono with the existing Connected App configuration.
+
+**Definition of done for Step 1:** A developer can click "Connect Source Org" in RevBrain's local dev mode, get redirected to Salesforce login, authenticate, and see CPQ products returned in the browser — identical to what the FastAPI prototype does today.
+
+### Step 2: Production hardening + Connected App updates
+
+Once the flow is confirmed working, we update the Connected App to add staging/production callback URLs, implement token encryption, database storage, multi-tenant isolation, health monitoring, and the full client-side UI. We may also refactor the callback URL path if a cleaner route structure makes sense — but only after Step 1 is proven.
+
+**Why this order matters:** If we change the Connected App settings and the Node implementation simultaneously, we can't tell whether a failure is a Salesforce config issue or a code bug. By keeping the Connected App untouched for Step 1, we isolate variables.
+
+---
+
+## 9. Implementation Tasks
 
 ### Phase A: Server-Side Foundation
 
@@ -297,7 +313,7 @@ CREATE TABLE salesforce_pkce_state (
 
 ---
 
-## 9. Security Considerations
+## 10. Security Considerations
 
 | Concern | Mitigation |
 |---|---|
@@ -312,7 +328,7 @@ CREATE TABLE salesforce_pkce_state (
 
 ---
 
-## 10. Environment-Specific Callback URLs
+## 11. Environment-Specific Callback URLs
 
 | Environment | Server URL | Callback URL (register in Connected App) |
 |---|---|---|
@@ -324,7 +340,7 @@ All three URLs must be registered as valid callback URLs in the Salesforce Conne
 
 ---
 
-## 11. Testing Strategy
+## 12. Testing Strategy
 
 | Layer | What to test | Approach |
 |---|---|---|
@@ -339,7 +355,7 @@ All three URLs must be registered as valid callback URLs in the Salesforce Conne
 
 ---
 
-## 12. Risks & Mitigations
+## 13. Risks & Mitigations
 
 | Risk | Impact | Mitigation |
 |---|---|---|
@@ -352,7 +368,7 @@ All three URLs must be registered as valid callback URLs in the Salesforce Conne
 
 ---
 
-## 13. What Changes from the Prototype
+## 14. What Changes from the Prototype
 
 | Prototype | Production |
 |---|---|
