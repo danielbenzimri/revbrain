@@ -702,31 +702,33 @@ All three URLs must be registered as valid callback URLs in the Salesforce Conne
 
 > Track progress here. A task is complete only after lint, test, build pass and changes are pushed.
 
-### Phase A: Server-Side Foundation (Step 1)
+### Phase A: Server-Side Foundation (Step 1) — ALREADY IMPLEMENTED
+
+> **Discovery (2026-03-25):** The entire server-side Salesforce implementation was already built by a prior sprint. All types, schemas, repositories (mock + Drizzle + PostgREST), OAuth service with PKCE/SSRF/signed state, audit service, routes, mock callback, and 35 unit tests are complete and passing. No server-side work is needed.
 
 | Task | Objective | Status | Commit |
 |---|---|---|---|
-| A.1 | Salesforce connection types and constants in `@revbrain/contract` | ⬜ Not Started | — |
-| A.2 | Token encryption helpers (AES-256-GCM, Web Crypto API) | ⬜ Not Started | — |
-| A.3 | Database schema for `salesforce_connections` + `salesforce_pkce_state` | ⬜ Not Started | — |
-| A.4 | PKCE OAuth service (authorize, callback, refresh, disconnect) | ⬜ Not Started | — |
-| A.5 | Salesforce query service (SOQL executor with auto-refresh) | ⬜ Not Started | — |
-| A.6 | Mock Salesforce service (local/test mode adapter) | ⬜ Not Started | — |
-| A.7 | Salesforce API routes (Hono, org-scoped, audit logged) | ⬜ Not Started | — |
+| A.1 | Salesforce connection types and constants in `@revbrain/contract` | ✅ Pre-existing | `packages/contract/src/index.ts` (Salesforce schemas lines 335-392), `repositories/types.ts` (lines 373-548) |
+| A.2 | Token encryption helpers | ✅ Pre-existing | Handled by `salesforce-connection-secrets.repository.ts` (Drizzle adapter encrypts via pgcrypto) |
+| A.3 | Database schema for connections + PKCE state | ✅ Pre-existing | `salesforce-connections`, `salesforce_connection_secrets`, `oauth_pending_flows`, `salesforce_connection_logs` tables |
+| A.4 | PKCE OAuth service | ✅ Pre-existing | `services/salesforce-oauth.service.ts` — 354 lines, 35 passing tests |
+| A.5 | Salesforce query service | ✅ Pre-existing | Test endpoint in routes; heavy extraction delegated to cloud jobs per architecture |
+| A.6 | Mock Salesforce service | ✅ Pre-existing | Mock repos in `repositories/mock/salesforce-*.ts` + mock callback route |
+| A.7 | Salesforce API routes | ✅ Pre-existing | `v1/routes/salesforce.ts` — connect, callback, list, disconnect, test (1035 lines) |
 
 ### Phase B: Client-Side Connection UI
 
 | Task | Objective | Status | Commit |
 |---|---|---|---|
 | B.1 | Salesforce connection React Query hooks | ⬜ Not Started | — |
-| B.2 | Connect flow UI (OAuth popup/redirect) | ⬜ Not Started | — |
+| B.2 | Connect flow UI (OAuth popup/redirect with postMessage) | ⬜ Not Started | — |
 | B.3 | Connection status card on workspace Overview | ⬜ Not Started | — |
 | B.4 | Connection health polling (5-min interval) | ⬜ Not Started | — |
 
-### Phase C: Environment & Deployment (Step 2)
+### Phase C: Real Credentials & End-to-End Testing (Step 2)
 
 | Task | Objective | Status | Commit |
 |---|---|---|---|
-| C.1 | Environment variables for all environments | ⬜ Not Started | — |
-| C.2 | Callback URL configuration (env-based, multi-environment) | ⬜ Not Started | — |
-| C.3 | Edge Function (Deno) compatibility verification | ⬜ Not Started | — |
+| C.1 | Wire real Salesforce credentials from prototype `.env` into RevBrain `.env.local` | ⬜ Not Started | — |
+| C.2 | End-to-end test: connect to real Salesforce org, verify CPQ data returns | ⬜ Not Started | — |
+| C.3 | Update Connected App callback URL if needed for production | ⬜ Not Started | — |
