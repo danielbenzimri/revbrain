@@ -1,21 +1,29 @@
 /**
- * Risk Bubble Scatter Plot
+ * Risk Waterfall
  *
- * Plots risks on a Likelihood (x) × Impact (y) plane.
- * Bubble size = number of affected domains. Color = category.
- * Top-right quadrant = critical attention area.
+ * Horizontal bars for each risk, sized by likelihood × impact score,
+ * colored by category. Sorted by severity. Readable descriptions
+ * next to each bar — the biggest bars = most attention needed.
  */
 import type { AssessmentRisk, RiskCategory } from '../../../mocks/assessment-mock-data';
 
 // ---------------------------------------------------------------------------
-// Category colors
+// Config
 // ---------------------------------------------------------------------------
 
-const CATEGORY_COLORS: Record<RiskCategory, { fill: string; stroke: string; label: string }> = {
-  technical: { fill: '#3b82f6', stroke: '#2563eb', label: 'Technical' },
-  business: { fill: '#8b5cf6', stroke: '#7c3aed', label: 'Business' },
-  timeline: { fill: '#f59e0b', stroke: '#d97706', label: 'Timeline' },
-  organizational: { fill: '#64748b', stroke: '#475569', label: 'Organizational' },
+const CATEGORY_STYLES: Record<RiskCategory, { bg: string; text: string; label: string }> = {
+  technical: { bg: 'bg-blue-400', text: 'text-blue-800', label: 'Technical' },
+  business: { bg: 'bg-violet-400', text: 'text-violet-800', label: 'Business' },
+  timeline: { bg: 'bg-amber-400', text: 'text-amber-800', label: 'Timeline' },
+  organizational: { bg: 'bg-slate-400', text: 'text-slate-700', label: 'Organizational' },
+};
+
+const SEVERITY_ORDER = ['critical', 'high', 'medium', 'low'] as const;
+const SEVERITY_LABEL: Record<string, { text: string; cls: string }> = {
+  critical: { text: 'Critical', cls: 'text-red-600 bg-red-50' },
+  high: { text: 'High', cls: 'text-red-500 bg-red-50' },
+  medium: { text: 'Medium', cls: 'text-amber-600 bg-amber-50' },
+  low: { text: 'Low', cls: 'text-emerald-600 bg-emerald-50' },
 };
 
 // ---------------------------------------------------------------------------
@@ -28,88 +36,80 @@ interface RiskBubbleScatterProps {
 }
 
 export default function RiskBubbleScatter({ risks, t }: RiskBubbleScatterProps) {
-  // Add slight jitter to prevent exact overlaps
-  const jitter = (val: number, i: number) => val + (((i * 7) % 5) - 2) * 0.06;
+  // Sort by severity then by score descending
+  const sorted = [...risks].sort((a, b) => {
+    const sevDiff = SEVERITY_ORDER.indexOf(a.severity) - SEVERITY_ORDER.indexOf(b.severity);
+    if (sevDiff !== 0) return sevDiff;
+    return (b.likelihood * b.impact) - (a.likelihood * a.impact);
+  });
+
+  // Show top 10 risks to keep it readable
+  const topRisks = sorted.slice(0, 10);
+  const maxScore = Math.max(...topRisks.map((r) => r.likelihood * r.impact), 1);
 
   return (
     <div className="bg-white rounded-2xl p-5" data-testid="risk-bubble-scatter">
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-semibold text-slate-900">
-          {t('assessment.riskRegister.heatMap')}
+          Top Risks by Severity
         </h3>
         <div className="flex items-center gap-3 text-xs">
-          {Object.entries(CATEGORY_COLORS).map(([key, { fill }]) => (
+          {Object.entries(CATEGORY_STYLES).map(([key, { bg }]) => (
             <span key={key} className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: fill }} />
+              <span className={`w-2.5 h-2.5 rounded-full ${bg}`} />
               {t(`assessment.riskRegister.categories.${key}`)}
             </span>
           ))}
         </div>
       </div>
 
-      <svg viewBox="0 0 100 100" className="w-full" style={{ minHeight: 280 }} role="img" aria-label="Risk likelihood vs impact scatter plot">
-        {/* Background quadrants */}
-        <rect x={10} y={5} width={42} height={42} fill="#f0fdf4" rx={2} /> {/* Low risk */}
-        <rect x={52} y={5} width={42} height={42} fill="#fef3c7" rx={2} /> {/* Medium-high */}
-        <rect x={10} y={47} width={42} height={42} fill="#f0fdf4" rx={2} /> {/* Low-low */}
-        <rect x={52} y={47} width={42} height={42} fill="#fef9c3" rx={2} /> {/* Medium-low */}
+      <div className="space-y-2">
+        {topRisks.map((risk) => {
+          const score = risk.likelihood * risk.impact;
+          const width = Math.max((score / maxScore) * 100, 12);
+          const { bg } = CATEGORY_STYLES[risk.category];
+          const sev = SEVERITY_LABEL[risk.severity] || SEVERITY_LABEL.medium;
 
-        {/* Critical zone highlight */}
-        <rect x={52} y={5} width={42} height={42} fill="#fef2f2" fillOpacity={0.5} rx={2} />
-        <text x={93} y={10} fontSize={2} fill="#ef4444" fontWeight={600} textAnchor="end">Critical Zone</text>
-
-        {/* Axis labels */}
-        <text x={50} y={98} fontSize={2.5} fill="#64748b" textAnchor="middle" fontWeight={500}>
-          {t('assessment.riskRegister.likelihood')} →
-        </text>
-        <text x={3} y={50} fontSize={2.5} fill="#64748b" textAnchor="middle" fontWeight={500} transform="rotate(-90, 3, 50)">
-          {t('assessment.riskRegister.impact')} →
-        </text>
-
-        {/* Grid lines */}
-        {[1, 2, 3, 4, 5].map((i) => {
-          const x = 10 + ((i - 0.5) / 5) * 84;
-          const y = 89 - ((i - 0.5) / 5) * 84;
-          return (
-            <g key={`grid-${i}`}>
-              <line x1={x} y1={5} x2={x} y2={89} stroke="#e2e8f0" strokeWidth={0.15} />
-              <line x1={10} y1={y} x2={94} y2={y} stroke="#e2e8f0" strokeWidth={0.15} />
-              <text x={x} y={93} fontSize={1.8} fill="#94a3b8" textAnchor="middle">{i}</text>
-              <text x={8} y={y + 0.7} fontSize={1.8} fill="#94a3b8" textAnchor="end">{i}</text>
-            </g>
-          );
-        })}
-
-        {/* Bubbles */}
-        {risks.map((risk, i) => {
-          const { fill, stroke } = CATEGORY_COLORS[risk.category];
-          const x = 10 + (jitter(risk.likelihood, i) / 5) * 84;
-          const y = 89 - (jitter(risk.impact, i) / 5) * 84;
-          const r = 1.5 + risk.affectedDomains.length * 0.8;
+          // Truncate description to fit
+          const desc = risk.description.split(' — ')[0];
+          const shortDesc = desc.length > 65 ? desc.slice(0, 62) + '...' : desc;
 
           return (
-            <g key={risk.id}>
-              <circle
-                cx={x}
-                cy={y}
-                r={r}
-                fill={fill}
-                fillOpacity={0.25}
-                stroke={stroke}
-                strokeWidth={0.3}
-              />
-              <circle
-                cx={x}
-                cy={y}
-                r={r * 0.4}
-                fill={fill}
-                fillOpacity={0.8}
-              />
-              <title>{risk.description}</title>
-            </g>
+            <div key={risk.id} className="group">
+              <div className="flex items-center gap-2 mb-0.5">
+                <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${sev.cls}`}>
+                  {sev.text}
+                </span>
+                <p className="text-xs text-slate-700 truncate flex-1" title={risk.description}>
+                  {shortDesc}
+                </p>
+                <span className="text-[10px] text-slate-400 tabular-nums shrink-0">
+                  {score}/25
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 h-5 rounded bg-slate-50 overflow-hidden">
+                  <div
+                    className={`${bg} h-full rounded transition-all group-hover:brightness-110`}
+                    style={{ width: `${width}%` }}
+                  />
+                </div>
+                {risk.affectedDomains.length > 0 && (
+                  <span className="text-[10px] text-slate-400 shrink-0">
+                    {risk.affectedDomains.length} domain{risk.affectedDomains.length > 1 ? 's' : ''}
+                  </span>
+                )}
+              </div>
+            </div>
           );
         })}
-      </svg>
+      </div>
+
+      {risks.length > 10 && (
+        <p className="text-xs text-slate-400 mt-3 text-center">
+          Showing top 10 of {risks.length} risks
+        </p>
+      )}
     </div>
   );
 }

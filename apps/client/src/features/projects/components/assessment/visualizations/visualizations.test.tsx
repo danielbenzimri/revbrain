@@ -88,30 +88,42 @@ describe('MigrationTreemap', () => {
   });
 });
 
-describe('RiskBubbleScatter', () => {
+describe('RiskWaterfall (RiskBubbleScatter)', () => {
   afterEach(() => cleanup());
 
-  it('renders scatter plot', () => {
+  it('renders risk waterfall', () => {
     render(<RiskBubbleScatter risks={assessment.risks} t={mockT} />);
     expect(screen.getByTestId('risk-bubble-scatter')).toBeTruthy();
   });
 
-  it('shows axis labels', () => {
+  it('shows top risks with severity badges', () => {
     render(<RiskBubbleScatter risks={assessment.risks} t={mockT} />);
-    expect(screen.getByText(/assessment\.riskRegister\.likelihood/)).toBeTruthy();
-    expect(screen.getByText(/assessment\.riskRegister\.impact/)).toBeTruthy();
+    const chart = screen.getByTestId('risk-bubble-scatter');
+    expect(chart.textContent).toContain('Critical');
   });
 
-  it('shows critical zone label', () => {
+  it('shows risk descriptions', () => {
     render(<RiskBubbleScatter risks={assessment.risks} t={mockT} />);
-    const svg = screen.getByRole('img');
-    expect(svg.textContent).toContain('Critical Zone');
+    const chart = screen.getByTestId('risk-bubble-scatter');
+    expect(chart.textContent).toContain('Calculator plugins');
   });
 
   it('shows category legend', () => {
     render(<RiskBubbleScatter risks={assessment.risks} t={mockT} />);
     expect(screen.getByText('assessment.riskRegister.categories.technical')).toBeTruthy();
     expect(screen.getByText('assessment.riskRegister.categories.business')).toBeTruthy();
+  });
+
+  it('shows score out of 25', () => {
+    render(<RiskBubbleScatter risks={assessment.risks} t={mockT} />);
+    const chart = screen.getByTestId('risk-bubble-scatter');
+    expect(chart.textContent).toContain('/25');
+  });
+
+  it('limits to top 10 risks', () => {
+    render(<RiskBubbleScatter risks={assessment.risks} t={mockT} />);
+    const chart = screen.getByTestId('risk-bubble-scatter');
+    expect(chart.textContent).toContain('Showing top 10 of 23 risks');
   });
 });
 
