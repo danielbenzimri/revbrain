@@ -12,6 +12,7 @@ import { webhooksRouter } from './webhooks.ts';
 import { devRouter } from './dev.ts';
 import { projectsRouter } from './projects.ts';
 import { salesforceRouter } from './salesforce.ts';
+import { internalRouter } from './internal.ts';
 import { type AppEnv } from '../../types/index.ts';
 
 /**
@@ -64,3 +65,6 @@ v1Router.route('/webhooks', webhooksRouter);
 
 // Dev routes (development only, no-op in production)
 v1Router.route('/dev', devRouter);
+
+// Internal routes (called by extraction worker, protected by shared secret)
+v1Router.route('/internal', internalRouter);
