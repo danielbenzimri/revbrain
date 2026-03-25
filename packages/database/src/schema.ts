@@ -1235,3 +1235,286 @@ export const salesforceConnectionLogs = pgTable(
 
 export type SalesforceConnectionLog = typeof salesforceConnectionLogs.$inferSelect;
 export type NewSalesforceConnectionLog = typeof salesforceConnectionLogs.$inferInsert;
+
+// ============================================================================
+// ASSESSMENT EXTRACTION TABLES
+// ============================================================================
+// CPQ data extraction job tracking, findings, relationships, metrics, summaries.
+// See: docs/CPQ-EXTRACTION-IMPLEMENTATION-PLAN.md Task 0.4
+// See: docs/CPQ-EXTRACTION-JOB-ARCHITECTURE.md Section 9.2
+
+/**
+ * Assessment run tracking with lease/heartbeat model and state machine.
+ * States: queued, dispatched, running, stalled, completed, completed_warnings,
+ *         failed, cancel_requested, cancelled
+ * State machine enforced by DB trigger (see SQL migration).
+ */
+export const assessmentRuns = pgTable(
+  'assessment_runs',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    projectId: uuid('project_id')
+      .references(() => projects.id)
+      .notNull(),
+    organizationId: uuid('organization_id')
+      .references(() => organizations.id, { onDelete: 'cascade' })
+      .notNull(),
+    connectionId: uuid('connection_id')
+      .references(() => salesforceConnections.id)
+      .notNull(),
+
+    // State machine
+    status: varchar('status', { length: 30 }).notNull().default('queued'),
+    statusReason: text('status_reason'),
+
+    // Scope & config
+    scope: jsonb('scope'),
+    mode: varchar('mode', { length: 20 }).notNull().default('full'),
+    disabledCollectors: jsonb('disabled_collectors').$type<string[]>().default([]),
+    rawSnapshotMode: varchar('raw_snapshot_mode', { length: 20 }).notNull().default('errors_only'),
+
+    // Progress (updated with heartbeat)
+    progress: jsonb('progress').default({}),
+    orgFingerprint: jsonb('org_fingerprint'),
+    normalizationStatus: varchar('normalization_status', { length: 20 }).default('pending'),
+
+    // Lease model
+    workerId: text('worker_id'),
+    leaseExpiresAt: timestamp('lease_expires_at', { withTimezone: true }),
+    lastHeartbeatAt: timestamp('last_heartbeat_at', { withTimezone: true }),
+
+    // Provider tracking
+    providerExecutionId: text('provider_execution_id'),
+
+    // Versioning / provenance
+    specVersion: text('spec_version'),
+    workerVersion: text('worker_version'),
+
+    // Retry
+    retryCount: integer('retry_count').notNull().default(0),
+    maxRetries: integer('max_retries').notNull().default(2),
+
+    // Idempotency
+    idempotencyKey: varchar('idempotency_key', { length: 64 }),
+
+    // Lifecycle timestamps
+    dispatchedAt: timestamp('dispatched_at', { withTimezone: true }),
+    startedAt: timestamp('started_at', { withTimezone: true }),
+    completedAt: timestamp('completed_at', { withTimezone: true }),
+    failedAt: timestamp('failed_at', { withTimezone: true }),
+    cancelRequestedAt: timestamp('cancel_requested_at', { withTimezone: true }),
+
+    // Metrics
+    durationMs: integer('duration_ms'),
+    apiCallsUsed: integer('api_calls_used').default(0),
+    recordsExtracted: integer('records_extracted').default(0),
+    completenessPct: integer('completeness_pct').default(0),
+
+    // Audit
+    createdBy: uuid('created_by').references(() => users.id),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+
+    error: text('error'),
+  },
+  (table) => ({
+    projectIdx: index('idx_runs_project').on(table.projectId, table.createdAt),
+    leaseIdx: index('idx_runs_lease').on(table.status, table.leaseExpiresAt),
+    // Note: unique partial index and idempotency_key unique index
+    // are created in SQL migration (Drizzle 0.29 doesn't support partial indexes)
+  })
+);
+
+export type AssessmentRun = typeof assessmentRuns.$inferSelect;
+export type NewAssessmentRun = typeof assessmentRuns.$inferInsert;
+
+/**
+ * Run attempts / execution history for support and debugging.
+ */
+export const runAttempts = pgTable(
+  'run_attempts',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    runId: uuid('run_id')
+      .references(() => assessmentRuns.id, { onDelete: 'cascade' })
+      .notNull(),
+    attemptNo: integer('attempt_no').notNull().default(1),
+    workerId: text('worker_id'),
+    providerExecutionId: text('provider_execution_id'),
+    startedAt: timestamp('started_at', { withTimezone: true }).defaultNow(),
+    endedAt: timestamp('ended_at', { withTimezone: true }),
+    exitCode: integer('exit_code'),
+    exitReason: text('exit_reason'),
+    infraDetails: jsonb('infra_details'),
+  },
+  (table) => ({
+    runAttemptUnique: unique('uq_run_attempts').on(table.runId, table.attemptNo),
+  })
+);
+
+export type RunAttempt = typeof runAttempts.$inferSelect;
+export type NewRunAttempt = typeof runAttempts.$inferInsert;
+
+/**
+ * Collector checkpoints for substep-level resume.
+ */
+export const collectorCheckpoints = pgTable(
+  'collector_checkpoints',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    runId: uuid('run_id')
+      .references(() => assessmentRuns.id, { onDelete: 'cascade' })
+      .notNull(),
+    collectorName: text('collector_name').notNull(),
+    criticality: varchar('criticality', { length: 10 }).notNull().default('tier1'),
+    status: varchar('status', { length: 20 }).notNull().default('pending'),
+    attemptNo: integer('attempt_no').notNull().default(1),
+    // Substep resume
+    phase: text('phase'),
+    substep: text('substep'),
+    cursorJson: jsonb('cursor_json'),
+    bulkJobIds: jsonb('bulk_job_ids').$type<string[]>().default([]),
+    // Metrics
+    startedAt: timestamp('started_at', { withTimezone: true }),
+    completedAt: timestamp('completed_at', { withTimezone: true }),
+    recordsExtracted: integer('records_extracted').default(0),
+    warnings: jsonb('warnings').$type<string[]>().default([]),
+    error: text('error'),
+    retryCount: integer('retry_count').default(0),
+  },
+  (table) => ({
+    checkpointUnique: unique('uq_collector_checkpoints').on(table.runId, table.collectorName),
+  })
+);
+
+export type CollectorCheckpoint = typeof collectorCheckpoints.$inferSelect;
+export type NewCollectorCheckpoint = typeof collectorCheckpoints.$inferInsert;
+
+/**
+ * Assessment findings with LLM-readiness: text_value for source text,
+ * evidence_refs for normalized references.
+ */
+export const assessmentFindings = pgTable(
+  'assessment_findings',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    runId: uuid('run_id')
+      .references(() => assessmentRuns.id, { onDelete: 'cascade' })
+      .notNull(),
+    domain: text('domain').notNull(),
+    collectorName: text('collector_name').notNull(),
+    artifactType: text('artifact_type').notNull(),
+    artifactName: text('artifact_name').notNull(),
+    artifactId: text('artifact_id'),
+    findingKey: text('finding_key').notNull(),
+    sourceType: text('source_type').notNull(),
+    sourceRef: text('source_ref'),
+    detected: boolean('detected').default(true),
+    countValue: integer('count_value'),
+    textValue: text('text_value'), // Verbatim source for LLM (QCP, Apex, formulas, etc.)
+    usageLevel: text('usage_level'),
+    riskLevel: text('risk_level'),
+    complexityLevel: text('complexity_level'),
+    migrationRelevance: text('migration_relevance'),
+    rcaTargetConcept: text('rca_target_concept'),
+    rcaMappingComplexity: text('rca_mapping_complexity'),
+    evidenceRefs: jsonb('evidence_refs').$type<unknown[]>().default([]),
+    notes: text('notes'),
+    organizationId: uuid('organization_id')
+      .references(() => organizations.id)
+      .notNull(),
+    schemaVersion: text('schema_version').default('1.0'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    findingsRunIdx: index('idx_findings_run').on(table.runId),
+    findingsDomainIdx: index('idx_findings_domain').on(table.runId, table.domain),
+    findingsCollectorIdx: index('idx_findings_collector').on(table.runId, table.collectorName),
+    // Note: unique partial index on (runId, findingKey) WHERE detected = true
+    // created in SQL migration
+  })
+);
+
+export type AssessmentFinding = typeof assessmentFindings.$inferSelect;
+export type NewAssessmentFinding = typeof assessmentFindings.$inferInsert;
+
+/**
+ * Dependency graph edges between findings.
+ */
+export const assessmentRelationships = pgTable(
+  'assessment_relationships',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    runId: uuid('run_id')
+      .references(() => assessmentRuns.id, { onDelete: 'cascade' })
+      .notNull(),
+    sourceFindingId: uuid('source_finding_id')
+      .references(() => assessmentFindings.id, { onDelete: 'cascade' })
+      .notNull(),
+    targetFindingId: uuid('target_finding_id')
+      .references(() => assessmentFindings.id, { onDelete: 'cascade' })
+      .notNull(),
+    relationshipType: text('relationship_type').notNull(),
+    description: text('description'),
+  },
+  (table) => ({
+    relSourceIdx: index('idx_rel_source').on(table.sourceFindingId),
+    relTargetIdx: index('idx_rel_target').on(table.targetFindingId),
+    relRunIdx: index('idx_rel_run').on(table.runId),
+  })
+);
+
+export type AssessmentRelationship = typeof assessmentRelationships.$inferSelect;
+export type NewAssessmentRelationship = typeof assessmentRelationships.$inferInsert;
+
+/**
+ * Per-collector metrics.
+ */
+export const collectorMetrics = pgTable(
+  'collector_metrics',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    runId: uuid('run_id')
+      .references(() => assessmentRuns.id, { onDelete: 'cascade' })
+      .notNull(),
+    collectorName: text('collector_name').notNull(),
+    domain: text('domain').notNull(),
+    metrics: jsonb('metrics').notNull().default({}),
+    warnings: jsonb('warnings').$type<string[]>().default([]),
+    coverage: integer('coverage').default(0),
+    collectedAt: timestamp('collected_at', { withTimezone: true }).defaultNow(),
+    durationMs: integer('duration_ms'),
+    schemaVersion: text('schema_version').default('1.0'),
+  },
+  (table) => ({
+    metricsUnique: unique('uq_collector_metrics').on(table.runId, table.collectorName),
+  })
+);
+
+export type CollectorMetric = typeof collectorMetrics.$inferSelect;
+export type NewCollectorMetric = typeof collectorMetrics.$inferInsert;
+
+/**
+ * Structured summaries (canonical, reproducible from findings).
+ */
+export const assessmentSummaries = pgTable(
+  'assessment_summaries',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    runId: uuid('run_id')
+      .references(() => assessmentRuns.id, { onDelete: 'cascade' })
+      .notNull(),
+    summaryType: text('summary_type').notNull(),
+    domain: text('domain'),
+    content: jsonb('content').notNull(),
+    schemaVersion: text('schema_version').default('1.0'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    summariesRunIdx: index('idx_summaries_run').on(table.runId, table.summaryType),
+    // Note: unique constraint on (runId, summaryType, COALESCE(domain, '_global'))
+    // created in SQL migration
+  })
+);
+
+export type AssessmentSummary = typeof assessmentSummaries.$inferSelect;
+export type NewAssessmentSummary = typeof assessmentSummaries.$inferInsert;
