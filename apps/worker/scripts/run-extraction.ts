@@ -11,6 +11,7 @@
 import { DiscoveryCollector } from '../src/collectors/discovery.ts';
 import { CatalogCollector } from '../src/collectors/catalog.ts';
 import { PricingCollector } from '../src/collectors/pricing.ts';
+import { UsageCollector } from '../src/collectors/usage.ts';
 import { SalesforceRestApi } from '../src/salesforce/rest.ts';
 import { SalesforceBulkApi } from '../src/salesforce/bulk.ts';
 import { SalesforceMetadataApi } from '../src/salesforce/soap.ts';
@@ -134,10 +135,19 @@ async function main() {
   const priResult = await pricing.run();
   printResult('Pricing', priResult);
 
+  // Run Usage
+  console.log('\n▶ Running Usage...');
+  const usage = new UsageCollector(ctx);
+  const usaResult = await usage.run();
+  printResult('Usage', usaResult);
+
   // Summary
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
   const totalFindings =
-    discResult.findings.length + catResult.findings.length + priResult.findings.length;
+    discResult.findings.length +
+    catResult.findings.length +
+    priResult.findings.length +
+    usaResult.findings.length;
   console.log(`\n${'═'.repeat(60)}`);
   console.log(`Extraction complete in ${elapsed}s`);
   console.log(`Total findings: ${totalFindings}`);
