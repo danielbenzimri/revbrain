@@ -717,4 +717,30 @@ if (
   console.log('[MOCK MODE] Reset endpoint: POST /v1/dev/reset-mock-data');
 }
 
+// Dev-only: expose raw SF access token for worker integration testing
+// NEVER available in production (guarded by isMock check above)
+if (process.env.USE_MOCK_DATA === 'true') {
+  devRouter.get('/sf-token/:connectionId', async (c) => {
+    try {
+      const { mockSalesforceConnectionSecrets } = await import('../../mocks/index.ts');
+      const connectionId = c.req.param('connectionId');
+      const secrets = mockSalesforceConnectionSecrets.find(
+        (s: any) => s.connectionId === connectionId
+      );
+      if (!secrets) {
+        return c.json({ error: 'No secrets found for connection' }, 404);
+      }
+      // In mock mode, accessToken is stored as plaintext (not encrypted)
+      return c.json({
+        accessToken: secrets.accessToken,
+        tokenVersion: secrets.tokenVersion,
+        issuedAt: secrets.tokenIssuedAt,
+      });
+    } catch (err: any) {
+      return c.json({ error: err.message }, 500);
+    }
+  });
+  console.log('[MOCK MODE] SF token endpoint: GET /v1/dev/sf-token/:connectionId');
+}
+
 export { devRouter };
