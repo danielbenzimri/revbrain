@@ -3,7 +3,7 @@
 > **Purpose:** Complete guide for the engineering team + CEO briefing on the CPQ data extraction service — what it is, how it's built, what's done, what's missing, and the step-by-step path to completion.
 >
 > **Date:** 2026-03-26
-> **Audience:** Daniel (CTO), Niv (Engineer), Rami (CEO)
+> **Audience:** Daniel (CTO), Niv (Engineer), Ofir (CEO)
 
 ---
 
@@ -254,7 +254,261 @@ graph TB
 
 ---
 
-## 5. How Extraction Data Maps to the UI
+## 5. What Each Collector Does (and Why Discovery Comes First)
+
+### Why Can't We Just Query Salesforce Directly?
+
+A common misconception: "We know the CPQ tables — just run the SOQL queries." This fails because **every Salesforce org is different**:
+
+| Problem                         | What Happens Without Discovery                                                                          |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| **Field doesn't exist**         | CPQ v218 doesn't have `SBQQ__TermDiscountLevel__c` (added in v230). Query crashes with `INVALID_FIELD`. |
+| **Field-Level Security**        | Customer's admin restricted `SBQQ__BillingFrequency__c` from our connected user. Query fails.           |
+| **CPQ not installed**           | No `SBQQ__` objects at all. Every collector crashes.                                                    |
+| **Huge data volume**            | 500K products — REST API times out. We needed to know the count first to use Bulk API.                  |
+| **API limits almost exhausted** | Org is at 95% of daily API limit. Our 70+ calls would break their production users.                     |
+
+**Discovery solves all of this in one pass (under 5 minutes).** It's the reconnaissance mission before the army moves in.
+
+### Discovery Collector — The Foundation
+
+```mermaid
+graph TB
+    D[Discovery Collector] --> S1[Step 1: Org Fingerprint<br/>Edition, sandbox, multi-currency,<br/>Person Accounts, timezone]
+    D --> S2[Step 2: Describe Global<br/>List ALL objects visible to our user<br/>Check: which of 35 CPQ objects exist?]
+    D --> S3[Step 3: Batched Describes<br/>For each CPQ object: every field,<br/>type, accessibility, formulas,<br/>picklists, field sets, relationships]
+    D --> S4[Step 4: Limits Check<br/>API calls remaining today<br/>Block if < 1,000 / Warn if < 5,000]
+    D --> S5[Step 5: CPQ Version<br/>v244? v232? v218?<br/>Determines which fields exist]
+    D --> S6[Step 6: Data Size Estimation<br/>COUNT per object<br/>REST or Bulk API path decision<br/>Runtime estimate for the user]
+
+    S3 --> DC[(Describe Cache<br/>Map of object → fields)]
+    DC --> CAT[Catalog Collector]
+    DC --> PRI[Pricing Collector]
+    DC --> USA[Usage Collector]
+    DC --> ALL[All Other Collectors]
+
+    style D fill:#4ade80
+    style DC fill:#fbbf24
+```
+
+**The Describe Cache is the key output.** After Discovery, `ctx.describeCache` contains the full schema of every CPQ object in this customer's org. When any collector builds a SOQL query, it does:
+
+```
+Wishlist: [Id, Name, SBQQ__ChargeType__c, SBQQ__TermDiscountLevel__c, ...]
+                                                  ↓
+                              Filter against Describe (what actually exists)
+                                                  ↓
+Safe query: SELECT Id, Name, SBQQ__ChargeType__c FROM Product2
+            (SBQQ__TermDiscountLevel__c removed — doesn't exist in this org)
+```
+
+This is why every other collector has `requires: ['discovery']` — without the Describe Cache, they can't build safe queries.
+
+### Tier 0 Collectors — The Core Assessment
+
+These are **mandatory**. If any fails, the entire run fails. They produce 80%+ of the assessment value.
+
+#### Catalog Collector (Spec §5)
+
+**What it extracts:** The product catalog — the "what are you selling?" question.
+
+```mermaid
+graph LR
+    subgraph "Salesforce Objects"
+        P[Product2<br/>All products + SKUs]
+        F[ProductFeature<br/>Bundle groupings]
+        O[ProductOption<br/>Options within bundles]
+        R[ProductRule<br/>Validation/selection rules]
+        A[ConfigurationAttribute<br/>Config UI attributes]
+    end
+
+    subgraph "Key Insights Produced"
+        I1[Total products: 234<br/>Active: 189, Dormant: 45]
+        I2[Bundle depth: 3 levels<br/>12 parent bundles]
+        I3[PSM candidates: 8 unique<br/>subscription models]
+        I4[SKU consolidation:<br/>42 SKUs → 6 attribute products]
+        I5[Rule complexity:<br/>15 validation, 8 selection, 3 filter]
+    end
+
+    P --> I1
+    F --> I2
+    O --> I2
+    P --> I3
+    P --> I4
+    R --> I5
+```
+
+**Why it matters for migration:** RCA replaces flat SKU catalogs with attribute-based products. If a customer has 200 products that are really 20 products × 10 size/color variants, that's a massive simplification opportunity. The catalog collector detects these patterns.
+
+**Example finding produced:**
+
+```json
+{
+  "domain": "catalog",
+  "artifactType": "Product2",
+  "artifactName": "Enterprise Widget - Large",
+  "findingKey": "catalog:Product2:01t000000ABC:sku_consolidation_candidate",
+  "migrationRelevance": "should-migrate",
+  "rcaTargetConcept": "ProductSellingModel",
+  "rcaMappingComplexity": "transform",
+  "evidenceRefs": [
+    {
+      "type": "field-ref",
+      "referencedFields": ["SBQQ__ChargeType__c", "SBQQ__BillingFrequency__c"]
+    }
+  ]
+}
+```
+
+#### Pricing Collector (Spec §6)
+
+**What it extracts:** The pricing engine — the most complex and highest-risk migration area.
+
+```mermaid
+graph TB
+    subgraph "CPQ Pricing Layer"
+        PR[Price Rules<br/>When to fire, what to change]
+        PC[Price Conditions<br/>IF this field = that value]
+        PA[Price Actions<br/>THEN set this field to X]
+        DS[Discount Schedules<br/>Volume/slab pricing tiers]
+        QCP[QCP Scripts<br/>Custom JavaScript logic<br/>THE HIGHEST RISK ITEM]
+        SV[Summary Variables<br/>Cross-line aggregation]
+        LQ[Lookup Queries + Data<br/>Data-driven pricing tables]
+    end
+
+    subgraph "Key Insights Produced"
+        I1[28 active price rules<br/>→ 28 Pricing Procedure nodes in RCA]
+        I2[3 QCP scripts, 1,200 lines<br/>2 have external callouts<br/>→ CRITICAL: full rewrite needed]
+        I3[5 discount schedules<br/>12 volume tiers<br/>→ Pricing Procedure discount nodes]
+        I4[Context Blueprint:<br/>47 unique fields participate<br/>in pricing logic]
+    end
+
+    PR --> I1
+    QCP --> I2
+    DS --> I3
+    PC --> I4
+    PA --> I4
+    SV --> I4
+    QCP --> I4
+```
+
+**Why it matters for migration:** CPQ's price rules + QCP JavaScript must be completely redesigned as RCA Pricing Procedures. QCP scripts are the #1 risk item in any migration — they contain custom business logic written in JavaScript that has no direct RCA equivalent. The pricing collector extracts the full source code, analyzes field references, detects external callouts, and flags everything for the consultant to review.
+
+**LLM-readiness note:** The full QCP JavaScript source is preserved in `text_value` on each finding. In v1.1, the LLM reads this code and explains what business logic it implements — something no human could do quickly for 1,200 lines of pricing JavaScript.
+
+#### Usage Collector (Spec §12)
+
+**What it extracts:** Real operational data from the last 90 days — how actively they use CPQ.
+
+```mermaid
+graph TB
+    subgraph "Bulk API Extraction"
+        Q[90-Day Quotes<br/>via Bulk API 2.0<br/>Potentially 50K+ records]
+        QL[Quote Lines<br/>Full pricing waterfall<br/>Every discount + override]
+        T[12-Month Trends<br/>Monthly quote volume<br/>Seasonal patterns]
+    end
+
+    subgraph "Key Insights Produced"
+        I1[3,421 quotes in 90 days<br/>Avg 8.3 lines per quote]
+        I2[Discount frequency: 67%<br/>Manual overrides: 12%]
+        I3[Top 5 products = 80% of volume<br/>45 products have zero usage]
+        I4[Quote-to-Order rate: 34%<br/>Renewal rate: 78%]
+        I5[Opportunity sync issues: 23<br/>OLI ≠ QuoteLine count]
+    end
+
+    Q --> I1
+    QL --> I2
+    Q --> I3
+    Q --> I4
+    T --> I4
+    Q --> I5
+```
+
+**Why it matters for migration:** Usage data answers "what do they actually use?" vs "what do they have configured?" A product catalog might have 500 products, but if only 50 are quoted in the last 90 days, the migration can focus on those first. The Opportunity sync health check catches data integrity issues that must be fixed BEFORE migration.
+
+**This is the performance-critical collector.** It uses Bulk API 2.0 to stream potentially 50K+ quote lines as CSV, processes them in chunks, and never loads the entire dataset into memory.
+
+### Tier 1 Collectors — Important but Non-Fatal
+
+If these fail, the run completes with `completed_warnings` — the assessment is still useful but has gaps.
+
+| Collector                      | What It Extracts                                                                                            | Why It Matters                                                                                                                                                 |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Dependencies** (Spec §10)    | Apex classes, triggers, flows, workflow rules that touch CPQ objects                                        | Apex code that disables CPQ triggers (`SBQQ.TriggerControl.disable()`) is a red flag — that pattern breaks completely in RCA. Flow dependencies need redesign. |
+| **Customizations** (Spec §9)   | Custom fields on CPQ objects, custom metadata types, validation rules, page layouts, sharing rules          | Every custom field on `SBQQ__Quote__c` needs to be mapped to the standard `Quote` object in RCA. Formula fields are especially tricky.                         |
+| **Settings** (Spec §15)        | CPQ package settings (Custom Settings) — calculation order, subscription proration, multi-currency behavior | These settings define the behavioral baseline. RCA's Revenue Settings must replicate this behavior or the pricing changes.                                     |
+| **Order Lifecycle** (Spec §13) | Orders, OrderItems, Contracts, Assets with CPQ fields                                                       | Shows the downstream impact — how quote data flows into orders and contracts. Required for RCA's Dynamic Revenue Orchestrator mapping.                         |
+
+### Tier 2 Collectors — Optional (Nice to Have)
+
+If these fail, it's a minor coverage gap. The core assessment is still complete.
+
+| Collector                   | What It Extracts                                                                | Why It Matters                                                                                     |
+| --------------------------- | ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| **Templates** (Spec §7)     | Quote templates, merge fields, document generation config                       | Templates usually need complete redesign for RCA. Detecting JavaScript in templates is a red flag. |
+| **Approvals** (Spec §8)     | CPQ custom actions, standard approval processes, Advanced Approvals (sbaa\_\_)  | Approval workflows need redesign for RCA's Flow-based approach. Multi-step approvals are complex.  |
+| **Integrations** (Spec §11) | Named credentials, platform events, external data sources, e-signature packages | External integrations touching the quote-to-cash path need careful migration planning.             |
+| **Localization** (Spec §14) | CPQ translations, custom labels                                                 | If >1,000 translation records exist, this adds weeks to migration effort.                          |
+
+### How Collectors Work Together
+
+```mermaid
+graph TB
+    subgraph "Phase 1: Discovery (Sequential)"
+        DISC[Discovery<br/>5 min]
+    end
+
+    subgraph "Phase 2: Tier 0 (Parallel)"
+        CAT[Catalog<br/>15 min]
+        PRI[Pricing<br/>20 min]
+        USA[Usage<br/>45 min]
+    end
+
+    subgraph "Gate: All Tier 0 must pass"
+        GATE{All 3<br/>succeeded?}
+    end
+
+    subgraph "Phase 3: Tier 1 + 2 (Parallel)"
+        DEP[Dependencies]
+        CUS[Customizations]
+        SET[Settings]
+        ORD[Orders]
+        TPL[Templates]
+        APP[Approvals]
+        INT[Integrations]
+        LOC[Localization]
+    end
+
+    subgraph "Phase 4: Post-Processing"
+        TF[Twin Fields<br/>Cross-object comparison]
+        VAL[Validation<br/>Referential integrity]
+        REL[Relationships<br/>Dependency graph]
+        MET[Derived Metrics<br/>Cross-collector]
+    end
+
+    subgraph "Phase 5: Summaries"
+        SUM[7 Summary Types<br/>→ Dashboard Data]
+    end
+
+    DISC --> CAT & PRI & USA
+    CAT & PRI & USA --> GATE
+    GATE -->|Yes| DEP & CUS & SET & ORD & TPL & APP & INT & LOC
+    GATE -->|No| FAIL[Run Failed]
+    DEP & CUS & SET & ORD & TPL & APP & INT & LOC --> TF & VAL & REL & MET
+    TF & VAL & REL & MET --> SUM
+
+    style DISC fill:#4ade80
+    style CAT fill:#f87171
+    style PRI fill:#f87171
+    style USA fill:#f87171
+    style GATE fill:#fbbf24
+```
+
+The tier gating is a key design decision: if Catalog extraction fails (e.g., Salesforce is unreachable), there's no point running Templates or Approvals — we'd just waste API calls. Tier 0 failure aborts the run, preserving the customer's API budget.
+
+---
+
+## 6. How Extraction Data Maps to the UI
 
 This is critical to understand. The extraction worker produces data in one format; the UI expects another. Here's the mapping:
 
@@ -293,7 +547,7 @@ graph LR
 
 ---
 
-## 6. Step-by-Step Completion Guide
+## 7. Step-by-Step Completion Guide
 
 ### Step 1: Get a Salesforce Sandbox Ready
 
@@ -500,7 +754,7 @@ JOB_ID=test RUN_ID=<uuid> pnpm worker:dev
 
 ---
 
-## 7. The Human-in-the-Loop Model
+## 8. The Human-in-the-Loop Model
 
 ```mermaid
 graph TB
@@ -593,7 +847,7 @@ This positions RevBrain as an **AI-augmented consulting tool**, not a black box.
 
 ---
 
-## 8. Timeline Estimate
+## 9. Timeline Estimate
 
 | Phase                         | Effort   | Who        | Elapsed              |
 | ----------------------------- | -------- | ---------- | -------------------- |
@@ -615,7 +869,7 @@ LLM analysis (v1.1) and human review workflow (v2) are separate initiatives that
 
 ---
 
-## 9. Reference Documents
+## 10. Reference Documents
 
 | Document                                                                       | Purpose                                                                           |
 | ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------- |
