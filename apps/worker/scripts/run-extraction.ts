@@ -10,6 +10,7 @@
 
 import { DiscoveryCollector } from '../src/collectors/discovery.ts';
 import { CatalogCollector } from '../src/collectors/catalog.ts';
+import { PricingCollector } from '../src/collectors/pricing.ts';
 import { SalesforceRestApi } from '../src/salesforce/rest.ts';
 import { SalesforceBulkApi } from '../src/salesforce/bulk.ts';
 import { SalesforceMetadataApi } from '../src/salesforce/soap.ts';
@@ -127,9 +128,16 @@ async function main() {
   const catResult = await catalog.run();
   printResult('Catalog', catResult);
 
+  // Run Pricing
+  console.log('\n▶ Running Pricing...');
+  const pricing = new PricingCollector(ctx);
+  const priResult = await pricing.run();
+  printResult('Pricing', priResult);
+
   // Summary
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-  const totalFindings = discResult.findings.length + catResult.findings.length;
+  const totalFindings =
+    discResult.findings.length + catResult.findings.length + priResult.findings.length;
   console.log(`\n${'═'.repeat(60)}`);
   console.log(`Extraction complete in ${elapsed}s`);
   console.log(`Total findings: ${totalFindings}`);
