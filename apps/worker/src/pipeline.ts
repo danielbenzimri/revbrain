@@ -34,12 +34,53 @@ import { validateExtraction } from './normalize/validation.ts';
 import { buildContextBlueprint } from './normalize/context-blueprint.ts';
 import { buildSummaries } from './summaries/builder.ts';
 import { logger } from './lib/logger.ts';
+import { writeCollectorData } from './db/writes.ts';
+import type { BaseCollector } from './collectors/base.ts';
 
 /** Maximum concurrent collectors (respect SF API concurrency) */
 const MAX_CONCURRENCY = 3;
 
 /** Minimum percentage of tier1 collectors that must succeed */
 const TIER1_THRESHOLD = 0.5;
+
+/**
+ * Run a collector and persist its results to the database.
+ */
+async function runAndPersist(
+  collector: BaseCollector,
+  ctx: CollectorContext,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  log: any
+): Promise<CollectorResult> {
+  const result = await collector.run();
+
+  // Write findings to DB (even on partial success)
+  if (result.findings.length > 0 || result.metrics) {
+    try {
+      await writeCollectorData({
+        sql: ctx.sql,
+        runId: ctx.runId,
+        organizationId: ctx.organizationId,
+        collectorName: collector.name,
+        findings: result.findings,
+        relationships: result.relationships,
+        metrics: result.metrics,
+      });
+      log.info(
+        { collector: collector.name, findings: result.findings.length },
+        'collector_data_persisted'
+      );
+    } catch (err) {
+      log.error(
+        { collector: collector.name, error: (err as Error).message },
+        'collector_persist_failed'
+      );
+      // Don't fail the collector if DB write fails — the result is still valid
+    }
+  }
+
+  return result;
+}
 
 export interface PipelineResult {
   status: 'completed' | 'completed_warnings' | 'failed';
@@ -59,7 +100,7 @@ export async function runPipeline(ctx: CollectorContext): Promise<PipelineResult
   // ── Phase 1: Discovery (sequential) ──────────────────────────────
   log.info('phase_1_start: discovery');
   const discovery = new DiscoveryCollector(ctx);
-  const discoveryResult = await discovery.run();
+  const discoveryResult = await runAndPersist(discovery, ctx, log);
   results.set('discovery', discoveryResult);
 
   if (discoveryResult.status === 'failed') {
@@ -75,7 +116,9 @@ export async function runPipeline(ctx: CollectorContext): Promise<PipelineResult
     new UsageCollector(ctx),
   ];
 
-  const tier0Results = await Promise.all(tier0Collectors.map((c) => limit(() => c.run())));
+  const tier0Results = await Promise.all(
+    tier0Collectors.map((c) => limit(() => runAndPersist(c, ctx, log)))
+  );
 
   for (let i = 0; i < tier0Collectors.length; i++) {
     results.set(tier0Collectors[i].name, tier0Results[i]);
@@ -112,7 +155,9 @@ export async function runPipeline(ctx: CollectorContext): Promise<PipelineResult
   ];
 
   const phase3Collectors = [...tier1Collectors, ...tier2Collectors];
-  const phase3Results = await Promise.all(phase3Collectors.map((c) => limit(() => c.run())));
+  const phase3Results = await Promise.all(
+    phase3Collectors.map((c) => limit(() => runAndPersist(c, ctx, log)))
+  );
 
   for (let i = 0; i < phase3Collectors.length; i++) {
     results.set(phase3Collectors[i].name, phase3Results[i]);
