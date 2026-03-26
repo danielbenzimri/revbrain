@@ -12,6 +12,14 @@ import { DiscoveryCollector } from '../src/collectors/discovery.ts';
 import { CatalogCollector } from '../src/collectors/catalog.ts';
 import { PricingCollector } from '../src/collectors/pricing.ts';
 import { UsageCollector } from '../src/collectors/usage.ts';
+import { DependenciesCollector } from '../src/collectors/dependencies.ts';
+import { CustomizationsCollector } from '../src/collectors/customizations.ts';
+import { SettingsCollector } from '../src/collectors/settings.ts';
+import { OrderLifecycleCollector } from '../src/collectors/order-lifecycle.ts';
+import { TemplatesCollector } from '../src/collectors/templates.ts';
+import { ApprovalsCollector } from '../src/collectors/approvals.ts';
+import { IntegrationsCollector } from '../src/collectors/integrations.ts';
+import { LocalizationCollector } from '../src/collectors/localization.ts';
 import { SalesforceRestApi } from '../src/salesforce/rest.ts';
 import { SalesforceBulkApi } from '../src/salesforce/bulk.ts';
 import { SalesforceMetadataApi } from '../src/salesforce/soap.ts';
@@ -141,13 +149,65 @@ async function main() {
   const usaResult = await usage.run();
   printResult('Usage', usaResult);
 
+  // Tier 1 collectors
+  console.log('\n▶ Running Dependencies...');
+  const deps = new DependenciesCollector(ctx);
+  const depsResult = await deps.run();
+  printResult('Dependencies', depsResult);
+
+  console.log('\n▶ Running Customizations...');
+  const cust = new CustomizationsCollector(ctx);
+  const custResult = await cust.run();
+  printResult('Customizations', custResult);
+
+  console.log('\n▶ Running Settings...');
+  const settings = new SettingsCollector(ctx);
+  const setResult = await settings.run();
+  printResult('Settings', setResult);
+
+  console.log('\n▶ Running Order Lifecycle...');
+  const orders = new OrderLifecycleCollector(ctx);
+  const ordResult = await orders.run();
+  printResult('Order Lifecycle', ordResult);
+
+  // Tier 2 collectors
+  console.log('\n▶ Running Templates...');
+  const templates = new TemplatesCollector(ctx);
+  const tplResult = await templates.run();
+  printResult('Templates', tplResult);
+
+  console.log('\n▶ Running Approvals...');
+  const approvals = new ApprovalsCollector(ctx);
+  const appResult = await approvals.run();
+  printResult('Approvals', appResult);
+
+  console.log('\n▶ Running Integrations...');
+  const integrations = new IntegrationsCollector(ctx);
+  const intResult = await integrations.run();
+  printResult('Integrations', intResult);
+
+  console.log('\n▶ Running Localization...');
+  const localization = new LocalizationCollector(ctx);
+  const locResult = await localization.run();
+  printResult('Localization', locResult);
+
   // Summary
+  const allResults = [
+    discResult,
+    catResult,
+    priResult,
+    usaResult,
+    depsResult,
+    custResult,
+    setResult,
+    ordResult,
+    tplResult,
+    appResult,
+    intResult,
+    locResult,
+  ];
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-  const totalFindings =
-    discResult.findings.length +
-    catResult.findings.length +
-    priResult.findings.length +
-    usaResult.findings.length;
+  const totalFindings = allResults.reduce((sum, r) => sum + r.findings.length, 0);
   console.log(`\n${'═'.repeat(60)}`);
   console.log(`Extraction complete in ${elapsed}s`);
   console.log(`Total findings: ${totalFindings}`);
