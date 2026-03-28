@@ -2,8 +2,10 @@
 
 > **Purpose:** Complete guide for the engineering team + CEO briefing on the CPQ data extraction service — what it is, how it's built, what's done, what's missing, and the step-by-step path to completion.
 >
-> **Date:** 2026-03-26
+> **Date:** 2026-03-28 (updated)
 > **Audience:** Daniel (CTO), Niv (Engineer), Ofir (CEO)
+>
+> **Last updated:** 2026-03-28 — Sections 3-4 updated to reflect completed implementation
 
 ---
 
@@ -127,7 +129,9 @@ stateDiagram-v2
 
 ## 3. What's Already Built
 
-### Fully Implemented & Tested (85 unit tests passing)
+### Fully Implemented & Tested (1146 tests passing — updated 2026-03-28)
+
+> **Status update (2026-03-28):** All 12 collectors implemented with real SOQL, post-processing complete (relationships, metrics, validation, context blueprint, summaries), DB tables live on staging Supabase (migration 0042), API routes wired to real Drizzle + Mock repositories, client hooks calling real API with adaptive polling, Assessment Dashboard rendering 532 real SF items with E2E 10/10. See implementation plan v3.1 for full task tracker.
 
 | Component                  | Files                                                 | What It Does                                                                                                     |
 | -------------------------- | ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
@@ -225,32 +229,21 @@ graph TB
     F --> G --> H --> I --> J
 ```
 
-### The 4 Missing Pieces
+### What's Remaining: Benchmark Parity (Phase 14)
 
-**1. Collector Extraction Logic** (the biggest piece)
+> **Updated 2026-03-28:** The original 4 missing pieces (collectors, transformation, API wiring, trigger integration) are now **all completed** (Phases 3-13). The remaining work is about **depth** — matching the output quality of a 22-page SI-grade benchmark report.
 
-- Each of the 12 collector stubs has `execute() → TODO`
-- Need to fill in: SOQL wishlists, query execution, result parsing, derived metrics, finding creation
-- This is ~70% of remaining effort
+A gap analysis against a competitor benchmark report ([CPQ-EXTRACTION-GAP-ANALYSIS.md](CPQ-EXTRACTION-GAP-ANALYSIS.md), v1.2) identified **21 gaps** across 5 areas:
 
-**2. Data Transformation Layer**
+| Area                        | Gaps                               | Effort   | What's Missing                                                                                                                                                      |
+| --------------------------- | ---------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Settings Intelligence**   | G-01, G-02                         | 1-2 days | CPQ settings panel values (QLE, Twin Fields, etc.), structured plugin inventory                                                                                     |
+| **Usage Analytics Depth**   | G-03–G-10, G-18–G-20               | 4-5 days | License counts, user behavior by role, discount distribution, price override detection, top products, deal-size conversion, modification patterns, trend indicators |
+| **Assessment Presentation** | G-11, G-12, G-14, G-15, G-17, G-21 | 3-4 days | Field completeness sampling, feature utilization inventory, consolidated object inventory, CPQ reports list, confidence metadata, "at a glance" dashboard           |
+| **LLM Enrichment**          | G-13, G-16                         | 2-3 days | Complexity hotspot narratives, quote lifecycle flow, executive summary (Claude Sonnet, non-blocking)                                                                |
+| **PDF Report Generation**   | —                                  | 5-8 days | Branded PDF matching benchmark format (separate spec)                                                                                                               |
 
-- Extraction worker writes `assessment_findings` (our schema)
-- UI reads `AssessmentItem` (mock data schema)
-- Need a mapping layer: findings → domain data → UI format
-- The mock data types (`AssessmentItem`, `DomainData`, `AssessmentRisk`) are the target format
-
-**3. API Wiring**
-
-- Assessment routes return 501 (not implemented)
-- Need: DB queries for runs/findings/summaries, response formatting
-- Need: trigger endpoint to create run + start Cloud Run job
-
-**4. Trigger Integration**
-
-- React hooks are placeholders (`useStartAssessmentRun` returns empty)
-- Need: wire to real API, show progress, load results
-- The progress UI and domain tabs already exist — just need real data
+**Total remaining: 15-22 days** (see implementation plan v3.1, Phase 14 tasks 14.1–14.13)
 
 ---
 

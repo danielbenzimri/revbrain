@@ -28,6 +28,7 @@ export { SEED_COUPONS } from './coupons.ts';
 export type { SeedCoupon } from './coupons.ts';
 export { SEED_TENANT_OVERRIDES } from './tenant-overrides.ts';
 export type { SeedTenantOverride } from './tenant-overrides.ts';
+export { SEED_ASSESSMENT_RUNS } from './assessment-runs.ts';
 export {
   SEED_SALESFORCE_CONNECTIONS,
   SEED_SALESFORCE_CONNECTION_SECRETS,

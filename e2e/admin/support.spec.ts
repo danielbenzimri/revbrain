@@ -76,8 +76,8 @@ test.describe('Support Tickets', () => {
   test('33 — search tickets', async ({ page }) => {
     await navigateAdmin(page, '/admin/support');
 
-    // Search placeholder: "חיפוש לפי מספר פנייה או נושא..."
-    const search = page.getByPlaceholder(/חיפוש/i);
+    // Search placeholder: EN "Search by ticket number or subject..." / HE "חיפוש לפי מספר פנייה או נושא..."
+    const search = page.getByPlaceholder(/search|חיפוש/i);
     await expect(search).toBeVisible({ timeout: 10_000 });
     await search.fill('login');
     await page.waitForTimeout(500);
@@ -116,16 +116,18 @@ test.describe('Support Tickets', () => {
   test('36 — view ticket detail', async ({ page }) => {
     await navigateAdmin(page, '/admin/support');
 
-    // Wait for either table rows or empty state
-    const viewBtn = page
-      .getByRole('link', { name: /view|צפייה/i })
-      .first()
-      .or(page.getByRole('button', { name: /view|צפייה/i }).first());
+    // Ensure we're on the support page before looking for tickets
+    await expect(page.getByText(/מרכז תמיכה|support center/i)).toBeVisible({ timeout: 10_000 });
 
-    if (!(await viewBtn.isVisible({ timeout: 5_000 }).catch(() => false))) {
+    // Wait for tickets table to appear — skip if no tickets (API may return 500 in mock mode)
+    const tableRow = page.locator('table tbody tr').first();
+    if (!(await tableRow.isVisible({ timeout: 5_000 }).catch(() => false))) {
       test.skip(); // No tickets loaded (API may be down)
       return;
     }
+
+    // Click the View button inside the first row
+    const viewBtn = tableRow.getByRole('button', { name: /view|צפייה/i });
     await viewBtn.click();
 
     const drawer = page.locator(sel.drawer);

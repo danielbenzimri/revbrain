@@ -1,4 +1,5 @@
 #!/usr/bin/env npx tsx
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Discovery dry-run: calls the actual Salesforce APIs that the Discovery
  * collector will use, printing everything it finds.

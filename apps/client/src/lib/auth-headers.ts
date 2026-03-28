@@ -23,14 +23,33 @@ function isMockMode(): boolean {
   }
 }
 
+/** Default mock token — used when no session exists yet in localStorage. */
+const DEFAULT_MOCK_TOKEN = 'mock_token_00000000-0000-4000-a000-000000000302';
+
 /**
- * Mock mode headers — skip ALL auth ceremony.
- * The server accepts any mock_token_* in mock mode.
+ * Build mock mode headers from the current localStorage session.
+ * Falls back to the default token if no session is stored.
  */
-const MOCK_HEADERS: HeadersInit = {
-  Authorization: 'Bearer mock_token_00000000-0000-4000-a000-000000000302',
-  'Content-Type': 'application/json',
-};
+function getMockHeaders(): HeadersInit {
+  try {
+    const raw = localStorage.getItem('revbrain_session');
+    if (raw) {
+      const stored = JSON.parse(raw) as { session?: { accessToken?: string } };
+      if (stored?.session?.accessToken) {
+        return {
+          Authorization: `Bearer ${stored.session.accessToken}`,
+          'Content-Type': 'application/json',
+        };
+      }
+    }
+  } catch {
+    // Corrupted storage — fall through to default
+  }
+  return {
+    Authorization: `Bearer ${DEFAULT_MOCK_TOKEN}`,
+    'Content-Type': 'application/json',
+  };
+}
 
 // ── In-memory session cache ──────────────────────────────
 // Avoids calling adapter.getSession() (localStorage read) on every API request.
@@ -63,7 +82,7 @@ export function invalidateAuthCache(): void {
  */
 export async function getAuthHeaders(): Promise<HeadersInit> {
   // Mock mode: skip all auth ceremony — instant, no refreshing, no sessions
-  if (isMockMode()) return MOCK_HEADERS;
+  if (isMockMode()) return getMockHeaders();
 
   const now = Date.now();
 
@@ -139,7 +158,7 @@ export async function authFetch(url: string, options: RequestInit = {}): Promise
   if (isMockMode()) {
     return dedupFetch(url, {
       ...options,
-      headers: { ...MOCK_HEADERS, ...options.headers },
+      headers: { ...getMockHeaders(), ...options.headers },
     });
   }
 

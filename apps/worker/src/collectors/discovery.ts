@@ -543,6 +543,100 @@ export class DiscoveryCollector extends BaseCollector {
       }
     }
 
+    // ================================================================
+    // G-03: CPQ License & User Adoption Metrics
+    // ================================================================
+    this.ctx.progress.updateSubstep('discovery', 'user_adoption');
+
+    // 1. CPQ license assignments (fallback chain per Gap Analysis G-03)
+    try {
+      const licenseResult = await this.ctx.restApi.query<Record<string, unknown>>(
+        "SELECT COUNT() FROM UserPackageLicense WHERE PackageLicense.NamespacePrefix = 'SBQQ'",
+        this.signal
+      );
+      metrics.cpqLicensesProvisioned = licenseResult.totalSize;
+    } catch {
+      // Fallback: count users with SBQQ permission sets
+      try {
+        const permResult = await this.ctx.restApi.query<Record<string, unknown>>(
+          "SELECT AssigneeId FROM PermissionSetAssignment WHERE PermissionSet.NamespacePrefix = 'SBQQ' AND Assignee.IsActive = true GROUP BY AssigneeId",
+          this.signal
+        );
+        metrics.cpqLicensesProvisioned = permResult.totalSize;
+        warnings.push(
+          'CPQ license count estimated from PermissionSetAssignment (UserPackageLicense not queryable)'
+        );
+      } catch {
+        metrics.cpqLicensesProvisioned = -1;
+        warnings.push('Could not determine CPQ license count');
+      }
+    }
+
+    // 2. Active quote creators in last 90 days (GROUP BY, count rows — SOQL has no COUNT DISTINCT)
+    try {
+      const creatorResult = await this.ctx.restApi.query<Record<string, unknown>>(
+        'SELECT CreatedById FROM SBQQ__Quote__c WHERE CreatedDate >= LAST_N_DAYS:90 GROUP BY CreatedById',
+        this.signal
+      );
+      metrics.activeQuoteCreators90d = creatorResult.totalSize;
+    } catch {
+      metrics.activeQuoteCreators90d = -1;
+    }
+
+    // 3. Profiles with CPQ access
+    try {
+      const profileResult = await this.ctx.restApi.query<Record<string, unknown>>(
+        "SELECT Assignee.ProfileId FROM PermissionSetAssignment WHERE PermissionSet.NamespacePrefix = 'SBQQ' AND Assignee.IsActive = true GROUP BY Assignee.ProfileId",
+        this.signal
+      );
+      metrics.profilesWithCpqAccess = profileResult.totalSize;
+    } catch {
+      metrics.profilesWithCpqAccess = -1;
+    }
+
+    // Produce UserAdoption finding
+    if (metrics.cpqLicensesProvisioned !== -1) {
+      const adoptionRate =
+        metrics.activeQuoteCreators90d !== -1 && metrics.cpqLicensesProvisioned > 0
+          ? Math.round(
+              ((metrics.activeQuoteCreators90d as number) /
+                (metrics.cpqLicensesProvisioned as number)) *
+                100
+            )
+          : null;
+
+      findings.push(
+        createFinding({
+          domain: 'settings',
+          collector: 'discovery',
+          artifactType: 'UserAdoption',
+          artifactName: 'CPQ User Adoption',
+          sourceType: 'object',
+          metricName: 'user_adoption',
+          scope: 'global',
+          riskLevel: 'info',
+          notes: `Licenses: ${metrics.cpqLicensesProvisioned}, Active creators (90d): ${metrics.activeQuoteCreators90d}, Profiles: ${metrics.profilesWithCpqAccess}${adoptionRate !== null ? `, Adoption: ${adoptionRate}%` : ''}`,
+          evidenceRefs: [
+            {
+              type: 'count' as const,
+              value: String(metrics.cpqLicensesProvisioned),
+              label: 'CPQ Licenses',
+            },
+            {
+              type: 'count' as const,
+              value: String(metrics.activeQuoteCreators90d),
+              label: 'Active Creators (90d)',
+            },
+            {
+              type: 'count' as const,
+              value: String(metrics.profilesWithCpqAccess),
+              label: 'Profiles with CPQ',
+            },
+          ],
+        })
+      );
+    }
+
     const coverage = Math.round((presentObjects.length / REQUIRED_CPQ_OBJECTS.length) * 100);
 
     return {

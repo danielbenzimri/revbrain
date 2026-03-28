@@ -29,7 +29,7 @@ import { ApprovalsCollector } from './collectors/approvals.ts';
 import { IntegrationsCollector } from './collectors/integrations.ts';
 import { LocalizationCollector } from './collectors/localization.ts';
 import { buildRelationships } from './normalize/relationships.ts';
-import { computeDerivedMetrics } from './normalize/metrics.ts';
+import { computeDerivedMetrics, computeAttachmentRates } from './normalize/metrics.ts';
 import { validateExtraction } from './normalize/validation.ts';
 import { buildContextBlueprint } from './normalize/context-blueprint.ts';
 import { buildSummaries } from './summaries/builder.ts';
@@ -192,12 +192,46 @@ export async function runPipeline(ctx: CollectorContext): Promise<PipelineResult
 
   // ── Phase 4: Post-processing ─────────────────────────────────────
   log.info('phase_4_start: post-processing');
-  // TODO: These are sequential post-processing steps
   try {
-    await buildRelationships(ctx, results);
-    await computeDerivedMetrics(ctx, results);
-    await validateExtraction(ctx, results);
-    await buildContextBlueprint(ctx, results);
+    const relGraph = await buildRelationships(ctx, results);
+    log.info(
+      { edges: relGraph.edges.length, crossDomain: relGraph.stats.crossDomainEdgeCount },
+      'relationships_built'
+    );
+
+    const derivedMetrics = await computeDerivedMetrics(ctx, results);
+    log.info(
+      {
+        complexityScore: derivedMetrics.overallComplexityScore,
+        effortHours: derivedMetrics.estimatedEffortHours,
+        volumeTier: derivedMetrics.volumeTier,
+      },
+      'derived_metrics_computed'
+    );
+
+    // G-07: Attachment rates (cross-collector: catalog + usage)
+    const attachmentFindings = computeAttachmentRates(results);
+    if (attachmentFindings.length > 0) {
+      log.info({ attachmentFindings: attachmentFindings.length }, 'attachment_rates_computed');
+    }
+
+    const validation = await validateExtraction(ctx, results);
+    if (!validation.valid) {
+      errors.push(...validation.errors.map((e) => `Validation error: ${e}`));
+    }
+    if (validation.warnings.length > 0) {
+      log.warn({ validationWarnings: validation.warnings }, 'extraction_validation_warnings');
+    }
+
+    const blueprint = await buildContextBlueprint(ctx, results);
+    log.info(
+      {
+        totalFields: blueprint.totalSourceFields,
+        mapped: blueprint.totalMapped,
+        coverage: blueprint.coveragePercent,
+      },
+      'context_blueprint_built'
+    );
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     log.warn({ error: msg }, 'phase_4_warning: post-processing error (non-fatal)');
@@ -207,11 +241,65 @@ export async function runPipeline(ctx: CollectorContext): Promise<PipelineResult
   // ── Phase 5: Summaries ───────────────────────────────────────────
   log.info('phase_5_start: summaries');
   try {
-    await buildSummaries(ctx, results);
+    const summaries = await buildSummaries(ctx, results);
+    log.info(
+      {
+        overallScore: summaries.overallScore,
+        domains: summaries.domainSummaries.length,
+        totalFindings: summaries.totalFindings,
+      },
+      'summaries_built'
+    );
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     log.warn({ error: msg }, 'phase_5_warning: summary generation error (non-fatal)');
     errors.push(`Summary warning: ${msg}`);
+  }
+
+  // ── Phase 5.5: LLM Enrichment (optional) ────────────────────────
+  if (ctx.config.llmEnrichmentEnabled && ctx.config.anthropicApiKey) {
+    log.info('phase_5_5_start: llm_enrichment');
+    try {
+      const { enrichWithLLM } = await import('./summaries/llm-enrichment.ts');
+      const enrichment = await enrichWithLLM({
+        apiKey: ctx.config.anthropicApiKey,
+        model: ctx.config.anthropicModel ?? undefined,
+        summaries: {
+          overallScore: 0,
+          domainSummaries: [],
+          totalFindings: 0,
+          riskDistribution: { critical: 0, high: 0, medium: 0, low: 0, info: 0 },
+          generatedAt: new Date().toISOString(),
+        },
+        results,
+      });
+      if (enrichment) {
+        // Write to assessment_summaries table
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (ctx.sql as any)`
+            INSERT INTO assessment_summaries (run_id, summary_type, content, schema_version)
+            VALUES (${ctx.runId}, 'llm_enrichment', ${JSON.stringify(enrichment)}, '1.0')
+            ON CONFLICT (run_id, summary_type, COALESCE(domain, '_global'))
+            DO UPDATE SET content = EXCLUDED.content, created_at = NOW()
+          `;
+        } catch {
+          log.warn('llm_enrichment_db_write_failed');
+        }
+        log.info(
+          {
+            summaryCount: enrichment.executiveSummary.length,
+            hotspotCount: enrichment.hotspotAnalyses.length,
+            lifecycleSteps: enrichment.lifecycleDescription.length,
+          },
+          'llm_enrichment_complete'
+        );
+      }
+    } catch {
+      log.warn('phase_5_5_warning: llm enrichment failed (non-fatal)');
+    }
+  } else {
+    log.info('phase_5_5_skip: llm_enrichment_disabled');
   }
 
   const finalStatus = errors.length > 0 ? 'completed_warnings' : 'completed';

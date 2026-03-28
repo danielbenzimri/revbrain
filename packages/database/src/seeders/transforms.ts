@@ -16,6 +16,7 @@ import {
   supportTickets,
   ticketMessages,
   coupons,
+  assessmentRuns,
 } from '../schema';
 
 import {
@@ -27,6 +28,7 @@ import {
   SEED_TICKETS,
   SEED_TICKET_MESSAGES,
   SEED_COUPONS,
+  SEED_ASSESSMENT_RUNS,
   MOCK_IDS,
 } from '@revbrain/seed-data';
 
@@ -256,5 +258,41 @@ export function getCouponInserts(): (typeof coupons.$inferInsert)[] {
     createdBy: c.createdBy,
     createdAt: c.createdAt instanceof Date ? c.createdAt : new Date(c.createdAt),
     updatedAt: c.updatedAt instanceof Date ? c.updatedAt : new Date(c.updatedAt),
+  }));
+}
+
+// ---------------------------------------------------------------------------
+// Assessment Runs
+// ---------------------------------------------------------------------------
+export function getAssessmentRunInserts(): (typeof assessmentRuns.$inferInsert)[] {
+  return SEED_ASSESSMENT_RUNS.map((r) => ({
+    id: r.id,
+    projectId: r.projectId,
+    organizationId: r.organizationId,
+    connectionId: r.connectionId,
+    status: r.status,
+    statusReason: r.statusReason ?? null,
+    mode: r.mode,
+    rawSnapshotMode: r.rawSnapshotMode,
+    progress: r.progress,
+    orgFingerprint: r.orgFingerprint,
+    workerId: r.workerId,
+    leaseExpiresAt: r.leaseExpiresAt,
+    lastHeartbeatAt: r.lastHeartbeatAt,
+    retryCount: r.retryCount,
+    maxRetries: r.maxRetries,
+    idempotencyKey: r.idempotencyKey,
+    dispatchedAt: r.dispatchedAt,
+    startedAt: r.startedAt,
+    completedAt: r.completedAt,
+    failedAt: r.failedAt,
+    cancelRequestedAt: r.cancelRequestedAt,
+    durationMs: r.durationMs,
+    apiCallsUsed: r.apiCallsUsed,
+    recordsExtracted: r.recordsExtracted,
+    completenessPct: r.completenessPct,
+    error: r.error,
+    createdBy: r.createdBy,
+    createdAt: r.createdAt instanceof Date ? r.createdAt : new Date(r.createdAt),
   }));
 }

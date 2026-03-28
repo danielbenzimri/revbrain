@@ -5,9 +5,9 @@
  * Shows migration readiness assessment results or contextual empty state.
  */
 import { useMemo, useCallback, useState } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ClipboardCheck, ChevronDown } from 'lucide-react';
+import { ClipboardCheck, ChevronDown, Loader2 } from 'lucide-react';
 import { getMockAssessmentData, DOMAIN_TAB_ORDER } from '../../mocks/assessment-mock-data';
 import type { DomainId, AssessmentData } from '../../mocks/assessment-mock-data';
 import OverviewTab from '../../components/assessment/OverviewTab';
@@ -16,6 +16,7 @@ import ItemDetailPanel from '../../components/assessment/ItemDetailPanel';
 import { RunSelector } from '../../components/assessment/RunDelta';
 import ChatStub from '../../components/assessment/ChatStub';
 import type { AssessmentItem } from '../../mocks/assessment-mock-data';
+import { useAssessmentStatus, useStartAssessmentRun } from '../../hooks/use-assessment-run';
 
 // ---------------------------------------------------------------------------
 // Tab configuration
@@ -49,7 +50,10 @@ function TabBar({ activeTab, onTabChange, assessment, t }: TabBarProps) {
   }, [assessment.domains]);
 
   return (
-    <div className="flex items-center gap-1 overflow-x-auto pb-px border-b border-slate-200" role="tablist">
+    <div
+      className="flex items-center gap-1 overflow-x-auto pb-px border-b border-slate-200"
+      role="tablist"
+    >
       {ALL_TABS.map((tabId) => {
         const isActive = activeTab === tabId;
         const hasBlocker = tabId !== 'overview' && domainsWithBlockers.has(tabId);
@@ -64,9 +68,11 @@ function TabBar({ activeTab, onTabChange, assessment, t }: TabBarProps) {
             className={`
               relative flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium whitespace-nowrap
               border-b-2 transition-colors
-              ${isActive
-                ? 'border-violet-500 text-violet-600'
-                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'}
+              ${
+                isActive
+                  ? 'border-violet-500 text-violet-600'
+                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+              }
             `}
           >
             {t(`assessment.tabs.${tabId}`)}
@@ -97,12 +103,7 @@ interface TabContentProps {
 
 function TabContent({ tabId, assessment, onTabChange, onItemClick, t }: TabContentProps) {
   return (
-    <div
-      id={`tabpanel-${tabId}`}
-      role="tabpanel"
-      aria-labelledby={`tab-${tabId}`}
-      className="py-6"
-    >
+    <div id={`tabpanel-${tabId}`} role="tabpanel" aria-labelledby={`tab-${tabId}`} className="py-6">
       {tabId === 'overview' ? (
         <OverviewTab
           assessment={assessment}
@@ -128,15 +129,25 @@ function TabContent({ tabId, assessment, onTabChange, onItemClick, t }: TabConte
 export default function AssessmentPage() {
   const { id } = useParams<{ id: string }>();
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const activeTab = (searchParams.get('tab') as TabId) || 'overview';
 
+  // Try API first, fall back to mock data
+  const { data: apiStatus } = useAssessmentStatus(id);
+  const startRun = useStartAssessmentRun(id);
+
   const assessment = useMemo(() => {
     if (!id) return null;
+    // API data will be used when transform-findings layer is built (Task 13.4 future).
+    // For now: mock data is the primary source, API status enriches the header.
     return getMockAssessmentData(id);
   }, [id]);
+
+  const isRunActive = !!(
+    apiStatus &&
+    !['completed', 'completed_warnings', 'failed', 'cancelled'].includes(apiStatus.status)
+  );
 
   const [selectedItem, setSelectedItem] = useState<AssessmentItem | null>(null);
 
@@ -144,7 +155,7 @@ export default function AssessmentPage() {
     (tab: TabId) => {
       setSearchParams({ tab });
     },
-    [setSearchParams],
+    [setSearchParams]
   );
 
   const handleItemClick = useCallback(
@@ -158,7 +169,7 @@ export default function AssessmentPage() {
         }
       }
     },
-    [assessment],
+    [assessment]
   );
 
   if (!id) return null;
@@ -170,31 +181,42 @@ export default function AssessmentPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-xl font-semibold text-slate-900">
-              {t('assessment.title')}
-            </h1>
+            <h1 className="text-xl font-semibold text-slate-900">{t('assessment.title')}</h1>
             <RunSelector
               runs={assessment.runs}
               currentIndex={assessment.currentRunIndex}
-              onRunChange={() => {/* Run switching not implemented in mock */}}
+              onRunChange={() => {
+                /* Run switching not implemented in mock */
+              }}
               t={t}
             />
+            {isRunActive && apiStatus && (
+              <div className="mt-1 flex items-center gap-2 text-xs text-violet-600">
+                <Loader2 size={12} className="animate-spin" />
+                <span>
+                  Extraction {apiStatus.status}... {apiStatus.completenessPct ?? 0}%
+                </span>
+              </div>
+            )}
           </div>
-          <button
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
-          >
-            {t('assessment.header.export')}
-            <ChevronDown size={14} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => startRun.mutate()}
+              disabled={startRun.isPending || isRunActive}
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-violet-600 rounded-lg hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {startRun.isPending ? <Loader2 size={14} className="animate-spin" /> : null}
+              {t('assessment.header.rerun', { defaultValue: 'Re-Extract' })}
+            </button>
+            <button className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
+              {t('assessment.header.export')}
+              <ChevronDown size={14} />
+            </button>
+          </div>
         </div>
 
         {/* Tab Bar */}
-        <TabBar
-          activeTab={activeTab}
-          onTabChange={handleTabChange}
-          assessment={assessment}
-          t={t}
-        />
+        <TabBar activeTab={activeTab} onTabChange={handleTabChange} assessment={assessment} t={t} />
 
         {/* Tab Content */}
         <TabContent
@@ -233,12 +255,23 @@ export default function AssessmentPage() {
           {t('workspace.placeholder.assessment.description')}
         </p>
         <button
-          onClick={() => navigate(`/project/${id}`)}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-violet-600 text-white text-sm font-medium rounded-lg hover:bg-violet-700 transition-colors"
+          onClick={() => {
+            startRun.mutate();
+          }}
+          disabled={startRun.isPending}
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-violet-600 text-white text-sm font-medium rounded-lg hover:bg-violet-700 disabled:opacity-50 transition-colors"
           aria-label={t('workspace.placeholder.assessment.cta')}
         >
+          {startRun.isPending && <Loader2 size={14} className="animate-spin" />}
           {t('workspace.placeholder.assessment.cta')}
         </button>
+        {startRun.error && (
+          <p className="text-xs text-red-500 mt-2">
+            {startRun.error instanceof Error
+              ? startRun.error.message
+              : 'Failed to start extraction'}
+          </p>
+        )}
         <p className="text-xs text-slate-400 mt-4">
           {t('workspace.placeholder.assessment.locked')}
         </p>

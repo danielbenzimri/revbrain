@@ -183,13 +183,15 @@ export const inviteLimiter = rateLimiter({
 
 /**
  * Rate limiter for list/GET endpoints to prevent data enumeration
- * 100 requests per minute per user
+ * Production: 100 requests per minute per user
+ * Local/dev: 10,000 per minute (effectively unlimited for testing)
  *
  * Key: User ID (authenticated required)
  */
+const isLocalList = process.env.APP_ENV === 'local' || process.env.NODE_ENV === 'development';
 export const listLimiter = rateLimiter({
   windowMs: 60 * 1000, // 1 minute
-  limit: 100,
+  limit: isLocalList ? 10_000 : 100,
   standardHeaders: 'draft-6',
   keyGenerator: userKeyGenerator,
   handler: (c) => {

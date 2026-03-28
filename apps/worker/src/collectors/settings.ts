@@ -1,10 +1,12 @@
 /**
  * Settings collector — CPQ package settings (Custom Settings).
  *
- * Implements Extraction Spec Section 15:
+ * Implements Extraction Spec Section 15 + Gap Analysis G-01, G-02:
  * - Discover SBQQ Custom Settings via Tooling API (dynamic, not hardcoded)
- * - Filter for Custom Setting types via Describe
- * - Extract all records including org-level + profile overrides
+ * - Extract ALL field values from org-level records (not just record counts)
+ * - Match fields to KNOWN_SETTINGS_MAP for human-readable labels
+ * - Produce CPQSettingValue findings for each known setting
+ * - Derive PluginStatus findings from settings + package detection (G-02)
  *
  * Tier 1 — failure → completed_warnings.
  */
@@ -13,6 +15,83 @@ import { BaseCollector, type CollectorContext, type CollectorResult } from './ba
 import type { CollectorDefinition } from './registry.ts';
 import type { AssessmentFindingInput } from '@revbrain/contract';
 import { createFinding } from '../normalize/findings.ts';
+import type { DescribeResult } from '../salesforce/rest.ts';
+
+// ============================================================================
+// Known CPQ settings — regex patterns anchored to SBQQ__ prefix
+// Matches against field API names from Describe results.
+// See: Gap Analysis G-01 (v1.2, Audit fix A1 §2.1)
+// ============================================================================
+
+interface KnownSetting {
+  pattern: RegExp;
+  label: string;
+  category: string;
+}
+
+const KNOWN_SETTINGS: KnownSetting[] = [
+  // Quoting
+  {
+    pattern: /^SBQQ__.*(?:QuoteLineEditor|EnableQLE)/i,
+    label: 'Quote Line Editor',
+    category: 'Quoting',
+  },
+  { pattern: /^SBQQ__.*EnableQuoteTerms/i, label: 'Quote Terms', category: 'Quoting' },
+  { pattern: /^SBQQ__.*GroupEnabled/i, label: 'Quote Line Groups', category: 'Quoting' },
+  // Pricing
+  { pattern: /^SBQQ__.*MultiCurrency/i, label: 'Multi-Currency', category: 'Pricing' },
+  { pattern: /^SBQQ__.*ContractedPric/i, label: 'Contracted Pricing', category: 'Pricing' },
+  { pattern: /^SBQQ__.*BlockPric/i, label: 'Block Pricing', category: 'Pricing' },
+  { pattern: /^SBQQ__.*PriceDimension/i, label: 'Price Dimensions', category: 'Pricing' },
+  // Subscription
+  {
+    pattern: /^SBQQ__.*SubscriptionProrat/i,
+    label: 'Subscription Proration',
+    category: 'Subscription',
+  },
+  { pattern: /^SBQQ__.*RenewalModel/i, label: 'Renewal Model', category: 'Subscription' },
+  {
+    pattern: /^SBQQ__.*SubscriptionTerm/i,
+    label: 'Default Subscription Term',
+    category: 'Subscription',
+  },
+  { pattern: /^SBQQ__.*CoTerminat/i, label: 'Co-Termination', category: 'Subscription' },
+  // Sync
+  { pattern: /^SBQQ__.*TwinField/i, label: 'Twin Fields', category: 'Sync' },
+  // Performance
+  {
+    pattern: /^SBQQ__.*LargeQuoteThreshold/i,
+    label: 'Large Quote Threshold',
+    category: 'Performance',
+  },
+  // Plugins
+  {
+    pattern: /^SBQQ__.*(?:CalculatorPlugin|QCP)/i,
+    label: 'Quote Calculator Plugin',
+    category: 'Plugins',
+  },
+  { pattern: /^SBQQ__.*DocumentStorePlugin/i, label: 'Document Store Plugin', category: 'Plugins' },
+  { pattern: /^SBQQ__.*PaymentGateway/i, label: 'Payment Gateway', category: 'Plugins' },
+  { pattern: /^SBQQ__.*ExternalConfigurat/i, label: 'External Configurator', category: 'Plugins' },
+  // Document Generation
+  { pattern: /^SBQQ__.*DocumentFormat/i, label: 'Document Format', category: 'Documents' },
+  { pattern: /^SBQQ__.*QuoteDocumentTemplate/i, label: 'Default Template', category: 'Documents' },
+  // Approvals
+  { pattern: /^SBQQ__.*ApprovalChaining/i, label: 'Approval Chaining', category: 'Approvals' },
+];
+
+// System/audit fields to skip when extracting setting values
+const SKIP_FIELDS = new Set([
+  'Id',
+  'IsDeleted',
+  'CreatedById',
+  'CreatedDate',
+  'LastModifiedById',
+  'LastModifiedDate',
+  'SystemModstamp',
+  'SetupOwnerId',
+  'Name',
+]);
 
 export class SettingsCollector extends BaseCollector {
   constructor(ctx: CollectorContext) {
@@ -37,6 +116,8 @@ export class SettingsCollector extends BaseCollector {
     this.ctx.progress.updateSubstep('settings', 'discover_settings');
     this.log.info('discovering_cpq_settings');
 
+    const allSettingValues = new Map<string, unknown>(); // fieldApiName → value
+
     try {
       const settingsResult = await this.ctx.restApi.toolingQuery<Record<string, unknown>>(
         'SELECT DeveloperName, QualifiedApiName, Description ' +
@@ -44,14 +125,10 @@ export class SettingsCollector extends BaseCollector {
         this.signal
       );
 
-      // Filter for Custom Settings (they end in __c like custom objects,
-      // but we can identify them by trying to Describe and checking customSettingsType)
       const settingObjects: Array<{ name: string; description: string }> = [];
 
       for (const obj of settingsResult.records) {
         const apiName = obj.QualifiedApiName as string;
-        // Custom Settings are queryable like regular objects
-        // Try to query each one — settings return data, regular objects may not
         try {
           const countResult = await this.ctx.restApi.query<Record<string, unknown>>(
             `SELECT COUNT() FROM ${apiName}`,
@@ -64,21 +141,47 @@ export class SettingsCollector extends BaseCollector {
             });
           }
         } catch {
-          // Not queryable — skip (probably not a Custom Setting)
+          // Not queryable — not a Custom Setting
         }
       }
 
       metrics.cpqSettingsDiscovered = settingObjects.length;
 
-      // Extract records from each setting
+      // ================================================================
+      // G-01: Extract ALL field values from org-level records
+      // ================================================================
+      this.ctx.progress.updateSubstep('settings', 'extract_field_values');
+
       for (const setting of settingObjects) {
         try {
-          // Get all records (org-level + profile overrides)
+          // Get Describe for this settings object to build full field list
+          let describe: DescribeResult | undefined;
+          try {
+            describe =
+              (this.ctx.describeCache.get(setting.name) as DescribeResult) ??
+              (await this.ctx.restApi.describe(setting.name, this.signal));
+          } catch {
+            // Describe failed — fall back to basic query
+          }
+
+          // Build field list from Describe (SOQL doesn't support SELECT *)
+          const fieldNames = describe
+            ? describe.fields.map((f) => f.name).filter((n) => !SKIP_FIELDS.has(n))
+            : ['Id', 'SetupOwnerId', 'Name'];
+
+          // Query org-level record (SetupOwnerId starts with '00D' = org ID)
           const records = await this.ctx.restApi.queryAll<Record<string, unknown>>(
-            `SELECT Id, SetupOwnerId, Name FROM ${setting.name}`,
+            `SELECT ${fieldNames.join(', ')} FROM ${setting.name}`,
             this.signal
           );
 
+          // Find the org-level default record
+          const orgRecord = records.find((r) => {
+            const ownerId = r.SetupOwnerId as string;
+            return ownerId && ownerId.startsWith('00D');
+          });
+
+          // Produce the generic CPQSetting finding (backward compat)
           findings.push(
             createFinding({
               domain: 'settings',
@@ -96,6 +199,53 @@ export class SettingsCollector extends BaseCollector {
           );
 
           metrics[`setting_${setting.name}_records`] = records.length;
+
+          // Extract field values from org-level record
+          if (orgRecord && describe) {
+            for (const field of describe.fields) {
+              if (SKIP_FIELDS.has(field.name)) continue;
+              const value = orgRecord[field.name];
+              if (value !== null && value !== undefined) {
+                allSettingValues.set(`${setting.name}.${field.name}`, value);
+              }
+            }
+
+            // Match against KNOWN_SETTINGS_MAP and produce CPQSettingValue findings
+            for (const field of describe.fields) {
+              if (SKIP_FIELDS.has(field.name)) continue;
+              const match = KNOWN_SETTINGS.find((ks) => ks.pattern.test(field.name));
+              if (match) {
+                const value = orgRecord[field.name];
+                const displayValue = formatSettingValue(value);
+
+                findings.push(
+                  createFinding({
+                    domain: 'settings',
+                    collector: 'settings',
+                    artifactType: 'CPQSettingValue',
+                    artifactName: match.label,
+                    artifactId: `${setting.name}.${field.name}`,
+                    sourceType: 'object',
+                    findingType: 'cpq_setting_value',
+                    riskLevel: 'info',
+                    rcaMappingComplexity: 'direct',
+                    rcaTargetConcept: 'Revenue Settings',
+                    migrationRelevance: 'should-migrate',
+                    notes: `${match.label}: ${displayValue}`,
+                    evidenceRefs: [
+                      {
+                        type: 'field-ref' as const,
+                        value: `${setting.name}.${field.name}`,
+                        label: displayValue,
+                      },
+                    ],
+                  })
+                );
+
+                metrics[`cpqSetting_${match.label.replace(/\s+/g, '_')}`] = displayValue;
+              }
+            }
+          }
         } catch (err) {
           this.log.warn(
             { setting: setting.name, error: (err as Error).message },
@@ -103,13 +253,27 @@ export class SettingsCollector extends BaseCollector {
           );
         }
       }
+
+      // ================================================================
+      // G-02: Derive PluginStatus findings from settings + packages
+      // ================================================================
+      this.ctx.progress.updateSubstep('settings', 'derive_plugin_status');
+
+      const pluginFindings = this.derivePluginStatuses(allSettingValues);
+      findings.push(...pluginFindings);
+      metrics.pluginsDetected = pluginFindings.filter((f) => f.notes?.includes('Active')).length;
     } catch (err) {
       this.log.warn({ error: (err as Error).message }, 'settings_discovery_failed');
       warnings.push(`Settings discovery failed: ${(err as Error).message}`);
     }
 
     this.log.info(
-      { settings: metrics.cpqSettingsDiscovered, findings: findings.length },
+      {
+        settings: metrics.cpqSettingsDiscovered,
+        settingValues: findings.filter((f) => f.artifactType === 'CPQSettingValue').length,
+        plugins: metrics.pluginsDetected,
+        findings: findings.length,
+      },
       'settings_complete'
     );
 
@@ -127,4 +291,141 @@ export class SettingsCollector extends BaseCollector {
       status: 'success',
     };
   }
+
+  /**
+   * G-02: Derive plugin statuses from settings field values + Discovery findings.
+   *
+   * Checks:
+   * 1. QCP (Quote Calculator Plugin) — from settings field or Pricing collector
+   * 2. Electronic Signature — from Discovery phantom packages
+   * 3. Document Store Plugin — from settings field
+   * 4. Payment Gateway — from settings field
+   * 5. External Configurator — from settings field
+   */
+  private derivePluginStatuses(settingValues: Map<string, unknown>): AssessmentFindingInput[] {
+    const plugins: AssessmentFindingInput[] = [];
+
+    // Helper: check if any setting value matches a plugin pattern
+    const findSettingValue = (pattern: RegExp): unknown => {
+      for (const [key, value] of settingValues) {
+        if (pattern.test(key) && value != null && value !== '' && value !== false) {
+          return value;
+        }
+      }
+      return null;
+    };
+
+    // 1. QCP
+    const qcpValue = findSettingValue(/CalculatorPlugin|QCP/i);
+    plugins.push(
+      createFinding({
+        domain: 'settings',
+        collector: 'settings',
+        artifactType: 'PluginStatus',
+        artifactName: 'Quote Calculator Plugin (QCP)',
+        sourceType: 'inferred',
+        findingType: 'plugin_status',
+        riskLevel: qcpValue ? 'high' : 'info',
+        countValue: qcpValue ? 1 : 0,
+        notes: qcpValue
+          ? `Active — QCP class: ${String(qcpValue)}. Custom JavaScript pricing logic must be converted to RCA Pricing Procedures.`
+          : 'Not Configured — no custom JavaScript calculation injection detected. Pricing logic uses standard Price Rules.',
+        rcaMappingComplexity: qcpValue ? 'redesign' : 'direct',
+      })
+    );
+
+    // 2. Electronic Signature — check Discovery's phantom packages
+    const discoveryMetrics = this.ctx.describeCache.get('_discoveryMetrics') as
+      | Record<string, unknown>
+      | undefined;
+    const phantomPackages = (discoveryMetrics?.phantomPackages as string[]) ?? [];
+    const hasDocuSign = phantomPackages.some((p) => p.includes('dsfs'));
+    const hasAdobeSign = phantomPackages.some((p) => p.includes('echosign'));
+    const esigProvider = hasDocuSign ? 'DocuSign' : hasAdobeSign ? 'Adobe Sign' : null;
+
+    plugins.push(
+      createFinding({
+        domain: 'settings',
+        collector: 'settings',
+        artifactType: 'PluginStatus',
+        artifactName: 'Electronic Signature',
+        sourceType: 'inferred',
+        findingType: 'plugin_status',
+        riskLevel: esigProvider ? 'medium' : 'info',
+        countValue: esigProvider ? 1 : 0,
+        notes: esigProvider
+          ? `Active (${esigProvider}) — document signing integration detected. Verify RCA compatibility post-migration.`
+          : 'Not Configured — no e-signature package detected.',
+        rcaMappingComplexity: esigProvider ? 'transform' : 'direct',
+      })
+    );
+
+    // 3. Document Store Plugin
+    const docStoreValue = findSettingValue(/DocumentStorePlugin/i);
+    plugins.push(
+      createFinding({
+        domain: 'settings',
+        collector: 'settings',
+        artifactType: 'PluginStatus',
+        artifactName: 'Document Store Plugin',
+        sourceType: 'inferred',
+        findingType: 'plugin_status',
+        riskLevel: 'info',
+        countValue: docStoreValue ? 1 : 0,
+        notes: docStoreValue
+          ? `Active — class: ${String(docStoreValue)}`
+          : 'Not Configured — standard document storage in use.',
+        rcaMappingComplexity: 'direct',
+      })
+    );
+
+    // 4. Payment Gateway
+    const paymentValue = findSettingValue(/PaymentGateway/i);
+    plugins.push(
+      createFinding({
+        domain: 'settings',
+        collector: 'settings',
+        artifactType: 'PluginStatus',
+        artifactName: 'Payment Gateway',
+        sourceType: 'inferred',
+        findingType: 'plugin_status',
+        riskLevel: paymentValue ? 'medium' : 'info',
+        countValue: paymentValue ? 1 : 0,
+        notes: paymentValue
+          ? `Active — payment processing via CPQ detected.`
+          : 'Not Configured — no payment processing via CPQ detected.',
+        rcaMappingComplexity: paymentValue ? 'redesign' : 'direct',
+      })
+    );
+
+    // 5. External Configurator
+    const extConfigValue = findSettingValue(/ExternalConfigurat/i);
+    plugins.push(
+      createFinding({
+        domain: 'settings',
+        collector: 'settings',
+        artifactType: 'PluginStatus',
+        artifactName: 'External Configurator',
+        sourceType: 'inferred',
+        findingType: 'plugin_status',
+        riskLevel: extConfigValue ? 'medium' : 'info',
+        countValue: extConfigValue ? 1 : 0,
+        notes: extConfigValue
+          ? `Active — URL: ${String(extConfigValue)}`
+          : 'Not Configured — standard CPQ configurator in use.',
+        rcaMappingComplexity: extConfigValue ? 'redesign' : 'direct',
+      })
+    );
+
+    return plugins;
+  }
+}
+
+/** Format a setting value for display */
+function formatSettingValue(value: unknown): string {
+  if (value === true) return 'Enabled';
+  if (value === false) return 'Disabled';
+  if (value === null || value === undefined) return 'Not Set';
+  if (typeof value === 'number') return String(value);
+  return String(value) || 'Empty';
 }

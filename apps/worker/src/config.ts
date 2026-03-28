@@ -28,6 +28,12 @@ export interface WorkerConfig {
   logLevel: string;
   /** Worker container image tag / git SHA */
   workerVersion: string;
+  /** Enable LLM enrichment (executive summary, hotspot narratives, lifecycle) */
+  llmEnrichmentEnabled: boolean;
+  /** Anthropic API key (required if llmEnrichmentEnabled) */
+  anthropicApiKey: string | null;
+  /** Anthropic model override (default: claude-sonnet-4-20250514) */
+  anthropicModel: string | null;
 }
 
 /**
@@ -80,5 +86,8 @@ export function loadConfig(): WorkerConfig {
     traceId: process.env.TRACE_ID ?? `trace-${Date.now()}`,
     logLevel: process.env.LOG_LEVEL ?? 'info',
     workerVersion: process.env.WORKER_VERSION ?? 'dev',
+    llmEnrichmentEnabled: process.env.LLM_ENRICHMENT_ENABLED === 'true',
+    anthropicApiKey: process.env.ANTHROPIC_API_KEY ?? null,
+    anthropicModel: process.env.ANTHROPIC_MODEL ?? null,
   };
 }

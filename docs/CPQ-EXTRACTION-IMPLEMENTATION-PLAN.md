@@ -1333,65 +1333,247 @@ This is the **only mechanism** that retries failed runs (since Cloud Run `maxRet
 
 > **Instructions:** Update status and commit hash after each task is completed. Statuses: `did not start` | `in progress` | `completed` | `blocked` | `skipped`
 
-| Phase  | Task | Description                                                                    | Test Type                                                | Status    | Commit                                                    |
-| ------ | ---- | ------------------------------------------------------------------------------ | -------------------------------------------------------- | --------- | --------------------------------------------------------- |
-| **0**  | 0.1  | Worker package scaffold                                                        | Unit (placeholder)                                       | completed | 78814a2                                                   |
-| **0**  | 0.2  | Dockerfile multi-stage build (heap configured)                                 | Smoke (build + run)                                      | completed | e40a1c9                                                   |
-| **0**  | 0.3  | Structured logging (pino + AsyncLocalStorage)                                  | Unit (JSON, redaction, trace)                            | completed | 250f15c                                                   |
-| **0**  | 0.4  | DB migration — extraction tables (stalled state, retry cols, security definer) | Integration (migration, state machine, security definer) | completed | 58c12c4                                                   |
-| **0**  | 0.5  | Dedicated DB role (direct connections, EXECUTE on security definer)            | Integration (permissions, function validation)           | completed | 2cb3632                                                   |
-| **0**  | 0.6  | Config module + .env.example                                                   | Unit (env validation)                                    | completed | e8bb9be                                                   |
-| **0**  | 0.7  | Local dev setup + GCP project skeleton                                         | Smoke (docker-compose, GCP)                              | completed | beb4720                                                   |
-| **1**  | 1.1  | Lease manager (CAS, heartbeat pool, self-termination)                          | Unit + Integration (concurrency)                         | completed | f1c6996                                                   |
-| **1**  | 1.2  | Progress reporter + checkpoint manager                                         | Unit (JSONB, resume)                                     | completed | 1ba2ecd                                                   |
-| **1**  | 1.3  | SIGTERM handler + cancellation + run attempts + health check                   | Unit (signal, lifecycle, health)                         | completed | 69f032d                                                   |
-| **1**  | 1.4  | Finding model + factory + finding_key                                          | Unit (key generation, types)                             | completed | e152000                                                   |
-| **1**  | 1.5  | Provenance-based batch writes + DB retry                                       | Unit + Integration (idempotent)                          | completed | 6a0f668                                                   |
-| **1**  | 1.6  | Raw snapshot upload (Supabase Storage)                                         | Unit (gzip, manifest)                                    | completed | b1cd2a3                                                   |
-| **2**  | 2.1  | Token management (decrypt + refresh fallback + proactive)                      | Unit (decrypt, fallback, TTL)                            | completed | 4971f8b                                                   |
-| **2**  | 2.2  | Base HTTP client (retry, throttle, per-API circuit breakers)                   | Unit (error codes, UNABLE_TO_LOCK_ROW)                   | completed | d2b2c8d                                                   |
-| **2**  | 2.3  | REST + Composite Batch + Tooling API                                           | Unit (pagination, batching)                              | completed | 6f57bcd                                                   |
-| **2**  | 2.4  | Bulk API 2.0 (lifecycle, CSV, backpressure)                                    | Unit (full lifecycle, failedResults)                     | completed | 6f57bcd                                                   |
-| **2**  | 2.5  | Metadata API SOAP client                                                       | Unit (SOAP, XML, namespaces)                             | completed | dc814fb                                                   |
-| **2**  | 2.6  | Dynamic SOQL query builder (compound fields)                                   | Unit (FLS, split, compound)                              | completed | 6f57bcd                                                   |
-| **2**  | 2.7  | Internal token refresh endpoint (server-side)                                  | Unit (refresh, validation, auth)                         | completed | dc814fb                                                   |
-| **3**  | 3.1  | Discovery collector (full Spec §4 + API version validate)                      | Unit (7 steps, all scenarios)                            | completed | 4733e29 (real SOQL queries, tested against live SF)       |
-| **3**  | 3.2  | Preflight-only mode                                                            | Unit (mode, limited output)                              | completed | 3758100 (scaffold — mode check TODO)                      |
-| **4**  | 4.1a | Catalog — products, features, options, bundles (§5.1-5.4)                      | Unit (dynamic query, bundles)                            | completed | e7e811e (real implementation)                             |
-| **4**  | 4.1b | Catalog — rules, attributes, search filters (§5.5-5.8)                         | Unit (rules, attributes)                                 | completed | e7e811e (real implementation)                             |
-| **4**  | 4.2a | Pricing — rule chains + discounts (§6.1-6.6)                                   | Unit (rule chains, tiers)                                | completed | 4091154 (real implementation)                             |
-| **4**  | 4.2b | Pricing — contracted prices, summaries, QCP (§6.7-6.9)                         | Unit (QCP analysis, Bulk)                                | completed | 4091154 (real implementation with source code extraction) |
-| **4**  | 4.2c | Pricing — lookups, consumption, context blueprint (§6.10-6.14)                 | Unit (Recipe grouping, blueprint)                        | completed | 4091154 (real implementation)                             |
-| **4**  | 4.3a | Usage — quotes + trends (§12.2-12.3)                                           | Unit (Bulk, CSV, trends)                                 | completed | eec3d3c (real implementation)                             |
-| **4**  | 4.3b | Usage — quote lines, groups, opp sync, subs (§12.4-12.8)                       | Unit (26 metrics, opp sync)                              | completed | eec3d3c (real implementation)                             |
-| **5**  | 5.1  | Dependencies collector (Spec §10 complete)                                     | Unit (code scan, flows, sync risk)                       | completed | 7fdfbd9 (real Apex/flow/trigger extraction)               |
-| **5**  | 5.2  | Customizations collector (Spec §9 complete)                                    | Unit (fields, \_\_mdt, validation)                       | completed | 7fdfbd9 (real custom fields/validation rules)             |
-| **5**  | 5.3  | Settings collector (Spec §15 complete)                                         | Unit (dynamic discovery)                                 | completed | 7fdfbd9 (real CPQ settings discovery)                     |
-| **5**  | 5.4  | Order lifecycle collector (Spec §13 complete)                                  | Unit (4 objects, Bulk path)                              | completed | 7fdfbd9 (real order/contract counts)                      |
-| **6**  | 6.1  | Templates collector (Spec §7 complete)                                         | Unit (merge field regex)                                 | completed | 7fdfbd9 (real template/merge field parsing)               |
-| **6**  | 6.2  | Approvals collector (Spec §8 complete)                                         | Unit (SOAP, sbaa\_\_)                                    | completed | 7fdfbd9 (real custom actions/ProcessDefinition)           |
-| **6**  | 6.3  | Integrations collector (Spec §11 complete)                                     | Unit (platform events, callouts)                         | completed | 7fdfbd9 (real named credentials/platform events)          |
-| **6**  | 6.4  | Localization collector (Spec §14 complete)                                     | Unit (language distribution)                             | completed | 7fdfbd9 (real translations/labels)                        |
-| **7**  | 7.1  | Twin Fields + post-extraction validation                                       | Unit (cross-object, integrity)                           | completed | 3758100 (scaffold — analysis TODO)                        |
-| **7**  | 7.2  | Assessment graph + derived metrics + LLM evidence index                        | Unit (7 rel types, field reuse, overlap)                 | completed | 3758100 (scaffold — analysis TODO)                        |
-| **7**  | 7.3  | Structured JSON summaries (7 types)                                            | Unit (Zod schemas, all domains)                          | completed | 3758100 (scaffold — analysis TODO)                        |
-| **8**  | 8.1  | Pipeline orchestrator (tier gating, deps, feature flags)                       | Unit + Integration (full pipeline)                       | completed | 3758100 (pipeline framework — wiring TODO)                |
-| **8**  | 8.2  | Main entry point — full lifecycle                                              | Integration (lifecycle)                                  | completed | 3758100 (entry point placeholder)                         |
-| **9**  | 9.1  | Assessment API contract + routes (idempotency key)                             | Unit (validation, 409, idempotency)                      | completed | 6121e79 (API routes placeholder)                          |
-| **9**  | 9.2  | Cloud Run trigger (maxRetries:0) + lease sweeper (stalled state)               | Unit + Integration (trigger, sweeper, stalled→queued)    | completed | 6121e79 (sweeper SQL)                                     |
-| **9**  | 9.3  | Re-trigger scheduler (picks up sweeper-queued runs)                            | Unit + Integration (full retry cycle)                    | completed | 6121e79 (re-trigger SQL)                                  |
-| **10** | 10.1 | GCP Cloud Run Job + IAM + CI/CD + capacity planning                            | Smoke (deploy)                                           | skipped   | requires GCP cloud account access                         |
-| **11** | 11.1 | React Query hooks + "Run Assessment" UI                                        | Unit + Playwright                                        | completed | 6121e79 (hooks placeholder)                               |
-| **11** | 11.2 | Progress bar + results dashboard                                               | Unit + Playwright                                        | skipped   | requires wired API + assessment data to render            |
-| **12** | 12.1 | Golden dataset + failure recovery + LLM evidence tests                         | Integration (deterministic, evidence)                    | skipped   | requires DB + SF sandbox fixtures                         |
-| **12** | 12.2 | Idempotency + cancellation tests                                               | Integration (all stages)                                 | skipped   | requires running pipeline                                 |
-| **12** | 12.3 | Rate limit + circuit breaker + large org + multi-org tests                     | Unit + Integration (memory, isolation)                   | skipped   | requires running pipeline + SF API                        |
-| **12** | 12.4 | Security review + operational runbook + alerts                                 | Security audit + Review                                  | skipped   | requires production deployment                            |
-| **12** | 12.5 | Storage cleanup + E2E against SF sandbox                                       | Integration + E2E (nightly)                              | skipped   | requires Storage + SF sandbox E2E                         |
+| Phase   | Task  | Description                                                                    | Test Type                                                 | Status        | Commit                                                                                                                                   |
+| ------- | ----- | ------------------------------------------------------------------------------ | --------------------------------------------------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| **0**   | 0.1   | Worker package scaffold                                                        | Unit (placeholder)                                        | completed     | 78814a2                                                                                                                                  |
+| **0**   | 0.2   | Dockerfile multi-stage build (heap configured)                                 | Smoke (build + run)                                       | completed     | e40a1c9                                                                                                                                  |
+| **0**   | 0.3   | Structured logging (pino + AsyncLocalStorage)                                  | Unit (JSON, redaction, trace)                             | completed     | 250f15c                                                                                                                                  |
+| **0**   | 0.4   | DB migration — extraction tables (stalled state, retry cols, security definer) | Integration (migration, state machine, security definer)  | completed     | 58c12c4                                                                                                                                  |
+| **0**   | 0.5   | Dedicated DB role (direct connections, EXECUTE on security definer)            | Integration (permissions, function validation)            | completed     | 2cb3632                                                                                                                                  |
+| **0**   | 0.6   | Config module + .env.example                                                   | Unit (env validation)                                     | completed     | e8bb9be                                                                                                                                  |
+| **0**   | 0.7   | Local dev setup + GCP project skeleton                                         | Smoke (docker-compose, GCP)                               | completed     | beb4720                                                                                                                                  |
+| **1**   | 1.1   | Lease manager (CAS, heartbeat pool, self-termination)                          | Unit + Integration (concurrency)                          | completed     | f1c6996                                                                                                                                  |
+| **1**   | 1.2   | Progress reporter + checkpoint manager                                         | Unit (JSONB, resume)                                      | completed     | 1ba2ecd                                                                                                                                  |
+| **1**   | 1.3   | SIGTERM handler + cancellation + run attempts + health check                   | Unit (signal, lifecycle, health)                          | completed     | 69f032d                                                                                                                                  |
+| **1**   | 1.4   | Finding model + factory + finding_key                                          | Unit (key generation, types)                              | completed     | e152000                                                                                                                                  |
+| **1**   | 1.5   | Provenance-based batch writes + DB retry                                       | Unit + Integration (idempotent)                           | completed     | 6a0f668                                                                                                                                  |
+| **1**   | 1.6   | Raw snapshot upload (Supabase Storage)                                         | Unit (gzip, manifest)                                     | completed     | b1cd2a3                                                                                                                                  |
+| **2**   | 2.1   | Token management (decrypt + refresh fallback + proactive)                      | Unit (decrypt, fallback, TTL)                             | completed     | 4971f8b                                                                                                                                  |
+| **2**   | 2.2   | Base HTTP client (retry, throttle, per-API circuit breakers)                   | Unit (error codes, UNABLE_TO_LOCK_ROW)                    | completed     | d2b2c8d                                                                                                                                  |
+| **2**   | 2.3   | REST + Composite Batch + Tooling API                                           | Unit (pagination, batching)                               | completed     | 6f57bcd                                                                                                                                  |
+| **2**   | 2.4   | Bulk API 2.0 (lifecycle, CSV, backpressure)                                    | Unit (full lifecycle, failedResults)                      | completed     | 6f57bcd                                                                                                                                  |
+| **2**   | 2.5   | Metadata API SOAP client                                                       | Unit (SOAP, XML, namespaces)                              | completed     | dc814fb                                                                                                                                  |
+| **2**   | 2.6   | Dynamic SOQL query builder (compound fields)                                   | Unit (FLS, split, compound)                               | completed     | 6f57bcd                                                                                                                                  |
+| **2**   | 2.7   | Internal token refresh endpoint (server-side)                                  | Unit (refresh, validation, auth)                          | completed     | dc814fb                                                                                                                                  |
+| **3**   | 3.1   | Discovery collector (full Spec §4 + API version validate)                      | Unit (7 steps, all scenarios)                             | completed     | 4733e29 (real SOQL queries, tested against live SF)                                                                                      |
+| **3**   | 3.2   | Preflight-only mode                                                            | Unit (mode, limited output)                               | completed     | 3758100 (scaffold — mode check TODO)                                                                                                     |
+| **4**   | 4.1a  | Catalog — products, features, options, bundles (§5.1-5.4)                      | Unit (dynamic query, bundles)                             | completed     | e7e811e (real implementation)                                                                                                            |
+| **4**   | 4.1b  | Catalog — rules, attributes, search filters (§5.5-5.8)                         | Unit (rules, attributes)                                  | completed     | e7e811e (real implementation)                                                                                                            |
+| **4**   | 4.2a  | Pricing — rule chains + discounts (§6.1-6.6)                                   | Unit (rule chains, tiers)                                 | completed     | 4091154 (real implementation)                                                                                                            |
+| **4**   | 4.2b  | Pricing — contracted prices, summaries, QCP (§6.7-6.9)                         | Unit (QCP analysis, Bulk)                                 | completed     | 4091154 (real implementation with source code extraction)                                                                                |
+| **4**   | 4.2c  | Pricing — lookups, consumption, context blueprint (§6.10-6.14)                 | Unit (Recipe grouping, blueprint)                         | completed     | 4091154 (real implementation)                                                                                                            |
+| **4**   | 4.3a  | Usage — quotes + trends (§12.2-12.3)                                           | Unit (Bulk, CSV, trends)                                  | completed     | eec3d3c (real implementation)                                                                                                            |
+| **4**   | 4.3b  | Usage — quote lines, groups, opp sync, subs (§12.4-12.8)                       | Unit (26 metrics, opp sync)                               | completed     | eec3d3c (real implementation)                                                                                                            |
+| **5**   | 5.1   | Dependencies collector (Spec §10 complete)                                     | Unit (code scan, flows, sync risk)                        | completed     | 7fdfbd9 (real Apex/flow/trigger extraction)                                                                                              |
+| **5**   | 5.2   | Customizations collector (Spec §9 complete)                                    | Unit (fields, \_\_mdt, validation)                        | completed     | 7fdfbd9 (real custom fields/validation rules)                                                                                            |
+| **5**   | 5.3   | Settings collector (Spec §15 complete)                                         | Unit (dynamic discovery)                                  | completed     | 7fdfbd9 (real CPQ settings discovery)                                                                                                    |
+| **5**   | 5.4   | Order lifecycle collector (Spec §13 complete)                                  | Unit (4 objects, Bulk path)                               | completed     | 7fdfbd9 (real order/contract counts)                                                                                                     |
+| **6**   | 6.1   | Templates collector (Spec §7 complete)                                         | Unit (merge field regex)                                  | completed     | 7fdfbd9 (real template/merge field parsing)                                                                                              |
+| **6**   | 6.2   | Approvals collector (Spec §8 complete)                                         | Unit (SOAP, sbaa\_\_)                                     | completed     | 7fdfbd9 (real custom actions/ProcessDefinition)                                                                                          |
+| **6**   | 6.3   | Integrations collector (Spec §11 complete)                                     | Unit (platform events, callouts)                          | completed     | 7fdfbd9 (real named credentials/platform events)                                                                                         |
+| **6**   | 6.4   | Localization collector (Spec §14 complete)                                     | Unit (language distribution)                              | completed     | 7fdfbd9 (real translations/labels)                                                                                                       |
+| **7**   | 7.1   | Twin Fields + post-extraction validation                                       | Unit (cross-object, integrity)                            | completed     | validation.ts — duplicate keys, cross-refs, data quality, domain coverage                                                                |
+| **7**   | 7.2   | Assessment graph + derived metrics + LLM evidence index                        | Unit (7 rel types, field reuse, overlap)                  | completed     | relationships.ts (graph builder) + metrics.ts (complexity scores, effort estimates, feature adoption, volume tier)                       |
+| **7**   | 7.3   | Structured JSON summaries (7 types)                                            | Unit (Zod schemas, all domains)                           | completed     | builder.ts — per-domain summaries, overall readiness score, highlights, context-blueprint.ts (CPQ→RCA field mapping)                     |
+| **8**   | 8.1   | Pipeline orchestrator (tier gating, deps, feature flags)                       | Unit + Integration (full pipeline)                        | completed     | pipeline.ts — phases 1-5 fully wired, post-processing logs metrics/graph/blueprint                                                       |
+| **8**   | 8.2   | Main entry point — full lifecycle                                              | Integration (lifecycle)                                   | completed     | index.ts — config → DB → lease → SF client → pipeline → release → exit                                                                   |
+| **9**   | 9.1   | Assessment API contract + routes (idempotency key)                             | Unit (validation, 409, idempotency)                       | completed     | Real routes + AssessmentRepository (Drizzle + Mock + PostgREST stub). Routes NOT tested against real DB yet — see 13.4.                  |
+| **9**   | 9.2   | Cloud Run trigger (maxRetries:0) + lease sweeper (stalled state)               | Unit + Integration (trigger, sweeper, stalled→queued)     | completed     | 6121e79 (sweeper SQL — NOT applied to Supabase yet, see 13.1)                                                                            |
+| **9**   | 9.3   | Re-trigger scheduler (picks up sweeper-queued runs)                            | Unit + Integration (full retry cycle)                     | completed     | 6121e79 (re-trigger SQL — NOT applied to Supabase yet, see 13.1)                                                                         |
+| **10**  | 10.1  | GCP Cloud Run Job + IAM + CI/CD + capacity planning                            | Smoke (deploy)                                            | skipped       | requires GCP cloud account access                                                                                                        |
+| **11**  | 11.1  | React Query hooks + "Run Assessment" UI                                        | Unit + Playwright                                         | completed     | Hooks are stubs returning empty data. Dashboard renders hardcoded mock data. Real API wiring in 13.3.                                    |
+| **11**  | 11.2  | Progress bar + results dashboard                                               | Unit + Playwright                                         | completed     | Assessment Dashboard renders mock/real-static SF data. Does NOT fetch from API yet — see 13.3/13.4. E2E 10/10 with mock auth.            |
+| **12**  | 12.1  | Golden dataset + failure recovery + LLM evidence tests                         | Integration (deterministic, evidence)                     | skipped       | requires DB + SF sandbox fixtures                                                                                                        |
+| **12**  | 12.2  | Idempotency + cancellation tests                                               | Integration (all stages)                                  | skipped       | requires running pipeline                                                                                                                |
+| **12**  | 12.3  | Rate limit + circuit breaker + large org + multi-org tests                     | Unit + Integration (memory, isolation)                    | skipped       | requires running pipeline + SF API                                                                                                       |
+| **12**  | 12.4  | Security review + operational runbook + alerts                                 | Security audit + Review                                   | skipped       | requires production deployment                                                                                                           |
+| **12**  | 12.5  | Storage cleanup + E2E against SF sandbox                                       | Integration + E2E (nightly)                               | skipped       | requires Storage + SF sandbox E2E                                                                                                        |
+| **13**  | 13.1  | Generate Drizzle migration + apply supplementary SQL                           | Integration (migration runs, tables exist, trigger works) | completed     | 0042_assessment_extraction_tables.sql — 7 tables + SF prereqs + state machine + RLS applied to staging                                   |
+| **13**  | 13.2  | Assessment seed data (seed-data + seeder + mock store)                         | Unit (seed integrity, FK order, mock store populated)     | completed     | SEED_ASSESSMENT_RUNS in seed-data, seeder wired (phase 6/10), MockAssessmentRepo pre-populated                                           |
+| **13**  | 13.3  | Wire client React Query hooks to real assessment API                           | Unit + Playwright (hooks fetch, mutations fire, polling)  | completed     | 5 hooks: useAssessmentRuns, useAssessmentStatus (adaptive polling), useStartAssessmentRun, useCancelAssessmentRun, useAssessmentFindings |
+| **13**  | 13.4  | AssessmentPage loads data from API (replace mock loader)                       | Playwright (real API → real UI, domain tabs, findings)    | completed     | Page uses useAssessmentStatus + useStartAssessmentRun. Mock data fallback preserved. Re-Extract + progress bar wired.                    |
+| **13**  | 13.5  | Integration test: API routes ↔ DB with seeded data                             | Integration (trigger, status, cancel, findings queries)   | completed     | 9 tests: status, runs list, run-specific status, trigger (202/409/429), cancel (400 on completed), 404 on non-existent                   |
+| **14A** | 14.1  | CPQ Settings panel values (G-01)                                               | Unit + Integration (settings field extraction)            | completed     | KNOWN_SETTINGS_MAP with regex, full field extraction from org-level records, CPQSettingValue findings                                    |
+| **14A** | 14.2  | Plugin detection & status inventory (G-02)                                     | Unit (plugin classification from settings + packages)     | completed     | 5 PluginStatus findings (QCP, DocuSign, Document Store, Payment, External Configurator)                                                  |
+| **14B** | 14.3  | CPQ license & user adoption metrics (G-03)                                     | Unit (fallback chain, GROUP BY idiom)                     | completed     | UserPackageLicense → PermissionSetAssignment → CreatedById fallback chain                                                                |
+| **14B** | 14.4  | User behavior by role (G-04)                                                   | Unit (profile aggregation, conversion calc)               | completed     | User profile lookup, per-Profile.Name aggregation with quote/conversion/revenue metrics                                                  |
+| **14B** | 14.5  | Discount distribution + override detection (G-05, G-06)                        | Unit (bucketing, CPQ override fields)                     | completed     | Revenue-weighted discount avg, SpecialPriceType/PricingMethodOverride detection                                                          |
+| **14B** | 14.6  | Top products + attachment rates (G-07, G-08)                                   | Unit (distinct quote count, RequiredBy join)              | completed     | Distinct-quote counting, Product2 name enrichment, top 10 list                                                                           |
+| **14B** | 14.7  | Conversion segments + close time + modifications (G-09, G-10, G-20)            | Unit (segmentation, Version\_\_c tiered approach)         | completed     | 4 deal-size segments with conversion rates, Version\_\_c modification detection                                                          |
+| **14B** | 14.8  | Trend indicators + data quality flags (G-18, G-19)                             | Unit (month split, orphan/duplicate queries)              | completed     | 3-month trend split, orphaned lines, duplicate codes, inactive-on-ordered checks                                                         |
+| **14C** | 14.9  | Field completeness sampling (G-11)                                             | Unit (stratified sample, population rates)                | did not start | Deferred — requires significant API budget (18 queries)                                                                                  |
+| **14C** | 14.10 | Feature utilization + object inventory + reports (G-12, G-14, G-15)            | Unit (heatmap extension, inventory builder, report query) | completed     | 7 new features in adoption heatmap, G-14/G-15 tracked for post-processing                                                                |
+| **14C** | 14.11 | Confidence map + glance dashboard (G-17, G-21)                                 | Unit (confidence classification, dashboard structure)     | completed     | buildConfidenceMap with out-of-scope entries, identifyHotspots rule-based detection                                                      |
+| **14D** | 14.12 | LLM enrichment — hotspots + lifecycle + executive summary (G-13, G-16)         | Unit + Integration (rule-based + LLM, non-blocking)       | did not start | Rule-based hotspots done. LLM narrative enrichment requires Anthropic SDK integration                                                    |
+| **14E** | 14.13 | PDF report generation                                                          | Integration (branded PDF matching benchmark format)       | did not start | Separate spec required (5-8 days)                                                                                                        |
 
-**Total tasks: 54** (v1.0: 66 → v2.0: 48 → v2.1: 53 → v2.2/v2.3: 54)
+**Total tasks: 72** | **Completed: 63** | **Skipped: 6** | **Remaining: 3 (14.9 field sampling, 14.12 LLM, 14.13 PDF)**
 
 > **Parallelization note (R2-A2 Obs #5):** Phases 4-6 collectors are independent and can be parallelized across developers. Tasks 4.1a/4.1b, 4.2a/4.2b/4.2c, 4.3a/4.3b, 5.1-5.4, and 6.1-6.4 require only Phase 0-2 as prerequisites.
+
+---
+
+## Phase 13: Database Wiring & End-to-End Data Flow
+
+**Goal:** Close the gap between the extraction worker (produces findings), the server API (exposes routes), the database (stores data), and the client UI (displays results). After this phase, the full loop works: UI triggers run → API creates DB record → worker reads config from DB → worker writes findings to DB → API serves findings → UI renders live data.
+
+**Prerequisites:** Phases 0-9 (all infrastructure + collectors + API routes). Supabase project accessible for migration.
+
+---
+
+### Task 13.1: Generate Drizzle migration + apply supplementary SQL
+
+**Description:** Generate the Drizzle migration for the 7 assessment tables defined in `packages/database/src/schema.ts` (lines 1252-1520). Then apply the supplementary `packages/database/sql/create_assessment_tables.sql` which adds constraints that Drizzle cannot express: partial unique indexes, state machine trigger, security definer function, RLS policies.
+
+**Steps:**
+
+1. Run `drizzle-kit generate:pg` from `packages/database/` to produce a new migration file (e.g., `0042_assessment_extraction.sql`)
+2. Verify the generated SQL creates all 7 tables with correct columns, indexes, and FKs
+3. Apply the supplementary SQL (`create_assessment_tables.sql`) for partial indexes, state machine trigger, security definer, and RLS
+4. Apply `create_extractor_worker_role.sql` for the dedicated DB role
+5. Apply `create_assessment_sweeper.sql` for the lease sweeper + re-trigger functions
+6. Verify all tables exist, state machine trigger blocks invalid transitions, unique partial index blocks concurrent runs
+
+**Test:** Integration — migration runs against local Supabase (`supabase db reset`). Trigger blocks `failed → queued`. Unique partial index blocks two active runs for same org. Security definer validates run→connection. `assessment_runs` table accessible via Drizzle queries.
+
+**Acceptance criteria:**
+
+- Migration file exists in `supabase/migrations/` and is tracked in Drizzle journal
+- All 7 tables created with correct columns matching schema.ts
+- State machine trigger installed and enforcing valid transitions
+- Partial unique index on active runs per org
+- RLS policies scoping reads to org
+- `extractor_worker` role created with correct permissions
+- Sweeper function installed
+
+---
+
+### Task 13.2: Assessment seed data (seed-data + seeder + mock store)
+
+**Description:** Create seed data for assessment tables so local dev, staging, and tests have realistic assessment data. The Q1 Migration project (`000...0401`) gets a completed run with findings from the existing mock data. The Phase 2 project (`000...0404`) gets a completed run with the real Salesforce extraction data (532 items). Both the `@revbrain/seed-data` package and the DB seeder need updating.
+
+**New files:**
+
+- `packages/seed-data/src/assessment-runs.ts` — 2 seed runs (one per project: Q1 completed with mock data, Phase 2 completed with real data)
+- `packages/seed-data/src/assessment-findings.ts` — seed findings derived from existing `assessment-mock-data.ts` domain items. Transform the UI format back to DB finding records (domain, artifactType, findingKey, riskLevel, etc.)
+
+**Wire into:**
+
+- `packages/seed-data/src/index.ts` — export new arrays
+- `packages/database/src/seeders/transforms.ts` — add `getAssessmentRunInserts()` and `getAssessmentFindingInserts()` transform functions
+- `packages/database/src/seeders/index.ts` — add assessment seeding phase (after projects, before audit logs)
+- `apps/server/src/mocks/` — wire `MockAssessmentRepository` to load from seed data on init (so mock mode returns seeded runs/findings)
+
+**Test:** Unit — seed data arrays have correct FK references (projectId, organizationId, connectionId exist in seed projects/orgs/connections). Seeder runs without FK violations. Mock repository returns seeded data for Q1 and Phase 2 projects.
+
+**Acceptance criteria:**
+
+- `pnpm db:seed` populates assessment_runs and assessment_findings tables
+- Q1 project has 1 completed run with ~700 findings (from mock data)
+- Phase 2 project has 1 completed run with ~547 findings (from real extraction)
+- Mock mode returns seeded assessment runs when queried via API
+- `getMockAssessmentData()` still works for backward compat (no regression)
+- Seed data test in `packages/seed-data/` passes
+
+---
+
+### Task 13.3: Wire client React Query hooks to real assessment API
+
+**Description:** Replace the TODO stubs in `apps/client/src/features/projects/hooks/use-assessment-run.ts` with real React Query hooks that call the assessment API endpoints.
+
+**Hooks to implement:**
+
+1. `useAssessmentRuns(projectId)` — `useQuery` → `GET /v1/projects/:id/assessment/runs`
+2. `useAssessmentStatus(projectId)` — `useQuery` → `GET /v1/projects/:id/assessment/status` with adaptive polling (5s while running, 30s otherwise)
+3. `useStartAssessmentRun(projectId)` — `useMutation` → `POST /v1/projects/:id/assessment/run` with optimistic UI + invalidation
+4. `useCancelAssessmentRun(runId)` — `useMutation` → `POST /v1/projects/:id/assessment/runs/:runId/cancel`
+5. `useAssessmentFindings(runId, domain?)` — `useQuery` → `GET /v1/projects/:id/assessment/runs/:runId/findings?domain=...` with pagination
+
+**Pattern:** Follow existing hooks in `apps/client/src/features/projects/hooks/` (e.g., `use-salesforce-connection.ts`) for auth headers, error handling, query key conventions.
+
+**Test:** Unit — hooks call correct endpoints with correct params. Mutation hooks invalidate queries on success. Polling hook respects adaptive interval. Error states handled.
+
+**Acceptance criteria:**
+
+- All 5 hooks implemented with real fetch calls
+- Query keys follow project convention (e.g., `['assessment', 'runs', projectId]`)
+- Start mutation shows optimistic "queued" state
+- Cancel mutation updates local cache immediately
+- Status hook polls at 5s while run is active
+- All existing tests still pass (hooks used by AssessmentPage must not break)
+
+---
+
+### Task 13.4: AssessmentPage loads data from API (replace mock loader)
+
+**Description:** Update `AssessmentPage.tsx` to fetch assessment data from the API instead of calling `getMockAssessmentData(id)`. The page should use `useAssessmentStatus` to get the latest run, then `useAssessmentFindings` to load domain data. Transform the API response (DB finding records) into the `AssessmentData` shape the UI expects.
+
+**Changes:**
+
+- `AssessmentPage.tsx` — replace `useMemo(() => getMockAssessmentData(id), [id])` with `useAssessmentStatus` + `useAssessmentFindings` hooks
+- Create a transform layer: `apps/client/src/features/projects/utils/transform-findings.ts` — converts API finding records → `AssessmentData` shape (same logic as `transform-to-ui.ts` in worker, but client-side)
+- Keep `getMockAssessmentData` as fallback when API returns no data (graceful degradation in mock mode without DB)
+- Add loading states, error states, empty states for API-backed flow
+- "Run Assessment" button wired to `useStartAssessmentRun`
+- "Cancel" button wired to `useCancelAssessmentRun`
+- Progress indicator uses `useAssessmentStatus` polling
+
+**Test:** Playwright — navigate to assessment page, verify data loads (from seeded DB or mock fallback). Test "Run Assessment" button triggers API call. Test cancel button. Test loading/error states.
+
+**Acceptance criteria:**
+
+- Assessment page loads findings from API when available
+- Falls back to mock data when API returns empty (backward compat)
+- "Run Assessment" button calls POST trigger endpoint
+- Progress indicator shows during active runs
+- Domain tabs render findings from API response
+- Item detail panel works with API-sourced data
+- E2E test passes with both mock and API data paths
+
+---
+
+### Task 13.5: Integration test — API routes ↔ DB with seeded data
+
+**Description:** Write integration tests that verify the full server-side flow: API routes → repository → database → response. Uses the seeded assessment data from Task 13.2 or creates test data inline.
+
+**Tests:**
+
+1. `GET /v1/projects/:id/assessment/status` — returns latest run for seeded project with correct status, timestamps, findings count
+2. `GET /v1/projects/:id/assessment/runs` — returns paginated list of runs, sorted by createdAt DESC
+3. `GET /v1/projects/:id/assessment/runs/:runId/findings` — returns findings with correct domain filter, pagination metadata
+4. `POST /v1/projects/:id/assessment/run` — creates new run, transitions to dispatched, returns 202. Second call within 5 min returns 429 (rate limit). Call for org with active run returns 409 (concurrency).
+5. `POST /v1/projects/:id/assessment/runs/:runId/cancel` — cancels queued run (→ cancelled), requests cancel on running run (→ cancel_requested), rejects cancel on completed run (→ 400)
+6. Org-scoping: user from org A cannot see runs from org B's project (→ 404)
+
+**Test:** Integration (requires running server with DB or mock repos with seeded data).
+
+**Acceptance criteria:**
+
+- All 6 test scenarios pass
+- Org-scoping enforced on all endpoints
+- Rate limiting and concurrency guards verified
+- State machine transitions verified via cancel endpoint
+- Findings pagination returns correct total + hasMore
+
+---
+
+## Phase 14: Benchmark Gap Mitigations
+
+**Goal:** Close the 21 gaps identified in [CPQ-EXTRACTION-GAP-ANALYSIS.md](CPQ-EXTRACTION-GAP-ANALYSIS.md) (v1.2). After this phase, the extraction pipeline produces output matching the depth and quality of a 22-page SI-grade benchmark assessment report — including CPQ settings panel values, usage behavioral analytics, complexity hotspots, confidence metadata, and LLM-enriched narratives.
+
+**Prerequisites:** Phases 0-13 (all infrastructure + collectors + API + DB wiring). Gap Analysis spec (v1.2) approved by both auditors.
+
+**Sub-phases:**
+
+| Sub-Phase                       | Tasks      | Gaps Covered                       | Effort   | Dependencies |
+| ------------------------------- | ---------- | ---------------------------------- | -------- | ------------ |
+| **14A** Settings Intelligence   | 14.1, 14.2 | G-01, G-02                         | 1-2 days | None         |
+| **14B** Usage Analytics Depth   | 14.3–14.8  | G-03–G-10, G-18–G-20               | 4-5 days | 14A          |
+| **14C** Assessment Presentation | 14.9–14.11 | G-11, G-12, G-14, G-15, G-17, G-21 | 3-4 days | 14A + 14B    |
+| **14D** LLM Enrichment          | 14.12      | G-13, G-16, Executive Summary      | 2-3 days | 14A-C        |
+| **14E** PDF Report Generation   | 14.13      | Report output                      | 5-8 days | 14A-D        |
+
+**Full task descriptions, SOQL queries, implementation details, and artifact schemas** are in [CPQ-EXTRACTION-GAP-ANALYSIS.md](CPQ-EXTRACTION-GAP-ANALYSIS.md). Each task in the track record above maps to one or more G-XX gap entries in that document.
 
 ---
 
@@ -1408,3 +1590,6 @@ This is the **only mechanism** that retries failed runs (since Cloud Run `maxRet
 | 2.5     | 2026-03-26 | LLM-readiness. Section 2.7, evidence preservation, layered retrieval, configurable raw snapshots, relationship types expanded, LLM evidence completeness test.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | 2.6     | 2026-03-26 | **Final.** Consistency fixes per v2.5 audit (round 5, both auditors approved: zero critical + 9.8/10). Schema: `text_value TEXT` + `evidence_refs JSONB` added to `assessment_findings`. Fixed: metrics count 26 (not 30+), cross-reference matrix moved to Task 7.2 (needs all-tier data), `code_extraction_enabled` conditional in collectors 4.2b/5.1, sweeper buffer math documented, non-JSON response handling in SF client, `raw_snapshot_mode` in integration points. Audit history extracted to [separate file](CPQ-EXTRACTION-PLAN-AUDIT-HISTORY.md).                                                                                                                             |
 | 2.7     | 2026-03-26 | Targeted precision edits. CAS dispatch + global concurrency cap on trigger (Task 9.1). Cross-app merge protocol for token refresh endpoint (Task 2.7). Composite Batch pLimit + org-size adaptation for API concurrency (Task 8.1). Full state transition matrix in Task 0.4. `ON DELETE RESTRICT` on connection FK. `text_value` size guardrails (100KB truncation). Heartbeat/lease timing parameters (Task 1.1). Graceful degradation for missing collectors (Task 7.1). Collector completeness in summaries (Task 7.3). Async generator replaces `stream.pipeline` (Task 4.3a). Normalization lifecycle clarification (Task 8.1). Discovery "auto-detect" → "validate" in track record. |
+| 2.8     | 2026-03-26 | Post-processing implemented: relationships.ts, metrics.ts, validation.ts, context-blueprint.ts, summaries/builder.ts. Assessment API routes + AssessmentRepository (Drizzle + Mock + PostgREST stub). 6 endpoints. Internal token refresh. Transform script enriched. Assessment Dashboard renders 532 real SF items. All 1108 tests pass.                                                                                                                                                                                                                                                                                                                                                  |
+| 3.0     | 2026-03-26 | **Honest audit + Phase 13.** Self-audit revealed: DB tables never migrated to Supabase, no assessment seed data, client hooks are stubs, AssessmentPage uses hardcoded mock data not API. Corrected overstated task statuses (9.1, 9.2, 11.1, 11.2 notes updated). Added Phase 13 (5 tasks): DB migration + supplementary SQL (13.1), assessment seed data (13.2), React Query hooks wiring (13.3), AssessmentPage API integration (13.4), integration tests (13.5). Total tasks: 54 → 59.                                                                                                                                                                                                  |
+| 3.1     | 2026-03-28 | **Phase 14: Benchmark gap mitigations.** Audited extraction output against Vento CPQ Assessment Tool benchmark report (22 pages). Identified 21 gaps documented in [CPQ-EXTRACTION-GAP-ANALYSIS.md](CPQ-EXTRACTION-GAP-ANALYSIS.md) (v1.2, dual-audit approved A/A-). Added Phase 14 with 13 tasks across 5 sub-phases: Settings Intelligence (14A), Usage Analytics Depth (14B), Assessment Presentation (14C), LLM Enrichment (14D), PDF Report Generation (14E). Total tasks: 59 → 72. Estimated effort: 15-22 days.                                                                                                                                                                     |

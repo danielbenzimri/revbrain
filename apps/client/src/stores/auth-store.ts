@@ -3,6 +3,7 @@ import type { User, UserRole } from '@/types/auth';
 import { MOCK_USERS } from '@/lib/mock-data';
 import { getAuthAdapter } from '@/lib/services';
 import { invalidateAuthCache } from '@/lib/auth-headers';
+import { simulateRole as simulateRoleSession } from '@/lib/adapters/local/auth';
 
 const USER_CACHE_KEY = 'revbrain_user';
 
@@ -145,10 +146,12 @@ export const useAuthStore = create<AuthState>()((set) => ({
     }
   },
 
-  // Role simulation
+  // Role simulation — creates a real session so API calls use the correct mock token
   simulateRole: (role: UserRole) => {
     const mockUser = MOCK_USERS[role];
     if (mockUser) {
+      invalidateAuthCache();
+      simulateRoleSession(role);
       set({ user: mockUser });
     }
   },

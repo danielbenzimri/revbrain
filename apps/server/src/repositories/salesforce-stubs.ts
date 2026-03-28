@@ -13,6 +13,7 @@ import type {
   SalesforceConnectionSecretsRepository,
   OauthPendingFlowRepository,
   SalesforceConnectionLogRepository,
+  AssessmentRepository,
 } from '@revbrain/contract';
 
 const NOT_IMPLEMENTED = 'Salesforce repository not yet implemented — see Task 1.6/1.7';
@@ -53,4 +54,18 @@ export class StubOauthPendingFlowRepository implements OauthPendingFlowRepositor
 export class StubSalesforceConnectionLogRepository implements SalesforceConnectionLogRepository {
   create = stub;
   findByConnection = stub;
+}
+
+export class StubAssessmentRepository implements AssessmentRepository {
+  createRun = stub;
+  findRunById = stub;
+  findRunsByProject = stub;
+  findActiveRunByOrg = stub;
+  findLatestRunByProject = stub;
+  updateRunStatus = stub;
+  casDispatch = stub;
+  findFindingsByRun = stub;
+  countFindingsByRun = stub;
+  countActiveRuns = stub;
+  countActiveRunsByOrg = stub;
 }

@@ -281,6 +281,19 @@ export class CatalogCollector extends BaseCollector {
       metrics.nestedBundleCount = nestedOptions.length;
       metrics.requiredOptions = options.filter((o) => o.SBQQ__Required__c === true).length;
 
+      // G-07: Store parent→option map for post-processing attachment rate computation
+      // Key: parentProductId, Value: array of option product IDs
+      const optionMapData: Record<string, string[]> = {};
+      for (const o of options) {
+        const parent = o.SBQQ__ConfiguredSKU__c as string;
+        const option = o.SBQQ__OptionalSKU__c as string;
+        if (parent && option) {
+          if (!optionMapData[parent]) optionMapData[parent] = [];
+          optionMapData[parent].push(option);
+        }
+      }
+      metrics.optionMap = JSON.stringify(optionMapData);
+
       if (maxBundleDepth >= 3) {
         warnings.push('Bundle nesting depth ≥ 3 — complex migration to RCA Product Compositions');
       }

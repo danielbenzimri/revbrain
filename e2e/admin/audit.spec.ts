@@ -62,8 +62,8 @@ test.describe('Audit Log', () => {
     test('66 — search audit logs', async ({ page }) => {
       await navigateAdmin(page, '/admin/audit');
 
-      // Search placeholder is "חיפוש..." (with ellipsis)
-      const search = page.getByPlaceholder(/חיפוש/i);
+      // Search placeholder: EN "Search..." / HE "חיפוש..."
+      const search = page.getByPlaceholder(/search|חיפוש/i);
       await expect(search).toBeVisible({ timeout: 10_000 });
       await search.fill('user');
       await page.waitForTimeout(500);

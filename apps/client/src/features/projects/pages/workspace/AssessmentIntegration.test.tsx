@@ -5,6 +5,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, within, fireEvent, cleanup } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import AssessmentPage from './AssessmentPage';
 
 vi.mock('react-i18next', () => ({
@@ -17,12 +18,17 @@ vi.mock('react-i18next', () => ({
 const Q1_PROJECT_ID = '00000000-0000-4000-a000-000000000401';
 
 function renderAssessment(search = '') {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
   return render(
-    <MemoryRouter initialEntries={[`/project/${Q1_PROJECT_ID}/assessment${search}`]}>
-      <Routes>
-        <Route path="/project/:id/assessment" element={<AssessmentPage />} />
-      </Routes>
-    </MemoryRouter>,
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter initialEntries={[`/project/${Q1_PROJECT_ID}/assessment${search}`]}>
+        <Routes>
+          <Route path="/project/:id/assessment" element={<AssessmentPage />} />
+        </Routes>
+      </MemoryRouter>
+    </QueryClientProvider>
   );
 }
 

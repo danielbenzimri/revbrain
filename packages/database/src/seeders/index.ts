@@ -15,6 +15,7 @@ import {
   supportTickets,
   ticketMessages,
   coupons,
+  assessmentRuns,
 } from '../schema';
 import {
   getPlanInserts,
@@ -26,6 +27,7 @@ import {
   getSupportTicketInserts,
   getTicketMessageInserts,
   getCouponInserts,
+  getAssessmentRunInserts,
 } from './transforms';
 import { ensureSeedTables, recordSeedRun, updateSeedRun } from './seed-log';
 import { MOCK_IDS } from '@revbrain/seed-data';
@@ -101,6 +103,7 @@ export async function seedDatabase(db: DrizzleDB, options: SeedOptions = {}): Pr
       entityCounts.supportTickets = getSupportTicketInserts().length;
       entityCounts.ticketMessages = getTicketMessageInserts().length;
       entityCounts.coupons = getCouponInserts().length;
+      entityCounts.assessmentRuns = getAssessmentRunInserts().length;
 
       await updateSeedRun(db, runId, {
         status: 'completed',
@@ -176,8 +179,22 @@ export async function seedDatabase(db: DrizzleDB, options: SeedOptions = {}): Pr
       }
       entityCounts.projects = projectRows.length;
 
-      // 6. Audit Logs
-      console.log('[seed] 6/9  Audit Logs...');
+      // 6. Assessment Runs (FK -> projects, organizations, salesforce_connections)
+      console.log('[seed] 6/10 Assessment Runs...');
+      const assessmentRunRows = getAssessmentRunInserts();
+      for (const row of assessmentRunRows) {
+        await tx
+          .insert(assessmentRuns)
+          .values(row)
+          .onConflictDoUpdate({
+            target: assessmentRuns.id,
+            set: { ...row, id: undefined } as any,
+          });
+      }
+      entityCounts.assessmentRuns = assessmentRunRows.length;
+
+      // 7. Audit Logs
+      console.log('[seed] 7/10 Audit Logs...');
       const auditRows = getAuditLogInserts();
       for (const row of auditRows) {
         await tx
@@ -190,8 +207,8 @@ export async function seedDatabase(db: DrizzleDB, options: SeedOptions = {}): Pr
       }
       entityCounts.auditLogs = auditRows.length;
 
-      // 7. Support Tickets
-      console.log('[seed] 7/9  Support Tickets...');
+      // 8. Support Tickets
+      console.log('[seed] 8/10 Support Tickets...');
       const ticketRows = getSupportTicketInserts();
       for (const row of ticketRows) {
         await tx
@@ -204,8 +221,8 @@ export async function seedDatabase(db: DrizzleDB, options: SeedOptions = {}): Pr
       }
       entityCounts.supportTickets = ticketRows.length;
 
-      // 8. Ticket Messages
-      console.log('[seed] 8/9  Ticket Messages...');
+      // 9. Ticket Messages
+      console.log('[seed] 9/10 Ticket Messages...');
       const messageRows = getTicketMessageInserts();
       for (const row of messageRows) {
         await tx
@@ -218,8 +235,8 @@ export async function seedDatabase(db: DrizzleDB, options: SeedOptions = {}): Pr
       }
       entityCounts.ticketMessages = messageRows.length;
 
-      // 9. Coupons
-      console.log('[seed] 9/9  Coupons...');
+      // 10. Coupons
+      console.log('[seed] 10/10 Coupons...');
       const couponRows = getCouponInserts();
       for (const row of couponRows) {
         await tx
@@ -354,7 +371,14 @@ export async function cleanupSeedData(
         await tx.delete(coupons).where(eq(coupons.id, id));
       }
 
-      // 4. Audit logs (FK -> users, organizations)
+      // 4. Assessment runs (FK -> projects, before deleting projects)
+      console.log('[cleanup] Deleting assessment runs...');
+      const allAssessmentRunIds = [MOCK_IDS.ASSESSMENT_RUN_Q1, MOCK_IDS.ASSESSMENT_RUN_PHASE2];
+      for (const id of allAssessmentRunIds) {
+        await tx.delete(assessmentRuns).where(eq(assessmentRuns.id, id));
+      }
+
+      // 5. Audit logs (FK -> users, organizations)
       console.log('[cleanup] Deleting audit logs...');
       // Delete audit logs that reference our known users/orgs
       for (const userId of allUserIds) {

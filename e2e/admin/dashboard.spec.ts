@@ -13,11 +13,18 @@ test.describe('Admin Dashboard', () => {
   test('7 — dashboard loads with stats', async ({ page }) => {
     await navigateAdmin(page, '/admin');
 
-    // Four stat cards should be visible
-    await expect(page.getByText(/total tenants|סה"כ ארגונים/i)).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByText(/active users|משתמשים פעילים/i)).toBeVisible();
-    await expect(page.getByText(/mrr|הכנסה חודשית/i)).toBeVisible();
-    await expect(page.getByText(/active projects|פרויקטים פעילים/i)).toBeVisible();
+    // Stat card labels are <h3> headings — use heading role to avoid matching the System Health section
+    // which repeats the same labels inside <span> elements
+    await expect(
+      page.getByRole('heading', { name: /total tenants|סה"כ ארגונים/i })
+    ).toBeVisible({ timeout: 10_000 });
+    await expect(
+      page.getByRole('heading', { name: /active users|משתמשים פעילים/i })
+    ).toBeVisible();
+    await expect(page.getByRole('heading', { name: /mrr|הכנסה חודשית/i })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: /active projects|פרויקטים פעילים/i })
+    ).toBeVisible();
   });
 
   test('8 — recent activity section renders', async ({ page }) => {

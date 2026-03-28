@@ -406,6 +406,36 @@ export class IntegrationsCollector extends BaseCollector {
       (eSignatureDetected ? 1 : 0);
     metrics.quotePathExternalDependencies = totalExternalDeps;
 
+    // ================================================================
+    // G-15: CPQ Reports & Dashboards
+    // ================================================================
+    try {
+      const reportResult = await this.ctx.restApi.query<Record<string, unknown>>(
+        "SELECT Id, Name, Description, FolderName FROM Report WHERE Name LIKE '%CPQ%' OR Name LIKE '%Quote%' OR Name LIKE '%SBQQ%' OR FolderName LIKE '%CPQ%' LIMIT 50",
+        this.signal
+      );
+      metrics.cpqReportCount = reportResult.totalSize;
+
+      for (const r of reportResult.records) {
+        findings.push(
+          createFinding({
+            domain: 'integration',
+            collector: 'integrations',
+            artifactType: 'CPQReport',
+            artifactName: (r.Name as string) ?? 'Unknown Report',
+            artifactId: r.Id as string,
+            sourceType: 'object',
+            findingType: 'cpq_report',
+            riskLevel: 'info',
+            notes: `${(r.Description as string) || 'No description'}. Folder: ${(r.FolderName as string) || 'N/A'}`,
+          })
+        );
+      }
+    } catch {
+      // Report object may not be queryable in all orgs — non-critical
+      metrics.cpqReportCount = -1;
+    }
+
     this.log.info(
       {
         namedCredentials: metrics.totalNamedCredentials,
@@ -415,6 +445,7 @@ export class IntegrationsCollector extends BaseCollector {
         connectedApps: metrics.totalConnectedApps,
         externalIdFields: externalIdFieldCount,
         eSignature: eSignatureDetected,
+        cpqReports: metrics.cpqReportCount,
         findings: findings.length,
       },
       'integrations_complete'

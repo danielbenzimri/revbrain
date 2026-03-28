@@ -11,25 +11,39 @@ test.describe('Tenant Management', () => {
   });
 
   // -----------------------------------------------------------------------
+  // Helper: wait for tenant table to be fully loaded
+  // -----------------------------------------------------------------------
+  async function waitForTenantTable(page: import('@playwright/test').Page) {
+    await navigateAdmin(page, '/admin/tenants');
+    await expect(page.getByText(/ארגונים|tenants/i).first()).toBeVisible({ timeout: 10_000 });
+    const table = page.locator('table');
+    await expect(table).toBeVisible({ timeout: 10_000 });
+    await expect(table.locator('tbody tr').first()).toBeVisible({ timeout: 5_000 });
+    return table;
+  }
+
+  // Helper: open the actions dropdown for a row and click an item
+  async function openRowActions(page: import('@playwright/test').Page, row: import('@playwright/test').Locator) {
+    // The actions button is the MoreHorizontal icon button (last cell, ghost variant)
+    const actionsBtn = row.getByRole('button');
+    await actionsBtn.click();
+    // Wait for the dropdown menu to appear
+    await expect(page.getByRole('menuitem').first()).toBeVisible({ timeout: 3_000 });
+  }
+
+  // -----------------------------------------------------------------------
   // 3.1 Tenant List
   // -----------------------------------------------------------------------
 
   test('10 — tenant list loads', async ({ page }) => {
-    await navigateAdmin(page, '/admin/tenants');
-
-    await expect(page.getByText(/ארגונים|tenants/i).first()).toBeVisible({ timeout: 10_000 });
-
-    // Table should be visible with at least one row
-    const table = page.locator('table');
-    await expect(table).toBeVisible({ timeout: 10_000 });
-    await expect(table.locator('tbody tr').first()).toBeVisible({ timeout: 5_000 });
+    await waitForTenantTable(page);
   });
 
   test('11 — tenant list shows storage usage', async ({ page }) => {
-    await navigateAdmin(page, '/admin/tenants');
+    await waitForTenantTable(page);
 
     // Storage column header
-    await expect(page.getByText(/storage|אחסון/i)).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(/storage|אחסון/i)).toBeVisible();
   });
 
   test('12 — seat warning shown when near limit', async ({ page }) => {
@@ -60,18 +74,13 @@ test.describe('Tenant Management', () => {
   // -----------------------------------------------------------------------
 
   test('13 — edit tenant name', async ({ page }) => {
-    await navigateAdmin(page, '/admin/tenants');
-    await expect(page.locator('table tbody tr').first()).toBeVisible({ timeout: 10_000 });
+    const table = await waitForTenantTable(page);
 
-    // Click the "..." actions button on the first row
-    const actionsBtn = page.locator('table tbody tr').first().locator('button').last();
-    await actionsBtn.click();
+    const firstRow = table.locator('tbody tr').first();
+    await openRowActions(page, firstRow);
 
-    // Click "ערוך" (Edit) from dropdown
-    await page
-      .getByText(/ערוך|edit/i)
-      .first()
-      .click();
+    // Click "Edit" from dropdown
+    await page.getByRole('menuitem', { name: /ערוך|edit/i }).click();
 
     const drawer = page.locator(sel.drawer);
     await expect(drawer).toBeVisible({ timeout: 5_000 });
@@ -86,15 +95,12 @@ test.describe('Tenant Management', () => {
   });
 
   test('14 — change tenant plan', async ({ page }) => {
-    await navigateAdmin(page, '/admin/tenants');
-    await expect(page.locator('table tbody tr').first()).toBeVisible({ timeout: 10_000 });
+    const table = await waitForTenantTable(page);
 
-    const actionsBtn = page.locator('table tbody tr').first().locator('button').last();
-    await actionsBtn.click();
-    await page
-      .getByText(/ערוך|edit/i)
-      .first()
-      .click();
+    const firstRow = table.locator('tbody tr').first();
+    await openRowActions(page, firstRow);
+
+    await page.getByRole('menuitem', { name: /ערוך|edit/i }).click();
 
     const drawer = page.locator(sel.drawer);
     await expect(drawer).toBeVisible({ timeout: 5_000 });
@@ -110,15 +116,12 @@ test.describe('Tenant Management', () => {
   });
 
   test('15 — change seat limit', async ({ page }) => {
-    await navigateAdmin(page, '/admin/tenants');
-    await expect(page.locator('table tbody tr').first()).toBeVisible({ timeout: 10_000 });
+    const table = await waitForTenantTable(page);
 
-    const actionsBtn = page.locator('table tbody tr').first().locator('button').last();
-    await actionsBtn.click();
-    await page
-      .getByText(/ערוך|edit/i)
-      .first()
-      .click();
+    const firstRow = table.locator('tbody tr').first();
+    await openRowActions(page, firstRow);
+
+    await page.getByRole('menuitem', { name: /ערוך|edit/i }).click();
 
     const drawer = page.locator(sel.drawer);
     await expect(drawer).toBeVisible({ timeout: 5_000 });
@@ -159,15 +162,14 @@ test.describe('Tenant Management', () => {
   // -----------------------------------------------------------------------
 
   test('17 — deactivate tenant', async ({ page }) => {
-    await navigateAdmin(page, '/admin/tenants');
-    await expect(page.locator('table tbody tr').first()).toBeVisible({ timeout: 10_000 });
+    const table = await waitForTenantTable(page);
 
     // Find the last row (Beta) and open actions
-    const lastRow = page.locator('table tbody tr').last();
-    await lastRow.locator('button').last().click();
+    const lastRow = table.locator('tbody tr').last();
+    await openRowActions(page, lastRow);
 
-    // Click "השבת" (Deactivate) — it's red in the dropdown
-    await page.getByText(/השבת|deactivate/i).click();
+    // Click "Deactivate" — it's red in the dropdown
+    await page.getByRole('menuitem', { name: /השבת|deactivate/i }).click();
 
     // Confirm if dialog appears
     const confirmBtn = page.getByRole('button', { name: /השבת|deactivate|confirm/i }).last();
@@ -179,14 +181,13 @@ test.describe('Tenant Management', () => {
   });
 
   test('18 — deactivate action accessible from menu', async ({ page }) => {
-    await navigateAdmin(page, '/admin/tenants');
-    await expect(page.locator('table tbody tr').first()).toBeVisible({ timeout: 10_000 });
+    const table = await waitForTenantTable(page);
 
-    const row = page.locator('table tbody tr').first();
-    await row.locator('button').last().click();
+    const row = table.locator('tbody tr').first();
+    await openRowActions(page, row);
 
-    // "השבת" should be visible in the dropdown menu
-    const deactivateOption = page.getByText(/השבת|deactivate/i);
+    // "Deactivate" should be visible in the dropdown menu
+    const deactivateOption = page.getByRole('menuitem', { name: /השבת|deactivate/i });
     await expect(deactivateOption).toBeVisible({ timeout: 3_000 });
 
     // Close menu without clicking (press Escape)

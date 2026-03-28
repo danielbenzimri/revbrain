@@ -43,6 +43,9 @@ export interface CollectorContext {
   config: {
     codeExtractionEnabled: boolean;
     rawSnapshotMode: string;
+    llmEnrichmentEnabled?: boolean;
+    anthropicApiKey?: string | null;
+    anthropicModel?: string | null;
   };
 }
 
@@ -155,6 +158,7 @@ export abstract class BaseCollector {
   protected createEmptyMetrics(durationMs: number): CollectorMetricsInput {
     return {
       collectorName: this.name,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       domain: this.definition.domain as any,
       metrics: {},
       warnings: [],

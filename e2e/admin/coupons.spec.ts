@@ -185,9 +185,17 @@ test.describe('Coupon Management', () => {
 
   test('52 — edit coupon name and limits', async ({ page }) => {
     await navigateAdmin(page, '/admin/coupons');
-    await expect(page.locator('table').or(page.getByText(/אין קופונים/i))).toBeVisible({
-      timeout: 10_000,
-    });
+
+    // Wait for table or empty state (EN or HE)
+    const table = page.locator('table');
+    const empty = page.getByText(/no coupons|אין קופונים/i);
+    await expect(table.or(empty)).toBeVisible({ timeout: 10_000 });
+
+    // Skip if no coupons exist (empty state visible, no table)
+    if (!(await table.isVisible().catch(() => false))) {
+      test.skip();
+      return;
+    }
 
     const editBtn = page.getByRole('button', { name: /ערוך|edit/i }).first();
     if (!(await editBtn.isVisible({ timeout: 3_000 }).catch(() => false))) {

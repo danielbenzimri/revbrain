@@ -17,11 +17,13 @@ import { MockSalesforceConnectionRepository } from './salesforce-connection.repo
 import { MockSalesforceConnectionSecretsRepository } from './salesforce-connection-secrets.repository.ts';
 import { MockOauthPendingFlowRepository } from './oauth-pending-flow.repository.ts';
 import { MockSalesforceConnectionLogRepository } from './salesforce-connection-log.repository.ts';
+import { MockAssessmentRepository } from './assessment.repository.ts';
 
 export { resetAllMockData as resetMockData } from '../../mocks/index.ts';
 export { MockTicketRepository } from './ticket.repository.ts';
 export { MockCouponRepository } from './coupon.repository.ts';
 export { MockOverrideRepository } from './override.repository.ts';
+export { MockAssessmentRepository } from './assessment.repository.ts';
 
 /**
  * Create all mock repositories.
@@ -38,6 +40,7 @@ export function createMockRepositories(): Repositories {
     salesforceConnectionSecrets: new MockSalesforceConnectionSecretsRepository(),
     oauthPendingFlows: new MockOauthPendingFlowRepository(),
     salesforceConnectionLogs: new MockSalesforceConnectionLogRepository(),
+    assessmentRuns: new MockAssessmentRepository(),
   };
 }
 

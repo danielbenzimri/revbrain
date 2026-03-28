@@ -20,6 +20,7 @@ import {
   StubSalesforceConnectionSecretsRepository,
   StubOauthPendingFlowRepository,
   StubSalesforceConnectionLogRepository,
+  StubAssessmentRepository,
 } from '../salesforce-stubs.ts';
 
 // Re-export individual repositories
@@ -46,5 +47,6 @@ export function createPostgRESTRepositories(supabase: SupabaseClient): Repositor
     salesforceConnectionSecrets: new StubSalesforceConnectionSecretsRepository(),
     oauthPendingFlows: new StubOauthPendingFlowRepository(),
     salesforceConnectionLogs: new StubSalesforceConnectionLogRepository(),
+    assessmentRuns: new StubAssessmentRepository(),
   };
 }

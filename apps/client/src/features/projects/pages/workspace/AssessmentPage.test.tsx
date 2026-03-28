@@ -5,6 +5,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, within, cleanup } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import AssessmentPage from './AssessmentPage';
 
 // Mock i18n — returns the key itself so we can assert on translation keys
@@ -16,15 +17,20 @@ vi.mock('react-i18next', () => ({
 }));
 
 const Q1_PROJECT_ID = '00000000-0000-4000-a000-000000000401';
-const EMPTY_PROJECT_ID = '00000000-0000-4000-a000-000000000404';
+const EMPTY_PROJECT_ID = '00000000-0000-4000-a000-000000000499'; // Non-existent project → empty state
 
 function renderWithRouter(projectId: string, search = '') {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
   return render(
-    <MemoryRouter initialEntries={[`/project/${projectId}/assessment${search}`]}>
-      <Routes>
-        <Route path="/project/:id/assessment" element={<AssessmentPage />} />
-      </Routes>
-    </MemoryRouter>,
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter initialEntries={[`/project/${projectId}/assessment${search}`]}>
+        <Routes>
+          <Route path="/project/:id/assessment" element={<AssessmentPage />} />
+        </Routes>
+      </MemoryRouter>
+    </QueryClientProvider>
   );
 }
 

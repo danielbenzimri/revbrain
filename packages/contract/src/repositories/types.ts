@@ -548,6 +548,115 @@ export interface SalesforceConnectionLogRepository {
 }
 
 // ============================================================
+// ASSESSMENT REPOSITORY
+// ============================================================
+
+export type AssessmentRunStatus =
+  | 'queued'
+  | 'dispatched'
+  | 'running'
+  | 'cancel_requested'
+  | 'completed'
+  | 'completed_warnings'
+  | 'failed'
+  | 'cancelled'
+  | 'stalled';
+
+export interface AssessmentRunEntity {
+  id: string;
+  projectId: string;
+  organizationId: string;
+  connectionId: string;
+  status: AssessmentRunStatus;
+  statusReason: string | null;
+  mode: string;
+  rawSnapshotMode: string;
+  progress: Record<string, unknown>;
+  orgFingerprint: Record<string, unknown> | null;
+  workerId: string | null;
+  leaseExpiresAt: Date | null;
+  lastHeartbeatAt: Date | null;
+  retryCount: number;
+  maxRetries: number;
+  idempotencyKey: string | null;
+  dispatchedAt: Date | null;
+  startedAt: Date | null;
+  completedAt: Date | null;
+  failedAt: Date | null;
+  cancelRequestedAt: Date | null;
+  durationMs: number | null;
+  apiCallsUsed: number | null;
+  recordsExtracted: number | null;
+  completenessPct: number | null;
+  error: string | null;
+  createdBy: string | null;
+  createdAt: Date;
+}
+
+export interface CreateAssessmentRunInput {
+  projectId: string;
+  organizationId: string;
+  connectionId: string;
+  mode?: string;
+  rawSnapshotMode?: string;
+  idempotencyKey?: string;
+  createdBy?: string;
+}
+
+export interface AssessmentFindingEntity {
+  id: string;
+  runId: string;
+  domain: string;
+  collectorName: string;
+  artifactType: string;
+  artifactName: string;
+  artifactId: string | null;
+  findingKey: string;
+  sourceType: string;
+  riskLevel: string | null;
+  complexityLevel: string | null;
+  migrationRelevance: string | null;
+  rcaTargetConcept: string | null;
+  rcaMappingComplexity: string | null;
+  evidenceRefs: unknown[];
+  notes: string | null;
+  countValue: number | null;
+  textValue: string | null;
+  createdAt: Date;
+}
+
+export interface AssessmentRepository {
+  // Runs
+  createRun(data: CreateAssessmentRunInput): Promise<AssessmentRunEntity>;
+  findRunById(id: string): Promise<AssessmentRunEntity | null>;
+  findRunsByProject(projectId: string, options?: FindManyOptions): Promise<AssessmentRunEntity[]>;
+  findActiveRunByOrg(organizationId: string): Promise<AssessmentRunEntity | null>;
+  findLatestRunByProject(projectId: string): Promise<AssessmentRunEntity | null>;
+  updateRunStatus(
+    id: string,
+    status: AssessmentRunStatus,
+    extra?: Partial<
+      Pick<
+        AssessmentRunEntity,
+        'statusReason' | 'cancelRequestedAt' | 'completedAt' | 'failedAt' | 'error'
+      >
+    >
+  ): Promise<AssessmentRunEntity | null>;
+  casDispatch(id: string): Promise<AssessmentRunEntity | null>;
+
+  // Findings
+  findFindingsByRun(
+    runId: string,
+    options?: FindManyOptions & { domain?: string }
+  ): Promise<AssessmentFindingEntity[]>;
+  countFindingsByRun(runId: string, domain?: string): Promise<number>;
+
+  // Concurrency guard
+  countActiveRuns(): Promise<number>;
+  countActiveRunsByOrg(organizationId: string): Promise<number>;
+}
+
+// ============================================================
 // REPOSITORY CONTAINER
 // ============================================================
 
@@ -561,6 +670,7 @@ export interface Repositories {
   salesforceConnectionSecrets: SalesforceConnectionSecretsRepository;
   oauthPendingFlows: OauthPendingFlowRepository;
   salesforceConnectionLogs: SalesforceConnectionLogRepository;
+  assessmentRuns: AssessmentRepository;
 }
 
 // ============================================================
