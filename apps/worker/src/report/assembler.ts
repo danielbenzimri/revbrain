@@ -118,14 +118,28 @@ export interface ReportData {
 
 export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
   // Group findings by artifact type for easy access
+  // Normalize: some collectors use full SF names (SBQQ__PriceRule__c), others use short (PriceRule)
   const byType = new Map<string, AssessmentFindingInput[]>();
   for (const f of findings) {
     if (!byType.has(f.artifactType)) byType.set(f.artifactType, []);
     byType.get(f.artifactType)!.push(f);
   }
 
-  const get = (type: string) => byType.get(type) ?? [];
-  const getOne = (type: string) => byType.get(type)?.[0] ?? null;
+  // get() searches both short name and full SF API name
+  const get = (...types: string[]) => {
+    const result: AssessmentFindingInput[] = [];
+    for (const t of types) {
+      result.push(...(byType.get(t) ?? []));
+    }
+    return result;
+  };
+  const getOne = (...types: string[]) => {
+    for (const t of types) {
+      const found = byType.get(t)?.[0];
+      if (found) return found;
+    }
+    return null;
+  };
 
   // Metadata from OrgFingerprint
   const orgFp = getOne('OrgFingerprint');
@@ -143,11 +157,25 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
   const userBehavior = get('UserBehavior');
   const trends = get('TrendIndicator');
 
-  // Code
+  // Code — handle both short and full SF API names
   const apexClasses = get('ApexClass');
   const triggers = get('ApexTrigger');
   const flows = get('Flow');
   const validationRules = get('ValidationRule');
+
+  // Pricing — collectors use full SF names
+  const priceRules = get('PriceRule', 'SBQQ__PriceRule__c');
+  const productRules = get('ProductRule', 'SBQQ__ProductRule__c');
+  const discountSchedules = get('DiscountSchedule', 'SBQQ__DiscountSchedule__c');
+  const customScripts = get('CustomScript', 'SBQQ__CustomScript__c');
+  const contractedPrices = get('ContractedPrice', 'SBQQ__ContractedPrice__c');
+
+  // Catalog
+  const productOptions = get('ProductOption', 'SBQQ__ProductOption__c');
+  const productFeatures = get('ProductFeature', 'SBQQ__ProductFeature__c');
+
+  // Templates
+  const quoteTemplates = get('QuoteTemplate', 'SBQQ__QuoteTemplate__c');
 
   // Presentation
   const hotspots = get('ComplexityHotspot');
@@ -155,6 +183,9 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
   const reports = get('CPQReport');
   const confidence = get('ExtractionConfidence');
   const qualityFlags = get('DataQualityFlag');
+
+  // Custom actions (approvals)
+  const customActions = get('CustomAction', 'SBQQ__CustomAction__c');
 
   return {
     metadata: {
@@ -210,14 +241,14 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
 
     configurationDomain: {
       productCatalog: [],
-      priceRules: get('PriceRule').map((r) => ({
+      priceRules: priceRules.map((r) => ({
         name: r.artifactName,
         description: r.notes ?? '',
         complexity: r.complexityLevel ?? 'medium',
         usage: '~100%',
         confidence: 'Confirmed',
       })),
-      productRules: get('ProductRule').map((r) => ({
+      productRules: productRules.map((r) => ({
         name: r.artifactName,
         description: r.notes ?? '',
         complexity: r.complexityLevel ?? 'medium',
@@ -369,7 +400,9 @@ function buildGlanceSections(
   findings: AssessmentFindingInput[],
   _settingValues: AssessmentFindingInput[]
 ): Record<string, Array<{ label: string; value: string; confidence: string }>> {
-  const count = (type: string) => findings.filter((f) => f.artifactType === type).length;
+  // Count by artifact type — handle both short and full SF API names
+  const count = (...types: string[]) =>
+    findings.filter((f) => types.includes(f.artifactType)).length;
   const dataCount = (name: string) => {
     const f = findings.find(
       (f) => f.artifactType === 'DataCount' && f.artifactName?.includes(name)
@@ -379,35 +412,66 @@ function buildGlanceSections(
 
   return {
     'Product Catalog': [
-      { label: 'Active Products', value: String(dataCount('Product')), confidence: 'Confirmed' },
+      {
+        label: 'Active Products',
+        value: String(dataCount('Product') || count('Product2')),
+        confidence: 'Confirmed',
+      },
       {
         label: 'Product Bundles',
-        value: String(count('ProductOption') > 0 ? 'Detected' : '0'),
+        value: String(
+          count('ProductOption', 'SBQQ__ProductOption__c') > 0
+            ? 'Detected'
+            : dataCount('ProductOption') > 0
+              ? 'Detected'
+              : '0'
+        ),
         confidence: 'Estimated',
       },
-      { label: 'Price Books', value: String(dataCount('Pricebook')), confidence: 'Confirmed' },
+      {
+        label: 'Price Books',
+        value: String(dataCount('Pricebook') || 'N/A'),
+        confidence: 'Confirmed',
+      },
     ],
     'Pricing & Rules': [
-      { label: 'Price Rules (Active)', value: String(count('PriceRule')), confidence: 'Confirmed' },
+      {
+        label: 'Price Rules (Active)',
+        value: String(count('PriceRule', 'SBQQ__PriceRule__c') || dataCount('PriceRule')),
+        confidence: 'Confirmed',
+      },
       {
         label: 'Product Rules (Active)',
-        value: String(count('ProductRule')),
+        value: String(count('ProductRule', 'SBQQ__ProductRule__c') || dataCount('ProductRule')),
         confidence: 'Confirmed',
       },
       {
         label: 'Discount Schedules',
-        value: String(count('DiscountSchedule')),
+        value: String(
+          count('DiscountSchedule', 'SBQQ__DiscountSchedule__c') || dataCount('DiscountSchedule')
+        ),
         confidence: 'Estimated',
       },
       {
         label: 'Custom Scripts',
-        value: count('CustomScript') > 0 ? 'Detected' : 'Not Configured',
+        value:
+          count('CustomScript', 'SBQQ__CustomScript__c') > 0
+            ? `${count('CustomScript', 'SBQQ__CustomScript__c')} Detected`
+            : 'Not Configured',
         confidence: 'Confirmed',
       },
     ],
     'Quoting (90 Days)': [
-      { label: 'Quotes Created', value: String(dataCount('Quote')), confidence: 'Confirmed' },
-      { label: 'Quote Lines', value: String(dataCount('QuoteLine')), confidence: 'Confirmed' },
+      {
+        label: 'Quotes Created',
+        value: String(dataCount('Quote') || dataCount('SBQQ__Quote')),
+        confidence: 'Confirmed',
+      },
+      {
+        label: 'Quote Lines',
+        value: String(dataCount('QuoteLine') || dataCount('SBQQ__QuoteLine')),
+        confidence: 'Confirmed',
+      },
     ],
     'Users & Licenses': [
       {

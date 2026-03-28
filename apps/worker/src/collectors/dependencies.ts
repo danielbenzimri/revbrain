@@ -210,12 +210,23 @@ export class DependenciesCollector extends BaseCollector {
     this.ctx.progress.updateSubstep('dependencies', 'flows');
 
     try {
-      const flowResult = await this.ctx.restApi.toolingQuery<Record<string, unknown>>(
-        'SELECT Id, DeveloperName, Description, ActiveVersionId, ' +
-          'ProcessType, TriggerType, TriggerObjectOrEvent, IsActive, ApiName ' +
-          'FROM FlowDefinitionView WHERE IsActive = true',
-        this.signal
-      );
+      // Try FlowDefinitionView first, fall back to FlowDefinition for older orgs
+      let flowResult: { records: Record<string, unknown>[] };
+      try {
+        flowResult = await this.ctx.restApi.toolingQuery<Record<string, unknown>>(
+          'SELECT Id, DeveloperName, Description, ActiveVersionId, ' +
+            'ProcessType, TriggerType, TriggerObjectOrEvent, IsActive, ApiName ' +
+            'FROM FlowDefinitionView WHERE IsActive = true',
+          this.signal
+        );
+      } catch {
+        // FlowDefinitionView not supported — try FlowDefinition
+        flowResult = await this.ctx.restApi.toolingQuery<Record<string, unknown>>(
+          'SELECT Id, DeveloperName, Description, ActiveVersionId ' +
+            'FROM FlowDefinition WHERE ActiveVersionId != null',
+          this.signal
+        );
+      }
 
       const cpqFlows = flowResult.records.filter((f) => {
         const trigger = f.TriggerObjectOrEvent as string;

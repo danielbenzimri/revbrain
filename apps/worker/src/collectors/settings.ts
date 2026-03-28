@@ -119,16 +119,18 @@ export class SettingsCollector extends BaseCollector {
     const allSettingValues = new Map<string, unknown>(); // fieldApiName → value
 
     try {
+      // Use DeveloperName (not QualifiedApiName which doesn't exist on all API versions)
       const settingsResult = await this.ctx.restApi.toolingQuery<Record<string, unknown>>(
-        'SELECT DeveloperName, QualifiedApiName, Description ' +
-          "FROM CustomObject WHERE NamespacePrefix = 'SBQQ'",
+        'SELECT DeveloperName, Description ' + "FROM CustomObject WHERE NamespacePrefix = 'SBQQ'",
         this.signal
       );
 
       const settingObjects: Array<{ name: string; description: string }> = [];
 
       for (const obj of settingsResult.records) {
-        const apiName = obj.QualifiedApiName as string;
+        // Build API name from namespace + developer name
+        const devName = obj.DeveloperName as string;
+        const apiName = devName.endsWith('__c') ? `SBQQ__${devName}` : `SBQQ__${devName}__c`;
         try {
           const countResult = await this.ctx.restApi.query<Record<string, unknown>>(
             `SELECT COUNT() FROM ${apiName}`,

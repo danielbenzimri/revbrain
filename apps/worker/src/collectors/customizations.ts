@@ -113,8 +113,8 @@ export class CustomizationsCollector extends BaseCollector {
 
     try {
       const mdtResult = await this.ctx.restApi.toolingQuery<Record<string, unknown>>(
-        'SELECT DeveloperName, NamespacePrefix, QualifiedApiName ' +
-          "FROM CustomObject WHERE QualifiedApiName LIKE '%__mdt' AND NamespacePrefix = null",
+        'SELECT DeveloperName, NamespacePrefix ' +
+          "FROM CustomObject WHERE DeveloperName LIKE '%mdt' AND NamespacePrefix = null",
         this.signal
       );
       metrics.customMetadataTypesCount = mdtResult.records.length;
@@ -130,7 +130,7 @@ export class CustomizationsCollector extends BaseCollector {
             findingType: 'custom_metadata',
             complexityLevel: 'medium',
             migrationRelevance: 'should-migrate',
-            notes: `Custom Metadata Type: ${mdt.QualifiedApiName}`,
+            notes: `Custom Metadata Type: ${mdt.DeveloperName}__mdt`,
           })
         );
       }
@@ -144,23 +144,27 @@ export class CustomizationsCollector extends BaseCollector {
     this.ctx.progress.updateSubstep('customizations', 'validation_rules');
 
     try {
-      const vrObjects = CPQ_OBJECTS_TO_SCAN.map((o) => `'${o}'`).join(',');
-      const vrResult = await this.ctx.restApi.toolingQuery<Record<string, unknown>>(
-        `SELECT Id, EntityDefinition.QualifiedApiName, ValidationName, Active, Description, Metadata ` +
-          `FROM ValidationRule WHERE EntityDefinition.QualifiedApiName IN (${vrObjects})`,
-        this.signal
-      );
+      // Query validation rules one object at a time (Metadata queries limited to 1 row at a time)
+      const allVRs: Array<Record<string, unknown>> = [];
+      for (const obj of CPQ_OBJECTS_TO_SCAN) {
+        try {
+          const vrResult = await this.ctx.restApi.toolingQuery<Record<string, unknown>>(
+            `SELECT Id, ValidationName, Active, Description FROM ValidationRule WHERE EntityDefinition.DeveloperName = '${obj.replace('__c', '').replace('SBQQ__', '')}'`,
+            this.signal
+          );
+          for (const vr of vrResult.records) {
+            allVRs.push({ ...vr, _entity: obj });
+          }
+        } catch {
+          // Some objects may not support this query — skip
+        }
+      }
 
-      metrics.totalValidationRules = vrResult.records.length;
-      metrics.activeValidationRules = vrResult.records.filter((r) => r.Active === true).length;
+      metrics.totalValidationRules = allVRs.length;
+      metrics.activeValidationRules = allVRs.filter((r) => r.Active === true).length;
 
-      for (const vr of vrResult.records) {
-        const entity = (vr.EntityDefinition as Record<string, unknown>)?.QualifiedApiName as string;
-        const metadata = vr.Metadata as Record<string, unknown>;
-        const formula = metadata?.errorConditionFormula as string;
-
-        // Check if formula references SBQQ fields
-        const hasSbqqRef = formula ? /SBQQ__/.test(formula) : false;
+      for (const vr of allVRs) {
+        const entity = vr._entity as string;
 
         findings.push(
           createFinding({
@@ -171,21 +175,17 @@ export class CustomizationsCollector extends BaseCollector {
             artifactId: vr.Id as string,
             findingType: 'validation_rule',
             sourceType: 'tooling',
-            riskLevel: hasSbqqRef ? 'medium' : 'low',
+            riskLevel: 'low',
             migrationRelevance: vr.Active ? 'should-migrate' : 'optional',
-            textValue: this.ctx.config.codeExtractionEnabled ? formula : undefined,
-            notes: `${vr.Active ? 'Active' : 'Inactive'} validation on ${entity}${hasSbqqRef ? ' — references CPQ fields' : ''}`,
-            evidenceRefs: formula
-              ? [
-                  {
-                    type: 'formula',
-                    value: formula.slice(0, 500),
-                    label: vr.ValidationName as string,
-                    referencedObjects: [entity],
-                    referencedFields: (formula.match(/SBQQ__\w+/g) || []).slice(0, 20),
-                  },
-                ]
-              : [],
+            notes: `${vr.Active ? 'Active' : 'Inactive'} validation on ${entity}. ${(vr.Description as string) ?? ''}`,
+            evidenceRefs: [
+              {
+                type: 'object-ref' as const,
+                value: entity,
+                label: vr.ValidationName as string,
+                referencedObjects: [entity],
+              },
+            ],
           })
         );
       }
@@ -219,10 +219,12 @@ export class CustomizationsCollector extends BaseCollector {
     this.ctx.progress.updateSubstep('customizations', 'sharing');
 
     try {
-      const sharingObjects = CPQ_OBJECTS_TO_SCAN.map((o) => `'${o}'`).join(',');
+      const sharingDevNames = CPQ_OBJECTS_TO_SCAN.map(
+        (o) => `'${o.replace('__c', '').replace('SBQQ__', '')}'`
+      ).join(',');
       const sharingResult = await this.ctx.restApi.toolingQuery<Record<string, unknown>>(
-        `SELECT QualifiedApiName, ExternalSharingModel, InternalSharingModel ` +
-          `FROM EntityDefinition WHERE QualifiedApiName IN (${sharingObjects})`,
+        `SELECT DeveloperName, ExternalSharingModel, InternalSharingModel ` +
+          `FROM EntityDefinition WHERE DeveloperName IN (${sharingDevNames})`,
         this.signal
       );
 
