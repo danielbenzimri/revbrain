@@ -80,9 +80,10 @@ export class UsageCollector extends BaseCollector {
       this.signal
     );
 
-    // 90-day quotes
+    // Configurable usage window (default 90 days, override via USAGE_WINDOW_DAYS for demo orgs)
+    const windowDays = Number(process.env.USAGE_WINDOW_DAYS ?? 90);
     const ninetyDaysAgo = new Date();
-    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - windowDays);
     const recentQuotes = allQuotes.filter((q) => {
       const created = new Date(q.CreatedDate as string);
       return created >= ninetyDaysAgo;

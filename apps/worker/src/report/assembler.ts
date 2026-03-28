@@ -214,7 +214,7 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
     cpqAtAGlance: buildGlanceSections(findings, settingValues),
 
     packageSettings: {
-      installedPackages: [],
+      installedPackages: buildInstalledPackages(orgFp),
       coreSettings: settingValues.map((s) => ({
         setting: s.artifactName,
         value: s.evidenceRefs?.[0]?.label ?? 'Unknown',
@@ -240,7 +240,7 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
     ],
 
     configurationDomain: {
-      productCatalog: [],
+      productCatalog: buildProductCatalog(findings),
       priceRules: priceRules.map((r) => ({
         name: r.artifactName,
         description: r.notes ?? '',
@@ -340,11 +340,21 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
       })),
     },
 
-    complexityHotspots: hotspots.map((h) => ({
-      name: h.artifactName,
-      severity: h.riskLevel ?? 'Medium',
-      analysis: h.notes ?? '',
-    })),
+    complexityHotspots:
+      hotspots.length > 0
+        ? hotspots.map((h) => ({
+            name: h.artifactName,
+            severity: h.riskLevel ?? 'Medium',
+            analysis: h.notes ?? '',
+          }))
+        : detectHotspots(
+            findings,
+            priceRules,
+            productRules,
+            customScripts,
+            discountSchedules,
+            plugins
+          ),
 
     appendixA: inventory.map((inv, i) => ({
       id: i + 1,
@@ -621,4 +631,108 @@ function buildDefaultKeyFindings(
   }
 
   return kf.slice(0, 5);
+}
+
+// ============================================================================
+// Installed Packages (from OrgFingerprint notes)
+// ============================================================================
+
+// ============================================================================
+// Hotspot Detection (inline, for when pipeline hotspots aren't in findings)
+// ============================================================================
+
+function detectHotspots(
+  findings: AssessmentFindingInput[],
+  priceRules: AssessmentFindingInput[],
+  productRules: AssessmentFindingInput[],
+  customScripts: AssessmentFindingInput[],
+  discountSchedules: AssessmentFindingInput[],
+  plugins: AssessmentFindingInput[]
+): Array<{ name: string; severity: string; analysis: string }> {
+  const hotspots: Array<{ name: string; severity: string; analysis: string }> = [];
+
+  if (priceRules.length > 0 && productRules.length > 0) {
+    hotspots.push({
+      name: 'Quote Pricing Engine',
+      severity: customScripts.length > 0 ? 'Critical' : 'High',
+      analysis: `${priceRules.length} Price Rules + ${productRules.length} Product Rules + ${discountSchedules.length} Discount Schedules${customScripts.length > 0 ? ` + ${customScripts.length} Custom Scripts` : ''} form a multi-layered calculation chain.`,
+    });
+  }
+
+  const esigPlugin = plugins.find(
+    (p) => p.artifactName?.includes('Electronic') && (p.countValue ?? 0) > 0
+  );
+  if (esigPlugin) {
+    hotspots.push({
+      name: 'DocuSign Document Chain',
+      severity: 'High',
+      analysis:
+        'Quote PDF generation → DocuSign envelope → signing → Order creation spans CPQ, document generation, and e-signature.',
+    });
+  }
+
+  const apexCount = findings.filter((f) => f.artifactType === 'ApexClass').length;
+  const triggerCount = findings.filter((f) => f.artifactType === 'ApexTrigger').length;
+  if (apexCount > 20 || triggerCount > 3) {
+    hotspots.push({
+      name: 'Custom Code Dependencies',
+      severity: 'High',
+      analysis: `${apexCount} Apex classes + ${triggerCount} triggers reference CPQ objects. Code review required before migration.`,
+    });
+  }
+
+  return hotspots;
+}
+
+function buildInstalledPackages(
+  orgFp: AssessmentFindingInput | null
+): Array<{ name: string; namespace: string; version: string; status: string }> {
+  const packages: Array<{ name: string; namespace: string; version: string; status: string }> = [];
+
+  if (orgFp?.notes) {
+    const cpqMatch = orgFp.notes.match(/CPQ\s+([v\d.]+)/);
+    if (cpqMatch) {
+      packages.push({
+        name: 'Salesforce CPQ',
+        namespace: 'SBQQ',
+        version: cpqMatch[1],
+        status: 'Active',
+      });
+    }
+  }
+
+  // These are detected from the findings themselves
+  return packages;
+}
+
+// ============================================================================
+// Product Catalog by Category (from Product2 findings)
+// ============================================================================
+
+function buildProductCatalog(
+  findings: AssessmentFindingInput[]
+): ReportData['configurationDomain']['productCatalog'] {
+  const products = findings.filter((f) => f.artifactType === 'Product2');
+  if (products.length === 0) return [];
+
+  // Group by Family (from evidenceRefs or notes)
+  const families: Record<string, { active: number; inactive: number }> = {};
+  for (const p of products) {
+    const family = p.evidenceRefs?.find((r) => r.label === 'Family')?.value ?? 'Other';
+    if (!families[family]) families[family] = { active: 0, inactive: 0 };
+    if (p.usageLevel === 'dormant') {
+      families[family].inactive++;
+    } else {
+      families[family].active++;
+    }
+  }
+
+  return Object.entries(families).map(([category, counts]) => ({
+    category,
+    active: counts.active,
+    inactive: counts.inactive,
+    quoted90d: 0,
+    percentQuoted: 0,
+    confidence: 'Confirmed',
+  }));
 }

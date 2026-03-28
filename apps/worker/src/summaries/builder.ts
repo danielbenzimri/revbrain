@@ -465,10 +465,19 @@ function identifyHotspots(
 
   // 1. Pricing Engine Hotspot — based on complexity score, not raw counts
   const pricingSummary = domainSummaries.find((d) => d.collectorName === 'pricing');
-  const priceRules = findings.filter((f) => f.artifactType === 'PriceRule').length;
-  const productRules = findings.filter((f) => f.artifactType === 'ProductRule').length;
-  const customScripts = findings.filter((f) => f.artifactType === 'CustomScript').length;
-  const discountSchedules = findings.filter((f) => f.artifactType === 'DiscountSchedule').length;
+  // Handle both short and full SF API names for artifact types
+  const matchType = (f: AssessmentFindingInput, ...types: string[]) =>
+    types.includes(f.artifactType);
+  const priceRules = findings.filter((f) => matchType(f, 'PriceRule', 'SBQQ__PriceRule__c')).length;
+  const productRules = findings.filter((f) =>
+    matchType(f, 'ProductRule', 'SBQQ__ProductRule__c')
+  ).length;
+  const customScripts = findings.filter((f) =>
+    matchType(f, 'CustomScript', 'SBQQ__CustomScript__c')
+  ).length;
+  const discountSchedules = findings.filter((f) =>
+    matchType(f, 'DiscountSchedule', 'SBQQ__DiscountSchedule__c')
+  ).length;
 
   if (
     pricingSummary &&
