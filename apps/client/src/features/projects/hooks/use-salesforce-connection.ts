@@ -68,10 +68,9 @@ export function useSalesforceConnections(projectId: string | undefined) {
     queryKey: salesforceKeys.connections(projectId || ''),
     queryFn: async (): Promise<ConnectionsResponse> => {
       const headers = await getAuthHeaders();
-      const response = await fetch(
-        `${apiUrl}/v1/projects/${projectId}/salesforce/connections`,
-        { headers },
-      );
+      const response = await fetch(`${apiUrl}/v1/projects/${projectId}/salesforce/connections`, {
+        headers,
+      });
 
       if (!response.ok) {
         if (response.status === 404) {
@@ -99,14 +98,11 @@ export function useConnectSalesforce(projectId: string | undefined) {
   const mutation = useMutation({
     mutationFn: async (input: ConnectInput): Promise<string> => {
       const headers = await getAuthHeaders();
-      const response = await fetch(
-        `${apiUrl}/v1/projects/${projectId}/salesforce/connect`,
-        {
-          method: 'POST',
-          headers: { ...headers, 'Content-Type': 'application/json' },
-          body: JSON.stringify(input),
-        },
-      );
+      const response = await fetch(`${apiUrl}/v1/projects/${projectId}/salesforce/connect`, {
+        method: 'POST',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      });
 
       if (!response.ok) {
         const error = await response.json().catch(() => ({}));
@@ -134,7 +130,7 @@ export function useConnectSalesforce(projectId: string | undefined) {
             const popup = window.open(
               redirectUrl,
               'salesforce-oauth',
-              'width=600,height=700,scrollbars=yes',
+              'width=600,height=700,scrollbars=yes'
             );
 
             if (!popup) {
@@ -186,13 +182,14 @@ export function useConnectSalesforce(projectId: string | undefined) {
         });
       });
     },
-    [mutation, projectId, queryClient],
+    [mutation, projectId, queryClient]
   );
 
   return {
     connect,
     isConnecting: mutation.isPending,
     error: mutation.error,
+    reset: mutation.reset, // Allow caller to reset stuck state
   };
 }
 
@@ -206,14 +203,11 @@ export function useDisconnectSalesforce(projectId: string | undefined) {
   return useMutation({
     mutationFn: async (connectionRole: 'source' | 'target'): Promise<void> => {
       const headers = await getAuthHeaders();
-      const response = await fetch(
-        `${apiUrl}/v1/projects/${projectId}/salesforce/disconnect`,
-        {
-          method: 'POST',
-          headers: { ...headers, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ connectionRole }),
-        },
-      );
+      const response = await fetch(`${apiUrl}/v1/projects/${projectId}/salesforce/disconnect`, {
+        method: 'POST',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ connectionRole }),
+      });
 
       if (!response.ok) {
         const error = await response.json().catch(() => ({}));
@@ -238,14 +232,11 @@ export function useTestConnection(projectId: string | undefined) {
   return useMutation({
     mutationFn: async (connectionRole: 'source' | 'target'): Promise<TestResult> => {
       const headers = await getAuthHeaders();
-      const response = await fetch(
-        `${apiUrl}/v1/projects/${projectId}/salesforce/test`,
-        {
-          method: 'POST',
-          headers: { ...headers, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ connectionRole }),
-        },
-      );
+      const response = await fetch(`${apiUrl}/v1/projects/${projectId}/salesforce/test`, {
+        method: 'POST',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ connectionRole }),
+      });
 
       if (!response.ok) {
         throw new Error(`Test failed: ${response.status}`);

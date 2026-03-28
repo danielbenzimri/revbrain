@@ -218,6 +218,56 @@ export interface DomainData {
   orgHealth?: OrgHealth;
 }
 
+// CPQ Intelligence section types (from gap analysis mitigations)
+export interface CPQSettingItem {
+  setting: string;
+  value: string;
+  fieldRef: string;
+  notes: string;
+}
+
+export interface PluginItem {
+  plugin: string;
+  status: string;
+  notes: string;
+}
+
+export interface UserBehaviorItem {
+  profile: string;
+  users: number;
+  notes: string;
+  evidenceRefs: Array<{ type: string; value: string; label: string }>;
+}
+
+export interface ConversionSegmentItem {
+  segment: string;
+  quoteCount: number;
+  notes: string;
+  evidenceRefs: Array<{ type: string; value: string; label: string }>;
+}
+
+export interface DataQualityFlagItem {
+  check: string;
+  count: number | null;
+  status: string;
+  notes: string;
+}
+
+export interface TopProductItem {
+  name: string;
+  productId: string;
+  quotedCount: number;
+  notes: string;
+  evidenceRefs: Array<{ type: string; value: string; label: string }>;
+}
+
+export interface ComplexityHotspotItem {
+  name: string;
+  severity: string;
+  analysis: string;
+  evidenceRefs: Array<{ type: string; value: string; label: string }>;
+}
+
 export interface AssessmentData {
   projectId: string;
   domains: DomainData[];
@@ -233,6 +283,36 @@ export interface AssessmentData {
   totalGuided: number;
   totalManual: number;
   totalBlocked: number;
+  // CPQ Intelligence sections (optional — populated by gap analysis mitigations)
+  settingsPanel?: CPQSettingItem[];
+  pluginInventory?: PluginItem[];
+  userBehavior?: UserBehaviorItem[];
+  discountDistribution?: {
+    totalDiscounted: number;
+    avgPercent: number;
+    buckets: Array<{ range: string; count: number }>;
+  } | null;
+  priceOverrides?: { count: number; notes: string; evidenceRefs: unknown[] } | null;
+  topProducts?: TopProductItem[];
+  conversionSegments?: ConversionSegmentItem[];
+  trendIndicators?: Array<{ metric: string; notes: string; evidenceRefs: unknown[] }>;
+  dataQualityFlags?: DataQualityFlagItem[];
+  complexityHotspots?: ComplexityHotspotItem[];
+  objectInventory?: Array<{
+    id: number;
+    objectName: string;
+    count: number;
+    complexity: string;
+    notes: string;
+  }>;
+  cpqReports?: Array<{ name: string; notes: string }>;
+  userAdoption?: {
+    licenses: string | null;
+    activeCreators: string | null;
+    profileCount: string | null;
+    notes: string;
+  } | null;
+  totalEstimatedHours?: number;
 }
 
 // ---------------------------------------------------------------------------

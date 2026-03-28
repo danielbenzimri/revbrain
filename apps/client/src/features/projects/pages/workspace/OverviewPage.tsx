@@ -42,6 +42,7 @@ import {
   useConnectSalesforce,
   useDisconnectSalesforce,
   useTestConnection,
+  useSalesforceConnections,
 } from '../../hooks/use-salesforce-connection';
 
 // ---------------------------------------------------------------------------
@@ -204,11 +205,7 @@ const ConnectionCard = memo(function ConnectionCard({
           className="inline-flex items-center gap-2 px-5 py-2.5 bg-violet-600 text-white text-sm font-medium rounded-lg hover:bg-violet-700 transition-colors disabled:opacity-50"
           aria-label={t('workspace.overview.connectionCards.connect')}
         >
-          {isConnecting ? (
-            <RefreshCw size={16} className="animate-spin" />
-          ) : (
-            <Plus size={16} />
-          )}
+          {isConnecting ? <RefreshCw size={16} className="animate-spin" /> : <Plus size={16} />}
           {isConnecting ? 'Connecting...' : t('workspace.overview.connectionCards.connect')}
         </button>
       </div>
@@ -600,6 +597,7 @@ export default function OverviewPage() {
   }, [id]);
 
   // Salesforce connection hooks
+  const { data: sfConnections } = useSalesforceConnections(id);
   const { connect: connectSource, isConnecting: isConnectingSource } = useConnectSalesforce(id);
   const { connect: connectTarget, isConnecting: isConnectingTarget } = useConnectSalesforce(id);
   const disconnectMutation = useDisconnectSalesforce(id);
@@ -611,8 +609,19 @@ export default function OverviewPage() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Health Strip */}
-      <HealthStrip items={data.healthStrip} projectId={id} />
+      {/* Health Strip — enrich with real connection status from API */}
+      <HealthStrip
+        items={data.healthStrip.map((item) => {
+          if (item.id === 'source' && sfConnections?.source) {
+            return { ...item, status: 'done' as const, statusText: 'Connected' };
+          }
+          if (item.id === 'target' && sfConnections?.target) {
+            return { ...item, status: 'done' as const, statusText: 'Connected' };
+          }
+          return item;
+        })}
+        projectId={id}
+      />
 
       {/* Connection Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
