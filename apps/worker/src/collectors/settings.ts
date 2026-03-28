@@ -157,13 +157,16 @@ export class SettingsCollector extends BaseCollector {
       for (const setting of settingObjects) {
         try {
           // Get Describe for this settings object to build full field list
+          // Cache the result so we don't re-describe on every run
           let describe: DescribeResult | undefined;
           try {
-            describe =
-              (this.ctx.describeCache.get(setting.name) as DescribeResult) ??
-              (await this.ctx.restApi.describe(setting.name, this.signal));
+            describe = this.ctx.describeCache.get(setting.name) as DescribeResult | undefined;
+            if (!describe) {
+              describe = await this.ctx.restApi.describe(setting.name, this.signal);
+              this.ctx.describeCache.set(setting.name, describe);
+            }
           } catch {
-            // Describe failed — fall back to basic query
+            // Describe failed — fall back to basic query (object may not be describable)
           }
 
           // Build field list from Describe (SOQL doesn't support SELECT *)

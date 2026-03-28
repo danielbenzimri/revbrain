@@ -214,7 +214,7 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
     cpqAtAGlance: buildGlanceSections(findings, settingValues),
 
     packageSettings: {
-      installedPackages: buildInstalledPackages(orgFp),
+      installedPackages: buildInstalledPackages(orgFp, findings),
       coreSettings: settingValues.map((s) => ({
         setting: s.artifactName,
         value: s.evidenceRefs?.[0]?.label ?? 'Unknown',
@@ -356,14 +356,17 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
             plugins
           ),
 
-    appendixA: inventory.map((inv, i) => ({
-      id: i + 1,
-      objectName: inv.artifactName,
-      apiName: inv.artifactName,
-      count: inv.countValue ?? 0,
-      complexity: inv.complexityLevel ?? 'low',
-      confidence: 'Confirmed',
-    })),
+    appendixA:
+      inventory.length > 0
+        ? inventory.map((inv, i) => ({
+            id: i + 1,
+            objectName: inv.artifactName,
+            apiName: inv.artifactName,
+            count: inv.countValue ?? 0,
+            complexity: inv.complexityLevel ?? 'low',
+            confidence: 'Confirmed',
+          }))
+        : buildObjectInventoryInline(findings),
 
     appendixB: reports.map((r) => ({
       name: r.artifactName,
@@ -684,8 +687,97 @@ function detectHotspots(
   return hotspots;
 }
 
+// ============================================================================
+// Object Inventory Builder (inline for report, mirrors summaries/builder.ts logic)
+// ============================================================================
+
+const REPORT_ARTIFACT_TO_SF: Record<string, string> = {
+  Product2: 'Product2',
+  SBQQ__ProductRule__c: 'SBQQ__ProductRule__c',
+  SBQQ__PriceRule__c: 'SBQQ__PriceRule__c',
+  SBQQ__PriceCondition__c: 'SBQQ__PriceCondition__c',
+  SBQQ__PriceAction__c: 'SBQQ__PriceAction__c',
+  SBQQ__DiscountSchedule__c: 'SBQQ__DiscountSchedule__c',
+  SBQQ__ContractedPrice__c: 'SBQQ__ContractedPrice__c',
+  SBQQ__CustomScript__c: 'SBQQ__CustomScript__c',
+  SBQQ__ProductOption__c: 'SBQQ__ProductOption__c',
+  QuoteTemplate: 'SBQQ__QuoteTemplate__c',
+  TemplateSection: 'SBQQ__TemplateSection__c',
+  TemplateContent: 'SBQQ__TemplateContent__c',
+  CustomAction: 'SBQQ__CustomAction__c',
+  ApexClass: 'ApexClass',
+  ApexTrigger: 'ApexTrigger',
+  ValidationRule: 'ValidationRule',
+  FormulaField: 'CustomField (Formula)',
+  PlatformEvent: 'PlatformEventChannel',
+  NamedCredential: 'NamedCredential',
+  LocalizationSummary: 'SBQQ__Localization__c',
+};
+
+const REPORT_SKIP_TYPES = new Set([
+  'DataCount',
+  'OrgFingerprint',
+  'UsageOverview',
+  'OrderLifecycleOverview',
+  'CPQSetting',
+  'CPQSettingValue',
+  'PluginStatus',
+  'UserAdoption',
+  'UserBehavior',
+  'DiscountDistribution',
+  'PriceOverrideAnalysis',
+  'TopQuotedProduct',
+  'ConversionSegment',
+  'TrendIndicator',
+  'DataQualityFlag',
+  'ComplexityHotspot',
+  'ExtractionConfidence',
+  'ObjectInventoryItem',
+  'CPQReport',
+  'OptionAttachmentRate',
+  'FieldCompleteness',
+  'Document',
+  'LanguageTranslation',
+  'ExternalIdField',
+]);
+
+function buildObjectInventoryInline(findings: AssessmentFindingInput[]): ReportData['appendixA'] {
+  const objectMap = new Map<string, { count: number; complexity: string }>();
+
+  for (const f of findings) {
+    if (REPORT_SKIP_TYPES.has(f.artifactType)) continue;
+    const sfName = REPORT_ARTIFACT_TO_SF[f.artifactType] ?? f.artifactType;
+    const existing = objectMap.get(sfName) ?? { count: 0, complexity: 'low' };
+
+    if (f.countValue != null && f.countValue > 0) {
+      existing.count = Math.max(existing.count, f.countValue);
+    } else {
+      existing.count++;
+    }
+
+    const complexityOrder = ['low', 'medium', 'high', 'very-high'];
+    const currentIdx = complexityOrder.indexOf(existing.complexity);
+    const newIdx = complexityOrder.indexOf(f.complexityLevel ?? 'low');
+    if (newIdx > currentIdx) existing.complexity = f.complexityLevel ?? 'low';
+
+    objectMap.set(sfName, existing);
+  }
+
+  return [...objectMap.entries()]
+    .sort((a, b) => b[1].count - a[1].count)
+    .map(([name, data], i) => ({
+      id: i + 1,
+      objectName: name,
+      apiName: name,
+      count: data.count,
+      complexity: data.complexity,
+      confidence: 'Confirmed',
+    }));
+}
+
 function buildInstalledPackages(
-  orgFp: AssessmentFindingInput | null
+  orgFp: AssessmentFindingInput | null,
+  findings: AssessmentFindingInput[]
 ): Array<{ name: string; namespace: string; version: string; status: string }> {
   const packages: Array<{ name: string; namespace: string; version: string; status: string }> = [];
 
@@ -701,7 +793,22 @@ function buildInstalledPackages(
     }
   }
 
-  // These are detected from the findings themselves
+  // Detect DocuSign from PluginStatus findings
+  const esig = findings.find(
+    (f) =>
+      f.artifactType === 'PluginStatus' &&
+      f.artifactName?.includes('Electronic') &&
+      (f.countValue ?? 0) > 0
+  );
+  if (esig) {
+    packages.push({
+      name: esig.notes?.includes('DocuSign') ? 'DocuSign eSignature' : 'E-Signature',
+      namespace: 'dsfs',
+      version: 'Detected',
+      status: 'Active',
+    });
+  }
+
   return packages;
 }
 
