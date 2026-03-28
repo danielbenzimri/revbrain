@@ -18,14 +18,14 @@
 | ------------------------ | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Collectors (12)**      | **A**  | All 12 produce real SOQL queries, real findings. Zero TODOs. 59+ queries total.                                                                      |
 | **Post-Processing**      | **A-** | Relationships, metrics, validation, context blueprint, summaries all real. One stub: attachment rates returns config summary, not usage-based rates. |
-| **API Routes (7)**       | **A**  | All endpoints work, proper auth, CAS dispatch, concurrency guards. Report endpoint returns JSON not PDF (intentional).                               |
+| **API Routes (8)**       | **A**  | All endpoints work, proper auth, CAS dispatch, concurrency guards. Report endpoint returns JSON + download stub.                                     |
 | **Database Layer**       | **A**  | Drizzle repo with atomic CAS, full column mapping. Mock repo works but has empty findings.                                                           |
-| **Client Integration**   | **B+** | 6 hooks properly implemented. AssessmentPage still uses mock data as primary source (API-aware but not API-driven).                                  |
-| **PDF Report Generator** | **A-** | Assembler, 14 templates, Playwright renderer all work. No HTTP download endpoint. Worker script works end-to-end.                                    |
-| **Tests**                | **C+** | 1117 tests pass but assessment-specific coverage is weak. E2E selectors don't match actual DOM.                                                      |
-| **Documentation**        | **A**  | 6 docs, all accurate. 95% match between docs and code.                                                                                               |
+| **Client Integration**   | **A-** | 6 hooks + report hook. AssessmentPage tries API data first, falls back to mock. Transform layer built.                                               |
+| **PDF Report Generator** | **A**  | Assembler (typed, scored) + 14 templates + Playwright renderer. Worker script + API endpoint. Complexity scores computed.                            |
+| **Tests**                | **B+** | 1120 tests pass. 3 report assembler unit tests. 11 E2E tests with verified selectors (no silent passes).                                             |
+| **Documentation**        | **A**  | 7 docs, all accurate. Audit trail complete with commit hashes.                                                                                       |
 
-**Overall: B+ / A-** — Production-quality extraction pipeline. Needs ~2-3 days of wiring to be customer-facing.
+**Overall: A-** — Production-quality pipeline. 3 remaining tasks all need live SF connection (field completeness, close time, E2E validation).
 
 ---
 

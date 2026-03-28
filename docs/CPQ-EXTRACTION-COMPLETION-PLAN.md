@@ -1231,25 +1231,27 @@ if (llmEnrichment) {
 
 ## 7. Track Record
 
-| Batch | Task | Description                                       | Test Type                               | Status        |
-| ----- | ---- | ------------------------------------------------- | --------------------------------------- | ------------- |
-| **1** | C-01 | Product option attachment rates (G-07)            | Unit (RequiredBy join, rate calc)       | did not start |
-| **1** | C-02 | Consolidated object inventory (G-14)              | Unit (grouping, sorting, brand flag)    | did not start |
-| **1** | C-03 | CPQ reports & dashboards query (G-15)             | Unit (SOQL, graceful failure)           | did not start |
-| **1** | C-04 | Quote Processes + Import Formats detection (G-12) | Unit (feature check)                    | did not start |
-| **1** | C-05 | Transform script updates (all new artifact types) | Unit (transform handles 14+ types)      | did not start |
-| **2** | L-01 | Worker config flag (llmEnrichmentEnabled)         | Unit (env loading, default off)         | did not start |
-| **2** | L-02 | LLM client module (Anthropic SDK)                 | Unit (mock client, error handling)      | did not start |
-| **2** | L-03 | Pipeline integration (Phase 5.5)                  | Unit (skip when disabled, non-blocking) | did not start |
-| **3** | R-01 | Report data assembler                             | Unit (all sections populated)           | did not start |
-| **3** | R-02 | HTML template system                              | Unit (valid HTML per section)           | did not start |
-| **3** | R-03 | PDF rendering (Puppeteer)                         | Unit + Integration (PDF output)         | did not start |
-| **3** | R-04 | Section templates (14 sections)                   | Unit (each section renders)             | did not start |
-| **3** | R-05 | API endpoint & download flow                      | Integration (trigger + download)        | did not start |
-| **4** | F-01 | Field completeness sampling (G-11)                | Unit + Integration (population rates)   | did not start |
-| **5** | V-01 | Data refresh + E2E validation                     | E2E (full pipeline + dashboard)         | did not start |
+| Batch | Task | Description                                       | Test Type                                  | Status    | Commit            |
+| ----- | ---- | ------------------------------------------------- | ------------------------------------------ | --------- | ----------------- |
+| **1** | C-01 | Product option attachment rates (G-07)            | Unit (RequiredBy join, rate calc)          | completed | 6b99f96           |
+| **1** | C-02 | Consolidated object inventory (G-14)              | Unit (grouping, sorting, brand flag)       | completed | 6b99f96           |
+| **1** | C-03 | CPQ reports & dashboards query (G-15)             | Unit (SOQL, graceful failure)              | completed | 6b99f96           |
+| **1** | C-04 | Quote Processes + Import Formats detection (G-12) | Unit (feature check)                       | completed | 6b99f96           |
+| **1** | C-05 | Transform script updates (all new artifact types) | Unit (transform handles 14+ types)         | completed | 6b99f96           |
+| **2** | L-01 | Worker config flag (llmEnrichmentEnabled)         | Unit (env loading, default off)            | completed | 6b99f96           |
+| **2** | L-02 | LLM client module (Zod validation + timeout)      | Unit (mock client, error handling)         | completed | 6b99f96           |
+| **2** | L-03 | Pipeline integration (Phase 5.5)                  | Unit (skip when disabled, non-blocking)    | completed | 6b99f96           |
+| **3** | R-01 | Report data assembler (typed ReportData)          | Unit (3 tests: sections, scores, findings) | completed | 6b99f96 + 7c2324b |
+| **3** | R-02 | Template system (TypeScript literals, not .hbs)   | Unit (valid HTML per section)              | completed | 6b99f96           |
+| **3** | R-03 | PDF rendering (Playwright, not Puppeteer)         | Unit + Integration (PDF output)            | completed | 6b99f96           |
+| **3** | R-04 | Section templates (14 sections)                   | Unit (each section renders)                | completed | 6b99f96           |
+| **3** | R-05 | API endpoint + download flow                      | Integration (JSON + download stub)         | completed | 6b99f96 + 7c2324b |
+| **—** | FIX  | Audit fixes: scores, e-sig, API data, E2E tests   | Unit + E2E (3 + 11 tests)                  | completed | 7c2324b + d55ab1c |
+| **4** | F-01 | Field completeness sampling (G-11)                | Unit + Integration (population rates)      | pending   | Needs live SF     |
+| **4** | F-02 | Avg close time per segment (G-20)                 | Unit (quote→order delta)                   | pending   | Needs live SF     |
+| **5** | V-01 | Data refresh + E2E validation                     | E2E (full pipeline + dashboard + PDF)      | pending   | Needs live SF     |
 
-**Total: 15 tasks** | Completed: 0 | Remaining: 15
+**Total: 17 tasks** | Completed: 14 | Remaining: 3 (all need live SF)
 
 ---
 
