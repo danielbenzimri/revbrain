@@ -89,31 +89,25 @@ export class UsageCollector extends BaseCollector {
       return created >= windowCutoff;
     });
 
-    // Fallback: if no quotes in the window, use ALL quotes and compute relative to the most recent
-    // This ensures usage analytics are populated even for demo orgs with older data
+    // Fallback: if no quotes in the window, use ALL quotes
+    // This ensures usage analytics are populated for any org regardless of data age
     let usageWindowLabel = `${windowDays}d`;
     if (recentQuotes.length === 0 && allQuotes.length > 0) {
-      // Find the most recent quote date
+      recentQuotes = allQuotes;
       const sortedByDate = [...allQuotes].sort(
         (a, b) =>
           new Date(b.CreatedDate as string).getTime() - new Date(a.CreatedDate as string).getTime()
       );
-      const mostRecentDate = new Date(sortedByDate[0].CreatedDate as string);
-      const fallbackCutoff = new Date(mostRecentDate);
-      fallbackCutoff.setDate(fallbackCutoff.getDate() - 90);
-
-      recentQuotes = allQuotes.filter((q) => {
-        const created = new Date(q.CreatedDate as string);
-        return created >= fallbackCutoff;
-      });
-
-      // If still empty (all quotes on same day), just use all
-      if (recentQuotes.length === 0) recentQuotes = allQuotes;
-
-      usageWindowLabel = `90d relative to ${mostRecentDate.toISOString().split('T')[0]}`;
+      const oldest = new Date(sortedByDate[sortedByDate.length - 1].CreatedDate as string);
+      const newest = new Date(sortedByDate[0].CreatedDate as string);
+      usageWindowLabel = `all time (${oldest.toISOString().split('T')[0]} to ${newest.toISOString().split('T')[0]})`;
       this.log.info(
-        { mostRecentDate: mostRecentDate.toISOString(), fallbackQuotes: recentQuotes.length },
-        'usage_window_fallback'
+        {
+          oldest: oldest.toISOString(),
+          newest: newest.toISOString(),
+          totalQuotes: allQuotes.length,
+        },
+        'usage_window_fallback_all_quotes'
       );
     }
 
