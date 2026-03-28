@@ -16,7 +16,12 @@ import ItemDetailPanel from '../../components/assessment/ItemDetailPanel';
 import { RunSelector } from '../../components/assessment/RunDelta';
 import ChatStub from '../../components/assessment/ChatStub';
 import type { AssessmentItem } from '../../mocks/assessment-mock-data';
-import { useAssessmentStatus, useStartAssessmentRun } from '../../hooks/use-assessment-run';
+import {
+  useAssessmentStatus,
+  useStartAssessmentRun,
+  useAssessmentFindings,
+} from '../../hooks/use-assessment-run';
+import { transformFindingsToAssessmentData } from '../../utils/transform-api-findings';
 
 // ---------------------------------------------------------------------------
 // Tab configuration
@@ -133,16 +138,25 @@ export default function AssessmentPage() {
 
   const activeTab = (searchParams.get('tab') as TabId) || 'overview';
 
-  // Try API first, fall back to mock data
+  // API hooks — try real data first, fall back to mock
   const { data: apiStatus } = useAssessmentStatus(id);
   const startRun = useStartAssessmentRun(id);
+  const completedRunId =
+    apiStatus?.status === 'completed' || apiStatus?.status === 'completed_warnings'
+      ? apiStatus.runId
+      : undefined;
+  const { data: findingsResult } = useAssessmentFindings(id, completedRunId);
 
   const assessment = useMemo(() => {
     if (!id) return null;
-    // API data will be used when transform-findings layer is built (Task 13.4 future).
-    // For now: mock data is the primary source, API status enriches the header.
+    // Try API data first (from completed extraction run)
+    if (findingsResult?.data && findingsResult.data.length > 10 && apiStatus) {
+      const apiData = transformFindingsToAssessmentData(findingsResult.data, apiStatus);
+      if (apiData) return apiData;
+    }
+    // Fallback to mock data for dev/demo
     return getMockAssessmentData(id);
-  }, [id]);
+  }, [id, findingsResult, apiStatus]);
 
   const isRunActive = !!(
     apiStatus &&

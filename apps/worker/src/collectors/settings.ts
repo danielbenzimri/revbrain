@@ -335,10 +335,8 @@ export class SettingsCollector extends BaseCollector {
     );
 
     // 2. Electronic Signature — check Discovery's phantom packages
-    const discoveryMetrics = this.ctx.describeCache.get('_discoveryMetrics') as
-      | Record<string, unknown>
-      | undefined;
-    const phantomPackages = (discoveryMetrics?.phantomPackages as string[]) ?? [];
+    // Discovery stores phantom packages in describeCache under '_phantomPackages'
+    const phantomPackages = (this.ctx.describeCache.get('_phantomPackages') as string[]) ?? [];
     const hasDocuSign = phantomPackages.some((p) => p.includes('dsfs'));
     const hasAdobeSign = phantomPackages.some((p) => p.includes('echosign'));
     const esigProvider = hasDocuSign ? 'DocuSign' : hasAdobeSign ? 'Adobe Sign' : null;

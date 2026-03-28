@@ -423,6 +423,9 @@ export class DiscoveryCollector extends BaseCollector {
       warnings.push(`Phantom packages detected: ${phantomPackages.join('; ')}`);
     }
 
+    // Store phantom packages in describeCache so Settings collector can detect e-signature
+    this.ctx.describeCache.set('_phantomPackages', phantomPackages);
+
     // Person Accounts detection (Spec §23.9)
     try {
       const personAcctResult = await this.ctx.restApi.query<Record<string, unknown>>(

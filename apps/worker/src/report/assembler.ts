@@ -169,19 +169,15 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
     },
 
     executiveSummary: {
-      keyFindings: hotspots.slice(0, 5).map((h) => ({
-        title: h.artifactName,
-        detail: h.notes ?? '',
-        confidence: 'Confirmed',
-      })),
-      complexityScores: {
-        overall: 0,
-        configurationDepth: 0,
-        pricingLogic: 0,
-        customizationLevel: 0,
-        dataVolumeUsage: 0,
-        technicalDebt: 0,
-      },
+      keyFindings:
+        hotspots.length > 0
+          ? hotspots.slice(0, 5).map((h) => ({
+              title: h.artifactName,
+              detail: h.notes ?? '',
+              confidence: 'Confirmed',
+            }))
+          : buildDefaultKeyFindings(findings, settingValues, plugins),
+      complexityScores: computeComplexityScores(findings),
     },
 
     cpqAtAGlance: buildGlanceSections(findings, settingValues),
@@ -433,4 +429,132 @@ function buildGlanceSections(
       },
     ],
   };
+}
+
+// ============================================================================
+// Complexity Score Computation (from findings)
+// ============================================================================
+
+const RISK_WEIGHT: Record<string, number> = { critical: 10, high: 6, medium: 3, low: 1, info: 0 };
+const COMPLEXITY_WEIGHT: Record<string, number> = { 'very-high': 10, high: 7, medium: 4, low: 1 };
+
+function computeComplexityScores(
+  findings: AssessmentFindingInput[]
+): ReportData['executiveSummary']['complexityScores'] {
+  const domainFindings: Record<string, AssessmentFindingInput[]> = {};
+  for (const f of findings) {
+    if (!domainFindings[f.domain]) domainFindings[f.domain] = [];
+    domainFindings[f.domain].push(f);
+  }
+
+  const score = (domain: string): number => {
+    const df = domainFindings[domain] ?? [];
+    if (df.length === 0) return 0;
+    let totalWeight = 0;
+    for (const f of df) {
+      const riskW = RISK_WEIGHT[f.riskLevel ?? 'medium'] ?? 3;
+      const complexW = COMPLEXITY_WEIGHT[f.complexityLevel ?? 'medium'] ?? 4;
+      totalWeight += (riskW + complexW) / 2;
+    }
+    return Math.min(100, Math.round((totalWeight / df.length / 10) * 100));
+  };
+
+  const catalogScore = score('catalog');
+  const pricingScore = score('pricing');
+  const customScore = score('customization');
+  const usageScore = score('usage');
+  const depScore = score('dependency');
+
+  const overall = Math.round(
+    catalogScore * 0.25 +
+      pricingScore * 0.25 +
+      customScore * 0.2 +
+      usageScore * 0.15 +
+      depScore * 0.15
+  );
+
+  return {
+    overall,
+    configurationDepth: catalogScore,
+    pricingLogic: pricingScore,
+    customizationLevel: customScore,
+    dataVolumeUsage: usageScore,
+    technicalDebt: depScore,
+  };
+}
+
+// ============================================================================
+// Default Key Findings (when no hotspots detected)
+// ============================================================================
+
+function buildDefaultKeyFindings(
+  findings: AssessmentFindingInput[],
+  settings: AssessmentFindingInput[],
+  plugins: AssessmentFindingInput[]
+): Array<{ title: string; detail: string; confidence: string }> {
+  const kf: Array<{ title: string; detail: string; confidence: string }> = [];
+
+  const totalFindings = findings.length;
+  const domains = new Set(findings.map((f) => f.domain));
+  kf.push({
+    title: `${totalFindings} CPQ artifacts extracted across ${domains.size} domains`,
+    detail: `Comprehensive extraction covering product catalog, pricing rules, quote templates, approvals, code dependencies, and usage analytics.`,
+    confidence: 'Confirmed',
+  });
+
+  const priceRules = findings.filter((f) => f.artifactType === 'PriceRule').length;
+  const productRules = findings.filter((f) => f.artifactType === 'ProductRule').length;
+  if (priceRules > 0 || productRules > 0) {
+    kf.push({
+      title: `${priceRules} price rules and ${productRules} product rules detected`,
+      detail: `Pricing logic encoded in business-specific rules that require mapping to RCA Pricing Procedures.`,
+      confidence: 'Confirmed',
+    });
+  }
+
+  const qcpPlugin = plugins.find(
+    (p) => p.artifactName?.includes('QCP') || p.artifactName?.includes('Calculator')
+  );
+  if (qcpPlugin && (qcpPlugin.countValue ?? 0) > 0) {
+    kf.push({
+      title: 'Custom Quote Calculator Plugin (QCP) detected',
+      detail: `JavaScript-based pricing logic must be converted to declarative RCA Pricing Procedures. This is typically the highest-effort migration item.`,
+      confidence: 'Confirmed',
+    });
+  }
+
+  const dormantProducts = findings.filter(
+    (f) => f.artifactType === 'Product2' && f.usageLevel === 'dormant'
+  ).length;
+  const totalProducts = findings.filter((f) => f.artifactType === 'Product2').length;
+  if (totalProducts > 0 && dormantProducts > totalProducts * 0.2) {
+    kf.push({
+      title: `Product catalog shows ${Math.round((dormantProducts / totalProducts) * 100)}% dormancy`,
+      detail: `${dormantProducts} of ${totalProducts} products were not quoted in the 90-day window. Consider cleanup before migration.`,
+      confidence: 'Confirmed',
+    });
+  }
+
+  if (settings.length > 0) {
+    const multiCurrency = settings.find((s) => s.artifactName?.includes('Multi-Currency'));
+    if (multiCurrency?.notes?.includes('Enabled')) {
+      kf.push({
+        title: 'Multi-currency enabled',
+        detail:
+          'The org uses multi-currency pricing. RCA supports multi-currency natively but field mappings need verification.',
+        confidence: 'Confirmed',
+      });
+    }
+  }
+
+  // Ensure at least 3 findings
+  while (kf.length < 3) {
+    kf.push({
+      title: 'Assessment complete',
+      detail: `Full CPQ environment assessment extracted ${totalFindings} artifacts for migration planning.`,
+      confidence: 'Confirmed',
+    });
+  }
+
+  return kf.slice(0, 5);
 }

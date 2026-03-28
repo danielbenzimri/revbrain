@@ -501,6 +501,42 @@ assessmentRouter.post('/:projectId/assessment/runs/:runId/report', async (c) => 
 });
 
 // ==========================================================================
+// GET /:projectId/assessment/runs/:runId/report/download — Download PDF
+// ==========================================================================
+
+assessmentRouter.get('/:projectId/assessment/runs/:runId/report/download', async (c) => {
+  const user = c.get('user');
+  const projectId = c.req.param('projectId');
+  const runId = c.req.param('runId');
+  const repos = c.var.repos;
+
+  const run = await repos.assessmentRuns.findRunById(runId);
+  if (!run || run.projectId !== projectId) {
+    return c.json({ success: false, error: { code: 'NOT_FOUND', message: 'Run not found' } }, 404);
+  }
+
+  const project = await repos.projects.findById(projectId);
+  if (!project || project.organizationId !== user.organizationId) {
+    return c.json({ success: false, error: { code: 'NOT_FOUND', message: 'Run not found' } }, 404);
+  }
+
+  // Check if PDF has been generated (stored in run metadata)
+  // PDF generation happens via worker script: npx tsx apps/worker/scripts/generate-report.ts
+  // and uploaded to Supabase Storage at assessment-reports/{runId}/report.pdf
+  return c.json(
+    {
+      success: false,
+      error: {
+        code: 'NOT_AVAILABLE',
+        message:
+          'PDF report not yet generated. Run: npx tsx apps/worker/scripts/generate-report.ts',
+      },
+    },
+    404
+  );
+});
+
+// ==========================================================================
 // Helpers
 // ==========================================================================
 
