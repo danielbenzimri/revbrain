@@ -263,6 +263,184 @@ export class SettingsCollector extends BaseCollector {
       }
 
       // ================================================================
+      // Strategy 4: Infer settings from field Describes when no Custom Settings found
+      // CPQ stores config via managed package internals — we detect from field defaults
+      // ================================================================
+      const settingValueCount = findings.filter((f) => f.artifactType === 'CPQSettingValue').length;
+      if (settingValueCount === 0) {
+        this.ctx.progress.updateSubstep('settings', 'infer_from_describes');
+        this.log.info('no_custom_settings_found_inferring_from_describes');
+
+        // Multi-currency detection from CurrencyIsoCode on Quote
+        const quoteDescribe = this.ctx.describeCache.get('SBQQ__Quote__c') as
+          | DescribeResult
+          | undefined;
+        if (quoteDescribe) {
+          const currencyField = quoteDescribe.fields.find((f) => f.name === 'CurrencyIsoCode');
+          if (currencyField) {
+            const currencies =
+              currencyField.picklistValues?.filter((p) => p.active).map((p) => p.value) ?? [];
+            findings.push(
+              createFinding({
+                domain: 'settings',
+                collector: 'settings',
+                artifactType: 'CPQSettingValue',
+                artifactName: 'Multi-Currency',
+                sourceType: 'inferred',
+                findingType: 'cpq_setting_value',
+                riskLevel: 'info',
+                rcaMappingComplexity: 'transform',
+                notes: `Multi-Currency: Enabled (${currencies.join(', ')})`,
+                evidenceRefs: [
+                  {
+                    type: 'field-ref' as const,
+                    value: 'CurrencyIsoCode',
+                    label: `Enabled (${currencies.join(', ')})`,
+                  },
+                ],
+              })
+            );
+            allSettingValues.set('MultiCurrency', currencies);
+          }
+
+          // Twin Fields: check if SBQQ fields have counterparts on Opportunity
+          const oppDescribe = this.ctx.describeCache.get('Opportunity') as
+            | DescribeResult
+            | undefined;
+          if (oppDescribe) {
+            const sbqqOppFields = oppDescribe.fields.filter((f) => f.name.startsWith('SBQQ__'));
+            if (sbqqOppFields.length > 0) {
+              findings.push(
+                createFinding({
+                  domain: 'settings',
+                  collector: 'settings',
+                  artifactType: 'CPQSettingValue',
+                  artifactName: 'Twin Fields',
+                  sourceType: 'inferred',
+                  findingType: 'cpq_setting_value',
+                  riskLevel: 'info',
+                  rcaMappingComplexity: 'direct',
+                  notes: `Twin Fields: Enabled (${sbqqOppFields.length} SBQQ fields on Opportunity)`,
+                  evidenceRefs: [
+                    {
+                      type: 'field-ref' as const,
+                      value: 'Opportunity.SBQQ__*',
+                      label: `Enabled (${sbqqOppFields.length} fields)`,
+                    },
+                  ],
+                })
+              );
+              allSettingValues.set('TwinFields', true);
+            }
+          }
+
+          // QLE detection: check if Quote Line Editor fields exist
+          const qleFields = quoteDescribe.fields.filter(
+            (f) => f.name.includes('LineItemsGrouped') || f.name.includes('LineItemsPrinted')
+          );
+          if (qleFields.length > 0) {
+            findings.push(
+              createFinding({
+                domain: 'settings',
+                collector: 'settings',
+                artifactType: 'CPQSettingValue',
+                artifactName: 'Quote Line Editor',
+                sourceType: 'inferred',
+                findingType: 'cpq_setting_value',
+                riskLevel: 'info',
+                rcaMappingComplexity: 'direct',
+                notes: 'Quote Line Editor: Enabled (QLE fields detected on Quote object)',
+                evidenceRefs: [
+                  { type: 'field-ref' as const, value: 'SBQQ__Quote__c.QLE', label: 'Enabled' },
+                ],
+              })
+            );
+            allSettingValues.set('QLE', true);
+          }
+
+          // Contracted pricing: check if ContractedPrice object has data
+          const cpDataCount = this.ctx.describeCache.get('SBQQ__ContractedPrice__c');
+          if (cpDataCount) {
+            findings.push(
+              createFinding({
+                domain: 'settings',
+                collector: 'settings',
+                artifactType: 'CPQSettingValue',
+                artifactName: 'Contracted Pricing',
+                sourceType: 'inferred',
+                findingType: 'cpq_setting_value',
+                riskLevel: 'info',
+                rcaMappingComplexity: 'transform',
+                notes: 'Contracted Pricing: Enabled (ContractedPrice object exists)',
+                evidenceRefs: [
+                  {
+                    type: 'field-ref' as const,
+                    value: 'SBQQ__ContractedPrice__c',
+                    label: 'Enabled',
+                  },
+                ],
+              })
+            );
+            allSettingValues.set('ContractedPricing', true);
+          }
+
+          // Subscription: check for subscription-related fields
+          const subFields = quoteDescribe.fields.filter(
+            (f) => f.name.includes('SubscriptionTerm') || f.name.includes('ContractingMethod')
+          );
+          const hasSubscription = subFields.length > 0;
+          const contractingDefault = quoteDescribe.fields.find(
+            (f) => f.name === 'SBQQ__ContractingMethod__c'
+          )?.defaultValue;
+          findings.push(
+            createFinding({
+              domain: 'settings',
+              collector: 'settings',
+              artifactType: 'CPQSettingValue',
+              artifactName: 'Subscription Proration',
+              sourceType: 'inferred',
+              findingType: 'cpq_setting_value',
+              riskLevel: 'info',
+              notes: hasSubscription
+                ? `Subscription: Enabled (Contracting: ${contractingDefault ?? 'default'})`
+                : 'Subscription: Not detected',
+              evidenceRefs: [
+                {
+                  type: 'field-ref' as const,
+                  value: 'SBQQ__ContractingMethod__c',
+                  label: (contractingDefault as string) ?? 'N/A',
+                },
+              ],
+            })
+          );
+        }
+
+        // Installed packages — read from Discovery cache
+        const discoveredPackages = this.ctx.describeCache.get('_installedPackages') as
+          | Array<{ namespace: string; name: string; version: string }>
+          | undefined;
+        if (discoveredPackages) {
+          for (const pkg of discoveredPackages) {
+            findings.push(
+              createFinding({
+                domain: 'settings',
+                collector: 'settings',
+                artifactType: 'CPQSettingValue',
+                artifactName: `Package: ${pkg.name}`,
+                sourceType: 'inferred',
+                findingType: 'cpq_setting_value',
+                riskLevel: 'info',
+                notes: `${pkg.name} (${pkg.namespace}) v${pkg.version}`,
+                evidenceRefs: [
+                  { type: 'field-ref' as const, value: pkg.namespace, label: `v${pkg.version}` },
+                ],
+              })
+            );
+          }
+        }
+      }
+
+      // ================================================================
       // G-02: Derive PluginStatus findings from settings + packages
       // ================================================================
       this.ctx.progress.updateSubstep('settings', 'derive_plugin_status');

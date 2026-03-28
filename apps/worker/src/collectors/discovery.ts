@@ -394,17 +394,26 @@ export class DiscoveryCollector extends BaseCollector {
         this.signal
       );
 
+      const allPackages: Array<{ namespace: string; name: string; version: string }> = [];
       for (const pkg of pkgResult.records) {
-        const ns = pkg.SubscriberPackage?.NamespacePrefix;
+        const ns = pkg.SubscriberPackage?.NamespacePrefix ?? '';
+        const name = pkg.SubscriberPackage?.Name ?? 'Unknown';
         const v = pkg.SubscriberPackageVersion;
         const version = v ? `${v.MajorVersion}.${v.MinorVersion}.${v.PatchVersion}` : 'unknown';
 
+        allPackages.push({ namespace: ns, name, version });
+
         if (ns === 'SBQQ') cpqVersion = version;
         if (ns === 'sbaa') sbaaVersion = version;
-        if (['echosign_dev1', 'dsfs', 'Conga', 'loop'].includes(ns)) {
-          phantomPackages.push(`${ns}: ${pkg.SubscriberPackage?.Name} v${version}`);
+        if (
+          ['echosign_dev1', 'dsfs', 'Conga', 'loop', 'dfsle', 'SBQQDS', 'APXTConga4'].includes(ns)
+        ) {
+          phantomPackages.push(`${ns}: ${name} v${version}`);
         }
       }
+
+      // Store all packages in cache for settings collector to read
+      this.ctx.describeCache.set('_installedPackages', allPackages);
     } catch (err) {
       this.log.warn(
         { error: (err as Error).message },
