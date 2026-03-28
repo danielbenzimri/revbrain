@@ -165,12 +165,23 @@ export class CatalogCollector extends BaseCollector {
           migrationRelevance: p.IsActive ? 'must-migrate' : 'optional',
           rcaTargetConcept: 'ProductSellingModel',
           rcaMappingComplexity: p.SBQQ__ConfigurationType__c ? 'transform' : 'direct',
+          usageLevel: p.IsActive ? undefined : 'dormant',
           evidenceRefs: [
             {
               type: 'record-id',
               value: p.Id as string,
               label: p.Name as string,
               referencedObjects: ['Product2'],
+            },
+            {
+              type: 'field-ref',
+              value: 'Product2.Family',
+              label: (p.Family as string) ?? 'Other',
+            },
+            {
+              type: 'field-ref',
+              value: 'Product2.ProductCode',
+              label: (p.ProductCode as string) ?? '',
             },
           ],
         })

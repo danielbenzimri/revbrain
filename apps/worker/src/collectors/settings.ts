@@ -132,18 +132,21 @@ export class SettingsCollector extends BaseCollector {
         const devName = obj.DeveloperName as string;
         const apiName = devName.endsWith('__c') ? `SBQQ__${devName}` : `SBQQ__${devName}__c`;
         try {
-          const countResult = await this.ctx.restApi.query<Record<string, unknown>>(
-            `SELECT COUNT() FROM ${apiName}`,
+          // Test if this is a hierarchy Custom Setting by querying for SetupOwnerId
+          // Only Custom Settings have this field; regular custom objects don't
+          const testResult = await this.ctx.restApi.query<Record<string, unknown>>(
+            `SELECT Id, SetupOwnerId FROM ${apiName} LIMIT 1`,
             this.signal
           );
-          if (countResult.totalSize >= 0) {
+          // If query succeeds with SetupOwnerId, it's a Custom Setting
+          if (testResult.totalSize >= 0) {
             settingObjects.push({
               name: apiName,
               description: (obj.Description as string) || '',
             });
           }
         } catch {
-          // Not queryable — not a Custom Setting
+          // SetupOwnerId not found = regular custom object, not a Setting — skip
         }
       }
 

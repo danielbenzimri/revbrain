@@ -82,15 +82,44 @@ export class UsageCollector extends BaseCollector {
 
     // Configurable usage window (default 90 days, override via USAGE_WINDOW_DAYS for demo orgs)
     const windowDays = Number(process.env.USAGE_WINDOW_DAYS ?? 90);
-    const ninetyDaysAgo = new Date();
-    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - windowDays);
-    const recentQuotes = allQuotes.filter((q) => {
+    const windowCutoff = new Date();
+    windowCutoff.setDate(windowCutoff.getDate() - windowDays);
+    let recentQuotes = allQuotes.filter((q) => {
       const created = new Date(q.CreatedDate as string);
-      return created >= ninetyDaysAgo;
+      return created >= windowCutoff;
     });
+
+    // Fallback: if no quotes in the window, use ALL quotes and compute relative to the most recent
+    // This ensures usage analytics are populated even for demo orgs with older data
+    let usageWindowLabel = `${windowDays}d`;
+    if (recentQuotes.length === 0 && allQuotes.length > 0) {
+      // Find the most recent quote date
+      const sortedByDate = [...allQuotes].sort(
+        (a, b) =>
+          new Date(b.CreatedDate as string).getTime() - new Date(a.CreatedDate as string).getTime()
+      );
+      const mostRecentDate = new Date(sortedByDate[0].CreatedDate as string);
+      const fallbackCutoff = new Date(mostRecentDate);
+      fallbackCutoff.setDate(fallbackCutoff.getDate() - 90);
+
+      recentQuotes = allQuotes.filter((q) => {
+        const created = new Date(q.CreatedDate as string);
+        return created >= fallbackCutoff;
+      });
+
+      // If still empty (all quotes on same day), just use all
+      if (recentQuotes.length === 0) recentQuotes = allQuotes;
+
+      usageWindowLabel = `90d relative to ${mostRecentDate.toISOString().split('T')[0]}`;
+      this.log.info(
+        { mostRecentDate: mostRecentDate.toISOString(), fallbackQuotes: recentQuotes.length },
+        'usage_window_fallback'
+      );
+    }
 
     metrics.quoteVolumeAll = allQuotes.length;
     metrics.quoteVolumeLast90Days = recentQuotes.length;
+    metrics.usageWindowLabel = usageWindowLabel;
 
     // Status distribution
     const statusDist: Record<string, number> = {};
