@@ -8,6 +8,9 @@ import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import AssessmentPage from './AssessmentPage';
 
+// Ensure mock mode is active for tests (so mock assessment data renders)
+vi.stubEnv('VITE_AUTH_MODE', 'mock');
+
 // Mock i18n — returns the key itself so we can assert on translation keys
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
