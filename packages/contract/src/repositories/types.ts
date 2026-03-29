@@ -160,6 +160,7 @@ export interface OrganizationRepository {
 export interface CreateOrganizationInput {
   name: string;
   slug: string;
+  type?: string;
   seatLimit?: number;
   planId?: string | null;
   createdBy?: string | null;
