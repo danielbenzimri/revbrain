@@ -247,7 +247,7 @@ export function UserDetailDrawer({
             {/* User identity */}
             <div className="flex flex-col items-center text-center pt-1">
               <div
-                className={`relative ${isEditing ? 'cursor-pointer group' : ''}`}
+                className={`relative ${isEditing ? 'cursor-pointer' : ''}`}
                 onClick={() => isEditing && fileInputRef.current?.click()}
               >
                 <Avatar className="h-18 w-18 ring-3 ring-white shadow-md">
@@ -257,7 +257,7 @@ export function UserDetailDrawer({
                   </AvatarFallback>
                 </Avatar>
                 {isEditing && !isUploading && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full transition-opacity">
                     <Camera size={20} className="text-white" />
                   </div>
                 )}
@@ -274,6 +274,15 @@ export function UserDetailDrawer({
                 className="hidden"
                 onChange={handleAvatarUpload}
               />
+              {isEditing && (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="text-xs text-violet-600 hover:text-violet-700 font-medium mt-1.5"
+                >
+                  Change photo
+                </button>
+              )}
 
               <h2 className="text-xl font-bold text-slate-900 mt-3 truncate max-w-full">
                 {user.name}
