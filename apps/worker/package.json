@@ -14,11 +14,13 @@
   },
   "scripts": {
     "dev": "tsx watch src/index.ts",
+    "local:db": "tsx watch src/index.ts",
     "build": "tsc",
     "lint": "eslint . && tsc --noEmit",
     "test": "vitest run",
     "test:unit": "vitest run tests/unit/",
-    "test:integration": "vitest run tests/integration/"
+    "test:integration": "vitest run tests/integration/",
+    "seed:findings": "tsx scripts/seed-findings-to-db.ts"
   },
   "dependencies": {
     "@revbrain/contract": "workspace:*",

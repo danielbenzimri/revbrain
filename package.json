@@ -11,6 +11,7 @@
   "scripts": {
     "local": "turbo run local",
     "local:real": "turbo run local:real",
+    "local:db": "turbo run local:db --filter=@revbrain/server --filter=client",
     "dev": "turbo run dev",
     "dev:remote": "pnpm --filter client dev:remote",
     "stg": "pnpm --filter client dev:remote",
@@ -25,6 +26,7 @@
     "db:migrate": "pnpm --filter @revbrain/database db:migrate",
     "db:seed": "pnpm --filter @revbrain/database seed",
     "worker:dev": "pnpm --filter @revbrain/worker dev",
+    "worker:seed-findings": "pnpm --filter @revbrain/worker seed:findings",
     "clean": "turbo run clean && rm -rf node_modules",
     "setup:cloud": "./scripts/init-supabase-cloud.sh",
     "perf:test": "playwright test --project=performance",

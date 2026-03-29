@@ -6,6 +6,7 @@
   "scripts": {
     "local": "vite",
     "local:real": "vite",
+    "local:db": "vite --mode local-db",
     "dev": "VITE_AUTH_MODE=jwt vite",
     "dev:remote": "vite --mode stg",
     "build": "NODE_OPTIONS='--max-old-space-size=8192' tsc -b && vite build",

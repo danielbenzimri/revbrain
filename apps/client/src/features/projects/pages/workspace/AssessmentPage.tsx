@@ -147,6 +147,9 @@ export default function AssessmentPage() {
       : undefined;
   const { data: findingsResult } = useAssessmentFindings(id, completedRunId);
 
+  // Only use mock fallback in mock mode — staging/production should show real data or empty state
+  const isMockMode = import.meta.env.VITE_AUTH_MODE === 'mock';
+
   const assessment = useMemo(() => {
     if (!id) return null;
     // Try API data first (from completed extraction run)
@@ -154,9 +157,13 @@ export default function AssessmentPage() {
       const apiData = transformFindingsToAssessmentData(findingsResult.data, apiStatus);
       if (apiData) return apiData;
     }
-    // Fallback to mock data for dev/demo
-    return getMockAssessmentData(id);
-  }, [id, findingsResult, apiStatus]);
+    // In mock mode only: fall back to hardcoded mock data for dev/demo
+    if (isMockMode) {
+      return getMockAssessmentData(id);
+    }
+    // In staging/production: return null → shows empty state (not fake data)
+    return null;
+  }, [id, findingsResult, apiStatus, isMockMode]);
 
   const isRunActive = !!(
     apiStatus &&

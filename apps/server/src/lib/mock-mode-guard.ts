@@ -20,9 +20,14 @@ export function validateMockModeConfig(env: Record<string, string | undefined>):
     throw new Error('FATAL: Mock mode cannot be enabled in production or staging.');
   }
 
-  if (useMock !== mockAuth) {
+  // Allow hybrid mode: real DB + mock auth for local-db dev environment
+  // This lets developers test with staging DB without needing Supabase Auth
+  const isLocalDbMode = appEnv === 'local-db';
+
+  if (useMock !== mockAuth && !isLocalDbMode) {
     throw new Error(
-      'FATAL: USE_MOCK_DATA=true requires AUTH_MODE=mock, and USE_MOCK_DATA=false requires AUTH_MODE=jwt.'
+      'FATAL: USE_MOCK_DATA=true requires AUTH_MODE=mock, and USE_MOCK_DATA=false requires AUTH_MODE=jwt. ' +
+        '(Use APP_ENV=local-db for real DB with mock auth.)'
     );
   }
 }
