@@ -72,6 +72,10 @@ export function OnboardTenantDrawer({ open, onOpenChange }: OnboardTenantDrawerP
       });
 
       setSuccess(true);
+      // Auto-close after brief success display
+      setTimeout(() => {
+        handleClose();
+      }, 2000);
     } catch (err: unknown) {
       console.error('[Onboard] Error:', err);
       const errorMessage = err instanceof Error ? err.message : 'An error occurred';
