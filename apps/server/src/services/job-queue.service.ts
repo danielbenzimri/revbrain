@@ -5,11 +5,21 @@
  * Supports multiple job types, retries with exponential backoff,
  * and distributed locking for concurrent workers.
  */
-import { db } from '@revbrain/database/client';
+import type { DrizzleDB } from '@revbrain/database';
 import { jobQueue } from '@revbrain/database';
 import { eq, and, lte, or, isNull, sql, desc } from 'drizzle-orm';
 import { logger } from '../lib/logger.ts';
 import { randomUUID } from 'node:crypto';
+
+// Lazy database accessor — prevents postgres.js from loading on Edge Functions (Deno)
+let _db: DrizzleDB | null = null;
+async function getDb(): Promise<DrizzleDB> {
+  if (!_db) {
+    const { db } = await import('@revbrain/database/client');
+    _db = db;
+  }
+  return _db;
+}
 
 export type JobType = 'email' | 'webhook' | 'report' | 'cleanup';
 
@@ -85,7 +95,9 @@ export class JobQueueService {
    * Enqueue a new job
    */
   async enqueue(type: JobType, payload: JobPayload, options?: EnqueueOptions): Promise<string> {
-    const [job] = await db
+    const [job] = await (
+      await getDb()
+    )
       .insert(jobQueue)
       .values({
         type,
@@ -124,7 +136,9 @@ export class JobQueueService {
     const lockUntil = new Date(now.getTime() + this.lockDurationMs);
 
     // Find and lock pending jobs
-    const jobs = await db
+    const jobs = await (
+      await getDb()
+    )
       .update(jobQueue)
       .set({
         status: 'processing',
@@ -148,7 +162,9 @@ export class JobQueueService {
     // Release extra jobs if we claimed too many
     if (jobs.length > batchSize) {
       const extraIds = jobs.slice(batchSize).map((j) => j.id);
-      await db
+      await (
+        await getDb()
+      )
         .update(jobQueue)
         .set({
           status: 'pending',
@@ -178,7 +194,9 @@ export class JobQueueService {
         await handler(job.payload as JobPayload);
 
         // Mark as completed
-        await db
+        await (
+          await getDb()
+        )
           .update(jobQueue)
           .set({
             status: 'completed',
@@ -206,7 +224,9 @@ export class JobQueueService {
           );
           const retryAt = new Date(Date.now() + delayMs);
 
-          await db
+          await (
+            await getDb()
+          )
             .update(jobQueue)
             .set({
               status: 'pending',
@@ -227,7 +247,9 @@ export class JobQueueService {
           });
         } else {
           // Max retries exceeded, mark as dead
-          await db
+          await (
+            await getDb()
+          )
             .update(jobQueue)
             .set({
               status: 'dead',
@@ -255,7 +277,9 @@ export class JobQueueService {
    * Get queue statistics
    */
   async getStats(): Promise<JobStats> {
-    const statusCounts = await db
+    const statusCounts = await (
+      await getDb()
+    )
       .select({
         status: jobQueue.status,
         count: sql<number>`count(*)::int`,
@@ -263,7 +287,9 @@ export class JobQueueService {
       .from(jobQueue)
       .groupBy(jobQueue.status);
 
-    const typeCounts = await db
+    const typeCounts = await (
+      await getDb()
+    )
       .select({
         type: jobQueue.type,
         count: sql<number>`count(*)::int`,
@@ -299,7 +325,7 @@ export class JobQueueService {
    * Get recent failed/dead jobs for debugging
    */
   async getFailedJobs(limit = 20): Promise<Array<typeof jobQueue.$inferSelect>> {
-    return db
+    return (await getDb())
       .select()
       .from(jobQueue)
       .where(or(eq(jobQueue.status, 'failed'), eq(jobQueue.status, 'dead')))
@@ -311,7 +337,9 @@ export class JobQueueService {
    * Retry a specific dead job
    */
   async retryJob(jobId: string): Promise<boolean> {
-    const result = await db
+    const result = await (
+      await getDb()
+    )
       .update(jobQueue)
       .set({
         status: 'pending',
@@ -337,7 +365,9 @@ export class JobQueueService {
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - retentionDays);
 
-    const result = await db
+    const result = await (
+      await getDb()
+    )
       .delete(jobQueue)
       .where(
         and(

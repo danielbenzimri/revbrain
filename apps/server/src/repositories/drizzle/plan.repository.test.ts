@@ -88,6 +88,8 @@ describe('DrizzlePlanRepository', () => {
     },
     isActive: true,
     isPublic: true,
+    stripeProductId: null,
+    stripePriceId: null,
     createdAt: new Date('2024-01-01'),
     updatedAt: new Date('2024-01-01'),
   };
@@ -116,6 +118,8 @@ describe('DrizzlePlanRepository', () => {
         features: { aiLevel: 'basic', modules: ['core'], customBranding: false, sso: false },
         isActive: true,
         isPublic: true,
+        stripeProductId: null,
+        stripePriceId: null,
         createdAt: mockPlanRow.createdAt,
         updatedAt: mockPlanRow.updatedAt,
       });

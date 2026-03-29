@@ -13,9 +13,14 @@ import type { AppEnv } from '../../types/index.ts';
 import { logger } from '../../lib/logger.ts';
 import { AppError, ErrorCodes } from '@revbrain/contract';
 import { getSupabaseAdmin } from '../../lib/supabase.ts';
-import { db } from '@revbrain/database/client';
 import { projectFiles } from '@revbrain/database';
 import { eq } from 'drizzle-orm';
+
+// Lazy database accessor — prevents postgres.js from loading on Edge Functions (Deno)
+async function getDb() {
+  const { db } = await import('@revbrain/database/client');
+  return db;
+}
 
 const projectFilesRouter = new OpenAPIHono<AppEnv>();
 
@@ -87,6 +92,7 @@ projectFilesRouter.openapi(
     }
 
     // Get files
+    const db = await getDb();
     const files = await db.query.projectFiles.findMany({
       where: (pf, { eq: eqOp }) => eqOp(pf.projectId, projectId),
       orderBy: (pf, { desc: descOp }) => [descOp(pf.createdAt)],
@@ -237,6 +243,7 @@ projectFilesRouter.openapi(
     // Create database record
     let fileRecord;
     try {
+      const db = await getDb();
       const [record] = await db
         .insert(projectFiles)
         .values({
@@ -324,6 +331,7 @@ projectFilesRouter.openapi(
     const projectId = projectIdResult.data;
 
     // Get file record
+    const db = await getDb();
     const file = await db.query.projectFiles.findFirst({
       where: (pf, { eq: eqOp, and: andOp }) =>
         andOp(eqOp(pf.id, fileId), eqOp(pf.projectId, projectId)),
@@ -408,6 +416,7 @@ projectFilesRouter.openapi(
     const projectId = projectIdResult.data;
 
     // Get existing file
+    const db = await getDb();
     const existing = await db.query.projectFiles.findFirst({
       where: (pf, { eq: eqOp, and: andOp }) =>
         andOp(eqOp(pf.id, fileId), eqOp(pf.projectId, projectId)),
@@ -480,6 +489,7 @@ projectFilesRouter.openapi(
     const projectId = projectIdResult.data;
 
     // Get file record
+    const db = await getDb();
     const file = await db.query.projectFiles.findFirst({
       where: (pf, { eq: eqOp, and: andOp }) =>
         andOp(eqOp(pf.id, fileId), eqOp(pf.projectId, projectId)),

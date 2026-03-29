@@ -10,9 +10,14 @@ import { requireRole } from '../../../middleware/rbac.ts';
 import { adminLimiter, listLimiter } from '../../../middleware/rate-limit.ts';
 import { routeMiddleware } from '../../../lib/middleware-types.ts';
 import { AppError, ErrorCodes } from '@revbrain/contract';
-import { db } from '@revbrain/database/client';
 import { adminNotifications } from '@revbrain/database';
 import { eq, and, desc, sql } from 'drizzle-orm';
+
+// Lazy database accessor — prevents postgres.js from loading on Edge Functions (Deno)
+async function getDb() {
+  const { db } = await import('@revbrain/database/client');
+  return db;
+}
 import type { AppEnv } from '../../../types/index.ts';
 
 const adminNotificationsRouter = new OpenAPIHono<AppEnv>();
@@ -60,6 +65,7 @@ adminNotificationsRouter.openapi(
       conditions.push(eq(adminNotifications.isRead, false));
     }
 
+    const db = await getDb();
     const notifications = await db
       .select()
       .from(adminNotifications)
@@ -103,6 +109,7 @@ adminNotificationsRouter.openapi(
       throw new AppError(ErrorCodes.UNAUTHORIZED, 'Authentication required', 401);
     }
 
+    const db = await getDb();
     const result = await db
       .select({ count: sql<number>`count(*)::int` })
       .from(adminNotifications)
@@ -151,6 +158,7 @@ adminNotificationsRouter.openapi(
 
     const { id } = c.req.valid('param');
 
+    const db = await getDb();
     const updated = await db
       .update(adminNotifications)
       .set({ isRead: true })
@@ -197,6 +205,7 @@ adminNotificationsRouter.openapi(
       throw new AppError(ErrorCodes.UNAUTHORIZED, 'Authentication required', 401);
     }
 
+    const db = await getDb();
     const updated = await db
       .update(adminNotifications)
       .set({ isRead: true })

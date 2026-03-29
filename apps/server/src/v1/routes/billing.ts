@@ -5,9 +5,6 @@
  * Requires authentication - users can only access their own org's billing.
  */
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import { db } from '@revbrain/database/client';
-import { organizations } from '@revbrain/database';
-import { eq } from 'drizzle-orm';
 import { authMiddleware } from '../../middleware/auth.ts';
 import { requireActiveSubscription } from '../../middleware/limits.ts';
 import { routeMiddleware } from '../../lib/middleware-types.ts';
@@ -70,9 +67,7 @@ billingRouter.openapi(
     const user = c.get('user');
     const { planId } = c.req.valid('json');
 
-    const org = await db.query.organizations.findFirst({
-      where: eq(organizations.id, user.organizationId),
-    });
+    const org = await c.var.repos.organizations.findById(user.organizationId);
 
     const billingService = new BillingService();
 

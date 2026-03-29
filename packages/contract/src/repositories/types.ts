@@ -239,6 +239,8 @@ export interface UpdatePlanInput {
   features?: PlanFeatures;
   isActive?: boolean;
   isPublic?: boolean;
+  stripeProductId?: string | null;
+  stripePriceId?: string | null;
 }
 
 export interface PlanLimits {
@@ -267,6 +269,8 @@ export interface PlanEntity {
   features: PlanFeatures | null;
   isActive: boolean;
   isPublic: boolean;
+  stripeProductId: string | null;
+  stripePriceId: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

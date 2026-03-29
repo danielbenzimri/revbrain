@@ -44,6 +44,8 @@ export class MockPlanRepository implements PlanRepository {
       features: data.features ?? null,
       isActive: data.isActive ?? true,
       isPublic: data.isPublic ?? false,
+      stripeProductId: null,
+      stripePriceId: null,
       createdAt: now,
       updatedAt: now,
     };

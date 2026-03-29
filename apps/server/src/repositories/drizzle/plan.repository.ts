@@ -88,6 +88,8 @@ export class DrizzlePlanRepository implements PlanRepository {
     if (data.features !== undefined) updateData.features = data.features;
     if (data.isActive !== undefined) updateData.isActive = data.isActive;
     if (data.isPublic !== undefined) updateData.isPublic = data.isPublic;
+    if (data.stripeProductId !== undefined) updateData.stripeProductId = data.stripeProductId;
+    if (data.stripePriceId !== undefined) updateData.stripePriceId = data.stripePriceId;
 
     const [plan] = await this.db.update(plans).set(updateData).where(eq(plans.id, id)).returning();
 
@@ -176,6 +178,8 @@ export class DrizzlePlanRepository implements PlanRepository {
       features: row.features,
       isActive: row.isActive,
       isPublic: row.isPublic,
+      stripeProductId: row.stripeProductId ?? null,
+      stripePriceId: row.stripePriceId ?? null,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     };

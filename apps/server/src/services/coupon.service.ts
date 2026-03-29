@@ -4,12 +4,22 @@
  * Handles coupon CRUD, Stripe sync, and validation.
  * Coupons are synced to Stripe as Coupon + Promotion Code pairs.
  */
-import { db } from '@revbrain/database/client';
+import type { DrizzleDB } from '@revbrain/database';
 import { coupons, couponUsages, plans, auditLogs } from '@revbrain/database';
 import { eq, and, sql, inArray } from 'drizzle-orm';
 import { getStripe, isStripeConfigured } from '../lib/stripe.ts';
 import { logger } from '../lib/logger.ts';
 import type Stripe from 'stripe';
+
+// Lazy database accessor — prevents postgres.js from loading on Edge Functions (Deno)
+let _db: DrizzleDB | null = null;
+async function getDb(): Promise<DrizzleDB> {
+  if (!_db) {
+    const { db } = await import('@revbrain/database/client');
+    _db = db;
+  }
+  return _db;
+}
 
 export interface CreateCouponInput {
   code: string;
@@ -64,7 +74,9 @@ export class CouponService {
     const code = input.code.toUpperCase().trim();
 
     // Check for existing code
-    const existing = await db.query.coupons.findFirst({
+    const existing = await (
+      await getDb()
+    ).query.coupons.findFirst({
       where: eq(coupons.code, code),
     });
 
@@ -85,7 +97,9 @@ export class CouponService {
     }
 
     // Create in database first
-    const [newCoupon] = await db
+    const [newCoupon] = await (
+      await getDb()
+    )
       .insert(coupons)
       .values({
         code,
@@ -110,7 +124,7 @@ export class CouponService {
     logger.info('Coupon created', { couponId: newCoupon.id, code: newCoupon.code });
 
     // Audit log the creation
-    await db.insert(auditLogs).values({
+    await (await getDb()).insert(auditLogs).values({
       userId: input.createdBy || null,
       organizationId: null, // System-level operation
       action: 'coupon.created',
@@ -136,7 +150,9 @@ export class CouponService {
     }
 
     // Fetch fresh data with Stripe IDs
-    const result = await db.query.coupons.findFirst({
+    const result = await (
+      await getDb()
+    ).query.coupons.findFirst({
       where: eq(coupons.id, newCoupon.id),
     });
 
@@ -153,7 +169,9 @@ export class CouponService {
     }
 
     const stripe = getStripe();
-    const coupon = await db.query.coupons.findFirst({
+    const coupon = await (
+      await getDb()
+    ).query.coupons.findFirst({
       where: eq(coupons.id, couponId),
     });
 
@@ -191,7 +209,9 @@ export class CouponService {
     // Restrict to specific products if applicable plans specified
     const planIds = coupon.applicablePlanIds as string[] | null;
     if (planIds && planIds.length > 0) {
-      const applicablePlans = await db.query.plans.findMany({
+      const applicablePlans = await (
+        await getDb()
+      ).query.plans.findMany({
         where: inArray(plans.id, planIds),
       });
 
@@ -232,7 +252,9 @@ export class CouponService {
     const stripePromoCode = await stripe.promotionCodes.create(promoParams);
 
     // Update database with Stripe IDs
-    await db
+    await (
+      await getDb()
+    )
       .update(coupons)
       .set({
         stripeCouponId: stripeCoupon.id,
@@ -253,7 +275,9 @@ export class CouponService {
    * Note: Some fields cannot be updated in Stripe after creation (code, discount).
    */
   async updateCoupon(couponId: string, updates: UpdateCouponInput, actorId?: string) {
-    const existing = await db.query.coupons.findFirst({
+    const existing = await (
+      await getDb()
+    ).query.coupons.findFirst({
       where: eq(coupons.id, couponId),
     });
 
@@ -261,7 +285,9 @@ export class CouponService {
       throw new Error('Coupon not found');
     }
 
-    const [updated] = await db
+    const [updated] = await (
+      await getDb()
+    )
       .update(coupons)
       .set({
         ...updates,
@@ -271,7 +297,7 @@ export class CouponService {
       .returning();
 
     // Audit log the update
-    await db.insert(auditLogs).values({
+    await (await getDb()).insert(auditLogs).values({
       userId: actorId || null,
       organizationId: null, // System-level operation
       action: 'coupon.updated',
@@ -312,7 +338,9 @@ export class CouponService {
    * Deactivate a coupon (soft delete).
    */
   async deleteCoupon(couponId: string, actorId?: string): Promise<void> {
-    const coupon = await db.query.coupons.findFirst({
+    const coupon = await (
+      await getDb()
+    ).query.coupons.findFirst({
       where: eq(coupons.id, couponId),
     });
 
@@ -333,7 +361,9 @@ export class CouponService {
     }
 
     // Soft delete in database
-    await db
+    await (
+      await getDb()
+    )
       .update(coupons)
       .set({
         isActive: false,
@@ -342,7 +372,7 @@ export class CouponService {
       .where(eq(coupons.id, couponId));
 
     // Audit log the deletion
-    await db.insert(auditLogs).values({
+    await (await getDb()).insert(auditLogs).values({
       userId: actorId || null,
       organizationId: null, // System-level operation
       action: 'coupon.deleted',
@@ -369,7 +399,9 @@ export class CouponService {
     const normalizedCode = code.toUpperCase().trim();
     const now = new Date();
 
-    const coupon = await db.query.coupons.findFirst({
+    const coupon = await (
+      await getDb()
+    ).query.coupons.findFirst({
       where: and(eq(coupons.code, normalizedCode), eq(coupons.isActive, true)),
     });
 
@@ -393,7 +425,9 @@ export class CouponService {
 
     // Check per-user limit
     if (coupon.maxUsesPerUser) {
-      const userUsages = await db.query.couponUsages.findMany({
+      const userUsages = await (
+        await getDb()
+      ).query.couponUsages.findMany({
         where: and(
           eq(couponUsages.couponId, coupon.id),
           eq(couponUsages.organizationId, organizationId)
@@ -453,7 +487,9 @@ export class CouponService {
     stripeInvoiceId?: string,
     stripeSubscriptionId?: string
   ): Promise<void> {
-    await db.transaction(async (tx) => {
+    await (
+      await getDb()
+    ).transaction(async (tx) => {
       // Insert usage record
       await tx.insert(couponUsages).values({
         couponId,
@@ -494,14 +530,18 @@ export class CouponService {
     const whereClause = includeInactive ? undefined : eq(coupons.isActive, true);
 
     // Get total count (for pagination metadata)
-    const countResult = await db
+    const countResult = await (
+      await getDb()
+    )
       .select({ count: sql<number>`count(*)::int` })
       .from(coupons)
       .where(whereClause);
     const total = countResult[0]?.count ?? 0;
 
     // Get paginated results at database level
-    const results = await db.query.coupons.findMany({
+    const results = await (
+      await getDb()
+    ).query.coupons.findMany({
       where: whereClause,
       orderBy: (c, { desc }) => [desc(c.createdAt)],
       limit,
@@ -515,7 +555,7 @@ export class CouponService {
    * Get a single coupon by ID.
    */
   async getCouponById(couponId: string) {
-    return db.query.coupons.findFirst({
+    return (await getDb()).query.coupons.findFirst({
       where: eq(coupons.id, couponId),
     });
   }
@@ -524,7 +564,7 @@ export class CouponService {
    * Get coupon usage history.
    */
   async getCouponUsages(couponId: string) {
-    return db.query.couponUsages.findMany({
+    return (await getDb()).query.couponUsages.findMany({
       where: eq(couponUsages.couponId, couponId),
       with: {
         organization: true,

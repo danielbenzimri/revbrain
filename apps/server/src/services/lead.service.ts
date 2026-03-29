@@ -3,7 +3,7 @@
  *
  * Handles enterprise lead capture, CRM operations, and conversion.
  */
-import { db } from '@revbrain/database/client';
+import type { DrizzleDB } from '@revbrain/database';
 import { leads, leadActivities, auditLogs } from '@revbrain/database';
 import { eq, desc, and, or, gte, lte, ilike, sql } from 'drizzle-orm';
 import { getEmailService } from '../emails/index.ts';
@@ -13,6 +13,16 @@ import {
 } from '../emails/templates/index.ts';
 import { logger } from '../lib/logger.ts';
 import { getEnv } from '../lib/env.ts';
+
+// Lazy database accessor — prevents postgres.js from loading on Edge Functions (Deno)
+let _db: DrizzleDB | null = null;
+async function getDb(): Promise<DrizzleDB> {
+  if (!_db) {
+    const { db } = await import('@revbrain/database/client');
+    _db = db;
+  }
+  return _db;
+}
 
 export interface CreateLeadInput {
   contactName: string;
@@ -60,7 +70,9 @@ export class LeadService {
    */
   async submitLead(input: CreateLeadInput) {
     // Create the lead
-    const [lead] = await db
+    const [lead] = await (
+      await getDb()
+    )
       .insert(leads)
       .values({
         contactName: input.contactName,
@@ -80,7 +92,7 @@ export class LeadService {
     logger.info('Lead submitted', { leadId: lead.id, email: lead.contactEmail });
 
     // Audit log the lead submission (public endpoint, no user)
-    await db.insert(auditLogs).values({
+    await (await getDb()).insert(auditLogs).values({
       userId: null,
       organizationId: null,
       action: 'lead.submitted',
@@ -161,7 +173,9 @@ export class LeadService {
    * Get lead by ID with activities.
    */
   async getLeadById(id: string) {
-    const lead = await db.query.leads.findFirst({
+    const lead = await (
+      await getDb()
+    ).query.leads.findFirst({
       where: eq(leads.id, id),
       with: {
         assignedToUser: true,
@@ -216,8 +230,9 @@ export class LeadService {
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
+    const database = await getDb();
     const [leadsList, countResult] = await Promise.all([
-      db.query.leads.findMany({
+      database.query.leads.findMany({
         where: whereClause,
         orderBy: desc(leads.createdAt),
         limit,
@@ -226,7 +241,7 @@ export class LeadService {
           assignedToUser: true,
         },
       }),
-      db
+      database
         .select({ count: sql<number>`count(*)::int` })
         .from(leads)
         .where(whereClause),
@@ -242,7 +257,9 @@ export class LeadService {
    * Update a lead.
    */
   async updateLead(id: string, input: UpdateLeadInput, actorId?: string) {
-    const existing = await db.query.leads.findFirst({
+    const existing = await (
+      await getDb()
+    ).query.leads.findFirst({
       where: eq(leads.id, id),
     });
 
@@ -253,7 +270,9 @@ export class LeadService {
     // Track status change for activity log
     const statusChanged = input.status && input.status !== existing.status;
 
-    const [updated] = await db
+    const [updated] = await (
+      await getDb()
+    )
       .update(leads)
       .set({
         ...input,
@@ -274,7 +293,7 @@ export class LeadService {
     }
 
     // Audit log the update
-    await db.insert(auditLogs).values({
+    await (await getDb()).insert(auditLogs).values({
       userId: actorId || null,
       organizationId: null, // Leads are system-level
       action: 'lead.updated',
@@ -302,7 +321,9 @@ export class LeadService {
       createdBy?: string;
     }
   ) {
-    const [activity] = await db
+    const [activity] = await (
+      await getDb()
+    )
       .insert(leadActivities)
       .values({
         leadId,
@@ -324,6 +345,7 @@ export class LeadService {
     const now = new Date();
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
+    const db = await getDb();
     const [allLeads, weekLeads, followUpLeads] = await Promise.all([
       db
         .select({ status: leads.status, count: sql<number>`count(*)::int` })
@@ -399,7 +421,7 @@ export class LeadService {
     });
 
     // Audit log the conversion
-    await db.insert(auditLogs).values({
+    await (await getDb()).insert(auditLogs).values({
       userId: actorId,
       organizationId: null, // Will be linked once org is created
       action: 'lead.converted',

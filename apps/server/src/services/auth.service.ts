@@ -1,8 +1,18 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { db } from '@revbrain/database/client';
+import type { DrizzleDB } from '@revbrain/database';
 import { users } from '@revbrain/database';
 import { eq, sql } from 'drizzle-orm';
 import { logger } from '../lib/logger.ts';
+
+// Lazy database accessor — prevents postgres.js from loading on Edge Functions (Deno)
+let _db: DrizzleDB | null = null;
+async function getDb(): Promise<DrizzleDB> {
+  if (!_db) {
+    const { db } = await import('@revbrain/database/client');
+    _db = db;
+  }
+  return _db;
+}
 
 /**
  * Provider-agnostic interface for administrative auth operations.
@@ -91,7 +101,9 @@ export class AuthService implements IAuthService {
     const normalizedEmail = email.toLowerCase().trim();
 
     // Fast path: Check local database (indexed, O(log n))
-    const result = await db
+    const result = await (
+      await getDb()
+    )
       .select({ count: sql<number>`1` })
       .from(users)
       .where(eq(sql`lower(${users.email})`, normalizedEmail))

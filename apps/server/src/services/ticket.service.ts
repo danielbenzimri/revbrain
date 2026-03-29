@@ -3,10 +3,20 @@
  *
  * Handles support ticket CRUD, messaging, and status management.
  */
-import { db } from '@revbrain/database/client';
+import type { DrizzleDB } from '@revbrain/database';
 import { supportTickets, ticketMessages, auditLogs } from '@revbrain/database';
 import { eq, and, desc, sql, or, ilike } from 'drizzle-orm';
 import { logger } from '../lib/logger.ts';
+
+// Lazy database accessor — prevents postgres.js from loading on Edge Functions (Deno)
+let _db: DrizzleDB | null = null;
+async function getDb(): Promise<DrizzleDB> {
+  if (!_db) {
+    const { db } = await import('@revbrain/database/client');
+    _db = db;
+  }
+  return _db;
+}
 
 export interface CreateTicketInput {
   subject: string;
@@ -67,7 +77,9 @@ export class TicketService {
    * Create a new support ticket
    */
   async createTicket(input: CreateTicketInput): Promise<typeof supportTickets.$inferSelect> {
-    const [ticket] = await db
+    const [ticket] = await (
+      await getDb()
+    )
       .insert(supportTickets)
       .values({
         ticketNumber: generateTicketNumber(), // Fallback, DB trigger should override
@@ -88,7 +100,7 @@ export class TicketService {
     });
 
     // Audit log
-    await db.insert(auditLogs).values({
+    await (await getDb()).insert(auditLogs).values({
       userId: input.userId,
       organizationId: input.organizationId,
       action: 'ticket.created',
@@ -118,7 +130,9 @@ export class TicketService {
    * Get ticket by ID with messages
    */
   async getTicketById(id: string, options?: { includeInternal?: boolean }) {
-    const ticket = await db.query.supportTickets.findFirst({
+    const ticket = await (
+      await getDb()
+    ).query.supportTickets.findFirst({
       where: eq(supportTickets.id, id),
       with: {
         user: true,
@@ -141,7 +155,7 @@ export class TicketService {
    * Get ticket by ticket number
    */
   async getTicketByNumber(ticketNumber: string) {
-    return db.query.supportTickets.findFirst({
+    return (await getDb()).query.supportTickets.findFirst({
       where: eq(supportTickets.ticketNumber, ticketNumber),
       with: {
         user: true,
@@ -204,8 +218,9 @@ export class TicketService {
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
+    const database = await getDb();
     const [tickets, countResult] = await Promise.all([
-      db.query.supportTickets.findMany({
+      database.query.supportTickets.findMany({
         where: whereClause,
         orderBy: desc(supportTickets.createdAt),
         limit: limit + 1,
@@ -216,7 +231,7 @@ export class TicketService {
           assignedToUser: true,
         },
       }),
-      db
+      database
         .select({ count: sql<number>`count(*)::int` })
         .from(supportTickets)
         .where(whereClause),
@@ -240,7 +255,9 @@ export class TicketService {
     input: UpdateTicketInput,
     actorId?: string
   ): Promise<typeof supportTickets.$inferSelect> {
-    const existing = await db.query.supportTickets.findFirst({
+    const existing = await (
+      await getDb()
+    ).query.supportTickets.findFirst({
       where: eq(supportTickets.id, id),
     });
 
@@ -268,7 +285,7 @@ export class TicketService {
     if (input.category !== undefined) updateData.category = input.category;
     if (input.assignedTo !== undefined) updateData.assignedTo = input.assignedTo;
 
-    const [updated] = await db
+    const [updated] = await (await getDb())
       .update(supportTickets)
       .set(updateData)
       .where(eq(supportTickets.id, id))
@@ -286,7 +303,7 @@ export class TicketService {
     }
 
     // Audit log
-    await db.insert(auditLogs).values({
+    await (await getDb()).insert(auditLogs).values({
       userId: actorId || null,
       organizationId: existing.organizationId,
       action: 'ticket.updated',
@@ -312,7 +329,9 @@ export class TicketService {
    * Add a message to a ticket
    */
   async addMessage(input: AddMessageInput): Promise<typeof ticketMessages.$inferSelect> {
-    const ticket = await db.query.supportTickets.findFirst({
+    const ticket = await (
+      await getDb()
+    ).query.supportTickets.findFirst({
       where: eq(supportTickets.id, input.ticketId),
     });
 
@@ -320,7 +339,9 @@ export class TicketService {
       throw new Error('Ticket not found');
     }
 
-    const [message] = await db
+    const [message] = await (
+      await getDb()
+    )
       .insert(ticketMessages)
       .values({
         ticketId: input.ticketId,
@@ -347,7 +368,10 @@ export class TicketService {
       updateData.status = 'open';
     }
 
-    await db.update(supportTickets).set(updateData).where(eq(supportTickets.id, input.ticketId));
+    await (await getDb())
+      .update(supportTickets)
+      .set(updateData)
+      .where(eq(supportTickets.id, input.ticketId));
 
     logger.info('Message added to ticket', {
       ticketId: input.ticketId,
@@ -367,6 +391,7 @@ export class TicketService {
       ? eq(supportTickets.organizationId, filters.organizationId)
       : undefined;
 
+    const db = await getDb();
     const [statusCounts, priorityCounts] = await Promise.all([
       db
         .select({

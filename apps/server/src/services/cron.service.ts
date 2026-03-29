@@ -9,13 +9,23 @@
  * This service is called by external schedulers (pg_cron, Vercel Cron, etc.)
  * and processes pending tasks in a batch.
  */
-import { db } from '@revbrain/database/client';
+import type { DrizzleDB } from '@revbrain/database';
 import { subscriptions, users, organizations } from '@revbrain/database';
 import { eq, and, lte, gte, isNull, inArray, sql } from 'drizzle-orm';
 import { getEmailService } from '../emails/index.ts';
 import { renderTrialEndingEmail, renderTrialEndedEmail } from '../emails/templates/index.ts';
 import { getEnv } from '../lib/env.ts';
 import { logger } from '../lib/logger.ts';
+
+// Lazy database accessor — prevents postgres.js from loading on Edge Functions (Deno)
+let _db: DrizzleDB | null = null;
+async function getDb(): Promise<DrizzleDB> {
+  if (!_db) {
+    const { db } = await import('@revbrain/database/client');
+    _db = db;
+  }
+  return _db;
+}
 
 /** Result of a cron job run */
 export interface CronJobResult {
@@ -89,7 +99,9 @@ export class CronService {
       const oneDayFromNow = new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000);
 
       // Find trialing subscriptions ending in 1-3 days that haven't been notified
-      const trialingSubs = await db.query.subscriptions.findMany({
+      const trialingSubs = await (
+        await getDb()
+      ).query.subscriptions.findMany({
         where: and(
           eq(subscriptions.status, 'trialing'),
           gte(subscriptions.trialEnd, oneDayFromNow),
@@ -133,7 +145,7 @@ export class CronService {
           });
 
           // Mark as notified
-          await db
+          await (await getDb())
             .update(subscriptions)
             .set({ trialEndingNotifiedAt: now })
             .where(eq(subscriptions.id, sub.id));
@@ -175,7 +187,9 @@ export class CronService {
 
       // Find trialing subscriptions that ended in the last 24 hours and haven't been notified
       // These are trials that expired without converting to paid
-      const expiredTrials = await db.query.subscriptions.findMany({
+      const expiredTrials = await (
+        await getDb()
+      ).query.subscriptions.findMany({
         where: and(
           // Trial ended in the last 24 hours
           gte(subscriptions.trialEnd, yesterday),
@@ -204,7 +218,7 @@ export class CronService {
           await this.sendTrialEndedEmail(contact, sub.plan?.name || 'Professional');
 
           // Mark as notified
-          await db
+          await (await getDb())
             .update(subscriptions)
             .set({ trialEndedNotifiedAt: now })
             .where(eq(subscriptions.id, sub.id));
@@ -234,7 +248,9 @@ export class CronService {
    * Get billing contact for an organization.
    */
   private async getBillingContact(orgId: string): Promise<BillingContact | null> {
-    const org = await db.query.organizations.findFirst({
+    const org = await (
+      await getDb()
+    ).query.organizations.findFirst({
       where: eq(organizations.id, orgId),
     });
 
@@ -242,14 +258,18 @@ export class CronService {
 
     // Find the primary billing contact (CEO or first admin)
     const adminRoles = ['org_owner', 'org_owner', 'system_admin'];
-    const adminUser = await db.query.users.findFirst({
+    const adminUser = await (
+      await getDb()
+    ).query.users.findFirst({
       where: and(eq(users.organizationId, orgId), inArray(users.role, adminRoles)),
     });
 
     // Fallback to any user in the org
     const user =
       adminUser ||
-      (await db.query.users.findFirst({
+      (await (
+        await getDb()
+      ).query.users.findFirst({
         where: eq(users.organizationId, orgId),
       }));
 

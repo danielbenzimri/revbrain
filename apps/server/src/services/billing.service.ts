@@ -4,7 +4,7 @@
  * Handles all billing operations: plan sync with Stripe,
  * checkout session creation, customer portal, subscription management.
  */
-import { db } from '@revbrain/database/client';
+import type { DrizzleDB } from '@revbrain/database';
 import {
   plans,
   organizations,
@@ -27,6 +27,16 @@ import {
 } from '../emails/templates/index.ts';
 import { getAlertingService } from '../alerting/index.ts';
 import type Stripe from 'stripe';
+
+// Lazy database accessor — prevents postgres.js from loading on Edge Functions (Deno)
+let _db: DrizzleDB | null = null;
+async function getDb(): Promise<DrizzleDB> {
+  if (!_db) {
+    const { db } = await import('@revbrain/database/client');
+    _db = db;
+  }
+  return _db;
+}
 
 /** Billing contact info for an organization */
 interface BillingContact {
@@ -80,7 +90,9 @@ export class BillingService {
     const stripe = getStripe();
 
     // Get plan with Stripe Price ID
-    const plan = await db.query.plans.findFirst({
+    const plan = await (
+      await getDb()
+    ).query.plans.findFirst({
       where: eq(plans.id, input.planId),
     });
 
@@ -93,7 +105,9 @@ export class BillingService {
     }
 
     // Get or create Stripe Customer
-    const org = await db.query.organizations.findFirst({
+    const org = await (
+      await getDb()
+    ).query.organizations.findFirst({
       where: eq(organizations.id, input.organizationId),
     });
 
@@ -115,7 +129,7 @@ export class BillingService {
       customerId = customer.id;
 
       // Save customer ID
-      await db
+      await (await getDb())
         .update(organizations)
         .set({ stripeCustomerId: customerId })
         .where(eq(organizations.id, input.organizationId));
@@ -180,7 +194,9 @@ export class BillingService {
   ): Promise<{ portalUrl: string }> {
     const stripe = getStripe();
 
-    const org = await db.query.organizations.findFirst({
+    const org = await (
+      await getDb()
+    ).query.organizations.findFirst({
       where: eq(organizations.id, organizationId),
     });
 
@@ -202,7 +218,9 @@ export class BillingService {
    * Get current subscription status for an organization.
    */
   async getSubscription(organizationId: string) {
-    const subscription = await db.query.subscriptions.findFirst({
+    const subscription = await (
+      await getDb()
+    ).query.subscriptions.findFirst({
       where: eq(subscriptions.organizationId, organizationId),
       with: {
         plan: true,
@@ -253,7 +271,9 @@ export class BillingService {
     const offset = options?.offset ?? 0;
 
     // Fetch one extra to determine hasMore
-    const payments = await db.query.paymentHistory.findMany({
+    const payments = await (
+      await getDb()
+    ).query.paymentHistory.findMany({
       where: eq(paymentHistory.organizationId, organizationId),
       orderBy: (p, { desc }) => [desc(p.createdAt)],
       limit: limit + 1,
@@ -296,7 +316,9 @@ export class BillingService {
 
     const stripe = getStripe();
 
-    const plan = await db.query.plans.findFirst({
+    const plan = await (
+      await getDb()
+    ).query.plans.findFirst({
       where: eq(plans.id, planId),
     });
 
@@ -335,7 +357,9 @@ export class BillingService {
     });
 
     // Update plan with Stripe IDs
-    await db
+    await (
+      await getDb()
+    )
       .update(plans)
       .set({
         stripeProductId: product.id,
@@ -360,7 +384,9 @@ export class BillingService {
       return { synced: 0, errors: ['Stripe not configured'] };
     }
 
-    const unsynced = await db.query.plans.findMany({
+    const unsynced = await (
+      await getDb()
+    ).query.plans.findMany({
       where: isNull(plans.stripeProductId),
     });
 
@@ -406,7 +432,9 @@ export class BillingService {
    */
   async handleWebhookEvent(event: Stripe.Event): Promise<WebhookProcessingResult> {
     // IDEMPOTENCY CHECK: Have we already processed this event?
-    const existingEvent = await db.query.billingEvents.findFirst({
+    const existingEvent = await (
+      await getDb()
+    ).query.billingEvents.findFirst({
       where: eq(billingEvents.stripeEventId, event.id),
     });
 
@@ -433,7 +461,9 @@ export class BillingService {
       });
     } else {
       // New event - log it for debugging and tracking
-      const [inserted] = await db
+      const [inserted] = await (
+        await getDb()
+      )
         .insert(billingEvents)
         .values({
           stripeEventId: event.id,
@@ -476,7 +506,9 @@ export class BillingService {
       }
 
       // Mark as processed successfully
-      await db
+      await (
+        await getDb()
+      )
         .update(billingEvents)
         .set({
           processedAt: new Date(),
@@ -498,7 +530,9 @@ export class BillingService {
 
       // Schedule retry with exponential backoff
       if (eventDbId) {
-        const currentEvent = await db.query.billingEvents.findFirst({
+        const currentEvent = await (
+          await getDb()
+        ).query.billingEvents.findFirst({
           where: eq(billingEvents.id, eventDbId),
         });
 
@@ -506,7 +540,9 @@ export class BillingService {
           const newRetryCount = currentEvent.retryCount + 1;
           const nextRetryAt = this.calculateNextRetryTime(newRetryCount);
 
-          await db
+          await (
+            await getDb()
+          )
             .update(billingEvents)
             .set({
               retryCount: newRetryCount,
@@ -599,7 +635,9 @@ export class BillingService {
     if (!orgId) {
       // Try to find org by customer ID
       const customerId = subscription.customer as string;
-      const org = await db.query.organizations.findFirst({
+      const org = await (
+        await getDb()
+      ).query.organizations.findFirst({
         where: eq(organizations.stripeCustomerId, customerId),
       });
 
@@ -633,7 +671,9 @@ export class BillingService {
     // Find plan by Stripe Price ID
     const subscriptionItem = subscription.items.data[0];
     const priceId = subscriptionItem?.price.id;
-    const newPlan = await db.query.plans.findFirst({
+    const newPlan = await (
+      await getDb()
+    ).query.plans.findFirst({
       where: eq(plans.stripePriceId, priceId),
     });
 
@@ -643,7 +683,9 @@ export class BillingService {
     }
 
     // Get existing subscription to detect plan changes
-    const existingSub = await db.query.subscriptions.findFirst({
+    const existingSub = await (
+      await getDb()
+    ).query.subscriptions.findFirst({
       where: eq(subscriptions.organizationId, orgId),
       with: { plan: true },
     });
@@ -660,7 +702,9 @@ export class BillingService {
       : new Date();
 
     // Upsert subscription record
-    await db
+    await (
+      await getDb()
+    )
       .insert(subscriptions)
       .values({
         organizationId: orgId,
@@ -691,7 +735,10 @@ export class BillingService {
       });
 
     // Update organization's planId for quick access
-    await db.update(organizations).set({ planId: newPlan.id }).where(eq(organizations.id, orgId));
+    await (await getDb())
+      .update(organizations)
+      .set({ planId: newPlan.id })
+      .where(eq(organizations.id, orgId));
 
     logger.info('Subscription updated', {
       orgId,
@@ -701,7 +748,7 @@ export class BillingService {
 
     // Audit log for subscription changes
     const action = previousPlan ? 'subscription.updated' : 'subscription.created';
-    await db.insert(auditLogs).values({
+    await (await getDb()).insert(auditLogs).values({
       userId: null, // Webhook-triggered, no user context
       organizationId: orgId,
       action,
@@ -764,12 +811,16 @@ export class BillingService {
 
   private async handleSubscriptionDeleted(subscription: Stripe.Subscription): Promise<void> {
     // Get the subscription before updating to find org and plan
-    const existingSub = await db.query.subscriptions.findFirst({
+    const existingSub = await (
+      await getDb()
+    ).query.subscriptions.findFirst({
       where: eq(subscriptions.stripeSubscriptionId, subscription.id),
       with: { plan: true },
     });
 
-    await db
+    await (
+      await getDb()
+    )
       .update(subscriptions)
       .set({
         status: 'canceled',
@@ -782,7 +833,7 @@ export class BillingService {
 
     // Audit log for cancellation
     if (existingSub) {
-      await db.insert(auditLogs).values({
+      await (await getDb()).insert(auditLogs).values({
         userId: null, // Webhook-triggered, no user context
         organizationId: existingSub.organizationId,
         action: 'subscription.canceled',
@@ -807,7 +858,9 @@ export class BillingService {
   private async handlePaymentSucceeded(invoice: Stripe.Invoice): Promise<void> {
     const customerId = invoice.customer as string;
 
-    const org = await db.query.organizations.findFirst({
+    const org = await (
+      await getDb()
+    ).query.organizations.findFirst({
       where: eq(organizations.stripeCustomerId, customerId),
     });
 
@@ -822,7 +875,9 @@ export class BillingService {
       (invoice.payments?.data?.[0]?.payment?.payment_intent as string | null) ?? null;
 
     // Record payment
-    await db
+    await (
+      await getDb()
+    )
       .insert(paymentHistory)
       .values({
         organizationId: org.id,
@@ -843,7 +898,7 @@ export class BillingService {
     });
 
     // Audit log for successful payment
-    await db.insert(auditLogs).values({
+    await (await getDb()).insert(auditLogs).values({
       userId: null, // Webhook-triggered, no user context
       organizationId: org.id,
       action: 'payment.succeeded',
@@ -861,7 +916,9 @@ export class BillingService {
   private async handlePaymentFailed(invoice: Stripe.Invoice): Promise<void> {
     const customerId = invoice.customer as string;
 
-    const org = await db.query.organizations.findFirst({
+    const org = await (
+      await getDb()
+    ).query.organizations.findFirst({
       where: eq(organizations.stripeCustomerId, customerId),
     });
 
@@ -871,7 +928,9 @@ export class BillingService {
     }
 
     // Record failed payment
-    await db
+    await (
+      await getDb()
+    )
       .insert(paymentHistory)
       .values({
         organizationId: org.id,
@@ -905,7 +964,7 @@ export class BillingService {
       .catch(() => {}); // Fire and forget
 
     // Audit log for failed payment
-    await db.insert(auditLogs).values({
+    await (await getDb()).insert(auditLogs).values({
       userId: null, // Webhook-triggered, no user context
       organizationId: org.id,
       action: 'payment.failed',
@@ -929,7 +988,9 @@ export class BillingService {
    * Returns the CEO/owner first, then falls back to any admin user.
    */
   private async getBillingContact(orgId: string): Promise<BillingContact | null> {
-    const org = await db.query.organizations.findFirst({
+    const org = await (
+      await getDb()
+    ).query.organizations.findFirst({
       where: eq(organizations.id, orgId),
     });
 
@@ -937,14 +998,18 @@ export class BillingService {
 
     // Find the primary billing contact (CEO or first admin)
     const adminRoles = ['org_owner', 'system_admin'];
-    const adminUser = await db.query.users.findFirst({
+    const adminUser = await (
+      await getDb()
+    ).query.users.findFirst({
       where: and(eq(users.organizationId, orgId), inArray(users.role, adminRoles)),
     });
 
     // Fallback to any user in the org
     const fallbackUser =
       adminUser ||
-      (await db.query.users.findFirst({
+      (await (
+        await getDb()
+      ).query.users.findFirst({
         where: eq(users.organizationId, orgId),
       }));
 
@@ -969,7 +1034,9 @@ export class BillingService {
       }
 
       // Get subscription and plan info
-      const sub = await db.query.subscriptions.findFirst({
+      const sub = await (
+        await getDb()
+      ).query.subscriptions.findFirst({
         where: eq(subscriptions.organizationId, orgId),
         with: { plan: true },
       });
@@ -1035,7 +1102,9 @@ export class BillingService {
       }
 
       // Get subscription info
-      const sub = await db.query.subscriptions.findFirst({
+      const sub = await (
+        await getDb()
+      ).query.subscriptions.findFirst({
         where: eq(subscriptions.organizationId, orgId),
         with: { plan: true },
       });
@@ -1147,7 +1216,9 @@ export class BillingService {
     const stripe = getStripe();
 
     // Get current subscription
-    const subscription = await db.query.subscriptions.findFirst({
+    const subscription = await (
+      await getDb()
+    ).query.subscriptions.findFirst({
       where: eq(subscriptions.organizationId, organizationId),
     });
 
@@ -1157,13 +1228,17 @@ export class BillingService {
 
     // Get current plan for audit logging
     const currentPlan = subscription.planId
-      ? await db.query.plans.findFirst({
+      ? await (
+          await getDb()
+        ).query.plans.findFirst({
           where: eq(plans.id, subscription.planId),
         })
       : null;
 
     // Get new plan
-    const newPlan = await db.query.plans.findFirst({
+    const newPlan = await (
+      await getDb()
+    ).query.plans.findFirst({
       where: eq(plans.id, newPlanId),
     });
 
@@ -1214,7 +1289,7 @@ export class BillingService {
     });
 
     // Audit log the plan change
-    await db.insert(auditLogs).values({
+    await (await getDb()).insert(auditLogs).values({
       userId: options?.actorId || null,
       organizationId,
       action: 'subscription.plan_changed',
@@ -1250,7 +1325,9 @@ export class BillingService {
     const stripe = getStripe();
 
     // Get current subscription
-    const subscription = await db.query.subscriptions.findFirst({
+    const subscription = await (
+      await getDb()
+    ).query.subscriptions.findFirst({
       where: eq(subscriptions.organizationId, organizationId),
     });
 
@@ -1260,7 +1337,9 @@ export class BillingService {
 
     // Get plan info for audit log
     const plan = subscription.planId
-      ? await db.query.plans.findFirst({
+      ? await (
+          await getDb()
+        ).query.plans.findFirst({
           where: eq(plans.id, subscription.planId),
         })
       : null;
@@ -1301,7 +1380,7 @@ export class BillingService {
         : null;
 
     // Audit log the cancellation
-    await db.insert(auditLogs).values({
+    await (await getDb()).insert(auditLogs).values({
       userId: options?.actorId || null,
       organizationId,
       action: 'subscription.canceled',
@@ -1331,7 +1410,9 @@ export class BillingService {
     const stripe = getStripe();
 
     // Get current subscription
-    const subscription = await db.query.subscriptions.findFirst({
+    const subscription = await (
+      await getDb()
+    ).query.subscriptions.findFirst({
       where: eq(subscriptions.organizationId, organizationId),
     });
 
@@ -1341,7 +1422,9 @@ export class BillingService {
 
     // Get plan info for audit log
     const plan = subscription.planId
-      ? await db.query.plans.findFirst({
+      ? await (
+          await getDb()
+        ).query.plans.findFirst({
           where: eq(plans.id, subscription.planId),
         })
       : null;
@@ -1373,7 +1456,9 @@ export class BillingService {
     });
 
     // Update local record immediately (webhook will also update, but this provides immediate feedback)
-    await db
+    await (
+      await getDb()
+    )
       .update(subscriptions)
       .set({
         cancelAtPeriodEnd: false,
@@ -1382,7 +1467,7 @@ export class BillingService {
       .where(eq(subscriptions.organizationId, organizationId));
 
     // Audit log the reactivation
-    await db.insert(auditLogs).values({
+    await (await getDb()).insert(auditLogs).values({
       userId: options?.actorId || null,
       organizationId,
       action: 'subscription.reactivated',
@@ -1422,7 +1507,9 @@ export class BillingService {
     refundReason: string | null;
     createdAt: Date;
   } | null> {
-    const payment = await db.query.paymentHistory.findFirst({
+    const payment = await (
+      await getDb()
+    ).query.paymentHistory.findFirst({
       where: eq(paymentHistory.id, paymentId),
     });
 
@@ -1451,7 +1538,9 @@ export class BillingService {
     const stripe = getStripe();
 
     // Get the payment
-    const payment = await db.query.paymentHistory.findFirst({
+    const payment = await (
+      await getDb()
+    ).query.paymentHistory.findFirst({
       where: eq(paymentHistory.id, input.paymentId),
     });
 
@@ -1498,7 +1587,9 @@ export class BillingService {
     const newRefundedTotal = alreadyRefunded + refundAmount;
     const newStatus = newRefundedTotal >= payment.amountCents ? 'refunded' : 'partially_refunded';
 
-    await db
+    await (
+      await getDb()
+    )
       .update(paymentHistory)
       .set({
         stripeRefundId: refund.id,
@@ -1518,7 +1609,7 @@ export class BillingService {
     });
 
     // Audit log
-    await db.insert(auditLogs).values({
+    await (await getDb()).insert(auditLogs).values({
       userId: input.actorId,
       organizationId: payment.organizationId,
       action: 'payment.refunded',
@@ -1564,7 +1655,9 @@ export class BillingService {
     }
 
     // Find the payment by payment intent
-    const payment = await db.query.paymentHistory.findFirst({
+    const payment = await (
+      await getDb()
+    ).query.paymentHistory.findFirst({
       where: eq(paymentHistory.stripePaymentIntentId, paymentIntentId),
     });
 
@@ -1589,7 +1682,9 @@ export class BillingService {
       payment.refundedAmountCents !== refundedAmount ||
       payment.status !== (isFullRefund ? 'refunded' : 'partially_refunded')
     ) {
-      await db
+      await (
+        await getDb()
+      )
         .update(paymentHistory)
         .set({
           stripeRefundId: stripeRefundId || payment.stripeRefundId,
@@ -1607,7 +1702,7 @@ export class BillingService {
       });
 
       // Audit log for external refund
-      await db.insert(auditLogs).values({
+      await (await getDb()).insert(auditLogs).values({
         userId: null, // Webhook-triggered
         organizationId: payment.organizationId,
         action: 'payment.refunded',

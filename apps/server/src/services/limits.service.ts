@@ -16,10 +16,20 @@ import type {
   PlanFeatures,
 } from '@revbrain/contract';
 import { AppError, ErrorCodes } from '@revbrain/contract';
-import { db } from '@revbrain/database/client';
+import type { DrizzleDB } from '@revbrain/database';
 import { subscriptions } from '@revbrain/database';
 import { eq } from 'drizzle-orm';
 import { logger } from '../lib/logger.ts';
+
+// Lazy database accessor — prevents postgres.js from loading on Edge Functions (Deno)
+let _db: DrizzleDB | null = null;
+async function getDb(): Promise<DrizzleDB> {
+  if (!_db) {
+    const { db } = await import('@revbrain/database/client');
+    _db = db;
+  }
+  return _db;
+}
 
 // ============================================================================
 // TYPES
@@ -428,7 +438,9 @@ export class LimitsService {
     const storageUsedGB = org.storageUsedBytes / BYTES_PER_GB;
 
     // Fetch subscription status from database
-    const sub = await db.query.subscriptions.findFirst({
+    const sub = await (
+      await getDb()
+    ).query.subscriptions.findFirst({
       where: eq(subscriptions.organizationId, organizationId),
     });
 

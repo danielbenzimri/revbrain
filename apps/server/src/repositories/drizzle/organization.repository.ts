@@ -129,6 +129,8 @@ export class DrizzleOrganizationRepository implements OrganizationRepository {
             features: result.plan.features,
             isActive: result.plan.isActive,
             isPublic: result.plan.isPublic,
+            stripeProductId: result.plan.stripeProductId ?? null,
+            stripePriceId: result.plan.stripePriceId ?? null,
             createdAt: result.plan.createdAt,
             updatedAt: result.plan.updatedAt,
           }

@@ -5,12 +5,22 @@
  * This service is used to process webhook events that failed during
  * initial processing and need to be retried.
  */
-import { db } from '@revbrain/database/client';
+import type { DrizzleDB } from '@revbrain/database';
 import { billingEvents } from '@revbrain/database';
 import { eq, and, lt, isNull, sql, lte } from 'drizzle-orm';
 import { BillingService } from './billing.service.ts';
 import { logger } from '../lib/logger.ts';
 import type Stripe from 'stripe';
+
+// Lazy database accessor — prevents postgres.js from loading on Edge Functions (Deno)
+let _db: DrizzleDB | null = null;
+async function getDb(): Promise<DrizzleDB> {
+  if (!_db) {
+    const { db } = await import('@revbrain/database/client');
+    _db = db;
+  }
+  return _db;
+}
 
 /** Configuration for exponential backoff */
 const BACKOFF_CONFIG = {
@@ -66,7 +76,9 @@ export class WebhookRetryService {
    * @param error The error message from the failed attempt
    */
   async scheduleRetry(eventId: string, error: string): Promise<void> {
-    const event = await db.query.billingEvents.findFirst({
+    const event = await (
+      await getDb()
+    ).query.billingEvents.findFirst({
       where: eq(billingEvents.id, eventId),
     });
 
@@ -79,7 +91,9 @@ export class WebhookRetryService {
 
     if (newRetryCount > event.maxRetries) {
       // Mark as exhausted
-      await db
+      await (
+        await getDb()
+      )
         .update(billingEvents)
         .set({
           lastError: error,
@@ -98,7 +112,9 @@ export class WebhookRetryService {
 
     const nextRetryAt = this.calculateNextRetryTime(newRetryCount - 1);
 
-    await db
+    await (
+      await getDb()
+    )
       .update(billingEvents)
       .set({
         retryCount: newRetryCount,
@@ -127,7 +143,9 @@ export class WebhookRetryService {
     const now = new Date();
 
     // Find events that are due for retry
-    const pendingEvents = await db.query.billingEvents.findMany({
+    const pendingEvents = await (
+      await getDb()
+    ).query.billingEvents.findMany({
       where: and(
         isNull(billingEvents.processedAt),
         lte(billingEvents.nextRetryAt, now),
@@ -158,7 +176,7 @@ export class WebhookRetryService {
         } as Stripe.Event;
 
         // Clear nextRetryAt before processing to prevent duplicate processing
-        await db
+        await (await getDb())
           .update(billingEvents)
           .set({ nextRetryAt: null })
           .where(eq(billingEvents.id, event.id));
@@ -212,7 +230,9 @@ export class WebhookRetryService {
     exhausted: number;
   }> {
     // Pending retries (scheduled but not yet due or currently processing)
-    const [pending] = await db
+    const [pending] = await (
+      await getDb()
+    )
       .select({ count: sql<number>`count(*)::int` })
       .from(billingEvents)
       .where(
@@ -223,7 +243,9 @@ export class WebhookRetryService {
       );
 
     // Failed events (have error but not exhausted)
-    const [failed] = await db
+    const [failed] = await (
+      await getDb()
+    )
       .select({ count: sql<number>`count(*)::int` })
       .from(billingEvents)
       .where(
@@ -235,7 +257,9 @@ export class WebhookRetryService {
       );
 
     // Exhausted (retry count >= max retries and not processed)
-    const [exhausted] = await db
+    const [exhausted] = await (
+      await getDb()
+    )
       .select({ count: sql<number>`count(*)::int` })
       .from(billingEvents)
       .where(
@@ -257,7 +281,9 @@ export class WebhookRetryService {
    * Useful for admin intervention.
    */
   async retryEvent(eventId: string): Promise<boolean> {
-    const event = await db.query.billingEvents.findFirst({
+    const event = await (
+      await getDb()
+    ).query.billingEvents.findFirst({
       where: eq(billingEvents.id, eventId),
     });
 
@@ -302,7 +328,9 @@ export class WebhookRetryService {
    * Useful for admin intervention after fixing the underlying issue.
    */
   async resetRetryCount(eventId: string, additionalRetries: number = 3): Promise<void> {
-    const event = await db.query.billingEvents.findFirst({
+    const event = await (
+      await getDb()
+    ).query.billingEvents.findFirst({
       where: eq(billingEvents.id, eventId),
     });
 
@@ -310,7 +338,9 @@ export class WebhookRetryService {
       throw new Error('Event not found');
     }
 
-    await db
+    await (
+      await getDb()
+    )
       .update(billingEvents)
       .set({
         retryCount: 0,

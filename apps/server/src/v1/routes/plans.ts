@@ -1,8 +1,5 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { zValidator } from '@hono/zod-validator';
-import { db } from '@revbrain/database/client';
-import { plans } from '@revbrain/database';
-import { eq } from 'drizzle-orm';
 import { authMiddleware } from '../../middleware/auth.ts';
 import { requireRole } from '../../middleware/rbac.ts';
 import { validateUuidParam } from '../../middleware/validate-uuid.ts';
@@ -208,13 +205,10 @@ plansRouter.post(
 
         if (stripeIds) {
           // Update plan with Stripe IDs
-          await db
-            .update(plans)
-            .set({
-              stripeProductId: stripeIds.stripeProductId,
-              stripePriceId: stripeIds.stripePriceId,
-            })
-            .where(eq(plans.id, newPlan.id));
+          await c.var.repos.plans.update(newPlan.id, {
+            stripeProductId: stripeIds.stripeProductId,
+            stripePriceId: stripeIds.stripePriceId,
+          });
 
           logger.info('Plan updated with Stripe IDs', {
             requestId,
@@ -276,11 +270,8 @@ plansRouter.put(
 
     // If plan is becoming public and doesn't have Stripe IDs, sync to Stripe
     if (updatedPlan && input.isPublic === true) {
-      // Check if plan has Stripe IDs by querying the database directly
-      const planWithStripe = await db.query.plans.findFirst({
-        where: eq(plans.id, id),
-        columns: { stripePriceId: true },
-      });
+      // Check if plan has Stripe IDs via repository
+      const planWithStripe = await c.var.repos.plans.findById(id);
 
       if (!planWithStripe?.stripePriceId) {
         const stripeIds = await syncPlanToStripe({
@@ -294,13 +285,10 @@ plansRouter.put(
         });
 
         if (stripeIds) {
-          await db
-            .update(plans)
-            .set({
-              stripeProductId: stripeIds.stripeProductId,
-              stripePriceId: stripeIds.stripePriceId,
-            })
-            .where(eq(plans.id, id));
+          await c.var.repos.plans.update(id, {
+            stripeProductId: stripeIds.stripeProductId,
+            stripePriceId: stripeIds.stripePriceId,
+          });
 
           logger.info('Plan synced to Stripe on publish', {
             planId: id,

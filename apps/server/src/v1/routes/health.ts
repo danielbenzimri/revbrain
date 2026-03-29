@@ -1,7 +1,12 @@
 import { Hono } from 'hono';
 import type { HealthCheckResponse } from '@revbrain/contract';
-import { db } from '@revbrain/database/client';
 import { users, billingEvents } from '@revbrain/database';
+
+// Lazy database accessor — prevents postgres.js from loading on Edge Functions (Deno)
+async function getDb() {
+  const { db } = await import('@revbrain/database/client');
+  return db;
+}
 import { sql, and, isNull } from 'drizzle-orm';
 import { getVersion, getRegion, isProduction } from '../../lib/config.ts';
 import { getEnv } from '../../lib/env.ts';
@@ -321,6 +326,7 @@ healthRouter.get('/full', async (c) => {
 
   const getWebhookStats = async (): Promise<WebhookStats> => {
     try {
+      const db = await getDb();
       // Count pending retries (not processed, retry count < max)
       const [pending] = await db
         .select({ count: sql<number>`count(*)::int` })
