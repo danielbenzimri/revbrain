@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -81,8 +81,14 @@ export function UserDetailDrawer({
     },
   });
 
+  // Track which user ID was last loaded to avoid resetting edit mode on refetch
+  const prevUserIdRef = useRef<string | null>(null);
+
   useEffect(() => {
     if (user) {
+      const isNewUser = prevUserIdRef.current !== user.id;
+      prevUserIdRef.current = user.id;
+
       form.reset({
         fullName: user.name,
         role: user.role,
@@ -93,8 +99,11 @@ export function UserDetailDrawer({
         age: user.age != null ? String(user.age) : '',
         bio: user.bio || '',
       });
-      setIsEditing(false);
-      setShowDeleteConfirm(false);
+
+      if (isNewUser) {
+        setIsEditing(false);
+        setShowDeleteConfirm(false);
+      }
     }
   }, [user, form]);
 

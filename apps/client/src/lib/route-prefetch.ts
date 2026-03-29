@@ -119,6 +119,97 @@ export const routeDataPrefetchMap: Record<string, DataPrefetcher> = {
       },
       staleTime: 5 * 60 * 1000,
     }),
+
+  '/admin': (qc) =>
+    qc.prefetchQuery({
+      queryKey: ['admin', 'stats'],
+      queryFn: async () => {
+        const headers = await getAuthHeaders();
+        const res = await fetch(`${apiUrl}/v1/admin/stats`, { headers });
+        if (!res.ok) return null;
+        const result = await res.json();
+        return result.data;
+      },
+      staleTime: PREFETCH_STALE_TIME,
+    }),
+
+  '/admin/tenants': (qc) =>
+    qc.prefetchQuery({
+      queryKey: ['admin', 'tenants', 'list'],
+      queryFn: async () => {
+        const headers = await getAuthHeaders();
+        const res = await fetch(`${apiUrl}/v1/admin/tenants?limit=50`, { headers });
+        if (!res.ok) return null;
+        const result = await res.json();
+        return result.data;
+      },
+      staleTime: PREFETCH_STALE_TIME,
+    }),
+
+  '/admin/users': (qc) =>
+    qc.prefetchQuery({
+      queryKey: ['admin', 'users', 'list'],
+      queryFn: async () => {
+        const headers = await getAuthHeaders();
+        const res = await fetch(`${apiUrl}/v1/admin/users?limit=50`, { headers });
+        if (!res.ok) return null;
+        const result = await res.json();
+        return result.data;
+      },
+      staleTime: PREFETCH_STALE_TIME,
+    }),
+
+  '/admin/pricing': (qc) =>
+    qc.prefetchQuery({
+      queryKey: ['admin', 'plans', 'list'],
+      queryFn: async () => {
+        const headers = await getAuthHeaders();
+        const res = await fetch(`${apiUrl}/v1/plans`, { headers });
+        if (!res.ok) return null;
+        const result = await res.json();
+        return result.data;
+      },
+      staleTime: 60_000,
+    }),
+
+  '/admin/audit': (qc) =>
+    qc.prefetchQuery({
+      queryKey: ['admin', 'audit', 'list'],
+      queryFn: async () => {
+        const headers = await getAuthHeaders();
+        const res = await fetch(`${apiUrl}/v1/admin/audit?limit=50`, { headers });
+        if (!res.ok) return null;
+        const result = await res.json();
+        return result.data;
+      },
+      staleTime: PREFETCH_STALE_TIME,
+    }),
+
+  '/admin/support': (qc) =>
+    qc.prefetchQuery({
+      queryKey: ['admin', 'support', 'tickets', 'list'],
+      queryFn: async () => {
+        const headers = await getAuthHeaders();
+        const res = await fetch(`${apiUrl}/v1/admin/support/tickets?limit=50`, { headers });
+        if (!res.ok) return null;
+        const result = await res.json();
+        return result.data;
+      },
+      staleTime: PREFETCH_STALE_TIME,
+    }),
+
+  '/admin/coupons': (qc) =>
+    qc.prefetchQuery({
+      queryKey: ['admin', 'coupons', 'list'],
+      queryFn: async () => {
+        const headers = await getAuthHeaders();
+        const res = await fetch(`${apiUrl}/v1/admin/coupons`, { headers });
+        if (!res.ok) return null;
+        const result = await res.json();
+        return result.data;
+      },
+      staleTime: PREFETCH_STALE_TIME,
+    }),
 };
 
 /**
