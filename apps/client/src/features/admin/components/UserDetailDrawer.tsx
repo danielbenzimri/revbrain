@@ -345,11 +345,7 @@ export function UserDetailDrawer({
               </div>
             </div>
           ) : isEditing ? (
-            <form
-              id="edit-user-form"
-              onSubmit={form.handleSubmit(onSubmit)}
-              className="px-6 py-5 space-y-5"
-            >
+            <div className="px-6 py-5 space-y-5">
               <FormField
                 label={t('admin.users.fullName')}
                 htmlFor="fullName"
@@ -417,7 +413,7 @@ export function UserDetailDrawer({
               <FormField label={t('admin.users.bio')} htmlFor="bio">
                 <Input id="bio" {...form.register('bio')} className="border-slate-200" />
               </FormField>
-            </form>
+            </div>
           ) : (
             <div className="divide-y divide-slate-100">
               {/* Contact details */}
@@ -504,10 +500,10 @@ export function UserDetailDrawer({
                 </Button>
                 <div className="flex-1" />
                 <Button
-                  type="submit"
+                  type="button"
                   size="sm"
                   disabled={isSaving}
-                  form="edit-user-form"
+                  onClick={form.handleSubmit(onSubmit)}
                   className="bg-violet-600 hover:bg-violet-700 text-white"
                 >
                   {isSaving && <Loader2 className="h-3.5 w-3.5 me-1.5 animate-spin" />}
