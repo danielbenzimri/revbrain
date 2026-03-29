@@ -11,9 +11,64 @@
  * See: Implementation Plan Task 9.1
  */
 
+import { spawn } from 'node:child_process';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { OpenAPIHono } from '@hono/zod-openapi';
 import type { AppEnv } from '../../types/index.ts';
 import type { AssessmentRunStatus } from '@revbrain/contract';
+
+// ---------------------------------------------------------------------------
+// Local worker dispatch (development only)
+// ---------------------------------------------------------------------------
+
+function dispatchWorkerLocally(runId: string, connectionId: string): void {
+  const isLocal =
+    (process.env.APP_ENV || '').startsWith('local') || process.env.NODE_ENV === 'development';
+
+  if (!isLocal) {
+    console.log(
+      `[assessment] Cloud Run dispatch not yet implemented — run ${runId} awaits external trigger`
+    );
+    return;
+  }
+
+  const workerEntry = resolve(
+    dirname(fileURLToPath(import.meta.url)),
+    '../../../../worker/src/index.ts'
+  );
+
+  console.log(`[assessment] Spawning local worker for run ${runId} → ${workerEntry}`);
+
+  const child = spawn('npx', ['tsx', workerEntry], {
+    env: {
+      ...process.env,
+      JOB_ID: `local-${Date.now()}`,
+      RUN_ID: runId,
+      CONNECTION_ID: connectionId,
+      SUPABASE_STORAGE_URL: `${process.env.SUPABASE_URL}/storage/v1`,
+      INTERNAL_API_URL: 'http://localhost:3000/api',
+      INTERNAL_API_SECRET: process.env.WORKER_SECRET || '',
+      LOG_LEVEL: 'info',
+      WORKER_VERSION: 'local-dev',
+      TRACE_ID: `local-trace-${runId.slice(0, 8)}`,
+    },
+    stdio: ['ignore', 'pipe', 'pipe'],
+    detached: true,
+  });
+
+  child.stdout?.on('data', (data: Buffer) =>
+    console.log(`[worker:${runId.slice(0, 8)}] ${data.toString().trimEnd()}`)
+  );
+  child.stderr?.on('data', (data: Buffer) =>
+    console.error(`[worker:${runId.slice(0, 8)}] ${data.toString().trimEnd()}`)
+  );
+  child.on('error', (err) =>
+    console.error(`[worker:${runId.slice(0, 8)}] spawn error:`, err.message)
+  );
+
+  child.unref();
+}
 
 export const assessmentRouter = new OpenAPIHono<AppEnv>();
 
@@ -141,9 +196,8 @@ assessmentRouter.post('/:projectId/assessment/run', async (c) => {
     );
   }
 
-  // 9. Trigger Cloud Run Job (placeholder — returns dispatched status)
-  // In production: call GCP Cloud Run Jobs API to create execution
-  // For now: the worker can poll for dispatched runs or be triggered externally
+  // 9. Trigger worker (local spawn in dev, Cloud Run in production)
+  dispatchWorkerLocally(dispatched.id, sourceConnection.id);
 
   return c.json(
     {

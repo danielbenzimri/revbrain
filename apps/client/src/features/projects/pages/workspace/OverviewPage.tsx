@@ -169,6 +169,7 @@ const ConnectionCard = memo(function ConnectionCard({
   onDisconnect,
   onTest,
   isConnecting,
+  connectError,
 }: {
   type: 'source' | 'target';
   connection: ConnectionCardData | null;
@@ -178,6 +179,7 @@ const ConnectionCard = memo(function ConnectionCard({
   onDisconnect?: () => void;
   onTest?: () => void;
   isConnecting?: boolean;
+  connectError?: Error | null;
 }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -185,7 +187,12 @@ const ConnectionCard = memo(function ConnectionCard({
 
   if (!connection) {
     return (
-      <div className="bg-white rounded-2xl p-6 flex flex-col items-center justify-center text-center min-h-[200px]">
+      <div
+        className="bg-white rounded-2xl p-6 flex flex-col items-center justify-center text-center min-h-[200px] cursor-pointer border border-transparent hover:border-violet-300 transition-colors"
+        onClick={onConnect || (() => navigate(`/project/${projectId}`))}
+        role="button"
+        tabIndex={0}
+      >
         <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mb-4">
           <Plug size={20} className="text-slate-400" />
         </div>
@@ -200,7 +207,10 @@ const ConnectionCard = memo(function ConnectionCard({
             : t('workspace.overview.connectionCards.noTargetDescription')}
         </p>
         <button
-          onClick={onConnect || (() => navigate(`/project/${projectId}`))}
+          onClick={(e) => {
+            e.stopPropagation();
+            (onConnect || (() => navigate(`/project/${projectId}`)))();
+          }}
           disabled={isConnecting}
           className="inline-flex items-center gap-2 px-5 py-2.5 bg-violet-600 text-white text-sm font-medium rounded-lg hover:bg-violet-700 transition-colors disabled:opacity-50"
           aria-label={t('workspace.overview.connectionCards.connect')}
@@ -208,6 +218,11 @@ const ConnectionCard = memo(function ConnectionCard({
           {isConnecting ? <RefreshCw size={16} className="animate-spin" /> : <Plus size={16} />}
           {isConnecting ? 'Connecting...' : t('workspace.overview.connectionCards.connect')}
         </button>
+        {connectError && (
+          <p className="text-xs text-red-500 mt-2">
+            {connectError instanceof Error ? connectError.message : 'Connection failed'}
+          </p>
+        )}
       </div>
     );
   }
@@ -598,8 +613,18 @@ export default function OverviewPage() {
 
   // Salesforce connection hooks
   const { data: sfConnections } = useSalesforceConnections(id);
-  const { connect: connectSource, isConnecting: isConnectingSource } = useConnectSalesforce(id);
-  const { connect: connectTarget, isConnecting: isConnectingTarget } = useConnectSalesforce(id);
+  const {
+    connect: connectSource,
+    isConnecting: isConnectingSource,
+    error: connectSourceError,
+    reset: resetSourceConnect,
+  } = useConnectSalesforce(id);
+  const {
+    connect: connectTarget,
+    isConnecting: isConnectingTarget,
+    error: connectTargetError,
+    reset: resetTargetConnect,
+  } = useConnectSalesforce(id);
   const disconnectMutation = useDisconnectSalesforce(id);
   const testMutation = useTestConnection(id);
 
@@ -630,20 +655,28 @@ export default function OverviewPage() {
           connection={data.sourceConnection}
           projectId={id}
           formatTimeAgo={formatTimeAgo}
-          onConnect={() => connectSource({ instanceType: 'production', connectionRole: 'source' })}
+          onConnect={() => {
+            resetSourceConnect();
+            connectSource({ instanceType: 'production', connectionRole: 'source' });
+          }}
           onDisconnect={() => disconnectMutation.mutate('source')}
           onTest={() => testMutation.mutate('source')}
           isConnecting={isConnectingSource}
+          connectError={connectSourceError}
         />
         <ConnectionCard
           type="target"
           connection={data.targetConnection}
           projectId={id}
           formatTimeAgo={formatTimeAgo}
-          onConnect={() => connectTarget({ instanceType: 'production', connectionRole: 'target' })}
+          onConnect={() => {
+            resetTargetConnect();
+            connectTarget({ instanceType: 'production', connectionRole: 'target' });
+          }}
           onDisconnect={() => disconnectMutation.mutate('target')}
           onTest={() => testMutation.mutate('target')}
           isConnecting={isConnectingTarget}
+          connectError={connectTargetError}
         />
       </div>
 

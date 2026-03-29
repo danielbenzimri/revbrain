@@ -5,7 +5,8 @@
     "export": "Export",
     "generateReport": "Generate Report",
     "exportCsv": "Export CSV",
-    "copyLink": "Copy Link"
+    "copyLink": "Copy Link",
+    "rerun": "Re-Extract"
   },
   "tabs": {
     "overview": "Overview",
@@ -271,5 +272,43 @@
   "empty": {
     "noAssessment": "No assessment data available",
     "runAssessment": "Run an assessment to see results"
-  }
+  },
+  "executiveSummary": {
+    "title": "Executive Summary",
+    "migrationReadiness": "Migration Readiness",
+    "high": "High",
+    "moderate": "Moderate",
+    "low": "Low",
+    "totalItems": "Total Items",
+    "domainsScanned": "Domains Scanned",
+    "criticalBlockers": "Critical Blockers",
+    "rcaLicenseStatus": "RCA License Status",
+    "ready": "Ready",
+    "blocked": "Blocked",
+    "rcaWarning": "RCA licenses are not detected in your org — deployment cannot begin until licenses are procured and assigned."
+  },
+  "cpqIntelligence": {
+    "title": "CPQ Intelligence",
+    "settings": "CPQ Settings",
+    "plugins": "Plugins",
+    "complexityHotspots": "Complexity Hotspots",
+    "dataQuality": "Data Quality",
+    "topProducts": "Top Quoted Products",
+    "conversionByDealSize": "Conversion by Deal Size",
+    "userBehavior": "User Behavior by Role",
+    "discountDistribution": "Discount Distribution",
+    "cpqReports": "CPQ Reports & Dashboards",
+    "objectInventory": "Object Inventory",
+    "setting": "Setting",
+    "value": "Value",
+    "product": "Product",
+    "quoted": "Quoted",
+    "object": "Object",
+    "count": "Count",
+    "more": "+{{count}} more",
+    "ofQuotes": "% of quotes",
+    "conversion": "conv."
+  },
+  "detailedAnalysis": "Detailed Analysis",
+  "statusProgress": "Status & Progress"
 }

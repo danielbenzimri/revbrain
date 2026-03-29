@@ -20,6 +20,7 @@ import {
   useAssessmentStatus,
   useStartAssessmentRun,
   useAssessmentFindings,
+  useGenerateReport,
 } from '../../hooks/use-assessment-run';
 import { transformFindingsToAssessmentData } from '../../utils/transform-api-findings';
 
@@ -146,6 +147,7 @@ export default function AssessmentPage() {
       ? apiStatus.runId
       : undefined;
   const { data: findingsResult } = useAssessmentFindings(id, completedRunId);
+  const generateReport = useGenerateReport(id);
 
   // Only use mock fallback in mock mode — staging/production should show real data or empty state
   const isMockMode = import.meta.env.VITE_AUTH_MODE === 'mock';
@@ -229,10 +231,26 @@ export default function AssessmentPage() {
               {startRun.isPending ? <Loader2 size={14} className="animate-spin" /> : null}
               {t('assessment.header.rerun', { defaultValue: 'Re-Extract' })}
             </button>
-            <button className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
-              {t('assessment.header.export')}
-              <ChevronDown size={14} />
+            <button
+              onClick={() => {
+                if (completedRunId) generateReport.mutate(completedRunId);
+              }}
+              disabled={!completedRunId || generateReport.isPending}
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {generateReport.isPending ? <Loader2 size={14} className="animate-spin" /> : null}
+              {generateReport.isSuccess
+                ? t('assessment.header.reportReady', { defaultValue: 'Report Ready' })
+                : t('assessment.header.export')}
+              {!generateReport.isPending && !generateReport.isSuccess && <ChevronDown size={14} />}
             </button>
+            {generateReport.isError && (
+              <span className="text-xs text-red-500">
+                {generateReport.error instanceof Error
+                  ? generateReport.error.message
+                  : 'Report generation failed'}
+              </span>
+            )}
           </div>
         </div>
 

@@ -568,6 +568,22 @@ export class UsageCollector extends BaseCollector {
 
         if (inSeg.length === 0) continue;
 
+        // G-20: Avg Close Time per Segment
+        let avgCloseDays = 0;
+        if (ordered.length > 0) {
+          const totalDays = ordered.reduce((sum, q) => {
+            const created = Date.parse(String(q.CreatedDate ?? ''));
+            const closed = Date.parse(String(q.LastModifiedDate ?? ''));
+            const days = (closed - created) / 86400000;
+            return sum + Math.max(days, 0);
+          }, 0);
+          avgCloseDays = Math.round(totalDays / ordered.length);
+        }
+
+        const convPct = Math.round((ordered.length / inSeg.length) * 100);
+        const quotePct = Math.round((inSeg.length / recentQuotes.length) * 100);
+        const revPct = Math.round((segRevenue / (totalRevenue || 1)) * 100);
+
         findings.push(
           createFinding({
             domain: 'usage',
@@ -578,22 +594,27 @@ export class UsageCollector extends BaseCollector {
             findingType: 'conversion_segment',
             riskLevel: 'info',
             countValue: inSeg.length,
-            notes: `${Math.round((inSeg.length / recentQuotes.length) * 100)}% of quotes, ${Math.round((segRevenue / (totalRevenue || 1)) * 100)}% of revenue. Conversion: ${Math.round((ordered.length / inSeg.length) * 100)}%.`,
+            notes: `${quotePct}% of quotes, ${revPct}% of revenue. Conversion: ${convPct}%.${ordered.length > 0 ? ` Avg close time: ${avgCloseDays} days.` : ''}`,
             evidenceRefs: [
               {
                 type: 'count' as const,
-                value: String(Math.round((inSeg.length / recentQuotes.length) * 100)),
+                value: String(quotePct),
                 label: '% of quotes',
               },
               {
                 type: 'count' as const,
-                value: String(Math.round((segRevenue / (totalRevenue || 1)) * 100)),
+                value: String(revPct),
                 label: '% of revenue',
               },
               {
                 type: 'count' as const,
-                value: String(Math.round((ordered.length / inSeg.length) * 100)),
+                value: String(convPct),
                 label: 'conversion %',
+              },
+              {
+                type: 'count' as const,
+                value: String(avgCloseDays),
+                label: 'avg close days',
               },
             ],
           })

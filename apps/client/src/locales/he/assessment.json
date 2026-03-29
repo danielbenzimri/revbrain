@@ -5,7 +5,8 @@
     "export": "ייצוא",
     "generateReport": "הפקת דוח",
     "exportCsv": "ייצוא CSV",
-    "copyLink": "העתקת קישור"
+    "copyLink": "העתקת קישור",
+    "rerun": "חילוץ מחדש"
   },
   "tabs": {
     "overview": "סקירה כללית",
@@ -271,5 +272,43 @@
   "empty": {
     "noAssessment": "אין נתוני הערכה זמינים",
     "runAssessment": "הרץ הערכה כדי לראות תוצאות"
-  }
+  },
+  "executiveSummary": {
+    "title": "תקציר מנהלים",
+    "migrationReadiness": "מוכנות להגירה",
+    "high": "גבוהה",
+    "moderate": "בינונית",
+    "low": "נמוכה",
+    "totalItems": "סך פריטים",
+    "domainsScanned": "תחומים שנסרקו",
+    "criticalBlockers": "חוסמים קריטיים",
+    "rcaLicenseStatus": "סטטוס רישיון RCA",
+    "ready": "מוכן",
+    "blocked": "חסום",
+    "rcaWarning": "רישיונות RCA לא זוהו בארגון שלך — לא ניתן להתחיל בפריסה עד לרכישת רישיונות."
+  },
+  "cpqIntelligence": {
+    "title": "מודיעין CPQ",
+    "settings": "הגדרות CPQ",
+    "plugins": "תוספים",
+    "complexityHotspots": "נקודות חמות של מורכבות",
+    "dataQuality": "איכות נתונים",
+    "topProducts": "מוצרים מצוטטים ביותר",
+    "conversionByDealSize": "המרה לפי גודל עסקה",
+    "userBehavior": "התנהגות משתמשים לפי תפקיד",
+    "discountDistribution": "התפלגות הנחות",
+    "cpqReports": "דוחות ולוחות מחוונים CPQ",
+    "objectInventory": "מלאי אובייקטים",
+    "setting": "הגדרה",
+    "value": "ערך",
+    "product": "מוצר",
+    "quoted": "צוטט",
+    "object": "אובייקט",
+    "count": "כמות",
+    "more": "+{{count}} נוספים",
+    "ofQuotes": "% מהצעות",
+    "conversion": "המרה"
+  },
+  "detailedAnalysis": "ניתוח מפורט",
+  "statusProgress": "סטטוס והתקדמות"
 }

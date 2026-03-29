@@ -19,6 +19,7 @@ import { BaseCollector, type CollectorContext, type CollectorResult } from './ba
 import type { CollectorDefinition } from './registry.ts';
 import type { AssessmentFindingInput, CollectorMetricsInput } from '@revbrain/contract';
 import { createFinding } from '../normalize/findings.ts';
+import type { DescribeResult } from '../salesforce/rest.ts';
 
 // Objects we expect in a CPQ org (from Extraction Spec §4.2)
 const REQUIRED_CPQ_OBJECTS = [
@@ -647,6 +648,141 @@ export class DiscoveryCollector extends BaseCollector {
           ],
         })
       );
+    }
+
+    // ================================================================
+    // G-11: Field Completeness Sampling
+    // ================================================================
+    this.ctx.progress.updateSubstep('discovery', 'field_completeness');
+    this.log.info('g_11_field_completeness_sampling');
+
+    const FIELD_COMPLETENESS_OBJECTS = [
+      'SBQQ__Quote__c',
+      'SBQQ__QuoteLine__c',
+      'Product2',
+      'PricebookEntry',
+      'Order',
+      'OrderItem',
+    ];
+
+    const SAMPLE_SIZE = 100;
+    const HIGH_POPULATION_THRESHOLD = 0.5; // 50%
+    const LOW_POPULATION_THRESHOLD = 0.05; // 5%
+
+    for (const objectName of FIELD_COMPLETENESS_OBJECTS) {
+      if (await this.checkCancellation()) return this.emptyResult('success');
+
+      try {
+        const describe = this.ctx.describeCache.get(objectName) as DescribeResult | undefined;
+        if (!describe) {
+          this.log.warn({ object: objectName }, 'field_completeness_skip_no_describe');
+          warnings.push(`G-11: Skipped ${objectName} — no Describe available`);
+          continue;
+        }
+
+        // For SBQQ objects, sample only SBQQ__ fields; for standard objects, sample all queryable fields
+        const isSbqqObject = objectName.startsWith('SBQQ__');
+        const targetFields = describe.fields
+          .filter((f) => {
+            // Skip compound parent fields (Address, Geolocation)
+            if (f.compoundFieldName) return false;
+            // For SBQQ objects, only SBQQ fields; for standard, all fields
+            return isSbqqObject ? f.name.startsWith('SBQQ__') : true;
+          })
+          .map((f) => f.name);
+
+        if (targetFields.length === 0) {
+          this.log.warn({ object: objectName }, 'field_completeness_skip_no_fields');
+          continue;
+        }
+
+        // Ensure Id is included for the query
+        const queryFields = targetFields.includes('Id') ? targetFields : ['Id', ...targetFields];
+
+        const soql =
+          `SELECT ${queryFields.join(', ')} FROM ${objectName}` +
+          ` ORDER BY CreatedDate DESC LIMIT ${SAMPLE_SIZE}`;
+
+        const result = await this.ctx.restApi.query<Record<string, unknown>>(soql, this.signal);
+        const records = result.records;
+
+        if (records.length === 0) {
+          this.log.info({ object: objectName }, 'field_completeness_no_records');
+          continue;
+        }
+
+        // Count non-null values per field
+        const fieldPopulation: Record<string, number> = {};
+        for (const field of targetFields) {
+          fieldPopulation[field] = 0;
+        }
+
+        for (const record of records) {
+          for (const field of targetFields) {
+            if (record[field] !== null && record[field] !== undefined) {
+              fieldPopulation[field]++;
+            }
+          }
+        }
+
+        const sampleCount = records.length;
+        let populatedAboveThreshold = 0;
+        let lowPopulation = 0;
+
+        for (const field of targetFields) {
+          const rate = fieldPopulation[field] / sampleCount;
+          if (rate >= HIGH_POPULATION_THRESHOLD) populatedAboveThreshold++;
+          if (rate < LOW_POPULATION_THRESHOLD) lowPopulation++;
+        }
+
+        findings.push(
+          createFinding({
+            domain: 'usage',
+            collector: 'discovery',
+            artifactType: 'FieldCompleteness',
+            artifactName: objectName,
+            sourceType: 'object',
+            findingType: 'field_completeness',
+            riskLevel: 'info',
+            countValue: targetFields.length,
+            notes: `${populatedAboveThreshold} of ${targetFields.length} fields populated above 50% threshold`,
+            evidenceRefs: [
+              {
+                type: 'count' as const,
+                value: String(populatedAboveThreshold),
+                label: 'Fields >50% populated',
+              },
+              {
+                type: 'count' as const,
+                value: String(lowPopulation),
+                label: 'Fields <5% populated',
+              },
+            ],
+          })
+        );
+
+        metrics[`fieldCompleteness_${objectName}_total`] = targetFields.length;
+        metrics[`fieldCompleteness_${objectName}_above50pct`] = populatedAboveThreshold;
+        metrics[`fieldCompleteness_${objectName}_below5pct`] = lowPopulation;
+        metrics[`fieldCompleteness_${objectName}_sampleSize`] = sampleCount;
+
+        this.log.info(
+          {
+            object: objectName,
+            totalFields: targetFields.length,
+            above50pct: populatedAboveThreshold,
+            below5pct: lowPopulation,
+            sampleSize: sampleCount,
+          },
+          'field_completeness_sampled'
+        );
+      } catch (err) {
+        this.log.warn(
+          { object: objectName, error: (err as Error).message },
+          'field_completeness_query_failed'
+        );
+        warnings.push(`G-11: Could not sample ${objectName} — ${(err as Error).message}`);
+      }
     }
 
     const coverage = Math.round((presentObjects.length / REQUIRED_CPQ_OBJECTS.length) * 100);
