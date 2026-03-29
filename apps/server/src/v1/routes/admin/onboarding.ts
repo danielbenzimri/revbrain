@@ -64,7 +64,14 @@ onboardingRouter.openapi(
       userAgent: c.req.header('user-agent') || null,
     };
 
-    const result = await c.var.services.onboarding.onboardOrganization(input, ctx);
+    let result;
+    try {
+      result = await c.var.services.onboarding.onboardOrganization(input, ctx);
+    } catch (err) {
+      if (err instanceof AppError) throw err;
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      throw new AppError(ErrorCodes.INTERNAL_SERVER_ERROR, `Onboard failed: ${msg}`, 500);
+    }
 
     try {
       const auditCtx = buildAuditContext(c);
