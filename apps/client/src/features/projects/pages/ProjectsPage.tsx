@@ -187,7 +187,7 @@ export default function ProjectsPage() {
   const prefetchProject = usePrefetchProject();
   const prefetchWorkspace = usePrefetchProjectWorkspace();
 
-  const projects = data?.projects || [];
+  const projects = useMemo(() => data?.projects ?? [], [data?.projects]);
 
   // Filter state from URL params
   const searchInput = searchParams.get('search') || '';

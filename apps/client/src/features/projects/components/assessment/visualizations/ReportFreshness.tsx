@@ -5,6 +5,7 @@
  * Color = CPQ-referencing (red) vs non-CPQ (green).
  * Helps prioritize which reports to rebuild.
  */
+import { useMemo } from 'react';
 import type { ReportDashboardItem } from '../../../mocks/assessment-mock-data';
 
 interface ReportFreshnessProps {
@@ -13,10 +14,12 @@ interface ReportFreshnessProps {
 }
 
 export default function ReportFreshness({ reports, t }: ReportFreshnessProps) {
-  if (!reports || reports.length === 0) return null;
-
-  const now = Date.now();
+  // Stable timestamp for freshness calculations (captured once per mount)
+  // eslint-disable-next-line react-hooks/purity
+  const now = useMemo(() => Date.now(), []);
   const maxDays = 90;
+
+  if (!reports || reports.length === 0) return null;
 
   // Sort by freshness (most recent first)
   const sorted = [...reports].sort((a, b) => {
@@ -59,17 +62,21 @@ export default function ReportFreshness({ reports, t }: ReportFreshnessProps) {
           const isCpq = report.referencesCpq;
 
           const dotColor = isCpq
-            ? daysAgo > 30 ? 'bg-red-500' : daysAgo > 7 ? 'bg-amber-400' : 'bg-red-300'
+            ? daysAgo > 30
+              ? 'bg-red-500'
+              : daysAgo > 7
+                ? 'bg-amber-400'
+                : 'bg-red-300'
             : 'bg-emerald-400';
 
-          const freshLabel = daysAgo === 0 ? 'Today'
-            : daysAgo === 1 ? '1d ago'
-            : `${daysAgo}d ago`;
+          const freshLabel = daysAgo === 0 ? 'Today' : daysAgo === 1 ? '1d ago' : `${daysAgo}d ago`;
 
           return (
             <div key={report.id} className="flex items-center gap-2">
               <div className="w-40 shrink-0 flex items-center gap-1.5">
-                <span className={`text-xs ${report.type === 'dashboard' ? 'text-violet-500' : 'text-slate-400'}`}>
+                <span
+                  className={`text-xs ${report.type === 'dashboard' ? 'text-violet-500' : 'text-slate-400'}`}
+                >
                   {report.type === 'dashboard' ? '▦' : '▤'}
                 </span>
                 <span className="text-xs text-slate-700 truncate">{report.name}</span>
@@ -85,7 +92,9 @@ export default function ReportFreshness({ reports, t }: ReportFreshnessProps) {
                   title={`Last run: ${freshLabel}${isCpq ? ' — references CPQ objects' : ''}`}
                 />
               </div>
-              <span className="text-xs text-slate-400 w-14 text-end tabular-nums">{freshLabel}</span>
+              <span className="text-xs text-slate-400 w-14 text-end tabular-nums">
+                {freshLabel}
+              </span>
             </div>
           );
         })}
