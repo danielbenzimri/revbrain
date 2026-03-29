@@ -58,7 +58,13 @@ describe('AuthService', () => {
     mockSupabase = {
       auth: {
         admin: {
-          inviteUserByEmail: vi.fn(),
+          createUser: vi.fn(),
+          generateLink: vi
+            .fn()
+            .mockResolvedValue({
+              data: { properties: { action_link: 'https://example.com/set-password' } },
+              error: null,
+            }),
           deleteUser: vi.fn(),
           updateUserById: vi.fn(),
           listUsers: vi.fn(),
@@ -70,82 +76,57 @@ describe('AuthService', () => {
   });
 
   describe('inviteUser', () => {
-    it('should successfully invite a user', async () => {
+    const inviteParams = {
+      email: 'test@example.com',
+      redirectTo: 'http://localhost:5173/set-password',
+      metadata: {
+        fullName: 'Test User',
+        role: 'admin',
+        organizationId: 'org-123',
+        organizationName: 'Test Org',
+        invitedBy: 'admin-123',
+        invitedAt: '2026-02-15T00:00:00Z',
+      },
+    };
+
+    it('should successfully create user and return provider ID', async () => {
       const mockUser = { id: 'provider-user-id' };
-      (mockSupabase.auth.admin.inviteUserByEmail as ReturnType<typeof vi.fn>).mockResolvedValue({
+      (mockSupabase.auth.admin.createUser as ReturnType<typeof vi.fn>).mockResolvedValue({
         data: { user: mockUser },
         error: null,
       });
 
-      const result = await authService.inviteUser({
-        email: 'test@example.com',
-        redirectTo: 'http://localhost:5173/set-password',
-        metadata: {
-          fullName: 'Test User',
-          role: 'admin',
-          organizationId: 'org-123',
-          organizationName: 'Test Org',
-          invitedBy: 'admin-123',
-          invitedAt: '2026-02-15T00:00:00Z',
-        },
-      });
+      const result = await authService.inviteUser(inviteParams);
 
       expect(result.providerUserId).toBe('provider-user-id');
-      expect(mockSupabase.auth.admin.inviteUserByEmail).toHaveBeenCalledWith('test@example.com', {
-        redirectTo: 'http://localhost:5173/set-password',
-        data: {
-          full_name: 'Test User',
-          role: 'admin',
-          organization_id: 'org-123',
-          organization_name: 'Test Org',
-          invited_by: 'admin-123',
-          invited_at: '2026-02-15T00:00:00Z',
-        },
-      });
+      expect(mockSupabase.auth.admin.createUser).toHaveBeenCalledWith(
+        expect.objectContaining({
+          email: 'test@example.com',
+          email_confirm: false,
+        })
+      );
     });
 
-    it('should throw error when invite fails with error message', async () => {
-      (mockSupabase.auth.admin.inviteUserByEmail as ReturnType<typeof vi.fn>).mockResolvedValue({
+    it('should throw error when user creation fails', async () => {
+      (mockSupabase.auth.admin.createUser as ReturnType<typeof vi.fn>).mockResolvedValue({
         data: { user: null },
         error: { message: 'Email already in use' },
       });
 
-      await expect(
-        authService.inviteUser({
-          email: 'existing@example.com',
-          redirectTo: 'http://localhost:5173/set-password',
-          metadata: {
-            fullName: 'Test User',
-            role: 'admin',
-            organizationId: 'org-123',
-            organizationName: 'Test Org',
-            invitedBy: 'admin-123',
-            invitedAt: '2026-02-15T00:00:00Z',
-          },
-        })
-      ).rejects.toThrow('Auth invite failed: Email already in use');
+      await expect(authService.inviteUser(inviteParams)).rejects.toThrow(
+        'Auth user creation failed: Email already in use'
+      );
     });
 
-    it('should throw error when invite returns no user', async () => {
-      (mockSupabase.auth.admin.inviteUserByEmail as ReturnType<typeof vi.fn>).mockResolvedValue({
+    it('should throw error when creation returns no user', async () => {
+      (mockSupabase.auth.admin.createUser as ReturnType<typeof vi.fn>).mockResolvedValue({
         data: { user: null },
         error: null,
       });
 
-      await expect(
-        authService.inviteUser({
-          email: 'test@example.com',
-          redirectTo: 'http://localhost:5173/set-password',
-          metadata: {
-            fullName: 'Test User',
-            role: 'admin',
-            organizationId: 'org-123',
-            organizationName: 'Test Org',
-            invitedBy: 'admin-123',
-            invitedAt: '2026-02-15T00:00:00Z',
-          },
-        })
-      ).rejects.toThrow('Auth invite failed: Unknown error');
+      await expect(authService.inviteUser(inviteParams)).rejects.toThrow(
+        'Auth user creation failed: Unknown error'
+      );
     });
   });
 

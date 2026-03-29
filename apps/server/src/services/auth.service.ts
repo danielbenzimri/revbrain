@@ -42,6 +42,7 @@ export interface AuthInviteParams {
 
 export interface AuthInviteResult {
   providerUserId: string;
+  inviteLink?: string | null;
 }
 
 /**
@@ -51,9 +52,12 @@ export class AuthService implements IAuthService {
   constructor(private supabase: SupabaseClient) {}
 
   async inviteUser(params: AuthInviteParams): Promise<AuthInviteResult> {
-    const { data, error } = await this.supabase.auth.admin.inviteUserByEmail(params.email, {
-      redirectTo: params.redirectTo,
-      data: {
+    // Create auth user directly (no Supabase invite email — we send our own via Resend).
+    // This avoids Supabase's email rate limits and lets us use branded templates.
+    const { data, error } = await this.supabase.auth.admin.createUser({
+      email: params.email,
+      email_confirm: false, // User must set password via invite link
+      user_metadata: {
         full_name: params.metadata.fullName,
         role: params.metadata.role,
         organization_id: params.metadata.organizationId,
@@ -64,10 +68,27 @@ export class AuthService implements IAuthService {
     });
 
     if (error || !data.user) {
-      throw new Error(`Auth invite failed: ${error?.message || 'Unknown error'}`);
+      throw new Error(`Auth user creation failed: ${error?.message || 'Unknown error'}`);
     }
 
-    return { providerUserId: data.user.id };
+    // Generate a password reset link (acts as the invite link for set-password flow)
+    const { data: linkData, error: linkError } = await this.supabase.auth.admin.generateLink({
+      type: 'magiclink',
+      email: params.email,
+      options: { redirectTo: params.redirectTo },
+    });
+
+    if (linkError) {
+      logger.warn('Failed to generate invite link, user created without link', {
+        email: params.email,
+        error: linkError.message,
+      });
+    }
+
+    return {
+      providerUserId: data.user.id,
+      inviteLink: linkData?.properties?.action_link || null,
+    };
   }
 
   async deleteUser(providerUserId: string): Promise<void> {

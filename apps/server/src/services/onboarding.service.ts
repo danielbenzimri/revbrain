@@ -1,4 +1,4 @@
-import type { Repositories, OrganizationEntity, UserEntity } from '@revbrain/contract';
+import type { Repositories, OrganizationEntity, UserEntity, EmailPort } from '@revbrain/contract';
 import { AppError, ErrorCodes } from '@revbrain/contract';
 import type { AuthService } from './auth.service.ts';
 import type { OrganizationService } from './organization.service.ts';
@@ -6,6 +6,7 @@ import type { RequestContext } from './types.ts';
 import { getEnv } from '../lib/env.ts';
 import { logger } from '../lib/logger.ts';
 import { withTransaction } from '../repositories/with-transaction.ts';
+import { renderInviteEmail } from '../emails/templates/invite.ts';
 
 export interface OnboardOrganizationInput {
   organization: {
@@ -23,7 +24,8 @@ export class OnboardingService {
   constructor(
     private repos: Repositories,
     private authService: AuthService,
-    private orgService: OrganizationService
+    private orgService: OrganizationService,
+    private emailService?: EmailPort
   ) {}
 
   /**
@@ -54,9 +56,9 @@ export class OnboardingService {
     // Generate unique slug
     const slug = await this.orgService.generateUniqueSlug(orgData.name);
 
-    // Step 1: External call first (auth provider invite)
+    // Step 1: Create auth user (no Supabase email — we send our own)
     const frontendUrl = getEnv('FRONTEND_URL') || 'http://localhost:5173';
-    const { providerUserId } = await this.authService.inviteUser({
+    const { providerUserId, inviteLink } = await this.authService.inviteUser({
       email: adminData.email,
       redirectTo: `${frontendUrl}/set-password`,
       metadata: {
@@ -113,7 +115,32 @@ export class OnboardingService {
         return { organization: org, admin: user };
       });
 
-      return { ...result, invitationSent: true };
+      // Step 3: Send branded invite email via Resend (non-blocking)
+      let invitationSent = false;
+      if (this.emailService) {
+        try {
+          const setPasswordUrl = inviteLink || `${frontendUrl}/set-password`;
+          const html = renderInviteEmail({
+            userName: adminData.fullName,
+            orgName: orgData.name,
+            inviterName: ctx.actorEmail || 'RevBrain Admin',
+            setPasswordUrl,
+          });
+          await this.emailService.send({
+            to: adminData.email,
+            subject: `You've been invited to ${orgData.name} on RevBrain`,
+            html,
+          });
+          invitationSent = true;
+        } catch (emailErr) {
+          logger.warn('Failed to send invite email (non-blocking)', {
+            email: adminData.email,
+            error: (emailErr as Error).message,
+          });
+        }
+      }
+
+      return { ...result, invitationSent };
     } catch (_error) {
       // Compensate: delete the auth provider user
       await this.authService.deleteUser(providerUserId).catch((e) => {

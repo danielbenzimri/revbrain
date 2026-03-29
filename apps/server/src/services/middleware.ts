@@ -37,7 +37,7 @@ export const serviceMiddleware = () => {
     const emailService = getEmailService();
     const orgService = new OrganizationService(repos);
     const userService = new UserService(repos, authService, emailService);
-    const onboardingService = new OnboardingService(repos, authService, orgService);
+    const onboardingService = new OnboardingService(repos, authService, orgService, emailService);
     const limitsService = new LimitsService(repos);
 
     c.set('services', {
