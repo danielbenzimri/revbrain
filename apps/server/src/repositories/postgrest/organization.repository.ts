@@ -28,6 +28,7 @@ export class PostgRESTOrganizationRepository implements OrganizationRepository {
     return insertOne<OrganizationEntity>(this.supabase, 'organizations', {
       name: data.name,
       slug: data.slug,
+      type: data.type ?? 'business',
       seatLimit: data.seatLimit ?? 5,
       planId: data.planId ?? null,
       createdBy: data.createdBy ?? null,

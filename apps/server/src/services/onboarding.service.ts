@@ -141,7 +141,10 @@ export class OnboardingService {
       }
 
       return { ...result, invitationSent };
-    } catch (_error) {
+    } catch (txError) {
+      const errMsg = txError instanceof Error ? txError.message : String(txError);
+      logger.error('Onboarding DB transaction failed', { error: errMsg }, txError as Error);
+
       // Compensate: delete the auth provider user
       await this.authService.deleteUser(providerUserId).catch((e) => {
         logger.error(
@@ -153,7 +156,7 @@ export class OnboardingService {
 
       throw new AppError(
         ErrorCodes.INTERNAL_SERVER_ERROR,
-        'Failed to onboard organization. Please try again.',
+        `Failed to onboard organization: ${errMsg}`,
         500
       );
     }
