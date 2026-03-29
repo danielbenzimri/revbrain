@@ -71,6 +71,8 @@ export function UserDetailDrawer({
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [localAvatarUrl, setLocalAvatarUrl] = useState<string | null>(null);
+  const [pendingFile, setPendingFile] = useState<{ file: File; previewUrl: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<EditUserForm>({
@@ -109,6 +111,7 @@ export function UserDetailDrawer({
       if (isNewUser) {
         setIsEditing(false);
         setShowDeleteConfirm(false);
+        setLocalAvatarUrl(null);
       }
     }
   }, [user, form]);
@@ -168,13 +171,24 @@ export function UserDetailDrawer({
     onOpenChange(false);
   };
 
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Step 1: User selects file → show preview dialog
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawFile = e.target.files?.[0];
     if (!rawFile || !user) return;
+    const previewUrl = URL.createObjectURL(rawFile);
+    setPendingFile({ file: rawFile, previewUrl });
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
 
+  // Step 2: User confirms preview → resize + upload
+  const handleConfirmUpload = async () => {
+    if (!pendingFile || !user) return;
+    const { file: rawFile, previewUrl } = pendingFile;
+    setPendingFile(null);
+    setLocalAvatarUrl(previewUrl);
     setIsUploading(true);
+
     try {
-      // Resize to 256x256 WebP before upload (no large images stored for avatars)
       const { resizeImageForAvatar } = await import('@/lib/resize-image');
       const file = await resizeImageForAvatar(rawFile);
 
@@ -182,7 +196,6 @@ export function UserDetailDrawer({
       formData.append('file', file);
 
       const headers = await getAuthHeaders();
-      // Remove Content-Type to let browser set multipart boundary
       delete (headers as Record<string, string>)['Content-Type'];
 
       const res = await fetch(`${apiUrl}/v1/users/me/avatar`, {
@@ -192,14 +205,24 @@ export function UserDetailDrawer({
       });
 
       if (!res.ok) throw new Error('Upload failed');
-      // Trigger a refetch of the user data by re-saving
-      await onSave(user.id, {});
+
+      const json = await res.json();
+      if (json.data?.avatarUrl) {
+        setLocalAvatarUrl(json.data.avatarUrl);
+      }
     } catch (err) {
       console.error('Avatar upload failed:', err);
+      setLocalAvatarUrl(null);
     } finally {
       setIsUploading(false);
-      // Reset the input so the same file can be re-selected
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      URL.revokeObjectURL(previewUrl);
+    }
+  };
+
+  const handleCancelUpload = () => {
+    if (pendingFile) {
+      URL.revokeObjectURL(pendingFile.previewUrl);
+      setPendingFile(null);
     }
   };
 
@@ -251,7 +274,7 @@ export function UserDetailDrawer({
                 onClick={() => isEditing && fileInputRef.current?.click()}
               >
                 <Avatar className="h-18 w-18 ring-3 ring-white shadow-md">
-                  <AvatarImage src={user.avatarUrl} />
+                  <AvatarImage src={localAvatarUrl || user.avatarUrl} />
                   <AvatarFallback className="bg-gradient-to-br from-violet-500 to-teal-600 text-white text-xl font-bold">
                     {getInitials(user.name)}
                   </AvatarFallback>
@@ -272,7 +295,7 @@ export function UserDetailDrawer({
                 type="file"
                 accept="image/png,image/jpeg,image/webp"
                 className="hidden"
-                onChange={handleAvatarUpload}
+                onChange={handleFileSelect}
               />
               {isEditing && (
                 <button
@@ -543,6 +566,38 @@ export function UserDetailDrawer({
           </div>
         )}
       </SheetContent>
+
+      {/* Avatar preview dialog */}
+      {pendingFile && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-2xl p-6 shadow-xl max-w-xs w-full mx-4 text-center">
+            <p className="text-sm font-semibold text-slate-900 mb-4">Preview</p>
+            <div className="w-32 h-32 mx-auto rounded-full overflow-hidden border-2 border-slate-200 mb-4">
+              <img
+                src={pendingFile.previewUrl}
+                alt="Avatar preview"
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <p className="text-xs text-slate-500 mb-4">
+              Image will be cropped to a circle and resized to 256×256
+            </p>
+            <div className="flex gap-3 justify-center">
+              <Button type="button" variant="ghost" size="sm" onClick={handleCancelUpload}>
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                onClick={handleConfirmUpload}
+                className="bg-violet-600 hover:bg-violet-700 text-white"
+              >
+                Upload
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </Sheet>
   );
 }
