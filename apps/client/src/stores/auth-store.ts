@@ -7,6 +7,35 @@ import { simulateRole as simulateRoleSession } from '@/lib/adapters/local/auth';
 
 const USER_CACHE_KEY = 'revbrain_user';
 
+const apiUrl = import.meta.env.VITE_API_URL || '/api';
+
+/**
+ * Fetch the user profile from our DB via the API.
+ * This is the single source of truth for role, name, etc.
+ * Falls back to null if the API is unreachable (offline, edge cold start).
+ */
+async function fetchDbUserProfile(accessToken: string): Promise<{
+  id: string;
+  email: string;
+  fullName: string;
+  role: string;
+  avatarUrl?: string;
+} | null> {
+  try {
+    const res = await fetch(`${apiUrl}/v1/users/me`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json.data ?? null;
+  } catch {
+    return null;
+  }
+}
+
 interface AuthState {
   // State
   user: User | null;
@@ -54,14 +83,17 @@ export const useAuthStore = create<AuthState>()((set) => ({
       .getSession()
       .then(async (session) => {
         if (session) {
-          const user = await adapter.getCurrentUser();
-          if (user) {
+          const authUser = await adapter.getCurrentUser();
+          if (authUser) {
+            // Fetch the real user profile from our DB — single source of truth for role
+            const dbProfile = await fetchDbUserProfile(session.accessToken);
+
             const appUser: User = {
-              id: user.id,
-              name: user.name || '',
-              email: user.email,
-              role: (user.role as UserRole) || 'admin',
-              avatar: user.avatar,
+              id: dbProfile?.id || authUser.id,
+              name: dbProfile?.fullName || authUser.name || '',
+              email: dbProfile?.email || authUser.email,
+              role: (dbProfile?.role as UserRole) || (authUser.role as UserRole) || 'admin',
+              avatar: dbProfile?.avatarUrl || authUser.avatar,
             };
             localStorage.setItem(USER_CACHE_KEY, JSON.stringify(appUser));
             set({ user: appUser, isLoading: false });
@@ -89,16 +121,18 @@ export const useAuthStore = create<AuthState>()((set) => ({
       }
 
       if (session) {
-        // Reload user details to get role/metadata
+        // Reload user details — DB profile is the source of truth for role
         try {
-          const user = await adapter.getCurrentUser();
-          if (user) {
+          const authUser = await adapter.getCurrentUser();
+          if (authUser) {
+            const dbProfile = await fetchDbUserProfile(session.accessToken);
+
             const appUser: User = {
-              id: user.id,
-              name: user.name || '',
-              email: user.email,
-              role: (user.role as UserRole) || 'admin',
-              avatar: user.avatar,
+              id: dbProfile?.id || authUser.id,
+              name: dbProfile?.fullName || authUser.name || '',
+              email: dbProfile?.email || authUser.email,
+              role: (dbProfile?.role as UserRole) || (authUser.role as UserRole) || 'admin',
+              avatar: dbProfile?.avatarUrl || authUser.avatar,
             };
             localStorage.setItem(USER_CACHE_KEY, JSON.stringify(appUser));
             set({ user: appUser, isLoading: false });
