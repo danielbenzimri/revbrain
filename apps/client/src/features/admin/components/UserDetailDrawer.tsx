@@ -169,11 +169,15 @@ export function UserDetailDrawer({
   };
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !user) return;
+    const rawFile = e.target.files?.[0];
+    if (!rawFile || !user) return;
 
     setIsUploading(true);
     try {
+      // Resize to 256x256 WebP before upload (no large images stored for avatars)
+      const { resizeImageForAvatar } = await import('@/lib/resize-image');
+      const file = await resizeImageForAvatar(rawFile);
+
       const formData = new FormData();
       formData.append('file', file);
 

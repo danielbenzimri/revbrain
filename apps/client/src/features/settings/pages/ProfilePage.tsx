@@ -32,11 +32,15 @@ function ProfileForm({ profile }: { profile: UserProfile }) {
       .slice(0, 2);
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const rawFile = e.target.files?.[0];
+    if (!rawFile) return;
 
     setIsUploading(true);
     try {
+      // Resize to 256x256 WebP before upload (no large images stored for avatars)
+      const { resizeImageForAvatar } = await import('@/lib/resize-image');
+      const file = await resizeImageForAvatar(rawFile);
+
       const formData = new FormData();
       formData.append('file', file);
 
