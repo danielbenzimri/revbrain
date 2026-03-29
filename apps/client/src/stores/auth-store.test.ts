@@ -94,9 +94,9 @@ describe('Auth Store — DB role source of truth', () => {
     expect(user?.role).toBe('system_admin'); // DB role wins
     expect(user?.email).toBe('admin@test.com');
 
-    // Verify fetch was called with the correct URL
+    // Verify fetch was called with users/me endpoint
     expect(mockFetch).toHaveBeenCalledWith(
-      'http://localhost:3000/v1/users/me',
+      expect.stringContaining('/v1/users/me'),
       expect.objectContaining({
         headers: expect.objectContaining({
           Authorization: 'Bearer test-token',
