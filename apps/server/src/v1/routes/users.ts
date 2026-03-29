@@ -13,6 +13,7 @@ import type { AppEnv } from '../../types/index.ts';
 import { AppError, ErrorCodes } from '@revbrain/contract';
 import type { RequestContext } from '../../services/types.ts';
 import { getClientIpOrNull } from '../../lib/request-ip.ts';
+import { getSupabaseAdmin } from '../../lib/supabase.ts';
 
 const usersRouter = new OpenAPIHono<AppEnv>();
 
@@ -185,6 +186,105 @@ usersRouter.openapi(
         role: updated.role,
         preferences: updated.preferences,
       },
+    });
+  }
+);
+
+// ============================================================================
+// UPLOAD AVATAR
+// ============================================================================
+
+usersRouter.openapi(
+  createRoute({
+    method: 'post',
+    path: '/me/avatar',
+    tags: ['Users'],
+    summary: 'Upload Avatar',
+    description: 'Uploads an avatar image. Max 2MB. Replaces existing avatar.',
+    middleware: routeMiddleware(authMiddleware),
+    responses: {
+      200: {
+        content: {
+          'application/json': {
+            schema: z.object({
+              success: z.boolean(),
+              data: z.object({ avatarUrl: z.string() }),
+            }),
+          },
+        },
+        description: 'Avatar uploaded successfully',
+      },
+    },
+  }),
+  async (c) => {
+    const user = c.get('user');
+    if (!user) {
+      throw new AppError(ErrorCodes.UNAUTHORIZED, 'Authentication required', 401);
+    }
+
+    const formData = await c.req.formData();
+    const file = formData.get('file') as File | null;
+
+    if (!file) {
+      throw new AppError(ErrorCodes.VALIDATION_ERROR, 'No file provided', 400);
+    }
+
+    const MAX_AVATAR_SIZE = 2 * 1024 * 1024; // 2MB
+    if (file.size > MAX_AVATAR_SIZE) {
+      throw new AppError(ErrorCodes.VALIDATION_ERROR, 'Avatar too large. Maximum 2MB.', 400);
+    }
+
+    const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      throw new AppError(
+        ErrorCodes.VALIDATION_ERROR,
+        'Invalid file type. Use PNG, JPEG, or WebP.',
+        400
+      );
+    }
+
+    const extension = file.type.split('/')[1] === 'jpeg' ? 'jpg' : file.type.split('/')[1];
+    const storagePath = `${user.organizationId}/${user.id}.${extension}`;
+
+    const supabase = getSupabaseAdmin();
+    const arrayBuffer = await file.arrayBuffer();
+
+    // Upload (upsert to replace existing avatar)
+    const { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(storagePath, arrayBuffer, {
+        contentType: file.type,
+        upsert: true,
+      });
+
+    if (uploadError) {
+      throw new AppError(
+        ErrorCodes.INTERNAL_SERVER_ERROR,
+        `Upload failed: ${uploadError.message}`,
+        500
+      );
+    }
+
+    // Get signed URL (long-lived for avatar display)
+    const { data: signedData } = await supabase.storage
+      .from('avatars')
+      .createSignedUrl(storagePath, 60 * 60 * 24 * 365); // 1 year
+
+    const avatarUrl = signedData?.signedUrl || '';
+
+    // Update user record with avatar URL
+    const ctx: RequestContext = {
+      actorId: user.id,
+      actorEmail: user.email,
+      ipAddress: getClientIpOrNull(c),
+      userAgent: c.req.header('user-agent') || null,
+    };
+
+    const updated = await c.var.services.users.updateProfile(user.id, { avatarUrl }, ctx);
+
+    return c.json({
+      success: true,
+      data: { avatarUrl: updated?.avatarUrl || avatarUrl },
     });
   }
 );

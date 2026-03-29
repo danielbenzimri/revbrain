@@ -14,6 +14,7 @@ import {
   X,
   AlertTriangle,
   Smartphone,
+  Camera,
 } from 'lucide-react';
 
 import { Sheet, SheetContent } from '@/components/ui/sheet';
@@ -30,7 +31,10 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 import { ALL_ROLES } from '@revbrain/contract';
+import { getAuthHeaders } from '@/lib/auth-headers';
 import type { AdminUser } from '../hooks/use-admin-users';
+
+const apiUrl = import.meta.env.VITE_API_URL || '/api';
 
 const editUserSchema = z.object({
   fullName: z.string().min(2, 'Name is required'),
@@ -66,6 +70,8 @@ export function UserDetailDrawer({
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<EditUserForm>({
     resolver: zodResolver(editUserSchema),
@@ -162,6 +168,37 @@ export function UserDetailDrawer({
     onOpenChange(false);
   };
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const headers = await getAuthHeaders();
+      // Remove Content-Type to let browser set multipart boundary
+      delete (headers as Record<string, string>)['Content-Type'];
+
+      const res = await fetch(`${apiUrl}/v1/users/me/avatar`, {
+        method: 'POST',
+        headers,
+        body: formData,
+      });
+
+      if (!res.ok) throw new Error('Upload failed');
+      // Trigger a refetch of the user data by re-saving
+      await onSave(user.id, {});
+    } catch (err) {
+      console.error('Avatar upload failed:', err);
+    } finally {
+      setIsUploading(false);
+      // Reset the input so the same file can be re-selected
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
@@ -185,12 +222,34 @@ export function UserDetailDrawer({
 
             {/* User identity */}
             <div className="flex flex-col items-center text-center pt-1">
-              <Avatar className="h-18 w-18 ring-3 ring-white shadow-md">
-                <AvatarImage src={user.avatarUrl} />
-                <AvatarFallback className="bg-gradient-to-br from-violet-500 to-teal-600 text-white text-xl font-bold">
-                  {getInitials(user.name)}
-                </AvatarFallback>
-              </Avatar>
+              <div
+                className={`relative ${isEditing ? 'cursor-pointer group' : ''}`}
+                onClick={() => isEditing && fileInputRef.current?.click()}
+              >
+                <Avatar className="h-18 w-18 ring-3 ring-white shadow-md">
+                  <AvatarImage src={user.avatarUrl} />
+                  <AvatarFallback className="bg-gradient-to-br from-violet-500 to-teal-600 text-white text-xl font-bold">
+                    {getInitials(user.name)}
+                  </AvatarFallback>
+                </Avatar>
+                {isEditing && !isUploading && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Camera size={20} className="text-white" />
+                  </div>
+                )}
+                {isUploading && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full">
+                    <Loader2 size={20} className="text-white animate-spin" />
+                  </div>
+                )}
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                className="hidden"
+                onChange={handleAvatarUpload}
+              />
 
               <h2 className="text-xl font-bold text-slate-900 mt-3 truncate max-w-full">
                 {user.name}

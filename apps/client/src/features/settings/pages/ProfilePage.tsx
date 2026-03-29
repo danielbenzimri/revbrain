@@ -1,8 +1,12 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Loader2, Save, CheckCircle2 } from 'lucide-react';
+import { Loader2, Save, CheckCircle2, Camera } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { getAuthHeaders } from '@/lib/auth-headers';
 import { useProfile, useUpdateProfile, type UserProfile } from '../hooks';
+
+const apiUrl = import.meta.env.VITE_API_URL || '/api';
 
 function ProfileForm({ profile }: { profile: UserProfile }) {
   const { t } = useTranslation();
@@ -16,6 +20,48 @@ function ProfileForm({ profile }: { profile: UserProfile }) {
   const [bio, setBio] = useState(profile.bio || '');
   const [avatarUrl, setAvatarUrl] = useState(profile.avatarUrl || '');
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const getInitials = (name: string | null) =>
+    (name || '?')
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const headers = await getAuthHeaders();
+      // Remove Content-Type to let browser set multipart boundary
+      delete (headers as Record<string, string>)['Content-Type'];
+
+      const res = await fetch(`${apiUrl}/v1/users/me/avatar`, {
+        method: 'POST',
+        headers,
+        body: formData,
+      });
+
+      if (!res.ok) throw new Error('Upload failed');
+      const json = await res.json();
+      if (json.data?.avatarUrl) {
+        setAvatarUrl(json.data.avatarUrl);
+      }
+    } catch (err) {
+      console.error('Avatar upload failed:', err);
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -136,17 +182,43 @@ function ProfileForm({ profile }: { profile: UserProfile }) {
           />
         </div>
 
-        {/* Avatar URL */}
+        {/* Avatar */}
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1.5">
+          <label className="block text-sm font-medium text-slate-700 mb-3">
             {t('settings.profile.avatarUrl')}
           </label>
+          <div className="flex items-center gap-4">
+            <div
+              className="relative cursor-pointer group"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Avatar className="h-20 w-20 ring-2 ring-slate-200">
+                <AvatarImage src={avatarUrl || undefined} />
+                <AvatarFallback className="bg-gradient-to-br from-violet-500 to-teal-600 text-white text-xl font-bold">
+                  {getInitials(fullName)}
+                </AvatarFallback>
+              </Avatar>
+              {!isUploading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Camera size={20} className="text-white" />
+                </div>
+              )}
+              {isUploading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full">
+                  <Loader2 size={20} className="text-white animate-spin" />
+                </div>
+              )}
+            </div>
+            <div className="text-sm text-slate-500">
+              {t('settings.profile.avatarHint', 'Click to upload a photo')}
+            </div>
+          </div>
           <input
-            type="url"
-            value={avatarUrl}
-            onChange={(e) => setAvatarUrl(e.target.value)}
-            placeholder="https://..."
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 outline-none text-sm"
+            ref={fileInputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            className="hidden"
+            onChange={handleAvatarUpload}
           />
         </div>
 
