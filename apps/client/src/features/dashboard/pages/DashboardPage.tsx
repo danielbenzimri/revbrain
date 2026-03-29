@@ -50,6 +50,8 @@ function useFormatTimeAgo() {
   };
 }
 
+const isMockMode = import.meta.env.VITE_AUTH_MODE === 'mock';
+
 function getProjectStage(projectId: string): {
   stageKey: string;
   stageColor: string;
@@ -58,6 +60,17 @@ function getProjectStage(projectId: string): {
   issueCount: number;
   sourceOrg: string | null;
 } {
+  if (!isMockMode) {
+    return {
+      stageKey: 'dashboard.stages.setup',
+      stageColor: 'slate',
+      sourceConnected: false,
+      targetConnected: false,
+      issueCount: 0,
+      sourceOrg: null,
+    };
+  }
+
   const workspace = getMockProjectWorkspaceData(projectId);
   if (!workspace) {
     return {
@@ -373,15 +386,17 @@ const MigrationCharts = memo(function MigrationCharts({
       guided = 0,
       manual = 0,
       blocked = 0;
-    enrichedProjects.forEach((p) => {
-      const workspace = getMockProjectWorkspaceData(p.id);
-      if (workspace.assessment) {
-        auto += workspace.assessment.autoMigrate;
-        guided += workspace.assessment.guidedMigrate;
-        manual += workspace.assessment.manualMigrate;
-        blocked += workspace.assessment.blocked;
-      }
-    });
+    if (isMockMode) {
+      enrichedProjects.forEach((p) => {
+        const workspace = getMockProjectWorkspaceData(p.id);
+        if (workspace.assessment) {
+          auto += workspace.assessment.autoMigrate;
+          guided += workspace.assessment.guidedMigrate;
+          manual += workspace.assessment.manualMigrate;
+          blocked += workspace.assessment.blocked;
+        }
+      });
+    }
     return { auto, guided, manual, blocked, total: auto + guided + manual + blocked };
   }, [enrichedProjects]);
 

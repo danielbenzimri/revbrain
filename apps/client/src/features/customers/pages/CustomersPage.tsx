@@ -166,7 +166,8 @@ export default function CustomersPage() {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const customers = MOCK_CUSTOMERS;
+  const isMockMode = import.meta.env.VITE_AUTH_MODE === 'mock';
+  const customers = useMemo(() => (isMockMode ? MOCK_CUSTOMERS : []), [isMockMode]);
 
   const filteredCustomers = useMemo(() => {
     if (!searchQuery.trim()) return customers;

@@ -59,10 +59,14 @@ function IssueCard({ issue }: { issue: IssueItem }) {
 export default function IssuesPage() {
   const { id } = useParams<{ id: string }>();
   const { t } = useTranslation();
+  const isMockMode = import.meta.env.VITE_AUTH_MODE === 'mock';
   const data = useMemo(() => {
     if (!id) return null;
-    return getMockProjectWorkspaceData(id);
-  }, [id]);
+    if (isMockMode) {
+      return getMockProjectWorkspaceData(id);
+    }
+    return null;
+  }, [id, isMockMode]);
 
   if (!id) return null;
 

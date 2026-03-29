@@ -606,10 +606,15 @@ export default function OverviewPage() {
   const { id } = useParams<{ id: string }>();
   const formatTimeAgo = useFormatTimeAgo();
 
+  const isMockMode = import.meta.env.VITE_AUTH_MODE === 'mock';
+
   const data = useMemo(() => {
     if (!id) return null;
-    return getMockProjectWorkspaceData(id);
-  }, [id]);
+    if (isMockMode) {
+      return getMockProjectWorkspaceData(id);
+    }
+    return null;
+  }, [id, isMockMode]);
 
   // Salesforce connection hooks
   const { data: sfConnections } = useSalesforceConnections(id);
@@ -628,8 +633,14 @@ export default function OverviewPage() {
   const disconnectMutation = useDisconnectSalesforce(id);
   const testMutation = useTestConnection(id);
 
-  if (!id || !data) {
-    return null;
+  if (!id) return null;
+
+  if (!data) {
+    return (
+      <div className="flex items-center justify-center min-h-[40vh]">
+        <p className="text-sm text-slate-500">No data available yet.</p>
+      </div>
+    );
   }
 
   return (

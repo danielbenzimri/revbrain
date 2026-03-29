@@ -181,7 +181,8 @@ const ProjectSwitcherDropdown = memo(function ProjectSwitcherDropdown({
   const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const projects = getMockRecentProjects();
+  const isMockMode = import.meta.env.VITE_AUTH_MODE === 'mock';
+  const projects = isMockMode ? getMockRecentProjects() : [];
 
   const filtered = projects.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()));
 
@@ -273,16 +274,23 @@ export function ProjectSidebar({
   const prefetchWorkspace = usePrefetchProjectWorkspace();
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
 
-  // Workspace mock data for connection status and issue counts
-  const workspaceData = useMemo(() => getMockProjectWorkspaceData(project.id), [project.id]);
+  const isMockMode = import.meta.env.VITE_AUTH_MODE === 'mock';
 
-  const issueCount = workspaceData.topIssues.length;
+  // Workspace mock data for connection status and issue counts
+  const workspaceData = useMemo(() => {
+    if (isMockMode) {
+      return getMockProjectWorkspaceData(project.id);
+    }
+    return null;
+  }, [project.id, isMockMode]);
+
+  const issueCount = workspaceData?.topIssues.length ?? 0;
   const notificationCount = issueCount;
 
   // Determine locked states from workspace data
-  const hasExtraction = workspaceData.cpqExplorerData !== null;
-  const hasAssessment = workspaceData.assessment !== null;
-  const hasTarget = workspaceData.targetConnection !== null;
+  const hasExtraction = workspaceData?.cpqExplorerData !== null;
+  const hasAssessment = workspaceData?.assessment !== null;
+  const hasTarget = workspaceData?.targetConnection !== null;
 
   // Build navigation groups
   const navGroups: NavGroup[] = [
@@ -413,8 +421,8 @@ export function ProjectSidebar({
     return translated !== roleKey ? translated : user.role;
   };
 
-  const sourceConn = workspaceData.sourceConnection;
-  const targetConn = workspaceData.targetConnection;
+  const sourceConn = workspaceData?.sourceConnection ?? null;
+  const targetConn = workspaceData?.targetConnection ?? null;
 
   return (
     <>

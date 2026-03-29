@@ -45,6 +45,7 @@ export function ProjectFormSheet({
 }: ProjectFormSheetProps) {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === 'he';
+  const isMockMode = import.meta.env.VITE_AUTH_MODE === 'mock';
   const isEditMode = !!project?.id;
 
   // Form state
@@ -246,11 +247,12 @@ export function ProjectFormSheet({
                     className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none text-sm bg-white"
                   >
                     <option value="">{t('customers.form.selectCustomer')}</option>
-                    {MOCK_CUSTOMERS.map((customer) => (
-                      <option key={customer.id} value={customer.id}>
-                        {customer.name}
-                      </option>
-                    ))}
+                    {isMockMode &&
+                      MOCK_CUSTOMERS.map((customer) => (
+                        <option key={customer.id} value={customer.id}>
+                          {customer.name}
+                        </option>
+                      ))}
                     <option value="__new__">{t('customers.form.createNew')}</option>
                   </select>
                 </div>
