@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { User, Loader2, Check, X, Upload, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -32,6 +32,10 @@ export function OnboardTenantDrawer({ open, onOpenChange }: OnboardTenantDrawerP
   // Form state - Admin
   const [adminEmail, setAdminEmail] = useState('');
   const [adminName, setAdminName] = useState('');
+
+  // Logo state
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
   // UI state
   const [error, setError] = useState<string | null>(null);
@@ -80,6 +84,7 @@ export function OnboardTenantDrawer({ open, onOpenChange }: OnboardTenantDrawerP
     setPhone('');
     setAddress('');
     setDescription('');
+    setLogoPreview(null);
     // Don't reset plan selection to avoid flashing
     setAdminEmail('');
     setAdminName('');
@@ -173,6 +178,7 @@ export function OnboardTenantDrawer({ open, onOpenChange }: OnboardTenantDrawerP
                     </label>
                     <input
                       type="text"
+                      dir="auto"
                       value={orgName}
                       onChange={(e) => setOrgName(e.target.value)}
                       placeholder={t('admin.onboard.orgNamePlaceholder')}
@@ -188,6 +194,7 @@ export function OnboardTenantDrawer({ open, onOpenChange }: OnboardTenantDrawerP
                     </label>
                     <input
                       type="tel"
+                      dir="ltr"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder={t('admin.onboard.phonePlaceholder')}
@@ -202,6 +209,7 @@ export function OnboardTenantDrawer({ open, onOpenChange }: OnboardTenantDrawerP
                     </label>
                     <input
                       type="text"
+                      dir="auto"
                       value={address}
                       onChange={(e) => setAddress(e.target.value)}
                       placeholder={t('admin.onboard.addressPlaceholder')}
@@ -215,6 +223,7 @@ export function OnboardTenantDrawer({ open, onOpenChange }: OnboardTenantDrawerP
                       {t('admin.onboard.description')}
                     </label>
                     <textarea
+                      dir="auto"
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
                       placeholder={t('admin.onboard.descriptionPlaceholder')}
@@ -223,15 +232,47 @@ export function OnboardTenantDrawer({ open, onOpenChange }: OnboardTenantDrawerP
                     />
                   </div>
 
-                  {/* Logo Upload Placeholder */}
+                  {/* Logo Upload */}
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-slate-700 mb-1.5">
                       {t('admin.onboard.logo')}
                     </label>
-                    <div className="border-2 border-dashed border-slate-200 rounded-xl p-4 flex items-center justify-center gap-3 text-slate-400 hover:border-slate-300 transition-colors cursor-pointer">
-                      <Upload className="h-5 w-5" />
-                      <span className="text-sm">{t('admin.onboard.logoHint')}</span>
+                    <div
+                      onClick={() => logoInputRef.current?.click()}
+                      className="border-2 border-dashed border-slate-200 rounded-xl p-4 flex items-center justify-center gap-3 text-slate-400 hover:border-violet-300 transition-colors cursor-pointer"
+                    >
+                      {logoPreview ? (
+                        <img
+                          src={logoPreview}
+                          alt="Logo preview"
+                          className="h-12 w-12 object-contain rounded"
+                        />
+                      ) : (
+                        <Upload className="h-5 w-5" />
+                      )}
+                      <span className="text-sm">
+                        {logoPreview
+                          ? t('admin.onboard.logoChange', { defaultValue: 'Change logo' })
+                          : t('admin.onboard.logoHint')}
+                      </span>
                     </div>
+                    <input
+                      ref={logoInputRef}
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setLogoPreview(URL.createObjectURL(file));
+                        }
+                      }}
+                    />
+                    <p className="text-xs text-slate-400 mt-1">
+                      {t('admin.onboard.logoAfterCreate', {
+                        defaultValue: 'Logo will be uploaded after organization is created.',
+                      })}
+                    </p>
                   </div>
                 </div>
               </section>
@@ -310,6 +351,7 @@ export function OnboardTenantDrawer({ open, onOpenChange }: OnboardTenantDrawerP
                     </label>
                     <input
                       type="email"
+                      dir="ltr"
                       value={adminEmail}
                       onChange={(e) => setAdminEmail(e.target.value)}
                       placeholder={t('admin.onboard.adminEmailPlaceholder')}
@@ -323,6 +365,7 @@ export function OnboardTenantDrawer({ open, onOpenChange }: OnboardTenantDrawerP
                     </label>
                     <input
                       type="text"
+                      dir="auto"
                       value={adminName}
                       onChange={(e) => setAdminName(e.target.value)}
                       placeholder={t('admin.onboard.adminNamePlaceholder')}
