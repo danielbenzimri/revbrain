@@ -204,11 +204,31 @@ export function UserDetailDrawer({
   };
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet
+      open={open}
+      onOpenChange={(isOpen) => {
+        // Only allow closing via our explicit handleClose — prevent Radix auto-close
+        // which can fire during content transitions (view→edit mode switch)
+        if (!isOpen && !isEditing) {
+          onOpenChange(false);
+        }
+      }}
+    >
       <SheetContent
         side={isRTL ? 'left' : 'right'}
         className="w-full sm:max-w-lg p-0 flex flex-col bg-white"
         hideCloseButton
+        onInteractOutside={(e) => {
+          // Prevent closing when clicking outside while in edit mode
+          if (isEditing) e.preventDefault();
+        }}
+        onEscapeKeyDown={(e) => {
+          // In edit mode, Escape exits edit mode instead of closing drawer
+          if (isEditing) {
+            e.preventDefault();
+            setIsEditing(false);
+          }
+        }}
       >
         {/* Header — subtle gradient with accent */}
         <div className="relative">
