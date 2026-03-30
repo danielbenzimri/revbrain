@@ -387,12 +387,20 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
         notes: s.notes ?? '',
         confidence: 'Confirmed',
       })),
-      plugins: plugins.map((p) => ({
-        plugin: p.artifactName,
-        status: (p.countValue ?? 0) > 0 ? 'Active' : 'Not Configured',
-        notes: p.notes ?? '',
-        confidence: 'Confirmed',
-      })),
+      plugins: plugins.map((p) => {
+        // Override QCP status if CustomScript findings exist (settings collector may not
+        // detect custom settings, but pricing collector finds SBQQ__CustomScript__c records)
+        const isQcp = p.artifactName?.includes('QCP') || p.artifactName?.includes('Calculator');
+        const qcpOverride = isQcp && (p.countValue ?? 0) === 0 && customScripts.length > 0;
+        return {
+          plugin: p.artifactName,
+          status: qcpOverride ? 'Active' : (p.countValue ?? 0) > 0 ? 'Active' : 'Not Configured',
+          notes: qcpOverride
+            ? `Active — ${customScripts.length} custom script(s) detected via SBQQ__CustomScript__c: ${customScripts.map((s) => s.artifactName).join(', ')}`
+            : (p.notes ?? ''),
+          confidence: 'Confirmed',
+        };
+      }),
     },
 
     quoteLifecycle: [
@@ -715,11 +723,24 @@ function buildFeatureUtilization(
 
   const features: Array<{ feature: string; status: string; detail: string }> = [];
 
-  const bundleCount = count('ProductOption', 'SBQQ__ProductOption__c');
+  // Bundle detection: count Product2 findings with medium complexity (= has ConfigurationType)
+  // OR count ProductOption findings, OR check DataCount for ProductOption
+  const bundleProducts = findings.filter(
+    (f) => f.artifactType === 'Product2' && f.complexityLevel === 'medium'
+  ).length;
+  const optionCount = count('ProductOption', 'SBQQ__ProductOption__c');
+  const optionDataCount =
+    findings.find(
+      (f) => f.artifactType === 'DataCount' && f.artifactName?.toLowerCase().includes('option')
+    )?.countValue ?? 0;
+  const detectedBundles = bundleProducts || optionCount || optionDataCount;
   features.push({
     feature: 'Product Bundles',
-    status: bundleCount > 0 ? 'Active' : 'Not Detected',
-    detail: bundleCount > 0 ? `${bundleCount} product options detected.` : '',
+    status: detectedBundles > 0 ? 'Active' : 'Not Detected',
+    detail:
+      detectedBundles > 0
+        ? `${bundleProducts} bundle products, ${optionDataCount || optionCount} product options.`
+        : '',
   });
 
   const dsCount = count('DiscountSchedule', 'SBQQ__DiscountSchedule__c');
@@ -780,12 +801,27 @@ function buildGlanceSections(
   // Count by artifact type — handle both short and full SF API names
   const count = (...types: string[]) =>
     findings.filter((f) => types.includes(f.artifactType)).length;
+  // DataCount findings have human labels like "Quote Lines (all)", "Product Options"
+  // Match flexibly: case-insensitive, ignore spaces, match partial
   const dataCount = (name: string) => {
+    const needle = name.toLowerCase().replace(/[\s_]/g, '');
     const f = findings.find(
-      (f) => f.artifactType === 'DataCount' && f.artifactName?.includes(name)
+      (f) =>
+        f.artifactType === 'DataCount' &&
+        f.artifactName?.toLowerCase().replace(/[\s_]/g, '').includes(needle)
     );
     return f?.countValue ?? 0;
   };
+
+  // Bundle count: from DataCount "Product Options" or Product2 findings with ConfigurationType
+  const bundleCount =
+    dataCount('ProductOption') > 0
+      ? dataCount('ProductOption')
+      : count('ProductOption', 'SBQQ__ProductOption__c');
+  // Also count products WITH ConfigurationType (actual bundles, not options)
+  const bundleProductCount = findings.filter(
+    (f) => f.artifactType === 'Product2' && f.complexityLevel === 'medium' // catalog sets medium for ConfigurationType products
+  ).length;
 
   return {
     'Product Catalog': [
@@ -796,14 +832,9 @@ function buildGlanceSections(
       },
       {
         label: 'Product Bundles',
-        value: String(
-          count('ProductOption', 'SBQQ__ProductOption__c') > 0
-            ? 'Detected'
-            : dataCount('ProductOption') > 0
-              ? 'Detected'
-              : '0'
-        ),
-        confidence: 'Estimated',
+        value:
+          bundleProductCount > 0 ? String(bundleProductCount) : bundleCount > 0 ? 'Detected' : '0',
+        confidence: bundleProductCount > 0 ? 'Confirmed' : 'Estimated',
       },
       {
         label: 'Price Books',
@@ -828,11 +859,13 @@ function buildGlanceSections(
         confidence: 'Estimated',
       },
       {
-        label: 'Custom Scripts',
+        label: 'Custom Scripts (QCP)',
         value:
           count('CustomScript', 'SBQQ__CustomScript__c') > 0
             ? `${count('CustomScript', 'SBQQ__CustomScript__c')} Detected`
-            : 'Not Configured',
+            : dataCount('QCP') > 0
+              ? `${dataCount('QCP')} Detected`
+              : 'Not Configured',
         confidence: 'Confirmed',
       },
     ],
@@ -860,7 +893,21 @@ function buildGlanceSections(
     ],
     'Automation & Code': [
       { label: 'Active Triggers', value: String(count('ApexTrigger')), confidence: 'Confirmed' },
-      { label: 'Active Flows', value: String(count('Flow')), confidence: 'Confirmed' },
+      {
+        label: 'Active Flows',
+        value: (() => {
+          const cpqFlows = count('Flow');
+          // Check if there's a summary finding with total org flow count
+          const summaryFlow = findings.find(
+            (f) => f.artifactType === 'Flow' && f.findingKey?.includes('non_cpq_summary')
+          );
+          const totalOrgFlows = summaryFlow ? cpqFlows + (summaryFlow.countValue ?? 0) : cpqFlows;
+          return totalOrgFlows > cpqFlows
+            ? `${totalOrgFlows} total (${cpqFlows} CPQ-related)`
+            : String(cpqFlows);
+        })(),
+        confidence: 'Confirmed',
+      },
       {
         label: 'Validation Rules',
         value: String(count('ValidationRule')),
@@ -988,13 +1035,17 @@ function buildDefaultKeyFindings(
   const kf: Array<{ title: string; detail: string; confidence: string }> = [];
 
   const totalFindings = findings.length;
-  const domains = new Set(findings.map((f) => f.domain));
-  kf.push({
-    title: `${totalFindings} CPQ artifacts extracted across ${domains.size} domains`,
-    detail: `Comprehensive extraction covering product catalog, pricing rules, quote templates, approvals, code dependencies, and usage analytics.`,
-    confidence: 'Confirmed',
-  });
 
+  // --- QCP detection: check both plugin status AND CustomScript findings ---
+  const qcpPlugin = plugins.find(
+    (p) => p.artifactName?.includes('QCP') || p.artifactName?.includes('Calculator')
+  );
+  const qcpScripts = findings.filter(
+    (f) => f.artifactType === 'SBQQ__CustomScript__c' || f.artifactType === 'CustomScript'
+  );
+  const hasQcp = (qcpPlugin && (qcpPlugin.countValue ?? 0) > 0) || qcpScripts.length > 0;
+
+  // --- Price/Product rules ---
   const priceRules = findings.filter(
     (f) => f.artifactType === 'PriceRule' || f.artifactType === 'SBQQ__PriceRule__c'
   );
@@ -1007,21 +1058,22 @@ function buildDefaultKeyFindings(
   const activeProdR = productRules.filter(
     (r) => r.usageLevel !== 'dormant' && !r.notes?.includes('Inactive')
   ).length;
-  if (priceRules.length > 0 || productRules.length > 0) {
+
+  // First finding: analytical observation, not extraction status
+  if (hasQcp) {
+    const scriptName =
+      qcpScripts[0]?.artifactName ?? qcpPlugin?.notes?.match(/class:\s*(\S+)/)?.[1] ?? '';
     kf.push({
-      title: `${activePR} active price rules and ${activeProdR} active product rules detected`,
-      detail: `Heavy rule density indicates significant business logic encoded in CPQ configuration. Pricing logic concentrated in business-specific rules.`,
+      title: `Custom Quote Calculator Plugin (QCP) active${scriptName ? `: ${scriptName}` : ''}`,
+      detail: `${qcpScripts.length} custom script(s) with JavaScript-based pricing logic injected into every calculation. This fundamentally changes the complexity profile.`,
       confidence: 'Confirmed',
     });
   }
 
-  const qcpPlugin = plugins.find(
-    (p) => p.artifactName?.includes('QCP') || p.artifactName?.includes('Calculator')
-  );
-  if (qcpPlugin && (qcpPlugin.countValue ?? 0) > 0) {
+  if (priceRules.length > 0 || productRules.length > 0) {
     kf.push({
-      title: 'Custom Quote Calculator Plugin (QCP) detected',
-      detail: `JavaScript-based pricing logic injected into every calculation. This fundamentally changes the complexity profile and is typically the highest-effort assessment item.`,
+      title: `${activePR} active price rules and ${activeProdR} active product rules detected`,
+      detail: `Heavy rule density indicates significant business logic encoded in CPQ configuration. Pricing logic concentrated in business-specific rules.`,
       confidence: 'Confirmed',
     });
   }
@@ -1060,11 +1112,26 @@ function buildDefaultKeyFindings(
     });
   }
 
-  // Ensure at least 3 findings
+  // Ensure at least 3 findings with analytical observations
+  const productCount = findings.filter((f) => f.artifactType === 'Product2').length;
+  if (productCount > 0 && kf.length < 5) {
+    const families = new Set(
+      findings
+        .filter((f) => f.artifactType === 'Product2')
+        .map((f) => f.evidenceRefs?.find((r) => r.value === 'Product2.Family')?.label)
+        .filter(Boolean)
+    );
+    kf.push({
+      title: `${productCount} products across ${families.size} product families`,
+      detail: `Product catalog spans ${families.size > 5 ? 'a diverse range of' : ''} families including ${[...families].slice(0, 5).join(', ')}${families.size > 5 ? ', and more' : ''}.`,
+      confidence: 'Confirmed',
+    });
+  }
+
   while (kf.length < 3) {
     kf.push({
-      title: 'Assessment complete',
-      detail: `Full CPQ environment assessment extracted ${totalFindings} configuration artifacts.`,
+      title: `CPQ environment spans ${new Set(findings.map((f) => f.domain)).size} configuration domains`,
+      detail: `${totalFindings} configuration artifacts assessed across product catalog, pricing, approvals, custom code, and usage analytics.`,
       confidence: 'Confirmed',
     });
   }

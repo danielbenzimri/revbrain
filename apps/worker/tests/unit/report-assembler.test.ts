@@ -198,7 +198,8 @@ describe('assembleReport', () => {
 
     const report = assembleReport(findings);
     expect(report.executiveSummary.keyFindings.length).toBeGreaterThanOrEqual(3);
-    expect(report.executiveSummary.keyFindings[0].title).toContain('3 CPQ artifacts');
+    // First finding should be analytical (rules, QCP, or products) not "X artifacts extracted"
+    expect(report.executiveSummary.keyFindings[0].title).not.toContain('extracted');
 
     // No migration/RCA language in findings
     for (const finding of report.executiveSummary.keyFindings) {
