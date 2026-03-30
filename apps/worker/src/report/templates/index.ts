@@ -21,12 +21,14 @@ export function renderReport(data: ReportData): string {
 </head>
 <body>
   ${renderCover(data)}
+  ${renderBanners(data)}
   ${renderScope(data)}
   ${renderExecutiveSummary(data)}
   ${renderGlance(data)}
   ${renderSettings(data)}
   ${renderLifecycle(data)}
   ${renderConfigDomain(data)}
+  ${renderApprovalsAndDocs(data)}
   ${renderUsage(data)}
   ${renderDataQuality(data)}
   ${renderCustomCode(data)}
@@ -510,6 +512,80 @@ function renderCustomCode(data: ReportData): string {
           )
         : '<p><em>No validation rules detected.</em></p>'
     }
+
+    ${
+      data.customCode.permissionSets.length > 0
+        ? `
+    <h3>9.4 CPQ Permission Sets</h3>
+    ${table(
+      ['Permission Set', 'Type', 'Namespace'],
+      data.customCode.permissionSets.map((ps) => [
+        escapeHtml(ps.name),
+        escapeHtml(ps.type),
+        escapeHtml(ps.namespace),
+      ])
+    )}`
+        : ''
+    }
+  </div>`;
+}
+
+// ============================================================================
+// Validation Banners (V1–V3 warnings, displayed at top of report)
+// ============================================================================
+
+function renderBanners(data: ReportData): string {
+  if (!data.reportBanners || data.reportBanners.length === 0) return '';
+  return `
+  <div style="margin: 10px 0; padding: 12px; background: #fff3cd; border: 2px solid #ffc107; border-radius: 6px;">
+    ${data.reportBanners.map((b) => `<p style="margin: 4px 0; font-weight: 600; color: #856404;">${escapeHtml(b)}</p>`).join('')}
+  </div>`;
+}
+
+// ============================================================================
+// Section 6.4: Approvals & Document Generation
+// ============================================================================
+
+function renderApprovalsAndDocs(data: ReportData): string {
+  const { approvalRules, quoteTemplates, documentGeneration } = data.approvalsAndDocs;
+  const hasContent = approvalRules.length > 0 || quoteTemplates.length > 0;
+
+  return `
+  <div class="page-break">
+    <h2>6.4 Approvals & Document Generation</h2>
+
+    <h3>Approval Rules</h3>
+    ${
+      approvalRules.length > 0
+        ? table(
+            ['Rule', 'Target Object', 'Conditions', 'Status'],
+            approvalRules.map((r) => [
+              escapeHtml(r.name),
+              escapeHtml(r.object),
+              String(r.conditions),
+              escapeHtml(r.status),
+            ])
+          )
+        : '<p><em>No approval rules detected. Advanced Approvals (sbaa) may not be installed.</em></p>'
+    }
+
+    <h3>Quote Templates</h3>
+    ${
+      quoteTemplates.length > 0
+        ? table(
+            ['Template', 'Default', 'Last Modified'],
+            quoteTemplates.map((t) => [
+              escapeHtml(t.name),
+              t.isDefault ? '<strong>Yes</strong>' : 'No',
+              escapeHtml(t.lastModified || 'Unknown'),
+            ])
+          )
+        : '<p><em>No quote templates detected.</em></p>'
+    }
+
+    <h3>Document Generation</h3>
+    <p>${documentGeneration.templateCount} quote template(s) configured. DocuSign integration: <strong>${documentGeneration.docuSignActive ? 'Active' : 'Not detected'}</strong>.</p>
+    ${!hasContent ? '<p><em>Approvals and document generation data requires Tier 2 collectors (templates, approvals) to complete successfully.</em></p>' : ''}
   </div>`;
 }
 
@@ -539,20 +615,37 @@ function renderHotspots(data: ReportData): string {
 
 function renderAppendixA(data: ReportData): string {
   if (data.appendixA.length === 0) return '';
-  return `
-  <div class="page-break">
-    <h2>Appendix A: Configuration Object Inventory</h2>
-    ${table(
+
+  const cpqObjects = data.appendixA.filter((a) => a.isCpqObject);
+  const platformObjects = data.appendixA.filter((a) => !a.isCpqObject);
+
+  const renderTable = (items: typeof data.appendixA) =>
+    table(
       ['ID', 'Object(s)', 'API Name', 'Count', 'Complexity', 'Conf.'],
-      data.appendixA.map((a) => [
-        String(a.id),
+      items.map((a, i) => [
+        String(i + 1),
         escapeHtml(a.objectName),
         `<code>${escapeHtml(a.apiName)}</code>`,
         String(a.count),
         severity(a.complexity),
         badge(a.confidence),
       ])
-    )}
+    );
+
+  return `
+  <div class="page-break">
+    <h2>Appendix A: Configuration Object Inventory</h2>
+
+    <h3>A.1 CPQ Configuration Objects</h3>
+    ${cpqObjects.length > 0 ? renderTable(cpqObjects) : '<p><em>No CPQ objects in inventory.</em></p>'}
+
+    ${
+      platformObjects.length > 0
+        ? `
+    <h3>A.2 Platform Metadata Summary</h3>
+    ${renderTable(platformObjects)}`
+        : ''
+    }
   </div>`;
 }
 

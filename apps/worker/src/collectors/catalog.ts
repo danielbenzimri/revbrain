@@ -188,6 +188,32 @@ export class CatalogCollector extends BaseCollector {
       );
     }
 
+    // Flag products with blank Family for data quality
+    const blankFamilyProducts = products.filter(
+      (p) => !p.Family || (p.Family as string).trim() === ''
+    );
+    if (blankFamilyProducts.length > 0) {
+      findings.push(
+        createFinding({
+          domain: 'catalog',
+          collector: 'catalog',
+          artifactType: 'DataQualityFlag',
+          artifactName: 'Products with Blank Family',
+          findingType: 'blank_family_products',
+          sourceType: 'object',
+          riskLevel: 'low',
+          complexityLevel: 'low',
+          countValue: blankFamilyProducts.length,
+          notes: `${blankFamilyProducts.length} products have no Product Family assigned: ${blankFamilyProducts
+            .slice(0, 5)
+            .map((p) => p.Name as string)
+            .join(
+              ', '
+            )}${blankFamilyProducts.length > 5 ? '...' : ''}. Consider assigning families for better categorization.`,
+        })
+      );
+    }
+
     this.log.info(
       { totalProducts, activeProducts, bundles: bundleProducts, psm: psmCombos.size },
       'products_extracted'

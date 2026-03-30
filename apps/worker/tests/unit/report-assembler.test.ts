@@ -156,11 +156,18 @@ describe('assembleReport', () => {
     expect(report.customCode.apexClasses[0].purpose).toBe('Quote processing'); // inferred from name
     expect(report.customCode.triggersFlows.length).toBe(1);
 
+    // Approvals & Docs section exists
+    expect(report.approvalsAndDocs).toBeTruthy();
+    expect(report.approvalsAndDocs.documentGeneration).toBeTruthy();
+
+    // Report banners initialized
+    expect(report.reportBanners).toEqual([]);
+
     // Hotspots
     expect(report.complexityHotspots.length).toBe(1);
     expect(report.complexityHotspots[0].severity).toBe('critical');
 
-    // Appendix A
+    // Appendix A — has isCpqObject flag
     expect(report.appendixA.length).toBe(1);
     expect(report.appendixA[0].objectName).toBe('SBQQ__PriceRule__c');
 

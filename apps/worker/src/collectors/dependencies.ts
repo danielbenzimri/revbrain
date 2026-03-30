@@ -228,18 +228,26 @@ export class DependenciesCollector extends BaseCollector {
         );
       }
 
-      const cpqFlows = flowResult.records.filter((f) => {
-        const trigger = f.TriggerObjectOrEvent as string;
-        return trigger && CPQ_OBJECTS.some((o) => trigger.includes(o));
+      // Report ALL active flows, not just CPQ-triggered ones
+      // The redline found 84 flows; the previous CPQ-only filter was too aggressive
+      const allFlows = flowResult.records;
+      const cpqFlows = allFlows.filter((f) => {
+        const trigger = (f.TriggerObjectOrEvent as string) || '';
+        const name = ((f.DeveloperName || f.ApiName) as string) || '';
+        const desc = ((f.Description as string) || '').toLowerCase();
+        // Match flows that trigger on CPQ objects OR reference CPQ in name/description
+        return (
+          CPQ_OBJECTS.some((o) => trigger === o) ||
+          /sbqq|cpq|quote|order|pricing/i.test(name) ||
+          /sbqq|cpq|quote/i.test(desc)
+        );
       });
 
-      metrics.totalActiveFlows = flowResult.records.length;
+      metrics.totalActiveFlows = allFlows.length;
       metrics.cpqRelatedFlows = cpqFlows.length;
 
       // Process types
-      const processBuildersCount = flowResult.records.filter(
-        (f) => f.ProcessType === 'Workflow'
-      ).length;
+      const processBuildersCount = allFlows.filter((f) => f.ProcessType === 'Workflow').length;
       metrics.processBuilderFlows = processBuildersCount;
       if (processBuildersCount > 0) {
         warnings.push(
@@ -253,6 +261,7 @@ export class DependenciesCollector extends BaseCollector {
       ).length;
       metrics.synchronousFlowCount = syncFlows;
 
+      // Create findings for CPQ-related flows
       for (const f of cpqFlows) {
         findings.push(
           createFinding({
@@ -268,6 +277,26 @@ export class DependenciesCollector extends BaseCollector {
             rcaTargetConcept: 'Updated Flow',
             rcaMappingComplexity: f.ProcessType === 'Workflow' ? 'redesign' : 'transform',
             notes: `${f.ProcessType} on ${f.TriggerObjectOrEvent}${f.ProcessType === 'Workflow' ? ' (DEPRECATED — must migrate)' : ''}`,
+          })
+        );
+      }
+
+      // Also create summary findings for non-CPQ flows (visible in report)
+      const nonCpqFlowCount = allFlows.length - cpqFlows.length;
+      if (nonCpqFlowCount > 0) {
+        findings.push(
+          createFinding({
+            domain: 'dependency',
+            collector: 'dependencies',
+            artifactType: 'Flow',
+            artifactName: `${nonCpqFlowCount} additional active flows (non-CPQ)`,
+            findingType: 'flow_non_cpq_summary',
+            sourceType: 'tooling',
+            riskLevel: 'info',
+            complexityLevel: 'low',
+            migrationRelevance: 'not-applicable',
+            countValue: nonCpqFlowCount,
+            notes: `${nonCpqFlowCount} active flows not directly related to CPQ objects. Total org flows: ${allFlows.length}.`,
           })
         );
       }
@@ -293,7 +322,81 @@ export class DependenciesCollector extends BaseCollector {
     }
 
     // ================================================================
-    // 10.5: Synchronous dependency risk
+    // 10.5: CPQ Permission Sets
+    // ================================================================
+    this.ctx.progress.updateSubstep('dependencies', 'permission_sets');
+
+    try {
+      const psResult = await this.ctx.restApi.query<Record<string, unknown>>(
+        'SELECT Id, Name, Label, IsCustom, NamespacePrefix ' +
+          'FROM PermissionSet ' +
+          "WHERE Name LIKE '%SBQQ%' OR Name LIKE '%sbaa%' OR Name LIKE '%CPQ%' " +
+          "OR NamespacePrefix = 'SBQQ' OR NamespacePrefix = 'sbaa'",
+        this.signal
+      );
+
+      metrics.cpqPermissionSets = psResult.records.length;
+
+      for (const ps of psResult.records) {
+        findings.push(
+          createFinding({
+            domain: 'dependency',
+            collector: 'dependencies',
+            artifactType: 'PermissionSet',
+            artifactName: (ps.Label || ps.Name) as string,
+            artifactId: ps.Id as string,
+            findingType: 'cpq_permission_set',
+            sourceType: 'object',
+            riskLevel: 'info',
+            complexityLevel: 'low',
+            migrationRelevance: 'should-migrate',
+            notes: `${ps.IsCustom ? 'Custom' : 'Managed'} permission set${ps.NamespacePrefix ? ` (${ps.NamespacePrefix})` : ''}`,
+          })
+        );
+      }
+    } catch (err) {
+      this.log.warn({ error: (err as Error).message }, 'permission_set_extraction_failed');
+    }
+
+    // ================================================================
+    // 10.6: CPQ Reports
+    // ================================================================
+    this.ctx.progress.updateSubstep('dependencies', 'cpq_reports');
+
+    try {
+      const reportResult = await this.ctx.restApi.query<Record<string, unknown>>(
+        'SELECT Id, Name, FolderName, Description, LastRunDate ' +
+          'FROM Report ' +
+          "WHERE FolderName LIKE '%CPQ%' OR Name LIKE '%CPQ%' OR Name LIKE '%SBQQ%' " +
+          "OR Name LIKE '%Quote%' OR FolderName LIKE '%Quote%'",
+        this.signal
+      );
+
+      metrics.cpqReports = reportResult.records.length;
+
+      for (const r of reportResult.records) {
+        findings.push(
+          createFinding({
+            domain: 'dependency',
+            collector: 'dependencies',
+            artifactType: 'CPQReport',
+            artifactName: r.Name as string,
+            artifactId: r.Id as string,
+            findingType: 'cpq_report',
+            sourceType: 'object',
+            riskLevel: 'info',
+            complexityLevel: 'low',
+            migrationRelevance: 'optional',
+            notes: `Folder: ${r.FolderName}${r.LastRunDate ? ` — Last run: ${r.LastRunDate}` : ''}`,
+          })
+        );
+      }
+    } catch (err) {
+      this.log.warn({ error: (err as Error).message }, 'report_extraction_failed');
+    }
+
+    // ================================================================
+    // 10.7: Synchronous dependency risk
     // ================================================================
     const syncCount =
       ((metrics.synchronousTriggerCount as number) || 0) +

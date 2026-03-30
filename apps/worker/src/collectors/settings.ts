@@ -514,7 +514,7 @@ export class SettingsCollector extends BaseCollector {
         riskLevel: qcpValue ? 'high' : 'info',
         countValue: qcpValue ? 1 : 0,
         notes: qcpValue
-          ? `Active — QCP class: ${String(qcpValue)}. Custom JavaScript pricing logic must be converted to RCA Pricing Procedures.`
+          ? `Active — QCP class: ${String(qcpValue)}. Custom JavaScript pricing logic injected into every calculation. This fundamentally changes the complexity profile.`
           : 'Not Configured — no custom JavaScript calculation injection detected. Pricing logic uses standard Price Rules.',
         rcaMappingComplexity: qcpValue ? 'redesign' : 'direct',
       })
@@ -538,7 +538,7 @@ export class SettingsCollector extends BaseCollector {
         riskLevel: esigProvider ? 'medium' : 'info',
         countValue: esigProvider ? 1 : 0,
         notes: esigProvider
-          ? `Active (${esigProvider}) — document signing integration detected. Verify RCA compatibility post-migration.`
+          ? `Active (${esigProvider}) — document signing integration detected.`
           : 'Not Configured — no e-signature package detected.',
         rcaMappingComplexity: esigProvider ? 'transform' : 'direct',
       })
@@ -598,6 +598,23 @@ export class SettingsCollector extends BaseCollector {
           ? `Active — URL: ${String(extConfigValue)}`
           : 'Not Configured — standard CPQ configurator in use.',
         rcaMappingComplexity: extConfigValue ? 'redesign' : 'direct',
+      })
+    );
+
+    // 6. Recommended Products Plugin
+    const recProductsValue = findSettingValue(/RecommendedProduct|ProductRecommendation/i);
+    plugins.push(
+      createFinding({
+        domain: 'settings',
+        collector: 'settings',
+        artifactType: 'PluginStatus',
+        artifactName: 'Recommended Products Plugin',
+        sourceType: 'inferred',
+        findingType: 'plugin_status',
+        riskLevel: 'info',
+        countValue: recProductsValue ? 1 : 0,
+        notes: recProductsValue ? `Active — class: ${String(recProductsValue)}` : 'Not Configured.',
+        rcaMappingComplexity: recProductsValue ? 'transform' : 'direct',
       })
     );
 

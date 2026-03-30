@@ -112,7 +112,15 @@ export interface ReportData {
     apexClasses: Array<{ name: string; lines: number; purpose: string; origin: string }>;
     triggersFlows: Array<{ name: string; type: string; object: string; status: string }>;
     validationRules: Array<{ object: string; rule: string; status: string; complexity: string }>;
+    permissionSets: Array<{ name: string; type: string; namespace: string }>;
   };
+  approvalsAndDocs: {
+    approvalRules: Array<{ name: string; object: string; conditions: number; status: string }>;
+    quoteTemplates: Array<{ name: string; isDefault: boolean; lastModified: string }>;
+    documentGeneration: { templateCount: number; docuSignActive: boolean };
+  };
+  /** Validation banners to display prominently in the report */
+  reportBanners: string[];
   complexityHotspots: Array<{ name: string; severity: string; analysis: string }>;
   appendixA: Array<{
     id: number;
@@ -121,6 +129,7 @@ export interface ReportData {
     count: number;
     complexity: string;
     confidence: string;
+    isCpqObject: boolean;
   }>;
   appendixB: Array<{ name: string; description: string }>;
   appendixD: Array<{ category: string; coverage: string; notes: string }>;
@@ -170,6 +179,19 @@ function inferApexOrigin(name: string): string {
   if (name.startsWith('blng')) return 'Managed (Billing)';
   if (name.startsWith('dlrs')) return 'Managed (DLRS)';
   return 'Custom';
+}
+
+/** Check if an object name is CPQ-related (SBQQ/sbaa/Product2) vs platform metadata */
+function isCpqObjectName(name: string): boolean {
+  return (
+    name.startsWith('SBQQ__') ||
+    name.startsWith('sbaa__') ||
+    name === 'Product2' ||
+    name === 'PricebookEntry' ||
+    name === 'Pricebook2' ||
+    name.startsWith('SBQQDS') ||
+    name.includes('ContractedPrice')
+  );
 }
 
 /** Parse validation rule object from domain/notes */
@@ -516,7 +538,16 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
         status: v.usageLevel === 'dormant' ? 'Inactive' : 'Active',
         complexity: v.complexityLevel ?? 'low',
       })),
+      permissionSets: get('PermissionSet').map((ps) => ({
+        name: ps.artifactName,
+        type: ps.notes?.includes('Custom') ? 'Custom' : 'Managed',
+        namespace: ps.notes?.match(/\((\w+)\)/)?.[1] ?? '',
+      })),
     },
+
+    approvalsAndDocs: buildApprovalsAndDocs(findings, plugins),
+
+    reportBanners: [],
 
     complexityHotspots:
       hotspots.length > 0
@@ -543,6 +574,7 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
             count: inv.countValue ?? 0,
             complexity: inv.complexityLevel ?? 'low',
             confidence: 'Confirmed',
+            isCpqObject: isCpqObjectName(inv.artifactName),
           }))
         : buildObjectInventoryInline(findings),
 
@@ -1092,6 +1124,51 @@ function detectHotspots(
 }
 
 // ============================================================================
+// Approvals & Document Generation Section
+// ============================================================================
+
+function buildApprovalsAndDocs(
+  findings: AssessmentFindingInput[],
+  plugins: AssessmentFindingInput[]
+): ReportData['approvalsAndDocs'] {
+  // Approval rules from approvals collector
+  const approvalRules = findings.filter(
+    (f) =>
+      f.artifactType === 'CustomAction' ||
+      f.artifactType === 'SBQQ__CustomAction__c' ||
+      f.findingKey?.includes('advanced_approval')
+  );
+
+  // Quote templates from templates collector
+  const quoteTemplates = findings.filter(
+    (f) => f.artifactType === 'QuoteTemplate' || f.artifactType === 'SBQQ__QuoteTemplate__c'
+  );
+
+  // DocuSign status from plugins
+  const docuSignPlugin = plugins.find(
+    (p) => p.artifactName?.includes('Electronic') && (p.countValue ?? 0) > 0
+  );
+
+  return {
+    approvalRules: approvalRules.map((r) => ({
+      name: r.artifactName,
+      object: r.evidenceRefs?.find((ref) => ref.label === 'TargetObject')?.value ?? '',
+      conditions: r.countValue ?? 0,
+      status: r.usageLevel === 'dormant' ? 'Inactive' : 'Active',
+    })),
+    quoteTemplates: quoteTemplates.map((t) => ({
+      name: t.artifactName,
+      isDefault: t.notes?.includes('Default') ?? false,
+      lastModified: t.evidenceRefs?.find((ref) => ref.label === 'LastModifiedDate')?.value ?? '',
+    })),
+    documentGeneration: {
+      templateCount: quoteTemplates.length,
+      docuSignActive: !!docuSignPlugin,
+    },
+  };
+}
+
+// ============================================================================
 // Dynamic Extraction Coverage (replaces hardcoded "Full" defaults)
 // ============================================================================
 
@@ -1228,6 +1305,7 @@ function buildObjectInventoryInline(findings: AssessmentFindingInput[]): ReportD
       count: data.count,
       complexity: data.complexity,
       confidence: 'Confirmed',
+      isCpqObject: isCpqObjectName(name),
     }));
 }
 
