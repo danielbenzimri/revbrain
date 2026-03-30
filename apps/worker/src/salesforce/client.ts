@@ -61,6 +61,13 @@ export class SalesforceClient {
     return this.apiCallCount;
   }
 
+  /** Reset all circuit breakers (useful for export scripts between collectors) */
+  resetCircuitBreakers(): void {
+    for (const breaker of Object.values(this.circuitBreakers)) {
+      breaker.reset();
+    }
+  }
+
   /**
    * Make an authenticated Salesforce API call with retry and error handling.
    */

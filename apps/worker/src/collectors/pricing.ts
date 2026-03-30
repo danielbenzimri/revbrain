@@ -88,6 +88,7 @@ export class PricingCollector extends BaseCollector {
       }
 
       for (const r of priceRules) {
+        const isActive = r.SBQQ__Active__c === true;
         findings.push(
           createFinding({
             domain: 'pricing',
@@ -99,10 +100,18 @@ export class PricingCollector extends BaseCollector {
             sourceType: 'object',
             riskLevel: 'medium',
             complexityLevel: 'medium',
-            migrationRelevance: r.SBQQ__Active__c ? 'must-migrate' : 'optional',
+            migrationRelevance: isActive ? 'must-migrate' : 'optional',
             rcaTargetConcept: 'PricingProcedure',
             rcaMappingComplexity: 'transform',
-            notes: `Eval: ${r.SBQQ__EvaluationEvent__c}, Scope: ${r.SBQQ__Scope__c}`,
+            usageLevel: isActive ? undefined : 'dormant',
+            notes: `${isActive ? '' : 'Inactive — '}Eval: ${r.SBQQ__EvaluationEvent__c}, Scope: ${r.SBQQ__Scope__c}`,
+            evidenceRefs: [
+              {
+                type: 'field-ref',
+                value: String(isActive),
+                label: 'Active',
+              },
+            ],
           })
         );
       }

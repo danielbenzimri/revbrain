@@ -378,7 +378,8 @@ export class CatalogCollector extends BaseCollector {
       metrics.filterRules = ruleTypeDist['Filter'] || 0;
 
       for (const r of rules) {
-        const ruleType = r.SBQQ__Type__c as string;
+        const ruleType = (r.SBQQ__Type__c as string) || 'Unknown';
+        const isActive = r.SBQQ__Active__c === true;
         findings.push(
           createFinding({
             domain: 'catalog',
@@ -389,9 +390,15 @@ export class CatalogCollector extends BaseCollector {
             findingType: 'product_rule',
             sourceType: 'object',
             riskLevel: ruleType === 'Filter' ? 'high' : 'medium',
-            migrationRelevance: r.SBQQ__Active__c ? 'must-migrate' : 'optional',
+            migrationRelevance: isActive ? 'must-migrate' : 'optional',
             rcaTargetConcept: ruleType === 'Filter' ? 'QualificationRuleProcedure' : 'CML',
             rcaMappingComplexity: ruleType === 'Filter' ? 'redesign' : 'transform',
+            usageLevel: isActive ? undefined : 'dormant',
+            notes: isActive ? undefined : 'Inactive',
+            evidenceRefs: [
+              { type: 'field-ref', value: ruleType, label: 'Type' },
+              { type: 'field-ref', value: String(isActive), label: 'Active' },
+            ],
           })
         );
       }

@@ -75,7 +75,8 @@ async function main() {
     forceRefresh: async () => ({ accessToken, instanceUrl: conn.salesforceInstanceUrl }),
   } as unknown as SalesforceAuth;
 
-  const sfClient = new SalesforceClient(auth, 1000);
+  // Higher budget for sequential export — all 12 collectors share one client
+  const sfClient = new SalesforceClient(auth, 5000);
   const apiVersion = conn.connectionMetadata?.apiVersion || 'v66.0';
   const restApi = new SalesforceRestApi(sfClient, apiVersion);
   const bulkApi = new SalesforceBulkApi(sfClient, apiVersion);
@@ -128,12 +129,17 @@ async function main() {
   let totalFindings = 0;
 
   for (const { name, Cls } of collectors) {
+    // Reset circuit breakers between collectors so a transient failure in one
+    // collector doesn't cascade to subsequent collectors
+    sfClient.resetCircuitBreakers();
     process.stdout.write(`  ${name}...`);
     const collector = new Cls(ctx);
     const result = await collector.run();
     results[name] = result;
     totalFindings += result.findings.length;
     console.log(` ${result.status} (${result.findings.length} findings)`);
+    // Brief pause between collectors to avoid rate limiting
+    await new Promise((resolve) => setTimeout(resolve, 1000));
   }
 
   // Build export

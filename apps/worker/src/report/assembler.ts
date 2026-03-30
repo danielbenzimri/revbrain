@@ -1364,7 +1364,9 @@ function buildProductCatalog(
   // Group by Family (from evidenceRefs or notes)
   const families: Record<string, { active: number; inactive: number; quoted: number }> = {};
   for (const p of products) {
-    const family = p.evidenceRefs?.find((r) => r.label === 'Family')?.value ?? 'Other';
+    // evidenceRef layout: { value: 'Product2.Family', label: '<family_name>' }
+    const familyRef = p.evidenceRefs?.find((r) => r.value === 'Product2.Family');
+    const family = familyRef?.label && familyRef.label !== '' ? familyRef.label : 'Other';
     if (!families[family]) families[family] = { active: 0, inactive: 0, quoted: 0 };
     if (p.usageLevel === 'dormant') {
       families[family].inactive++;

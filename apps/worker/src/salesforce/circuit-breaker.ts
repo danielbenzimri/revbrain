@@ -59,6 +59,13 @@ export class CircuitBreaker {
     }
   }
 
+  /** Force reset to closed state (for testing / export scripts) */
+  reset(): void {
+    this.failures = 0;
+    this.state = 'closed';
+    this.openedAt = undefined;
+  }
+
   getState(): CircuitState {
     return this.state;
   }
