@@ -12,6 +12,16 @@
 import type { AssessmentFindingInput } from '@revbrain/contract';
 
 // ============================================================================
+// Helpers — safe accessors for DB data (JSONB may not be proper arrays)
+// ============================================================================
+
+/** Safely get evidenceRefs as an array (JSONB from DB may be object/null) */
+function safeRefs(f: { evidenceRefs?: unknown }): Array<Record<string, unknown>> {
+  if (Array.isArray(f.evidenceRefs)) return f.evidenceRefs;
+  return [];
+}
+
+// ============================================================================
 // ReportData Interface (fully typed — no `any`)
 // ============================================================================
 
@@ -324,6 +334,13 @@ export function sectionConfidence(
 // ============================================================================
 
 export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
+  // Normalize evidenceRefs — JSONB from DB may be object/null instead of array
+  for (const f of findings) {
+    if (!Array.isArray(f.evidenceRefs)) {
+      (f as Record<string, unknown>).evidenceRefs = [];
+    }
+  }
+
   // Group findings by artifact type for easy access
   // Normalize: some collectors use full SF names (SBQQ__PriceRule__c), others use short (PriceRule)
   const byType = new Map<string, AssessmentFindingInput[]>();
@@ -427,8 +444,8 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
   const assessmentPeriod = `${formatDate(startDate)} – ${formatDate(endDate)} (90 Days)`;
 
   // Discount distribution percentage calculation
-  const discountRefs = discountDist?.evidenceRefs ?? [];
-  const discountTotal = discountRefs.reduce((sum, r) => sum + Number(r.value ?? 0), 0);
+  const discountRefs = Array.isArray(discountDist?.evidenceRefs) ? discountDist.evidenceRefs : [];
+  const discountTotal = discountRefs.reduce((sum: number, r: Record<string, unknown>) => sum + Number(r.value ?? 0), 0);
 
   // Top products percentage calculation
   const totalTopProductQuoted = topProducts.reduce((sum, p) => sum + (p.countValue ?? 0), 0);
