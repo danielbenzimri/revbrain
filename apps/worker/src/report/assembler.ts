@@ -334,9 +334,16 @@ export function sectionConfidence(
 // ============================================================================
 
 export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
-  // Normalize evidenceRefs — JSONB from DB may be object/null instead of array
+  // Normalize evidenceRefs — JSONB from DB may be string, object, or null instead of array
   for (const f of findings) {
-    if (!Array.isArray(f.evidenceRefs)) {
+    const refs = f.evidenceRefs;
+    if (typeof refs === 'string') {
+      try {
+        (f as Record<string, unknown>).evidenceRefs = JSON.parse(refs);
+      } catch {
+        (f as Record<string, unknown>).evidenceRefs = [];
+      }
+    } else if (!Array.isArray(refs)) {
       (f as Record<string, unknown>).evidenceRefs = [];
     }
   }
@@ -2093,9 +2100,10 @@ function buildFieldCompleteness(
       below5pct: Number(f.evidenceRefs?.find((r) => r.label === 'below5pct')?.value ?? 0),
       score: f.evidenceRefs?.find((r) => r.label === 'score')?.value ?? 'N/A',
     }));
-    // If all entries are stubs with no real data, return empty array
-    const hasRealData = mapped.some((f) => f.totalFields > 0);
-    return hasRealData ? mapped : [];
+    // If all entries have zero population data (no above50pct, no below5pct, all N/A scores),
+    // suppress the section — field completeness analysis was not actually performed (P0-5)
+    const hasPopulationData = mapped.some((f) => f.above50pct > 0 || f.below5pct > 0 || (f.score !== 'N/A' && f.score !== ''));
+    return hasPopulationData ? mapped : [];
   }
 
   // No FieldCompleteness findings exist — return empty array instead of stub entries (Task 0.5)
