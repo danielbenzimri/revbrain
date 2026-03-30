@@ -4,7 +4,8 @@
  * This bridges the gap between the server API response (flat findings list)
  * and the UI's AssessmentData structure (domain-organized with stats).
  *
- * See: Final Audit Step 5
+ * Updated: Ensures UI has ALL data the PDF report has, plus more.
+ * See: docs/CPQ-REPORT-REDLINE-ANALYSIS.md
  */
 
 import type { AssessmentData, DomainId } from '../mocks/assessment-mock-data';
@@ -68,6 +69,14 @@ function mapComplexity(level: string | null): Complexity {
   return 'low';
 }
 
+type EvidenceRef = { type?: string; value?: string; label?: string };
+
+/** Safe evidence ref accessor */
+function getRef(refs: unknown[] | null | undefined, label: string): string | undefined {
+  if (!refs) return undefined;
+  return (refs as EvidenceRef[]).find((r) => r.label === label)?.value;
+}
+
 /**
  * Convert API findings into the AssessmentData shape the UI expects.
  * Returns null if findings are empty or insufficient.
@@ -78,12 +87,34 @@ export function transformFindingsToAssessmentData(
 ): AssessmentData | null {
   if (!findings || findings.length < 10) return null;
 
-  // Group findings by UI domain
+  // ── Reusable lookups ──
+  const qcpScripts = findings.filter(
+    (f) => f.artifactType === 'SBQQ__CustomScript__c' || f.artifactType === 'CustomScript'
+  );
+  const priceRuleFindings = findings.filter(
+    (f) => f.artifactType === 'PriceRule' || f.artifactType === 'SBQQ__PriceRule__c'
+  );
+  const activePriceRules = priceRuleFindings.filter(
+    (f) => f.usageLevel !== 'dormant' && !f.notes?.includes('Inactive')
+  ).length;
+  const totalQuotes =
+    findings.find(
+      (f) =>
+        f.artifactType === 'DataCount' &&
+        f.artifactName?.toLowerCase().replace(/\s/g, '').includes('quote') &&
+        !f.artifactName?.toLowerCase().includes('line')
+    )?.countValue ?? 0;
+
+  // ── Group findings by UI domain ──
   const domainFindings = new Map<DomainId, AssessmentFindingResponse[]>();
+  const domainItemCounts: Record<string, number> = {};
   for (const f of findings) {
     const uiDomain = DOMAIN_MAPPING[f.domain] ?? 'dataReporting';
     if (!domainFindings.has(uiDomain)) domainFindings.set(uiDomain, []);
     domainFindings.get(uiDomain)!.push(f);
+    if (!AGGREGATE_TYPES.has(f.artifactType)) {
+      domainItemCounts[uiDomain] = (domainItemCounts[uiDomain] ?? 0) + 1;
+    }
   }
 
   const domainOrder: DomainId[] = [
@@ -162,7 +193,7 @@ export function transformFindingsToAssessmentData(
     };
   });
 
-  // Build risks from high/critical findings
+  // ── Risks from high/critical findings ──
   const risks = findings
     .filter((f) => f.riskLevel === 'critical' || f.riskLevel === 'high')
     .slice(0, 20)
@@ -182,18 +213,8 @@ export function transformFindingsToAssessmentData(
       owner: null as string | null,
     }));
 
-  // Build key findings from hotspots or high-level observations
+  // ── Key Findings ──
   const hotspots = findings.filter((f) => f.artifactType === 'ComplexityHotspot');
-  const qcpScripts = findings.filter(
-    (f) => f.artifactType === 'SBQQ__CustomScript__c' || f.artifactType === 'CustomScript'
-  );
-  const priceRuleFindings = findings.filter(
-    (f) => f.artifactType === 'PriceRule' || f.artifactType === 'SBQQ__PriceRule__c'
-  );
-  const activePriceRules = priceRuleFindings.filter(
-    (f) => f.usageLevel !== 'dormant' && !f.notes?.includes('Inactive')
-  ).length;
-
   const keyFindings = [
     ...(qcpScripts.length > 0
       ? [
@@ -220,18 +241,13 @@ export function transformFindingsToAssessmentData(
     })),
   ];
 
-  // Extract org health from OrgFingerprint and UserAdoption findings
+  // ── Org Health ──
   const orgFp = findings.find((f) => f.artifactType === 'OrgFingerprint');
   const userAdoption = findings.find((f) => f.artifactType === 'UserAdoption');
-  const cpqLicenses = Number(
-    (userAdoption?.evidenceRefs as Array<{ label?: string; value?: string }>)?.find(
-      (r) => r.label === 'CPQ Licenses'
-    )?.value ?? 0
-  );
+  const cpqLicenses = Number(getRef(userAdoption?.evidenceRefs, 'CPQ Licenses') ?? 0);
   const orgEdition = orgFp?.notes?.match(/(\w+ Edition)/)?.[1] ?? 'Enterprise Edition';
 
-  // Domain insights from aggregate data
-  const dataQualityFlags = findings.filter((f) => f.artifactType === 'DataQualityFlag');
+  // ── Domain Insights ──
   for (const domain of domains) {
     const domainInsights: string[] = [];
     if (domain.id === 'products') {
@@ -240,9 +256,7 @@ export function transformFindingsToAssessmentData(
           .filter((f) => f.artifactType === 'Product2')
           .map(
             (f) =>
-              (f.evidenceRefs as Array<{ value?: string; label?: string }>)?.find(
-                (r) => r.value === 'Product2.Family'
-              )?.label
+              (f.evidenceRefs as EvidenceRef[])?.find((r) => r.value === 'Product2.Family')?.label
           )
           .filter(Boolean)
       ).size;
@@ -266,26 +280,30 @@ export function transformFindingsToAssessmentData(
     domain.insights = domainInsights;
   }
 
-  // Build completeness from extraction coverage
-  const completeness = Object.entries(domainCounts).map(([id, count]) => ({
+  // ── Completeness from domain counts ──
+  const completeness = Object.entries(domainItemCounts).map(([id, count]) => ({
     category: id,
-    items: count as number,
-    coverage: (count as number) > 5 ? 100 : (count as number) > 0 ? 75 : 0,
+    items: count,
+    coverage: count > 5 ? 100 : count > 0 ? 75 : 0,
   }));
 
-  // CPQ Intelligence data
+  // ══════════════════════════════════════════════════════════════
+  // CPQ Intelligence data — matches everything the PDF has + more
+  // ══════════════════════════════════════════════════════════════
+
+  // Settings Panel
   const settingsPanel = findings
     .filter((f) => f.artifactType === 'CPQSettingValue')
     .map((f) => ({
       setting: f.artifactName,
-      value: ((f.evidenceRefs as Array<{ label?: string }>)?.[0]?.label as string) ?? 'Unknown',
+      value: (f.evidenceRefs as EvidenceRef[])?.[0]?.label ?? 'Unknown',
       notes: f.notes ?? '',
     }));
 
+  // Plugin Inventory (with QCP + Rec Products override)
   const pluginInventory = findings
     .filter((f) => f.artifactType === 'PluginStatus')
     .map((f) => {
-      // Apply QCP/Plugin override (same logic as assembler)
       const isQcp = f.artifactName?.includes('QCP') || f.artifactName?.includes('Calculator');
       const qcpOverride = isQcp && (f.countValue ?? 0) === 0 && qcpScripts.length > 0;
       const isRecProducts = f.artifactName?.includes('Recommended');
@@ -311,18 +329,124 @@ export function transformFindingsToAssessmentData(
       };
     });
 
+  // Complexity Hotspots
+  const complexityHotspots = hotspots.map((h) => ({
+    name: h.artifactName,
+    severity: h.riskLevel ?? 'medium',
+    analysis: h.notes ?? '',
+  }));
+
+  // Top Quoted Products (with category + percentQuotes from PDF)
   const topProducts = findings
     .filter((f) => f.artifactType === 'TopQuotedProduct')
-    .map((f) => ({
-      name: f.artifactName,
-      quotedCount: f.countValue ?? 0,
+    .map((f) => {
+      const count = f.countValue ?? 0;
+      const denom = totalQuotes > 0 ? totalQuotes : 1;
+      const pct =
+        denom < 10
+          ? `${Math.round((count / denom) * 100)}% (${count} of ${denom})`
+          : `${Math.round((count / denom) * 100)}%`;
+      return {
+        name: f.artifactName,
+        category:
+          (f.evidenceRefs as EvidenceRef[])?.find((r) => r.value === 'Product2.Family')?.label ??
+          'Unknown',
+        quotedCount: count,
+        percentQuotes: pct,
+      };
+    });
+
+  // Conversion Segments
+  const conversionSegments = findings
+    .filter((f) => f.artifactType === 'ConversionSegment')
+    .map((s) => ({
+      segment: s.artifactName,
+      percentQuotes: Number(getRef(s.evidenceRefs, '% of quotes') ?? 0),
+      percentRevenue: Number(getRef(s.evidenceRefs, '% of revenue') ?? 0),
+      conversionRate: Number(getRef(s.evidenceRefs, 'conversion %') ?? 0),
     }));
 
+  // User Behavior
+  const userBehavior = findings
+    .filter((f) => f.artifactType === 'UserBehavior')
+    .map((u) => ({
+      profile: u.artifactName,
+      users: u.countValue ?? 0,
+      percentQuotes: Number(getRef(u.evidenceRefs, '% of quotes') ?? 0),
+      conversionRate: Number(getRef(u.evidenceRefs, 'Conversion %') ?? 0),
+      notes: u.notes ?? '',
+    }));
+
+  // Discount Distribution
+  const discountDistFinding = findings.find((f) => f.artifactType === 'DiscountDistribution');
+  const discountBuckets = (discountDistFinding?.evidenceRefs as EvidenceRef[] | undefined) ?? [];
+  const totalDiscounted = discountBuckets.reduce((s, r) => s + Number(r.value ?? 0), 0);
+  const discountDistribution = {
+    totalDiscounted,
+    avgPercent: 0,
+    buckets: discountBuckets.map((r) => ({
+      range: r.label ?? '',
+      count: Number(r.value ?? 0),
+      percent: totalDiscounted > 0 ? Math.round((Number(r.value ?? 0) / totalDiscounted) * 100) : 0,
+    })),
+  };
+
+  // Data Quality Flags (matches UI field names: check, count, status, notes)
+  const dataQualityFlags = findings
+    .filter((f) => f.artifactType === 'DataQualityFlag')
+    .map((f) => ({
+      check: f.artifactName,
+      count: f.countValue ?? 0,
+      status: ((f.countValue ?? 0) > 0
+        ? 'flagged'
+        : f.countValue === null
+          ? 'not_assessed'
+          : 'clean') as string,
+      notes: f.notes ?? '',
+    }));
+
+  // CPQ Reports
+  const cpqReports = findings
+    .filter((f) => f.artifactType === 'CPQReport')
+    .map((r) => ({
+      name: r.artifactName,
+      notes: r.notes ?? '',
+    }));
+
+  // Object Inventory (from ObjectInventoryItem findings)
+  const objectInventory = findings
+    .filter((f) => f.artifactType === 'ObjectInventoryItem')
+    .map((f) => ({
+      objectName: f.artifactName,
+      count: f.countValue ?? 0,
+      complexity: f.complexityLevel ?? 'low',
+    }));
+
+  // Permission Sets
   const permissionSets = findings
     .filter((f) => f.artifactType === 'PermissionSet')
     .map((f) => ({
       name: f.artifactName,
       type: f.notes?.includes('Custom') ? 'Custom' : 'Managed',
+    }));
+
+  // Price Override Analysis
+  const overrideFinding = findings.find((f) => f.artifactType === 'PriceOverrideAnalysis');
+  const priceOverrides = overrideFinding
+    ? {
+        count: overrideFinding.countValue ?? 0,
+        rate: Number(getRef(overrideFinding.evidenceRefs, 'Override rate %') ?? 0),
+        revenueImpact: Number(getRef(overrideFinding.evidenceRefs, 'Revenue impact $') ?? 0),
+      }
+    : undefined;
+
+  // Trend Indicators
+  const trendIndicators = findings
+    .filter((f) => f.artifactType === 'TrendIndicator')
+    .map((t) => ({
+      metric: t.artifactName,
+      value: t.countValue ?? 0,
+      trend: getRef(t.evidenceRefs, 'Trend') ?? 'Stable',
     }));
 
   return {
@@ -357,15 +481,19 @@ export function transformFindingsToAssessmentData(
     totalGuided,
     totalManual,
     totalBlocked,
-    // CPQ Intelligence data (consumed by CPQIntelligence component)
+    // CPQ Intelligence data — consumed by CPQIntelligence component
     settingsPanel,
     pluginInventory,
+    complexityHotspots,
     topProducts,
+    conversionSegments,
+    userBehavior,
+    discountDistribution,
+    dataQualityFlags,
+    cpqReports,
+    objectInventory,
     permissionSets,
-    dataQualityFlags: dataQualityFlags.map((f) => ({
-      issue: f.artifactName,
-      status: (f.countValue ?? 0) > 0 ? 'Flagged' : 'Clean',
-      detail: f.notes ?? '',
-    })),
+    priceOverrides,
+    trendIndicators,
   } as AssessmentData;
 }
