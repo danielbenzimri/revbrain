@@ -21,6 +21,36 @@ import { getEnv } from '../../lib/env.ts';
 import { logger } from '../../lib/logger.ts';
 
 // ---------------------------------------------------------------------------
+// Report generation — dynamic import from worker package at runtime.
+// Uses dynamic import() to avoid TypeScript rootDir restrictions while
+// allowing the server to assemble + render the full HTML report.
+// The worker report modules only depend on @revbrain/contract (shared).
+// ---------------------------------------------------------------------------
+
+let _assembleReport: ((findings: unknown[]) => unknown) | null = null;
+let _renderReport: ((data: unknown) => string) | null = null;
+
+async function getReportModules() {
+  if (_assembleReport && _renderReport) return { assembleReport: _assembleReport, renderReport: _renderReport };
+  try {
+    const workerReportPath = resolve(
+      dirname(fileURLToPath(import.meta.url)),
+      '../../../../worker/src/report/index.ts'
+    );
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const mod = await import(workerReportPath) as any;
+    _assembleReport = mod.assembleReport;
+    _renderReport = mod.renderReport;
+    return { assembleReport: _assembleReport!, renderReport: _renderReport! };
+  } catch (err) {
+    logger.error('report_module_import_failed', {
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return null;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Worker dispatch — local (dev) or Cloud Run trigger proxy (staging/prod)
 // ---------------------------------------------------------------------------
 
@@ -524,91 +554,54 @@ assessmentRouter.post('/:projectId/assessment/runs/:runId/report', async (c) => 
     });
   }
 
-  // Generate report — returns findings as structured JSON for now.
-  // Full PDF generation requires Playwright (available in worker package).
-  // v1: Return structured report data that client can render or that
-  // a dedicated report-generation endpoint in the worker can consume.
+  // Generate report — assemble findings into structured data, then render HTML.
+  // The assembler + renderer are dynamically imported from the worker package
+  // (pure functions, no heavy deps — only @revbrain/contract types and templates).
   try {
-    const findings = await repos.assessmentRuns.findFindingsByRun(runId, { limit: 5000 });
-
-    // Group findings by artifact type for the report structure
-    const byType: Record<string, typeof findings> = {};
-    for (const f of findings) {
-      if (!byType[f.artifactType]) byType[f.artifactType] = [];
-      byType[f.artifactType].push(f);
+    const reportModules = await getReportModules();
+    if (!reportModules) {
+      return c.json(
+        {
+          success: false,
+          error: {
+            code: 'REPORT_GENERATION_FAILED',
+            message: 'Report generation modules not available. Ensure the worker package is accessible.',
+          },
+        },
+        500
+      );
     }
 
-    const settingsPanel = (byType['CPQSettingValue'] ?? []).map((f) => ({
-      setting: f.artifactName,
-      value: ((f.evidenceRefs?.[0] as Record<string, unknown>)?.label as string) ?? 'Unknown',
-      notes: f.notes ?? '',
-    }));
+    const findings = await repos.assessmentRuns.findFindingsByRun(runId, { limit: 5000 });
 
-    const customScripts = byType['SBQQ__CustomScript__c'] ?? byType['CustomScript'] ?? [];
-    const plugins = (byType['PluginStatus'] ?? []).map((f) => {
-      const isQcp = f.artifactName?.includes('QCP') || f.artifactName?.includes('Calculator');
-      const qcpOverride = isQcp && (f.countValue ?? 0) === 0 && customScripts.length > 0;
-      const isRecProducts = f.artifactName?.includes('Recommended');
-      const recApex = isRecProducts
-        ? findings.find(
-            (a: { artifactType: string; artifactName: string }) =>
-              a.artifactType === 'ApexClass' && /ProductRecommendation/i.test(a.artifactName)
-          )
-        : null;
-      const recOverride = isRecProducts && (f.countValue ?? 0) === 0 && recApex;
-      return {
-        plugin: f.artifactName,
-        status:
-          qcpOverride || recOverride
-            ? 'Active'
-            : (f.countValue ?? 0) > 0
-              ? 'Active'
-              : 'Not Configured',
-        notes: qcpOverride
-          ? `Active — ${customScripts.length} custom script(s) detected`
-          : recOverride
-            ? `Active — Apex: ${recApex.artifactName}`
-            : (f.notes ?? ''),
-      };
-    });
+    // Query param: ?format=html returns raw HTML for download; default returns JSON metadata
+    const format = c.req.query('format');
 
-    const hotspots = (byType['ComplexityHotspot'] ?? []).map((f) => ({
-      name: f.artifactName,
-      severity: f.riskLevel ?? 'medium',
-      analysis: f.notes ?? '',
-    }));
+    // Assemble the report data structure from raw findings
+    const reportData = reportModules.assembleReport(findings);
 
-    const topProducts = (byType['TopQuotedProduct'] ?? []).map((f) => ({
-      name: f.artifactName,
-      quotedCount: f.countValue ?? 0,
-      notes: f.notes ?? '',
-    }));
+    // Render the full HTML report
+    const html = reportModules.renderReport(reportData);
 
-    const objectInventory = (byType['ObjectInventoryItem'] ?? []).map((f, i) => ({
-      id: i + 1,
-      objectName: f.artifactName,
-      count: f.countValue ?? 0,
-      complexity: f.complexityLevel ?? 'low',
-    }));
+    if (format === 'html') {
+      // Return raw HTML — client will trigger download or print-to-PDF
+      return new Response(html, {
+        status: 200,
+        headers: {
+          'Content-Type': 'text/html; charset=utf-8',
+          'Content-Disposition': `attachment; filename="cpq-assessment-${runId.slice(0, 8)}.html"`,
+        },
+      });
+    }
 
+    // Default: return JSON with report metadata + HTML embedded
     return c.json({
       success: true,
       data: {
         runId,
         totalFindings: findings.length,
-        settingsPanel,
-        plugins,
-        hotspots,
-        topProducts,
-        objectInventory,
-        findingsByType: Object.fromEntries(
-          Object.entries(byType).map(([type, items]) => [type, items.length])
-        ),
-        // PDF generation available via worker script:
-        // npx tsx apps/worker/scripts/generate-report.ts --runId={runId}
-        pdfAvailable: false,
-        pdfNote:
-          'PDF generation requires Playwright. Use the worker report generator for full PDF output.',
+        reportHtml: html,
+        generatedAt: new Date().toISOString(),
       },
     });
   } catch (err) {
@@ -643,20 +636,56 @@ assessmentRouter.get('/:projectId/assessment/runs/:runId/report/download', async
     return c.json({ success: false, error: { code: 'NOT_FOUND', message: 'Run not found' } }, 404);
   }
 
-  // Check if PDF has been generated (stored in run metadata)
-  // PDF generation happens via worker script: npx tsx apps/worker/scripts/generate-report.ts
-  // and uploaded to Supabase Storage at assessment-reports/{runId}/report.pdf
-  return c.json(
-    {
-      success: false,
-      error: {
-        code: 'NOT_AVAILABLE',
-        message:
-          'PDF report not yet generated. Run: npx tsx apps/worker/scripts/generate-report.ts',
+  // Generate HTML report on-the-fly and return as downloadable file
+  if (!['completed', 'completed_warnings'].includes(run.status)) {
+    return c.json(
+      {
+        success: false,
+        error: {
+          code: 'BAD_REQUEST',
+          message: `Cannot download report for run in '${run.status}' state.`,
+        },
       },
-    },
-    404
-  );
+      400
+    );
+  }
+
+  try {
+    const reportModules = await getReportModules();
+    if (!reportModules) {
+      return c.json(
+        {
+          success: false,
+          error: {
+            code: 'REPORT_GENERATION_FAILED',
+            message: 'Report generation modules not available.',
+          },
+        },
+        500
+      );
+    }
+
+    const findings = await repos.assessmentRuns.findFindingsByRun(runId, { limit: 5000 });
+    const reportData = reportModules.assembleReport(findings);
+    const html = reportModules.renderReport(reportData);
+
+    return new Response(html, {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Content-Disposition': `attachment; filename="cpq-assessment-${runId.slice(0, 8)}.html"`,
+      },
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return c.json(
+      {
+        success: false,
+        error: { code: 'REPORT_GENERATION_FAILED', message: `Report generation failed: ${msg}` },
+      },
+      500
+    );
+  }
 });
 
 // ==========================================================================

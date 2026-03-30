@@ -15,6 +15,11 @@ import {
   Database,
   FileText,
   Shield,
+  Layers,
+  Activity,
+  Copy,
+  Lock,
+  Target,
 } from 'lucide-react';
 import type { AssessmentData } from '../../mocks/assessment-mock-data';
 
@@ -30,7 +35,9 @@ export default function CPQIntelligence({ assessment }: CPQIntelligenceProps) {
     (assessment.complexityHotspots?.length ?? 0) > 0 ||
     (assessment.topProducts?.length ?? 0) > 0 ||
     (assessment.conversionSegments?.length ?? 0) > 0 ||
-    (assessment.dataQualityFlags?.length ?? 0) > 0;
+    (assessment.dataQualityFlags?.length ?? 0) > 0 ||
+    (assessment.featureUtilization?.length ?? 0) > 0 ||
+    (assessment.scoringMethodology?.length ?? 0) > 0;
 
   if (!hasAnyData) return null;
 
@@ -210,10 +217,14 @@ export default function CPQIntelligence({ assessment }: CPQIntelligenceProps) {
           >
             <div className="space-y-3">
               {assessment.conversionSegments.map((s, i) => {
+                // Support both transformed data (percentQuotes number) and raw data (evidenceRefs)
+                const seg = s as Record<string, unknown>;
                 const pctQuotes =
-                  s.evidenceRefs?.find((r) => r.label === '% of quotes')?.value ?? '0';
+                  seg.percentQuotes ??
+                  (s.evidenceRefs?.find((r: { label?: string; value?: string }) => r.label === '% of quotes')?.value ?? '0');
                 const conversion =
-                  s.evidenceRefs?.find((r) => r.label === 'conversion %')?.value ?? '0';
+                  seg.conversionRate ??
+                  (s.evidenceRefs?.find((r: { label?: string; value?: string }) => r.label === 'conversion %')?.value ?? '0');
                 return (
                   <div key={i}>
                     <div className="flex justify-between text-xs mb-1">
@@ -332,6 +343,194 @@ export default function CPQIntelligence({ assessment }: CPQIntelligenceProps) {
                   ))}
                 </tbody>
               </table>
+            </div>
+          </Card>
+        )}
+      </div>
+
+      {/* Low-Volume Warning Banner */}
+      {assessment.lowVolumeWarning && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
+          <AlertTriangle size={16} className="text-amber-600 mt-0.5 shrink-0" />
+          <p className="text-xs text-amber-800 leading-relaxed">{assessment.lowVolumeWarning}</p>
+        </div>
+      )}
+
+      {/* Row 6: Complexity Scores + Scoring Methodology */}
+      {assessment.complexityScores && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Complexity Score Bars */}
+          <Card
+            icon={<Target size={16} />}
+            title="Complexity Scores"
+            count={assessment.complexityScores.overall}
+          >
+            <div className="space-y-3">
+              {[
+                { label: 'Overall', value: assessment.complexityScores.overall },
+                { label: 'Config Depth', value: assessment.complexityScores.configurationDepth },
+                { label: 'Pricing Logic', value: assessment.complexityScores.pricingLogic },
+                { label: 'Customization', value: assessment.complexityScores.customizationLevel },
+                { label: 'Data Volume', value: assessment.complexityScores.dataVolumeUsage },
+                { label: 'Tech Debt', value: assessment.complexityScores.technicalDebt },
+              ].map((s, i) => (
+                <div key={i}>
+                  <div className="flex justify-between text-xs mb-1">
+                    <span className={`font-medium ${i === 0 ? 'text-slate-900' : 'text-slate-600'}`}>{s.label}</span>
+                    <span className={`font-semibold ${s.value >= 70 ? 'text-red-600' : s.value >= 40 ? 'text-amber-600' : 'text-emerald-600'}`}>{s.value}/100</span>
+                  </div>
+                  <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${s.value >= 70 ? 'bg-red-500' : s.value >= 40 ? 'bg-amber-500' : 'bg-emerald-500'}`}
+                      style={{ width: `${s.value}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+              <p className="text-[10px] text-slate-400 italic mt-1">Scores are directional indicators, not absolute measures.</p>
+            </div>
+          </Card>
+
+          {/* Scoring Methodology */}
+          {assessment.scoringMethodology && assessment.scoringMethodology.length > 0 && (
+            <Card
+              icon={<Layers size={16} />}
+              title="Scoring Methodology"
+              count={assessment.scoringMethodology.length}
+            >
+              <div className="max-h-64 overflow-y-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-100">
+                      <th className="text-start py-1 font-medium text-slate-500">Dimension</th>
+                      <th className="text-end py-1 font-medium text-slate-500">Weight</th>
+                      <th className="text-end py-1 font-medium text-slate-500">Score</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {assessment.scoringMethodology.map((m, i) => (
+                      <tr key={i} className="border-b border-slate-50">
+                        <td className="py-1.5">
+                          <div className="text-slate-700 font-medium">{m.dimension}</div>
+                          <div className="text-[10px] text-slate-400 mt-0.5">{m.rationale}</div>
+                        </td>
+                        <td className="py-1 text-end text-slate-500">{m.weight}%</td>
+                        <td className="py-1 text-end font-semibold text-slate-900">{m.score}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          )}
+        </div>
+      )}
+
+      {/* Row 7: Feature Utilization + Permission Sets */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Feature Utilization (5-level model) */}
+        {assessment.featureUtilization && assessment.featureUtilization.length > 0 && (
+          <Card
+            icon={<Activity size={16} />}
+            title="Feature Utilization"
+            count={assessment.featureUtilization.length}
+          >
+            <div className="space-y-2">
+              {assessment.featureUtilization.map((f, i) => (
+                <div
+                  key={i}
+                  className="flex items-center justify-between py-1.5 border-b border-slate-50 last:border-0"
+                >
+                  <div>
+                    <span className="text-xs text-slate-700">{f.feature}</span>
+                    <p className="text-[10px] text-slate-400">{f.detail}</p>
+                  </div>
+                  <span
+                    className={`text-xs font-medium px-2 py-0.5 rounded-full shrink-0 ms-2 ${
+                      f.status === 'Active'
+                        ? 'bg-emerald-50 text-emerald-700'
+                        : f.status === 'Not Used'
+                          ? 'bg-slate-100 text-slate-500'
+                          : 'bg-amber-50 text-amber-700'
+                    }`}
+                  >
+                    {f.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+
+        {/* Permission Sets */}
+        {assessment.permissionSets && assessment.permissionSets.length > 0 && (
+          <Card
+            icon={<Lock size={16} />}
+            title="CPQ Permission Sets"
+            count={assessment.permissionSets.length}
+          >
+            <div className="space-y-2">
+              {assessment.permissionSets.map((ps, i) => (
+                <div
+                  key={i}
+                  className="flex items-center justify-between py-1.5 border-b border-slate-50 last:border-0"
+                >
+                  <span className="text-xs text-slate-700">{ps.name}</span>
+                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                    ps.type === 'Custom' ? 'bg-violet-50 text-violet-700' : 'bg-slate-100 text-slate-500'
+                  }`}>{ps.type}</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+      </div>
+
+      {/* Row 8: Dormant Families + Discount Schedule Dedup */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Dormant Product Families */}
+        {assessment.dormantFamilies && assessment.dormantFamilies.length > 0 && (
+          <Card
+            icon={<AlertTriangle size={16} />}
+            title="Dormant Product Families"
+            count={assessment.dormantFamilies.length}
+          >
+            <p className="text-[10px] text-slate-400 mb-2">
+              Families with zero quoting activity in the 90-day assessment window.
+            </p>
+            <div className="space-y-1.5">
+              {assessment.dormantFamilies.map((d, i) => (
+                <div
+                  key={i}
+                  className="flex items-center justify-between py-1 border-b border-slate-50 last:border-0"
+                >
+                  <span className="text-xs text-slate-700">{d.name}</span>
+                  <span className="text-xs text-slate-400">{d.productCount} products</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+
+        {/* Discount Schedule Dedup */}
+        {assessment.discountScheduleDedup && assessment.discountScheduleDedup.totalCount > 0 && (
+          <Card
+            icon={<Copy size={16} />}
+            title="Discount Schedules"
+            count={assessment.discountScheduleDedup.totalCount}
+          >
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-slate-50 rounded-lg p-2.5 text-center">
+                  <p className="text-lg font-bold text-slate-900">{assessment.discountScheduleDedup.totalCount}</p>
+                  <p className="text-[10px] text-slate-500">Total</p>
+                </div>
+                <div className="bg-slate-50 rounded-lg p-2.5 text-center">
+                  <p className="text-lg font-bold text-slate-900">{assessment.discountScheduleDedup.uniqueCount}</p>
+                  <p className="text-[10px] text-slate-500">Unique</p>
+                </div>
+              </div>
+              <p className="text-[11px] text-slate-600">{assessment.discountScheduleDedup.duplicateDetail}</p>
             </div>
           </Card>
         )}

@@ -249,7 +249,7 @@ export function useAssessmentFindings(
 }
 
 // ---------------------------------------------------------------------------
-// Mutation: Generate assessment report
+// Mutation: Generate assessment report and trigger download
 // ---------------------------------------------------------------------------
 
 export function useGenerateReport(projectId: string | undefined) {
@@ -271,6 +271,28 @@ export function useGenerateReport(projectId: string | undefined) {
       }
 
       const json = await response.json();
+      const reportHtml = json.data?.reportHtml;
+
+      if (reportHtml) {
+        // Trigger download of the HTML report
+        const blob = new Blob([reportHtml], { type: 'text/html;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `cpq-assessment-${runId.slice(0, 8)}.html`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        // Also open in new tab for print-to-PDF
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+          printWindow.document.write(reportHtml);
+          printWindow.document.close();
+        }
+      }
+
       return json.data;
     },
   });

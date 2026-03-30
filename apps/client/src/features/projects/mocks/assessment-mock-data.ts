@@ -313,6 +313,31 @@ export interface AssessmentData {
     notes: string;
   } | null;
   totalEstimatedHours?: number;
+  // V3 PDF parity fields
+  permissionSets?: Array<{ name: string; type: string }>;
+  featureUtilization?: Array<{ feature: string; status: string; detail: string }>;
+  dormantFamilies?: Array<{ name: string; productCount: number }>;
+  discountScheduleDedup?: {
+    totalCount: number;
+    uniqueCount: number;
+    duplicateDetail: string;
+  };
+  lowVolumeWarning?: string | null;
+  scoringMethodology?: Array<{
+    dimension: string;
+    weight: number;
+    score: number;
+    drivers: string;
+    rationale: string;
+  }>;
+  complexityScores?: {
+    overall: number;
+    configurationDepth: number;
+    pricingLogic: number;
+    customizationLevel: number;
+    dataVolumeUsage: number;
+    technicalDebt: number;
+  };
 }
 
 // ---------------------------------------------------------------------------
