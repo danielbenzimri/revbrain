@@ -315,6 +315,29 @@ function renderConfigDomain(data: ReportData): string {
         badge(r.confidence),
       ])
     )}
+
+    ${
+      data.configurationDomain.discountScheduleAnalysis.length > 0
+        ? `
+    <h3>6.4 Discount Schedules</h3>
+    <p><em>${data.configurationDomain.discountScheduleAnalysis.length} unique schedule names (${data.configurationDomain.discountScheduleAnalysis.filter((d) => d.isDuplicate).length} with duplicate names).</em></p>
+    ${table(
+      ['Schedule Name', 'Status'],
+      data.configurationDomain.discountScheduleAnalysis.map((d) => [
+        escapeHtml(d.name),
+        d.isDuplicate ? '<strong>⚠ Duplicate</strong>' : 'Unique',
+      ])
+    )}`
+        : ''
+    }
+
+    ${
+      data.configurationDomain.optionAttachmentSummary
+        ? `
+    <h3>6.5 Product Option Attachment</h3>
+    <p>${escapeHtml(data.configurationDomain.optionAttachmentSummary)}</p>`
+        : ''
+    }
   </div>`;
 }
 
@@ -459,6 +482,34 @@ function renderDataQuality(data: ReportData): string {
             ])
           )
         : '<p><em>Feature utilization analysis requires collector data.</em></p>'
+    }
+
+    <h3>8.4 Field Completeness by Object</h3>
+    ${
+      data.dataQuality.fieldCompleteness.some((f) => f.totalFields > 0)
+        ? table(
+            [
+              'Object',
+              'Total Fields',
+              'Fields >50% Populated',
+              'Fields <5% Populated',
+              'Quality Score',
+            ],
+            data.dataQuality.fieldCompleteness.map((f) => [
+              escapeHtml(f.object),
+              String(f.totalFields),
+              String(f.above50pct),
+              String(f.below5pct),
+              escapeHtml(f.score),
+            ])
+          )
+        : table(
+            ['Object', 'Status'],
+            data.dataQuality.fieldCompleteness.map((f) => [
+              escapeHtml(f.object),
+              escapeHtml(f.score),
+            ])
+          )
     }
   </div>`;
 }

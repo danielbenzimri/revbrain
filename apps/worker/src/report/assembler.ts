@@ -78,6 +78,8 @@ export interface ReportData {
     }>;
     activePriceRuleSummary: string;
     activeProductRuleSummary: string;
+    discountScheduleAnalysis: Array<{ name: string; isDuplicate: boolean }>;
+    optionAttachmentSummary: string | null;
   };
   usageAdoption: {
     quotingActivity: Array<{ metric: string; value: string; trend: string; confidence: string }>;
@@ -107,6 +109,13 @@ export interface ReportData {
     flaggedAreas: Array<{ issue: string; status: string; detail: string }>;
     technicalDebt: Array<{ category: string; count: number; detail: string }>;
     featureUtilization: Array<{ feature: string; status: string; detail: string }>;
+    fieldCompleteness: Array<{
+      object: string;
+      totalFields: number;
+      above50pct: number;
+      below5pct: number;
+      score: string;
+    }>;
   };
   customCode: {
     apexClasses: Array<{ name: string; lines: number; purpose: string; origin: string }>;
@@ -392,36 +401,54 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
         // detect custom settings, but pricing collector finds SBQQ__CustomScript__c records)
         const isQcp = p.artifactName?.includes('QCP') || p.artifactName?.includes('Calculator');
         const qcpOverride = isQcp && (p.countValue ?? 0) === 0 && customScripts.length > 0;
+        // Override Recommended Products Plugin if Apex implementation detected
+        const isRecProducts = p.artifactName?.includes('Recommended');
+        const recProductsApex = isRecProducts
+          ? apexClasses.find((a) => /ProductRecommendation/i.test(a.artifactName))
+          : null;
+        const recOverride = isRecProducts && (p.countValue ?? 0) === 0 && recProductsApex;
         return {
           plugin: p.artifactName,
-          status: qcpOverride ? 'Active' : (p.countValue ?? 0) > 0 ? 'Active' : 'Not Configured',
+          status:
+            qcpOverride || recOverride
+              ? 'Active'
+              : (p.countValue ?? 0) > 0
+                ? 'Active'
+                : 'Not Configured',
           notes: qcpOverride
             ? `Active — ${customScripts.length} custom script(s) detected via SBQQ__CustomScript__c: ${customScripts.map((s) => s.artifactName).join(', ')}`
-            : (p.notes ?? ''),
+            : recOverride
+              ? `Active — Apex implementation detected: ${recProductsApex.artifactName}`
+              : (p.notes ?? ''),
           confidence: 'Confirmed',
         };
       }),
     },
 
-    quoteLifecycle: [
-      { step: 1, description: 'Lead qualified → converted to Account, Contact, Opportunity.' },
-      { step: 2, description: 'Sales Rep creates Quote from Opportunity.' },
-      { step: 3, description: 'Quote Line Editor: products added, bundles configured.' },
-      { step: 4, description: 'Price rules calculate freight, tax, discounts.' },
-      { step: 5, description: 'Approval routing (if required).' },
-      { step: 6, description: 'Quote PDF generated → Document signing.' },
-      { step: 7, description: 'Quote accepted → Order auto-created.' },
-    ],
+    quoteLifecycle: buildLifecycle(findings, plugins),
 
     configurationDomain: {
       productCatalog: buildProductCatalog(findings, topProducts, totalQuotes),
       priceRules: priceRules.map((r) => {
         const isActive = r.usageLevel !== 'dormant' && !r.notes?.includes('Inactive');
         const isTechDebt = TECH_DEBT_PATTERNS.test(r.artifactName);
+        // Derive complexity from evaluation events in notes (e.g., "Eval: On Init;Before Calc;On Calc;After Calc")
+        const evalMatch = r.notes?.match(/Eval:\s*([^,]+)/)?.[1] ?? '';
+        const evalEvents = evalMatch.split(';').filter((e) => e.trim().length > 0).length;
+        const derivedComplexity =
+          r.complexityLevel && r.complexityLevel !== 'medium'
+            ? r.complexityLevel
+            : evalEvents >= 4
+              ? 'high'
+              : evalEvents >= 2
+                ? 'medium'
+                : evalEvents === 1
+                  ? 'low'
+                  : (r.complexityLevel ?? 'medium');
         return {
           name: r.artifactName + (isTechDebt ? ' ⚠ Potential tech debt' : ''),
           description: r.notes ?? '',
-          complexity: r.complexityLevel ?? 'unknown',
+          complexity: derivedComplexity,
           status: isActive ? 'Active' : 'Inactive',
           confidence: 'Confirmed',
         };
@@ -447,25 +474,27 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
         productRules.length > 0
           ? `${activeProductRules.length} active of ${productRules.length} total`
           : 'None detected',
+      discountScheduleAnalysis: buildDiscountScheduleAnalysis(discountSchedules),
+      optionAttachmentSummary: (() => {
+        const optCount =
+          _productOptions.length > 0
+            ? _productOptions.length
+            : (findings.find(
+                (f) =>
+                  f.artifactType === 'DataCount' &&
+                  f.artifactName?.toLowerCase().replace(/\s/g, '').includes('productoption')
+              )?.countValue ?? 0);
+        const bundleCount = findings.filter(
+          (f) => f.artifactType === 'Product2' && f.complexityLevel === 'medium'
+        ).length;
+        return optCount > 0
+          ? `${optCount} product options across ${bundleCount} bundle products. Per-option attachment rate analysis requires quote line cross-reference data.`
+          : null;
+      })(),
     },
 
     usageAdoption: {
-      quotingActivity:
-        trends.length > 0
-          ? trends.map((t) => ({
-              metric: t.artifactName,
-              value: String(t.countValue ?? ''),
-              trend: t.evidenceRefs?.find((r) => r.label === 'Trend')?.value ?? 'Stable',
-              confidence: 'Confirmed',
-            }))
-          : [
-              {
-                metric: 'Quoting Activity',
-                value: 'Not extracted',
-                trend: 'N/A',
-                confidence: 'Not extracted',
-              },
-            ],
+      quotingActivity: buildQuotingActivityMetrics(findings, trends, totalQuotes),
       conversionBySize: segments.map((s) => ({
         segment: s.artifactName,
         percentQuotes: Number(s.evidenceRefs?.find((r) => r.label === '% of quotes')?.value ?? 0),
@@ -515,6 +544,7 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
       })),
       technicalDebt,
       featureUtilization,
+      fieldCompleteness: buildFieldCompleteness(findings),
     },
 
     customCode: {
@@ -897,9 +927,12 @@ function buildGlanceSections(
         label: 'Active Flows',
         value: (() => {
           const cpqFlows = count('Flow');
-          // Check if there's a summary finding with total org flow count
+          // Check for non-CPQ summary finding OR count from flow summary in notes
           const summaryFlow = findings.find(
-            (f) => f.artifactType === 'Flow' && f.findingKey?.includes('non_cpq_summary')
+            (f) =>
+              f.artifactType === 'Flow' &&
+              (f.findingKey?.includes('non_cpq_summary') ||
+                f.artifactName?.includes('additional active flows'))
           );
           const totalOrgFlows = summaryFlow ? cpqFlows + (summaryFlow.countValue ?? 0) : cpqFlows;
           return totalOrgFlows > cpqFlows
@@ -1158,10 +1191,16 @@ function detectHotspots(
   const hotspots: Array<{ name: string; severity: string; analysis: string }> = [];
 
   if (priceRules.length > 0 && productRules.length > 0) {
+    const activePR = priceRules.filter(
+      (r) => r.usageLevel !== 'dormant' && !r.notes?.includes('Inactive')
+    ).length;
+    const activeProdR = productRules.filter(
+      (r) => r.usageLevel !== 'dormant' && !r.notes?.includes('Inactive')
+    ).length;
     hotspots.push({
       name: 'Quote Pricing Engine',
       severity: customScripts.length > 0 ? 'Critical' : 'High',
-      analysis: `${priceRules.length} Price Rules + ${productRules.length} Product Rules + ${discountSchedules.length} Discount Schedules${customScripts.length > 0 ? ` + ${customScripts.length} Custom Scripts` : ''} form a multi-layered calculation chain.`,
+      analysis: `${activePR} active Price Rules + ${activeProdR} active Product Rules + ${discountSchedules.length} Discount Schedules${customScripts.length > 0 ? ` + ${customScripts.length} Custom Scripts (QCP)` : ''} form a multi-layered calculation chain.`,
     });
   }
 
@@ -1374,6 +1413,258 @@ function buildObjectInventoryInline(findings: AssessmentFindingInput[]): ReportD
       confidence: 'Confirmed',
       isCpqObject: isCpqObjectName(name),
     }));
+}
+
+// ============================================================================
+// Org-Specific Lifecycle (S5.1)
+// ============================================================================
+
+function buildLifecycle(
+  findings: AssessmentFindingInput[],
+  plugins: AssessmentFindingInput[]
+): Array<{ step: number; description: string }> {
+  const hasDocuSign = plugins.some(
+    (p) => p.artifactName?.includes('Electronic') && (p.countValue ?? 0) > 0
+  );
+  const hasApprovals =
+    findings.filter(
+      (f) => f.artifactType === 'CustomAction' || f.artifactType === 'SBQQ__CustomAction__c'
+    ).length > 0;
+  const hasQcp = findings.some(
+    (f) => f.artifactType === 'SBQQ__CustomScript__c' || f.artifactType === 'CustomScript'
+  );
+  const hasBundles = findings.some(
+    (f) => f.artifactType === 'Product2' && f.complexityLevel === 'medium'
+  );
+
+  return [
+    { step: 1, description: 'Lead qualified → converted to Account, Contact, Opportunity.' },
+    {
+      step: 2,
+      description: 'Sales Rep creates Quote from Opportunity.',
+    },
+    {
+      step: 3,
+      description: `Quote Line Editor: products added${hasBundles ? ', bundles configured with nested options' : ''}. Product rules enforce selection and validation constraints.`,
+    },
+    {
+      step: 4,
+      description: `Pricing engine executes: price rules calculate adjustments, discount schedules apply tiered discounts${hasQcp ? ', QCP custom JavaScript injects additional pricing logic' : ''}.`,
+    },
+    {
+      step: 5,
+      description: hasApprovals
+        ? 'Approval routing via Advanced Approvals (sbaa) — multi-level chains with condition-based routing.'
+        : 'Approval routing (if required).',
+    },
+    {
+      step: 6,
+      description: hasDocuSign
+        ? 'Quote PDF generated from configured templates → DocuSign envelope created for e-signature.'
+        : 'Quote PDF generated → Document signing.',
+    },
+    { step: 7, description: 'Quote accepted → Order auto-created.' },
+  ];
+}
+
+// ============================================================================
+// Quoting Activity Metrics (S7.1 — expanded from 1 to 13 metrics)
+// ============================================================================
+
+function buildQuotingActivityMetrics(
+  findings: AssessmentFindingInput[],
+  trends: AssessmentFindingInput[],
+  totalQuotes: number
+): Array<{ metric: string; value: string; trend: string; confidence: string }> {
+  const metrics: Array<{ metric: string; value: string; trend: string; confidence: string }> = [];
+
+  // Find usage overview
+  const usageOverview = findings.find((f) => f.artifactType === 'UsageOverview');
+  const getRefs = (label: string) =>
+    usageOverview?.evidenceRefs?.find((r) => r.label === label)?.value;
+
+  // Quote volume
+  metrics.push({
+    metric: 'Quotes Created',
+    value: String(totalQuotes || getRefs('totalQuotes') || '0'),
+    trend:
+      trends
+        .find((t) => t.artifactName?.includes('Quote'))
+        ?.evidenceRefs?.find((r) => r.label === 'Trend')?.value ?? 'Stable',
+    confidence: 'Confirmed',
+  });
+
+  // Quote lines
+  const qlCount = findings.find(
+    (f) =>
+      f.artifactType === 'DataCount' &&
+      f.artifactName?.toLowerCase().replace(/\s/g, '').includes('quoteline')
+  )?.countValue;
+  metrics.push({
+    metric: 'Quote Lines',
+    value: qlCount != null ? String(qlCount) : 'Not extracted',
+    trend: 'N/A',
+    confidence: qlCount != null ? 'Confirmed' : 'Not extracted',
+  });
+
+  // Avg/Max lines per quote
+  const avgLines = getRefs('avgQuoteLinesPerQuote');
+  if (avgLines) {
+    metrics.push({
+      metric: 'Avg Lines per Quote',
+      value: avgLines,
+      trend: 'N/A',
+      confidence: 'Confirmed',
+    });
+  }
+  const maxLines = getRefs('maxQuoteLinesPerQuote');
+  if (maxLines) {
+    metrics.push({
+      metric: 'Max Lines per Quote',
+      value: maxLines,
+      trend: 'N/A',
+      confidence: 'Confirmed',
+    });
+  }
+
+  // Conversion rate
+  const orderRate = getRefs('quoteToOrderRate');
+  if (orderRate) {
+    metrics.push({
+      metric: 'Quote-to-Order Rate',
+      value: `${orderRate}%`,
+      trend: 'N/A',
+      confidence: 'Confirmed',
+    });
+  }
+
+  // Primary quote rate
+  const primaryRate = getRefs('primaryQuoteRate');
+  if (primaryRate) {
+    metrics.push({
+      metric: 'Primary Quote Rate',
+      value: `${primaryRate}%`,
+      trend: 'N/A',
+      confidence: 'Confirmed',
+    });
+  }
+
+  // Discounting frequency
+  const discFreq = getRefs('discountingFrequency');
+  if (discFreq) {
+    metrics.push({
+      metric: 'Discounted Quotes',
+      value: `${discFreq}%`,
+      trend: 'N/A',
+      confidence: 'Confirmed',
+    });
+  }
+
+  // Modification rate
+  const modRate = getRefs('quoteModificationRate');
+  metrics.push({
+    metric: 'Quote Modification Rate',
+    value:
+      modRate != null
+        ? `${modRate}%`
+        : 'Not assessed — requires Field History Tracking on SBQQ__Quote__c',
+    trend: 'N/A',
+    confidence: modRate != null ? 'Confirmed' : 'Not extracted',
+  });
+
+  // Trend metrics
+  for (const t of trends) {
+    if (!metrics.some((m) => m.metric === t.artifactName)) {
+      metrics.push({
+        metric: t.artifactName,
+        value: String(t.countValue ?? ''),
+        trend: t.evidenceRefs?.find((r) => r.label === 'Trend')?.value ?? 'Stable',
+        confidence: 'Confirmed',
+      });
+    }
+  }
+
+  if (metrics.length === 0) {
+    metrics.push({
+      metric: 'Quoting Activity',
+      value: 'Not extracted',
+      trend: 'N/A',
+      confidence: 'Not extracted',
+    });
+  }
+
+  return metrics;
+}
+
+// ============================================================================
+// Field Completeness (S8.1 — from Discovery's field completeness sampling)
+// ============================================================================
+
+function buildFieldCompleteness(
+  findings: AssessmentFindingInput[]
+): Array<{
+  object: string;
+  totalFields: number;
+  above50pct: number;
+  below5pct: number;
+  score: string;
+}> {
+  const completeness = findings.filter((f) => f.artifactType === 'FieldCompleteness');
+
+  if (completeness.length > 0) {
+    return completeness.map((f) => ({
+      object: f.artifactName,
+      totalFields: f.countValue ?? 0,
+      above50pct: Number(f.evidenceRefs?.find((r) => r.label === 'above50pct')?.value ?? 0),
+      below5pct: Number(f.evidenceRefs?.find((r) => r.label === 'below5pct')?.value ?? 0),
+      score: f.evidenceRefs?.find((r) => r.label === 'score')?.value ?? 'N/A',
+    }));
+  }
+
+  // Fallback: build from DataCount findings that have field completeness data in notes
+  // Discovery logs field completeness in metrics, not findings — surface what we can
+  const objects = [
+    'SBQQ__Quote__c',
+    'SBQQ__QuoteLine__c',
+    'Product2',
+    'PricebookEntry',
+    'Order',
+    'OrderItem',
+  ];
+  return objects.map((obj) => ({
+    object: obj,
+    totalFields: 0,
+    above50pct: 0,
+    below5pct: 0,
+    score: 'Not assessed',
+  }));
+}
+
+// ============================================================================
+// Discount Schedule Analysis (S6.8)
+// ============================================================================
+
+function buildDiscountScheduleAnalysis(
+  discountSchedules: AssessmentFindingInput[]
+): Array<{ name: string; isDuplicate: boolean }> {
+  const nameCounts = new Map<string, number>();
+  for (const ds of discountSchedules) {
+    nameCounts.set(ds.artifactName, (nameCounts.get(ds.artifactName) ?? 0) + 1);
+  }
+
+  // Deduplicate for display — show unique names with duplicate flag
+  const seen = new Set<string>();
+  const result: Array<{ name: string; isDuplicate: boolean }> = [];
+  for (const ds of discountSchedules) {
+    if (!seen.has(ds.artifactName)) {
+      seen.add(ds.artifactName);
+      result.push({
+        name: ds.artifactName,
+        isDuplicate: (nameCounts.get(ds.artifactName) ?? 0) > 1,
+      });
+    }
+  }
+  return result;
 }
 
 function buildInstalledPackages(

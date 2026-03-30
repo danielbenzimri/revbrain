@@ -138,6 +138,13 @@ describe('assembleReport', () => {
     expect(report.configurationDomain.productRules.length).toBe(1);
     expect(report.configurationDomain.productRules[0]).toHaveProperty('type');
 
+    // Discount schedule analysis and option attachment
+    expect(report.configurationDomain).toHaveProperty('discountScheduleAnalysis');
+    expect(report.configurationDomain).toHaveProperty('optionAttachmentSummary');
+
+    // Field completeness
+    expect(report.dataQuality.fieldCompleteness.length).toBeGreaterThan(0);
+
     // Usage — top products have calculated percentages
     expect(report.usageAdoption.topProducts.length).toBe(1);
     expect(report.usageAdoption.topProducts[0].name).toBe('Widget A');

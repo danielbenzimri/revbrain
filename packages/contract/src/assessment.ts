@@ -36,6 +36,18 @@ export type SourceType = z.infer<typeof SourceTypeSchema>;
 export const UsageLevelSchema = z.enum(['high', 'medium', 'low', 'dormant']);
 export type UsageLevel = z.infer<typeof UsageLevelSchema>;
 
+/** Standardized output states for report data confidence (Redline Architectural P0) */
+export const DataConfidenceSchema = z.enum([
+  'Confirmed', // SOQL returned result, query verified correct
+  'Estimated', // Derived/inferred value
+  'Partial', // Incomplete extraction (sampling, partial query)
+  'Detected', // Metadata confirms presence, count not available
+  'Not extracted', // Extraction not attempted or collector failed
+  'N/A', // Feature/object doesn't exist in this org
+  'Insufficient activity', // <3 records, not enough for meaningful metrics
+]);
+export type DataConfidence = z.infer<typeof DataConfidenceSchema>;
+
 export const RiskLevelSchema = z.enum(['critical', 'high', 'medium', 'low', 'info']);
 export type RiskLevel = z.infer<typeof RiskLevelSchema>;
 
