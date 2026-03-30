@@ -48,6 +48,10 @@ const AGGREGATE_TYPES = new Set([
   'OptionAttachmentRate',
   'FieldCompleteness',
   'TopQuotedProduct',
+  'PermissionSet',
+  'Document',
+  'LanguageTranslation',
+  'LocalizationSummary',
 ]);
 
 function mapMigrationStatus(rca: string | null): MigrationStatus {
@@ -178,11 +182,154 @@ export function transformFindingsToAssessmentData(
       owner: null as string | null,
     }));
 
+  // Build key findings from hotspots or high-level observations
+  const hotspots = findings.filter((f) => f.artifactType === 'ComplexityHotspot');
+  const qcpScripts = findings.filter(
+    (f) => f.artifactType === 'SBQQ__CustomScript__c' || f.artifactType === 'CustomScript'
+  );
+  const priceRuleFindings = findings.filter(
+    (f) => f.artifactType === 'PriceRule' || f.artifactType === 'SBQQ__PriceRule__c'
+  );
+  const activePriceRules = priceRuleFindings.filter(
+    (f) => f.usageLevel !== 'dormant' && !f.notes?.includes('Inactive')
+  ).length;
+
+  const keyFindings = [
+    ...(qcpScripts.length > 0
+      ? [
+          {
+            id: 'kf-qcp',
+            text: `Custom Quote Calculator Plugin (QCP) detected: ${qcpScripts.length} script(s). JavaScript-based pricing logic fundamentally changes the complexity profile.`,
+            severity: 'warning' as const,
+          },
+        ]
+      : []),
+    ...(priceRuleFindings.length > 0
+      ? [
+          {
+            id: 'kf-rules',
+            text: `${activePriceRules} active price rules detected. Heavy rule density indicates significant business logic in CPQ configuration.`,
+            severity: 'success' as const,
+          },
+        ]
+      : []),
+    ...hotspots.slice(0, 3).map((h, i) => ({
+      id: `kf-hotspot-${i}`,
+      text: `${h.artifactName}: ${h.notes ?? ''}`,
+      severity: (h.riskLevel === 'critical' ? 'error' : 'warning') as 'error' | 'warning',
+    })),
+  ];
+
+  // Extract org health from OrgFingerprint and UserAdoption findings
+  const orgFp = findings.find((f) => f.artifactType === 'OrgFingerprint');
+  const userAdoption = findings.find((f) => f.artifactType === 'UserAdoption');
+  const cpqLicenses = Number(
+    (userAdoption?.evidenceRefs as Array<{ label?: string; value?: string }>)?.find(
+      (r) => r.label === 'CPQ Licenses'
+    )?.value ?? 0
+  );
+  const orgEdition = orgFp?.notes?.match(/(\w+ Edition)/)?.[1] ?? 'Enterprise Edition';
+
+  // Domain insights from aggregate data
+  const dataQualityFlags = findings.filter((f) => f.artifactType === 'DataQualityFlag');
+  for (const domain of domains) {
+    const domainInsights: string[] = [];
+    if (domain.id === 'products') {
+      const familyCount = new Set(
+        findings
+          .filter((f) => f.artifactType === 'Product2')
+          .map(
+            (f) =>
+              (f.evidenceRefs as Array<{ value?: string; label?: string }>)?.find(
+                (r) => r.value === 'Product2.Family'
+              )?.label
+          )
+          .filter(Boolean)
+      ).size;
+      if (familyCount > 0) domainInsights.push(`${familyCount} product families detected.`);
+    }
+    if (domain.id === 'pricing' && qcpScripts.length > 0) {
+      domainInsights.push(
+        `${qcpScripts.length} Custom Script(s) (QCP) inject JavaScript into pricing calculations.`
+      );
+    }
+    if (domain.id === 'approvals' && domain.stats.total > 0) {
+      domainInsights.push(`${domain.stats.total} custom approval actions configured.`);
+    }
+    if (domain.id === 'code') {
+      const triggerCtrl = findings.filter(
+        (f) => f.artifactType === 'ApexClass' && f.notes?.includes('TriggerControl')
+      ).length;
+      if (triggerCtrl > 0)
+        domainInsights.push(`${triggerCtrl} classes use TriggerControl pattern.`);
+    }
+    domain.insights = domainInsights;
+  }
+
+  // Build completeness from extraction coverage
+  const completeness = Object.entries(domainCounts).map(([id, count]) => ({
+    category: id,
+    items: count as number,
+    coverage: (count as number) > 5 ? 100 : (count as number) > 0 ? 75 : 0,
+  }));
+
+  // CPQ Intelligence data
+  const settingsPanel = findings
+    .filter((f) => f.artifactType === 'CPQSettingValue')
+    .map((f) => ({
+      setting: f.artifactName,
+      value: ((f.evidenceRefs as Array<{ label?: string }>)?.[0]?.label as string) ?? 'Unknown',
+      notes: f.notes ?? '',
+    }));
+
+  const pluginInventory = findings
+    .filter((f) => f.artifactType === 'PluginStatus')
+    .map((f) => {
+      // Apply QCP/Plugin override (same logic as assembler)
+      const isQcp = f.artifactName?.includes('QCP') || f.artifactName?.includes('Calculator');
+      const qcpOverride = isQcp && (f.countValue ?? 0) === 0 && qcpScripts.length > 0;
+      const isRecProducts = f.artifactName?.includes('Recommended');
+      const recApex = isRecProducts
+        ? findings.find(
+            (a) => a.artifactType === 'ApexClass' && /ProductRecommendation/i.test(a.artifactName)
+          )
+        : null;
+      const recOverride = isRecProducts && (f.countValue ?? 0) === 0 && recApex;
+      return {
+        plugin: f.artifactName,
+        status:
+          qcpOverride || recOverride
+            ? 'Active'
+            : (f.countValue ?? 0) > 0
+              ? 'Active'
+              : 'Not Configured',
+        notes: qcpOverride
+          ? `Active — ${qcpScripts.length} custom script(s) detected`
+          : recOverride
+            ? `Active — Apex implementation: ${recApex.artifactName}`
+            : (f.notes ?? ''),
+      };
+    });
+
+  const topProducts = findings
+    .filter((f) => f.artifactType === 'TopQuotedProduct')
+    .map((f) => ({
+      name: f.artifactName,
+      quotedCount: f.countValue ?? 0,
+    }));
+
+  const permissionSets = findings
+    .filter((f) => f.artifactType === 'PermissionSet')
+    .map((f) => ({
+      name: f.artifactName,
+      type: f.notes?.includes('Custom') ? 'Custom' : 'Managed',
+    }));
+
   return {
     projectId: runStatus.projectId,
     domains,
     risks,
-    keyFindings: [],
+    keyFindings,
     runs: [
       {
         id: runStatus.runId,
@@ -195,20 +342,30 @@ export function transformFindingsToAssessmentData(
     currentRunIndex: 0,
     runDelta: { added: totalItems, removed: 0, changed: 0, details: [] },
     orgHealth: {
-      edition: 'Enterprise Edition',
+      edition: orgEdition,
       apiUsagePercent: 0,
       storageUsagePercent: 0,
       apexGovernorPercent: 0,
-      cpqLicenseCount: 0,
+      cpqLicenseCount: cpqLicenses,
       rcaLicenseCount: 0,
       hasSalesforceBilling: false,
       billingObjectCount: 0,
     },
-    completeness: [],
+    completeness,
     totalItems,
     totalAuto,
     totalGuided,
     totalManual,
     totalBlocked,
+    // CPQ Intelligence data (consumed by CPQIntelligence component)
+    settingsPanel,
+    pluginInventory,
+    topProducts,
+    permissionSets,
+    dataQualityFlags: dataQualityFlags.map((f) => ({
+      issue: f.artifactName,
+      status: (f.countValue ?? 0) > 0 ? 'Flagged' : 'Clean',
+      detail: f.notes ?? '',
+    })),
   } as AssessmentData;
 }

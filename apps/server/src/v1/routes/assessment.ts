@@ -497,11 +497,33 @@ assessmentRouter.post('/:projectId/assessment/runs/:runId/report', async (c) => 
       notes: f.notes ?? '',
     }));
 
-    const plugins = (byType['PluginStatus'] ?? []).map((f) => ({
-      plugin: f.artifactName,
-      status: (f.countValue ?? 0) > 0 ? 'Active' : 'Not Configured',
-      notes: f.notes ?? '',
-    }));
+    const customScripts = byType['SBQQ__CustomScript__c'] ?? byType['CustomScript'] ?? [];
+    const plugins = (byType['PluginStatus'] ?? []).map((f) => {
+      const isQcp = f.artifactName?.includes('QCP') || f.artifactName?.includes('Calculator');
+      const qcpOverride = isQcp && (f.countValue ?? 0) === 0 && customScripts.length > 0;
+      const isRecProducts = f.artifactName?.includes('Recommended');
+      const recApex = isRecProducts
+        ? findings.find(
+            (a: { artifactType: string; artifactName: string }) =>
+              a.artifactType === 'ApexClass' && /ProductRecommendation/i.test(a.artifactName)
+          )
+        : null;
+      const recOverride = isRecProducts && (f.countValue ?? 0) === 0 && recApex;
+      return {
+        plugin: f.artifactName,
+        status:
+          qcpOverride || recOverride
+            ? 'Active'
+            : (f.countValue ?? 0) > 0
+              ? 'Active'
+              : 'Not Configured',
+        notes: qcpOverride
+          ? `Active — ${customScripts.length} custom script(s) detected`
+          : recOverride
+            ? `Active — Apex: ${recApex.artifactName}`
+            : (f.notes ?? ''),
+      };
+    });
 
     const hotspots = (byType['ComplexityHotspot'] ?? []).map((f) => ({
       name: f.artifactName,
