@@ -18,17 +18,18 @@ import {
  * Custom bytea column type for storing binary data (encrypted tokens, etc.).
  * Handles Buffer ↔ bytea conversion at the driver level.
  */
-const bytea = customType<{ data: Buffer; dpiData: string }>({
+const bytea = customType<{ data: Buffer; dpiData: Buffer }>({
   dataType() {
     return 'bytea';
   },
-  toDriver(value: Buffer): string {
-    return `\\x${value.toString('hex')}`;
+  toDriver(value: Buffer): Buffer {
+    // Pass Buffer directly — postgres.js handles Buffer → bytea natively
+    return value;
   },
   fromDriver(value: unknown): Buffer {
     if (Buffer.isBuffer(value)) return value;
+    if (value instanceof Uint8Array) return Buffer.from(value);
     if (typeof value === 'string') {
-      // Handle both \\x-prefixed hex strings and raw hex
       const hex = value.startsWith('\\x') ? value.slice(2) : value;
       return Buffer.from(hex, 'hex');
     }
