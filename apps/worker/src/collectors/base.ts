@@ -56,6 +56,8 @@ export interface CollectorResult {
   metrics: CollectorMetricsInput;
   status: 'success' | 'partial' | 'failed';
   error?: string;
+  /** Fields requested but dropped due to FLS or Describe mismatch */
+  droppedFields?: Array<{ object: string; fields: string[] }>;
 }
 
 /**
