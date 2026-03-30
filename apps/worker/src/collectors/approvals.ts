@@ -244,14 +244,45 @@ export class ApprovalsCollector extends BaseCollector {
 
           metrics.approvalRuleCount = result.length;
 
+          // Pre-fetch condition counts per rule for enrichment (Task 0.1)
+          const conditionsByRule = new Map<string, number>();
+          try {
+            const condDescribe = this.ctx.describeCache.get('sbaa__ApprovalCondition__c') as
+              | DescribeResult
+              | undefined;
+            if (condDescribe) {
+              const condFields = ['Id', 'sbaa__ApprovalRule__c'];
+              const { query: condQuery } = buildSafeQuery(
+                'sbaa__ApprovalCondition__c',
+                condFields,
+                condDescribe
+              );
+              const condResult = await this.ctx.restApi.queryAll<Record<string, unknown>>(
+                condQuery,
+                this.signal
+              );
+              for (const c of condResult) {
+                const ruleId = c.sbaa__ApprovalRule__c as string;
+                if (ruleId) {
+                  conditionsByRule.set(ruleId, (conditionsByRule.get(ruleId) || 0) + 1);
+                }
+              }
+            }
+          } catch {
+            // Condition pre-fetch failed — condition counts will default to 0
+          }
+
           for (const rule of result) {
+            const ruleId = rule.Id as string;
+            const condCount = conditionsByRule.get(ruleId) ?? 0;
+
             findings.push(
               createFinding({
                 domain: 'approvals',
                 collector: 'approvals',
                 artifactType: 'AdvancedApprovalRule',
                 artifactName: rule.Name as string,
-                artifactId: rule.Id as string,
+                artifactId: ruleId,
                 findingType: 'advanced_approval_rule',
                 sourceType: 'object',
                 riskLevel: 'high',
@@ -259,7 +290,20 @@ export class ApprovalsCollector extends BaseCollector {
                 migrationRelevance: 'must-migrate',
                 rcaTargetConcept: 'Flow-based approval orchestration',
                 rcaMappingComplexity: 'redesign',
-                notes: `Advanced Approval Rule: ${rule.Name}`,
+                countValue: condCount,
+                evidenceRefs: [
+                  {
+                    type: 'object-ref' as const,
+                    label: 'TargetObject',
+                    value: (rule.sbaa__TargetObject__c as string) ?? '',
+                  },
+                  {
+                    type: 'count' as const,
+                    label: 'ConditionCount',
+                    value: String(condCount),
+                  },
+                ],
+                notes: `Advanced Approval Rule: ${rule.Name} — Target: ${(rule.sbaa__TargetObject__c as string) ?? 'N/A'}, Conditions: ${condCount}`,
               })
             );
           }

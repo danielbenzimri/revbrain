@@ -142,8 +142,8 @@ describe('assembleReport', () => {
     expect(report.configurationDomain).toHaveProperty('discountScheduleAnalysis');
     expect(report.configurationDomain).toHaveProperty('optionAttachmentSummary');
 
-    // Field completeness
-    expect(report.dataQuality.fieldCompleteness.length).toBeGreaterThan(0);
+    // Field completeness — returns empty when no FieldCompleteness findings exist (Task 0.5)
+    expect(report.dataQuality.fieldCompleteness.length).toBe(0);
 
     // Usage — top products have calculated percentages
     expect(report.usageAdoption.topProducts.length).toBe(1);
@@ -389,11 +389,12 @@ describe('assembleReport', () => {
     const report = assembleReport(findings);
     const catalogCoverage = report.appendixD.find((d) => d.category === 'Product Catalog');
     expect(catalogCoverage).toBeTruthy();
-    expect(catalogCoverage!.coverage).toBe('Full'); // 6 findings > 5 threshold
+    // Task 1.7: per-category checks — Product2 present but no ProductOption → Partial
+    expect(catalogCoverage!.coverage).toBe('Partial');
 
     const pricingCoverage = report.appendixD.find((d) => d.category === 'Pricing & Rules');
     expect(pricingCoverage).toBeTruthy();
-    expect(pricingCoverage!.coverage).toBe('Partial'); // 1 finding <= 5 threshold
+    expect(pricingCoverage!.coverage).toBe('Partial'); // 1 finding, missing sub-categories
 
     const templatesCoverage = report.appendixD.find((d) => d.category === 'Quote Templates');
     expect(templatesCoverage).toBeTruthy();

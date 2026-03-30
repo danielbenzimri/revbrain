@@ -13,6 +13,7 @@
 
 import type { CollectorContext, CollectorResult } from '../collectors/base.ts';
 import type { AssessmentFindingInput } from '@revbrain/contract';
+import type { ReportData } from '../report/assembler.ts';
 import { logger } from '../lib/logger.ts';
 
 const log = logger.child({ component: 'validation' });
@@ -613,4 +614,274 @@ function checkCriticalFieldDrops(
   }
 
   return warnings;
+}
+
+// ============================================================================
+// V9–V12: Post-assembly validation rules (Task 0.7)
+// ============================================================================
+
+export interface ReportValidationResult {
+  valid: boolean;
+  rules: ValidationRule[];
+  reportBanners: string[];
+}
+
+/**
+ * Post-assembly validator — runs after assembleReport() and before renderReport().
+ * Catches inconsistencies between assembled sections that can't be detected from
+ * raw findings alone.
+ */
+export function validateReportData(data: ReportData): ReportValidationResult {
+  const rules: ValidationRule[] = [];
+  const reportBanners: string[] = [];
+
+  rules.push(checkV9_ActiveTotalMismatch(data));
+  rules.push(checkV10_DuplicateAppendix(data));
+  rules.push(checkV11_FieldCompletenessSuppression(data));
+  rules.push(checkV12_PercentageMath(data));
+  rules.push(...validateTemplateParity(data));
+
+  for (const rule of rules) {
+    if (!rule.passed) {
+      if (['V9', 'V12'].includes(rule.id)) {
+        reportBanners.push(`⚠ Data Consistency: ${rule.message}`);
+      }
+    }
+  }
+
+  const valid = rules.every((r) => r.passed || r.severity === 'warning');
+
+  log.info(
+    {
+      valid,
+      rulesPassed: rules.filter((r) => r.passed).length,
+      rulesFailed: rules.filter((r) => !r.passed).length,
+      reportBanners: reportBanners.length,
+    },
+    'report_validation_complete'
+  );
+
+  return { valid, rules, reportBanners };
+}
+
+/**
+ * V9: Active price/product rule count in At-a-Glance must match section detail.
+ */
+function checkV9_ActiveTotalMismatch(data: ReportData): ValidationRule {
+  const glancePricing = data.cpqAtAGlance['Pricing & Rules'] ?? [];
+  const glancePriceRules = glancePricing.find((m) => m.label === 'Price Rules (Active)');
+  const glanceProductRules = glancePricing.find((m) => m.label === 'Product Rules (Active)');
+
+  // Extract active count from section summary (e.g., "20 active of 28 total")
+  const sectionPriceMatch = data.configurationDomain.activePriceRuleSummary.match(/^(\d+) active/);
+  const sectionProductMatch =
+    data.configurationDomain.activeProductRuleSummary.match(/^(\d+) active/);
+
+  const mismatches: string[] = [];
+  if (glancePriceRules && sectionPriceMatch) {
+    if (glancePriceRules.value !== sectionPriceMatch[1]) {
+      mismatches.push(
+        `Price Rules: Glance=${glancePriceRules.value}, Section=${sectionPriceMatch[1]}`
+      );
+    }
+  }
+  if (glanceProductRules && sectionProductMatch) {
+    if (glanceProductRules.value !== sectionProductMatch[1]) {
+      mismatches.push(
+        `Product Rules: Glance=${glanceProductRules.value}, Section=${sectionProductMatch[1]}`
+      );
+    }
+  }
+
+  if (mismatches.length > 0) {
+    return {
+      id: 'V9',
+      name: 'At-a-Glance counts match section detail',
+      severity: 'error',
+      passed: false,
+      message: `At-a-Glance counts do not match section detail: ${mismatches.join('; ')}.`,
+    };
+  }
+
+  return {
+    id: 'V9',
+    name: 'At-a-Glance counts match section detail',
+    severity: 'error',
+    passed: true,
+    message: 'OK',
+  };
+}
+
+/**
+ * V10: No two entries in appendix B should share the same name.
+ */
+function checkV10_DuplicateAppendix(data: ReportData): ValidationRule {
+  const names = data.appendixB.map((r) => r.name);
+  const uniqueNames = new Set(names);
+
+  if (uniqueNames.size < names.length) {
+    const duplicateCount = names.length - uniqueNames.size;
+    return {
+      id: 'V10',
+      name: 'No duplicate appendix entries',
+      severity: 'warning',
+      passed: false,
+      message: `${duplicateCount} duplicate report name(s) in Appendix B. Auto-deduplication should be applied.`,
+    };
+  }
+
+  return {
+    id: 'V10',
+    name: 'No duplicate appendix entries',
+    severity: 'warning',
+    passed: true,
+    message: 'OK',
+  };
+}
+
+/**
+ * V11: If all FieldCompleteness entries have score === 'N/A' or array is empty,
+ * flag for suppression.
+ */
+function checkV11_FieldCompletenessSuppression(data: ReportData): ValidationRule {
+  const fc = data.dataQuality.fieldCompleteness;
+
+  if (fc.length === 0) {
+    // Empty is OK — means the assembler already suppressed it (Task 0.5)
+    return {
+      id: 'V11',
+      name: 'Field completeness suppressed when empty',
+      severity: 'warning',
+      passed: true,
+      message: 'OK — field completeness suppressed (no data).',
+    };
+  }
+
+  const allStub = fc.every((f) => f.totalFields === 0 || f.score === 'N/A');
+  if (allStub) {
+    return {
+      id: 'V11',
+      name: 'Field completeness suppressed when empty',
+      severity: 'warning',
+      passed: false,
+      message:
+        'All field completeness entries have zero fields or N/A scores. Table should be suppressed.',
+    };
+  }
+
+  return {
+    id: 'V11',
+    name: 'Field completeness suppressed when empty',
+    severity: 'warning',
+    passed: true,
+    message: 'OK',
+  };
+}
+
+/**
+ * Task 2.17: Template parity pre-release verification.
+ * Checks all required fields/sections exist in ReportData.
+ */
+function validateTemplateParity(data: ReportData): ValidationRule[] {
+  const rules: ValidationRule[] = [];
+
+  // V13: Cover page required fields
+  const coverFields = ['clientName', 'orgId', 'environment', 'assessmentDate', 'assessmentPeriod', 'cpqVersion', 'documentVersion', 'generatedBy'] as const;
+  const missingCover = coverFields.filter((f) => !data.metadata[f] || data.metadata[f] === 'Unknown');
+  rules.push({
+    id: 'V13',
+    name: 'Cover page has all required fields',
+    severity: 'warning',
+    passed: missingCover.length === 0,
+    message: missingCover.length > 0
+      ? `Cover page missing fields: ${missingCover.join(', ')}.`
+      : 'OK',
+  });
+
+  // V14: Executive Summary has findings with title + detail + confidence
+  const findingsOk = data.executiveSummary.keyFindings.length >= 3 &&
+    data.executiveSummary.keyFindings.every((f) => f.title && f.detail && f.confidence);
+  rules.push({
+    id: 'V14',
+    name: 'Executive Summary has valid key findings',
+    severity: 'warning',
+    passed: findingsOk,
+    message: findingsOk
+      ? 'OK'
+      : `Executive Summary has ${data.executiveSummary.keyFindings.length} findings (expected >= 3, each with title + detail + confidence).`,
+  });
+
+  // V15: At-a-Glance panels check
+  const glancePanels = Object.keys(data.cpqAtAGlance);
+  const expectedPanels = ['Product Catalog', 'Pricing & Rules', 'Quoting (90 Days)', 'Users & Licenses', 'Automation & Code'];
+  const missingPanels = expectedPanels.filter((p) => !glancePanels.includes(p));
+  rules.push({
+    id: 'V15',
+    name: 'At-a-Glance has required panels',
+    severity: 'warning',
+    passed: missingPanels.length === 0,
+    message: missingPanels.length > 0
+      ? `At-a-Glance missing panels: ${missingPanels.join(', ')}.`
+      : 'OK',
+  });
+
+  // V16: Appendix D has >=10 category rows
+  rules.push({
+    id: 'V16',
+    name: 'Appendix D has sufficient category rows',
+    severity: 'warning',
+    passed: data.appendixD.length >= 10,
+    message: data.appendixD.length >= 10
+      ? 'OK'
+      : `Appendix D has only ${data.appendixD.length} categories (expected >= 10).`,
+  });
+
+  return rules;
+}
+
+/**
+ * V12: Percentage totals (conversion segments, discount distribution) should sum to ~100%.
+ */
+function checkV12_PercentageMath(data: ReportData): ValidationRule {
+  const issues: string[] = [];
+
+  // Conversion segments
+  if (data.usageAdoption.conversionBySize.length > 0) {
+    const segmentSum = data.usageAdoption.conversionBySize.reduce(
+      (sum, s) => sum + s.percentQuotes,
+      0
+    );
+    if (segmentSum > 0 && (segmentSum < 90 || segmentSum > 110)) {
+      issues.push(`Conversion segment %Quotes sums to ${segmentSum}% (expected ~100%)`);
+    }
+  }
+
+  // Discount distribution
+  if (data.usageAdoption.discountDistribution.length > 0) {
+    const discountSum = data.usageAdoption.discountDistribution.reduce((sum, d) => {
+      const pctMatch = d.percent.match(/^(\d+)/);
+      return sum + (pctMatch ? Number(pctMatch[1]) : 0);
+    }, 0);
+    if (discountSum > 0 && (discountSum < 90 || discountSum > 110)) {
+      issues.push(`Discount distribution sums to ${discountSum}% (expected ~100%)`);
+    }
+  }
+
+  if (issues.length > 0) {
+    return {
+      id: 'V12',
+      name: 'Percentage math valid (post-assembly)',
+      severity: 'error',
+      passed: false,
+      message: `Percentage calculations inconsistent: ${issues.join('; ')}.`,
+    };
+  }
+
+  return {
+    id: 'V12',
+    name: 'Percentage math valid (post-assembly)',
+    severity: 'error',
+    passed: true,
+    message: 'OK',
+  };
 }

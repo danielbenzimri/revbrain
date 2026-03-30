@@ -24,6 +24,8 @@ export interface ReportData {
     assessmentPeriod: string;
     cpqVersion: string;
     sbaaVersion: string | null;
+    /** Document version for cover page (Task 1.8) */
+    documentVersion: string;
     generatedBy: string;
     lowVolumeWarning: string | null;
   };
@@ -42,6 +44,8 @@ export interface ReportData {
       weight: number;
       score: number;
       drivers: string;
+      /** Per-dimension rationale (Task 2.5) */
+      rationale: string;
     }>;
   };
   cpqAtAGlance: Record<string, Array<{ label: string; value: string; confidence: string }>>;
@@ -61,6 +65,8 @@ export interface ReportData {
       percentQuoted: string;
       confidence: string;
     }>;
+    /** Dormant product families (Task 2.9) */
+    dormantFamilies: Array<{ name: string; productCount: number }>;
     priceRules: Array<{
       name: string;
       description: string;
@@ -68,6 +74,8 @@ export interface ReportData {
       status: string;
       confidence: string;
     }>;
+    /** Pre-computed price rule summary (Task 2.3) */
+    priceRuleSummary: { active: number; total: number; highComplexity: number; inactive: number; stale: number };
     productRules: Array<{
       name: string;
       type: string;
@@ -76,9 +84,15 @@ export interface ReportData {
       status: string;
       confidence: string;
     }>;
+    /** Pre-computed product rule summary by type (Task 2.3) */
+    productRuleSummary: { selection: number; alert: number; validation: number; filter: number; inactive: number; stale: number };
     activePriceRuleSummary: string;
     activeProductRuleSummary: string;
     discountScheduleAnalysis: Array<{ name: string; isDuplicate: boolean }>;
+    /** Total and unique discount schedule counts (Task 1.4) */
+    discountScheduleTotalCount: number;
+    discountScheduleUniqueCount: number;
+    discountScheduleDuplicateDetail: string;
     optionAttachmentSummary: string | null;
   };
   usageAdoption: {
@@ -104,6 +118,8 @@ export interface ReportData {
       quotedCount: number;
       percentQuotes: string;
     }>;
+    /** Low volume flag for inline warnings (Task 2.8) */
+    isLowVolume: boolean;
   };
   dataQuality: {
     flaggedAreas: Array<{ issue: string; status: string; detail: string }>;
@@ -124,7 +140,14 @@ export interface ReportData {
     permissionSets: Array<{ name: string; type: string; namespace: string }>;
   };
   approvalsAndDocs: {
-    approvalRules: Array<{ name: string; object: string; conditions: number; status: string }>;
+    /** CPQ Custom Action buttons (SBQQ__CustomAction__c) — NOT approval rules */
+    customActions: Array<{ name: string; type: string; location: string; status: string }>;
+    /** Advanced Approval Rules (sbaa__ApprovalRule__c) */
+    advancedApprovalRules: Array<{ name: string; conditions: number; status: string }>;
+    /** Approval chain summary */
+    approvalChains: { count: number; approvers: number };
+    /** Standard Approval Processes (ProcessDefinition on CPQ objects) */
+    approvalRules: Array<{ name: string; object: string; status: string }>;
     quoteTemplates: Array<{ name: string; isDefault: boolean; lastModified: string }>;
     documentGeneration: { templateCount: number; docuSignActive: boolean };
   };
@@ -139,8 +162,12 @@ export interface ReportData {
     complexity: string;
     confidence: string;
     isCpqObject: boolean;
+    /** Deployment phase (Task 2.12) */
+    phase: string;
   }>;
-  appendixB: Array<{ name: string; description: string }>;
+  appendixB: Array<{ name: string; description: string; isStale: boolean }>;
+  /** Appendix B summary (Task 2.11) */
+  appendixBSummary: { total: number; runLast12Mo: number; staleCount: number };
   appendixD: Array<{ category: string; coverage: string; notes: string }>;
 }
 
@@ -160,33 +187,90 @@ function pct(numerator: number, denominator: number): string {
 const TECH_DEBT_PATTERNS =
   /\b(delete|test|draft|deprecated|copy of|old|backup|temp|do not use|todo)\b/i;
 
-/** Infer Apex class purpose from name */
+/** CPQ object → deployment phase mapping (Task 2.12) */
+const CPQ_PHASE_MAP: Record<string, string> = {
+  'Product2': 'Phase 1',
+  'PricebookEntry': 'Phase 1',
+  'Pricebook2': 'Phase 1',
+  'SBQQ__ProductOption__c': 'Phase 1',
+  'SBQQ__ProductFeature__c': 'Phase 1',
+  'SBQQ__ProductRule__c': 'Phase 1',
+  'SBQQ__PriceRule__c': 'Phase 2',
+  'SBQQ__PriceCondition__c': 'Phase 2',
+  'SBQQ__PriceAction__c': 'Phase 2',
+  'SBQQ__DiscountSchedule__c': 'Phase 2',
+  'SBQQ__CustomScript__c': 'Phase 2',
+  'SBQQ__ContractedPrice__c': 'Phase 3',
+  'SBQQ__QuoteTemplate__c': 'Phase 2',
+  'SBQQ__TemplateSection__c': 'Phase 2',
+  'SBQQ__TemplateContent__c': 'Phase 2',
+  'SBQQ__CustomAction__c': 'Phase 3',
+  'sbaa__ApprovalRule__c': 'Phase 3',
+  'ApexClass': 'Phase 3',
+  'ApexTrigger': 'Phase 3',
+};
+
+/** CPQ-relevant package namespaces — only these appear in Section 4.1 (Task 1.1) */
+const CPQ_RELEVANT_NAMESPACES = new Set([
+  'SBQQ',
+  'sbaa',
+  'blng',
+  'sbc',
+  'dsfs',
+  'dfsle',
+  'SBQQDS',
+  'APXTConga4',
+  'APXTCFQ',
+  'AVA_MAPPER',
+  'AVA_BLNG',
+  'SFBD',
+  'cpqea',
+  'cpqlabs',
+]);
+
+/** Infer Apex class purpose from name — metadata first, then heuristics (Task 3.3) */
 function inferApexPurpose(name: string, notes: string | undefined): string {
+  // Prefer metadata/annotation-derived purpose
   if (notes && notes.length > 0 && !notes.startsWith('CPQ-related')) {
     return notes.split('.')[0];
   }
   const lower = name.toLowerCase();
+  // Task 3.3: expanded name-based lookup table
   if (lower.includes('test')) return 'Test class';
   if (lower.includes('plugin') || lower.includes('calculator')) return 'CPQ Plugin';
+  if (lower.includes('controller') || lower.includes('ctrl')) return 'Controller';
   if (lower.includes('quote')) return 'Quote processing';
   if (lower.includes('contract')) return 'Contract management';
   if (lower.includes('order')) return 'Order processing';
   if (lower.includes('trigger')) return 'Trigger handler';
   if (lower.includes('search')) return 'Product search';
   if (lower.includes('batch') || lower.includes('schedule')) return 'Batch/Scheduled job';
-  if (lower.includes('invoice') || lower.includes('billing')) return 'Billing integration';
+  if (lower.includes('invoice') || lower.includes('bill')) return 'Billing integration';
   if (lower.includes('handler')) return 'Event handler';
-  if (lower.includes('util') || lower.includes('helper')) return 'Utility class';
+  if (lower.includes('util') || lower.includes('helper') || lower.includes('utils')) return 'Utility class';
+  if (lower.includes('clean')) return 'Org maintenance';
+  if (lower.includes('datacannon') || lower.includes('blaster') || lower.includes('seed')) return 'Data generation';
+  if (lower.includes('api') || lower.includes('rest') || lower.includes('callout')) return 'Integration';
+  if (lower.includes('service')) return 'Service layer';
+  if (lower.includes('selector') || lower.includes('query')) return 'Data access';
   return 'CPQ-related Apex';
 }
 
-/** Detect origin from namespace */
-function inferApexOrigin(name: string): string {
+/** Detect origin from namespace — check metadata first, then name heuristics (Task 3.2) */
+function inferApexOrigin(name: string, namespacePrefix?: string): string {
+  // Task 3.2: prefer metadata namespace if available
+  if (namespacePrefix) {
+    if (CPQ_RELEVANT_NAMESPACES.has(namespacePrefix)) return `Managed (${namespacePrefix})`;
+    return `Managed (${namespacePrefix})`;
+  }
+  // Fallback: name-based heuristics
   if (name.startsWith('SBQQ')) return 'Managed (CPQ)';
   if (name.startsWith('sbaa')) return 'Managed (AA)';
   if (name.startsWith('dsfs') || name.startsWith('SBQQDS')) return 'Managed (DocuSign)';
   if (name.startsWith('blng')) return 'Managed (Billing)';
   if (name.startsWith('dlrs')) return 'Managed (DLRS)';
+  if (name.startsWith('sbc')) return 'Managed (Subscription)';
+  if (name.startsWith('cpqea') || name.startsWith('cpqlabs')) return 'Managed (CPQ Labs)';
   return 'Custom';
 }
 
@@ -217,6 +301,22 @@ function parseValidationObject(domain: string, artifactName: string): string {
   // Fall back to domain
   if (domain === 'customization') return 'CPQ Object';
   return domain;
+}
+
+/** Task 2.13: Compute section-level confidence from finding source types */
+export function sectionConfidence(
+  findings: AssessmentFindingInput[],
+  ...sectionArtifactTypes: string[]
+): 'Confirmed' | 'Estimated' | 'Partial' {
+  const sectionFindings = findings.filter((f) => sectionArtifactTypes.includes(f.artifactType));
+  if (sectionFindings.length === 0) return 'Partial';
+  const hasInferred = sectionFindings.some((f) => f.sourceType === 'inferred');
+  const allDirect = sectionFindings.every(
+    (f) => f.sourceType === 'object' || f.sourceType === 'metadata' || f.sourceType === 'tooling'
+  );
+  if (allDirect) return 'Confirmed';
+  if (hasInferred) return 'Estimated';
+  return 'Confirmed';
 }
 
 // ============================================================================
@@ -305,11 +405,11 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
   const activePriceRules = priceRules.filter(
     (r) => r.usageLevel !== 'dormant' && !r.notes?.includes('Inactive')
   );
-  const inactivePriceRules = priceRules.length - activePriceRules.length;
+  const _inactivePriceRules = priceRules.length - activePriceRules.length;
   const activeProductRules = productRules.filter(
     (r) => r.usageLevel !== 'dormant' && !r.notes?.includes('Inactive')
   );
-  const inactiveProductRules = productRules.length - activeProductRules.length;
+  const _inactiveProductRules = productRules.length - activeProductRules.length;
 
   // Low volume detection
   const activeUsers = findings.find((f) => f.artifactType === 'UserAdoption')?.countValue ?? 0;
@@ -346,6 +446,26 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
   // Feature utilization
   const featureUtilization = buildFeatureUtilization(findings);
 
+  // Canonical counts — computed once, passed to both glance and section builders (Task 0.8)
+  const totalQuoteLines =
+    findings.find(
+      (f) =>
+        f.artifactType === 'DataCount' &&
+        f.artifactName?.toLowerCase().replace(/\s/g, '').includes('quoteline')
+    )?.countValue ?? 0;
+
+  const dsNameSet = new Set(discountSchedules.map((d) => d.artifactName));
+  const reportCounts: ReportCounts = {
+    activePriceRules: activePriceRules.length,
+    totalPriceRules: priceRules.length,
+    activeProductRules: activeProductRules.length,
+    totalProductRules: productRules.length,
+    totalQuotes,
+    totalQuoteLines,
+    discountScheduleTotal: discountSchedules.length,
+    discountScheduleUnique: dsNameSet.size,
+  };
+
   // sbaa version detection
   const sbaaVersion =
     orgFp?.notes?.match(/sbaa\s+([v\d.]+)/i)?.[1] ??
@@ -367,6 +487,7 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
       assessmentPeriod,
       cpqVersion: orgFp?.notes?.match(/CPQ\s+([v\d.]+)/)?.[1] ?? 'Unknown',
       sbaaVersion,
+      documentVersion: '1.0',
       generatedBy: 'RevBrain CPQ Assessment Tool v1.0',
       lowVolumeWarning,
     },
@@ -379,12 +500,12 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
               detail: h.notes ?? '',
               confidence: 'Confirmed',
             }))
-          : buildDefaultKeyFindings(findings, settingValues, plugins),
+          : buildDefaultKeyFindings(findings, settingValues, plugins, reportCounts),
       complexityScores,
-      scoringMethodology: buildScoringMethodology(complexityScores),
+      scoringMethodology: buildScoringMethodology(complexityScores, findings, technicalDebt),
     },
 
-    cpqAtAGlance: buildGlanceSections(findings, settingValues, technicalDebt, featureUtilization),
+    cpqAtAGlance: buildGlanceSections(findings, settingValues, technicalDebt, featureUtilization, reportCounts),
 
     dataConfidenceSummary,
 
@@ -429,6 +550,13 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
 
     configurationDomain: {
       productCatalog: buildProductCatalog(findings, topProducts, totalQuotes),
+      dormantFamilies: (() => {
+        const catalog = buildProductCatalog(findings, topProducts, totalQuotes);
+        return catalog
+          .filter((c) => c.quoted90d === 0)
+          .sort((a, b) => (b.active + b.inactive) - (a.active + a.inactive))
+          .map((c) => ({ name: c.category, productCount: c.active + c.inactive }));
+      })(),
       priceRules: priceRules.map((r) => {
         const isActive = r.usageLevel !== 'dormant' && !r.notes?.includes('Inactive');
         const isTechDebt = TECH_DEBT_PATTERNS.test(r.artifactName);
@@ -453,19 +581,69 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
           confidence: 'Confirmed',
         };
       }),
-      productRules: productRules.map((r) => {
-        const isActive = r.usageLevel !== 'dormant' && !r.notes?.includes('Inactive');
-        const ruleType = r.evidenceRefs?.find((ref) => ref.label === 'Type')?.value ?? 'Unknown';
-        const isTechDebt = TECH_DEBT_PATTERNS.test(r.artifactName);
-        return {
-          name: r.artifactName + (isTechDebt ? ' ⚠ Potential tech debt' : ''),
-          type: ruleType,
-          description: r.notes ?? '',
-          complexity: r.complexityLevel ?? 'unknown',
-          status: isActive ? 'Active' : 'Inactive',
-          confidence: 'Confirmed',
-        };
-      }),
+      productRules: (() => {
+        // Task 1.3: deduplicate by artifactName + type
+        const seen = new Set<string>();
+        return productRules
+          .filter((r) => {
+            const ruleType = r.evidenceRefs?.find((ref) => ref.label === 'Type')?.value ?? 'Unknown';
+            const key = `${r.artifactName}::${ruleType}`;
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          })
+          .map((r) => {
+            const isActive = r.usageLevel !== 'dormant' && !r.notes?.includes('Inactive');
+            const ruleType = r.evidenceRefs?.find((ref) => ref.label === 'Type')?.value ?? 'Unknown';
+            const isTechDebt = TECH_DEBT_PATTERNS.test(r.artifactName);
+            // Task 2.2: derive complexity from condition count or fallback to 'Not assessed'
+            const condCount = r.countValue ?? 0;
+            const derivedComplexity =
+              r.complexityLevel && r.complexityLevel !== 'medium' && (r.complexityLevel as string) !== 'unknown'
+                ? r.complexityLevel
+                : condCount >= 5
+                  ? 'high'
+                  : condCount >= 3
+                    ? 'medium'
+                    : condCount >= 1
+                      ? 'low'
+                      : 'Not assessed';
+            return {
+              name: r.artifactName + (isTechDebt ? ' ⚠ Potential tech debt' : ''),
+              type: ruleType,
+              description: r.notes ?? '',
+              complexity: derivedComplexity,
+              status: isActive ? 'Active' : 'Inactive',
+              confidence: 'Confirmed',
+            };
+          });
+      })(),
+      // Task 2.3: Pre-computed summary for price rules
+      priceRuleSummary: (() => {
+        const active = activePriceRules.length;
+        const total = priceRules.length;
+        const highComplexity = priceRules.filter((r) => {
+          const evalMatch = r.notes?.match(/Eval:\s*([^,]+)/)?.[1] ?? '';
+          return evalMatch.split(';').filter((e) => e.trim().length > 0).length >= 4;
+        }).length;
+        const inactive = total - active;
+        const stale = priceRules.filter((r) => TECH_DEBT_PATTERNS.test(r.artifactName)).length;
+        return { active, total, highComplexity, inactive, stale };
+      })(),
+      // Task 2.3: Pre-computed summary for product rules by type
+      productRuleSummary: (() => {
+        const typeCounts = { selection: 0, alert: 0, validation: 0, filter: 0, inactive: 0, stale: 0 };
+        for (const r of productRules) {
+          const type = (r.evidenceRefs?.find((ref) => ref.label === 'Type')?.value ?? '').toLowerCase();
+          if (type.includes('selection')) typeCounts.selection++;
+          else if (type.includes('alert')) typeCounts.alert++;
+          else if (type.includes('validation')) typeCounts.validation++;
+          else if (type.includes('filter')) typeCounts.filter++;
+          if (r.usageLevel === 'dormant' || r.notes?.includes('Inactive')) typeCounts.inactive++;
+          if (TECH_DEBT_PATTERNS.test(r.artifactName)) typeCounts.stale++;
+        }
+        return typeCounts;
+      })(),
       activePriceRuleSummary:
         priceRules.length > 0
           ? `${activePriceRules.length} active of ${priceRules.length} total`
@@ -475,6 +653,18 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
           ? `${activeProductRules.length} active of ${productRules.length} total`
           : 'None detected',
       discountScheduleAnalysis: buildDiscountScheduleAnalysis(discountSchedules),
+      // Task 1.4: explicit total/unique/duplicate counts
+      discountScheduleTotalCount: discountSchedules.length,
+      discountScheduleUniqueCount: dsNameSet.size,
+      discountScheduleDuplicateDetail: (() => {
+        const nameCounts = new Map<string, number>();
+        for (const ds of discountSchedules) nameCounts.set(ds.artifactName, (nameCounts.get(ds.artifactName) ?? 0) + 1);
+        const dupes = [...nameCounts.entries()].filter(([, c]) => c > 1);
+        return dupes.length > 0
+          ? dupes.map(([n, c]) => `'${n}' appears ${c} times`).join('; ') + ' — flagged as duplicate in Technical Debt inventory.'
+          : '';
+      })(),
+      // Task 1.5: set to null when cross-reference unavailable (clean "Not extracted" row)
       optionAttachmentSummary: (() => {
         const optCount =
           _productOptions.length > 0
@@ -487,8 +677,13 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
         const bundleCount = findings.filter(
           (f) => f.artifactType === 'Product2' && f.complexityLevel === 'medium'
         ).length;
+        // Check if quote-line-to-option cross-reference data exists
+        const hasAttachmentData = findings.some((f) => f.artifactType === 'OptionAttachmentRate');
+        if (optCount > 0 && hasAttachmentData) {
+          return `${optCount} product options across ${bundleCount} bundle products with attachment rate data.`;
+        }
         return optCount > 0
-          ? `${optCount} product options across ${bundleCount} bundle products. Per-option attachment rate analysis requires quote line cross-reference data.`
+          ? `${optCount} product options across ${bundleCount} bundle products.`
           : null;
       })(),
     },
@@ -533,6 +728,7 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
         quotedCount: p.countValue ?? 0,
         percentQuotes: pct(p.countValue ?? 0, topProductDenominator),
       })),
+      isLowVolume,
     },
 
     dataQuality: {
@@ -552,7 +748,7 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
         name: a.artifactName,
         lines: a.countValue ?? 0,
         purpose: inferApexPurpose(a.artifactName, a.notes ?? undefined),
-        origin: inferApexOrigin(a.artifactName),
+        origin: inferApexOrigin(a.artifactName, a.evidenceRefs?.find((r) => r.label === 'NamespacePrefix')?.value ?? undefined),
       })),
       triggersFlows: [
         ...triggers.map((t) => ({
@@ -603,8 +799,8 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
             plugins
           ),
 
-    appendixA:
-      inventory.length > 0
+    appendixA: (() => {
+      const items = inventory.length > 0
         ? inventory.map((inv, i) => ({
             id: i + 1,
             objectName: inv.artifactName,
@@ -613,13 +809,58 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
             complexity: inv.complexityLevel ?? 'low',
             confidence: 'Confirmed',
             isCpqObject: isCpqObjectName(inv.artifactName),
+            phase: CPQ_PHASE_MAP[inv.artifactName] ?? '',
           }))
-        : buildObjectInventoryInline(findings),
+        : buildObjectInventoryInline(findings);
+      return items;
+    })(),
 
-    appendixB: reports.map((r) => ({
-      name: r.artifactName,
-      description: r.notes ?? '',
-    })),
+    appendixB: (() => {
+      // Deduplicate by report name (Task 0.4) — keep the entry with the longer description
+      const seenReports = new Map<string, string>();
+      for (const r of reports) {
+        const existing = seenReports.get(r.artifactName);
+        const desc = r.notes ?? '';
+        if (!existing || desc.length > existing.length) {
+          seenReports.set(r.artifactName, desc);
+        }
+      }
+      // Task 2.11: sort by last-run date descending, flag stale reports
+      const now = Date.now();
+      const _twoYearsMs = 2 * 365 * 24 * 60 * 60 * 1000;
+      const _oneYearMs = 365 * 24 * 60 * 60 * 1000;
+      const entries = [...seenReports.entries()].map(([name, description]) => {
+        const dateMatch = description.match(/(\d{4}-\d{2}-\d{2})/);
+        const ts = dateMatch ? Date.parse(dateMatch[1]) : 0;
+        const isStale = ts > 0 && (now - ts) > _twoYearsMs;
+        return { name, description, isStale, _ts: ts };
+      });
+      entries.sort((a, b) => b._ts - a._ts);
+      return entries.map(({ name, description, isStale }) => ({ name, description, isStale }));
+    })(),
+
+    appendixBSummary: (() => {
+      const seenReports = new Map<string, string>();
+      for (const r of reports) {
+        const existing = seenReports.get(r.artifactName);
+        const desc = r.notes ?? '';
+        if (!existing || desc.length > existing.length) seenReports.set(r.artifactName, desc);
+      }
+      const now = Date.now();
+      const twoYearsMs = 2 * 365 * 24 * 60 * 60 * 1000;
+      const oneYearMs = 365 * 24 * 60 * 60 * 1000;
+      let runLast12Mo = 0;
+      let staleCount = 0;
+      for (const desc of seenReports.values()) {
+        const dateMatch = desc.match(/(\d{4}-\d{2}-\d{2})/);
+        if (dateMatch) {
+          const ts = Date.parse(dateMatch[1]);
+          if (ts > 0 && (now - ts) < oneYearMs) runLast12Mo++;
+          if (ts > 0 && (now - ts) > twoYearsMs) staleCount++;
+        }
+      }
+      return { total: seenReports.size, runLast12Mo, staleCount };
+    })(),
 
     appendixD:
       confidence.length > 0
@@ -764,9 +1005,10 @@ function buildFeatureUtilization(
       (f) => f.artifactType === 'DataCount' && f.artifactName?.toLowerCase().includes('option')
     )?.countValue ?? 0;
   const detectedBundles = bundleProducts || optionCount || optionDataCount;
+  // Task 2.7: 5-level status model — Active Usage, Configured, Low Usage, Detected / Unverified, Not Detected
   features.push({
     feature: 'Product Bundles',
-    status: detectedBundles > 0 ? 'Active' : 'Not Detected',
+    status: detectedBundles > 0 ? 'Active Usage' : 'Not Detected',
     detail:
       detectedBundles > 0
         ? `${bundleProducts} bundle products, ${optionDataCount || optionCount} product options.`
@@ -776,42 +1018,52 @@ function buildFeatureUtilization(
   const dsCount = count('DiscountSchedule', 'SBQQ__DiscountSchedule__c');
   features.push({
     feature: 'Discount Schedules',
-    status: dsCount > 0 ? 'Active' : 'Not Detected',
+    status: dsCount > 0 ? 'Active Usage' : 'Not Detected',
     detail: dsCount > 0 ? `${dsCount} schedules detected.` : '',
   });
 
   const csCount = count('CustomScript', 'SBQQ__CustomScript__c');
   features.push({
     feature: 'Custom Scripts (QCP)',
-    status: csCount > 0 ? 'Active' : 'Not Detected',
+    status: csCount > 0 ? 'Active Usage' : 'Not Detected',
     detail: csCount > 0 ? `${csCount} custom scripts detected.` : '',
   });
 
   const tmplCount = count('QuoteTemplate', 'SBQQ__QuoteTemplate__c');
   features.push({
     feature: 'Quote Templates',
-    status: tmplCount > 0 ? 'Active' : 'Not Detected',
-    detail: tmplCount > 0 ? `${tmplCount} templates detected.` : '',
+    status: tmplCount > 0 ? 'Configured' : 'Not Detected',
+    detail: tmplCount > 0 ? `${tmplCount} templates detected. Usage not tracked.` : '',
   });
 
-  const approvalCount = count('CustomAction', 'SBQQ__CustomAction__c');
+  const advApprovalCount = count('AdvancedApprovalRule', 'AdvancedApprovals');
+  const customActionCount = count('CustomAction', 'SBQQ__CustomAction__c');
   features.push({
     feature: 'Advanced Approvals',
-    status: approvalCount > 0 ? 'Active' : 'Not Detected',
-    detail: approvalCount > 0 ? `${approvalCount} approval actions detected.` : '',
+    status: advApprovalCount > 0 ? 'Active Usage' : customActionCount > 0 ? 'Detected / Unverified' : 'Not Detected',
+    detail:
+      advApprovalCount > 0
+        ? `${advApprovalCount} advanced approval rules detected.`
+        : customActionCount > 0
+          ? `${customActionCount} custom action buttons detected (no advanced approvals).`
+          : '',
   });
 
   const cpCount = count('ContractedPrice', 'SBQQ__ContractedPrice__c');
+  // Task 2.7: ContractedPrice present means at least "Configured"
+  const cpConfigured = findings.some(
+    (f) => f.artifactType === 'CPQSettingValue' && f.artifactName?.includes('Contracted') && f.evidenceRefs?.[0]?.label?.toLowerCase() !== 'false'
+  );
   features.push({
     feature: 'Contracted Pricing',
-    status: cpCount > 0 ? 'Active' : 'Not Detected',
-    detail: cpCount > 0 ? `${cpCount} contracted prices detected.` : '',
+    status: cpCount > 0 ? 'Active Usage' : cpConfigured ? 'Configured' : 'Not Detected',
+    detail: cpCount > 0 ? `${cpCount} contracted prices detected.` : cpConfigured ? 'ContractedPrice setting enabled but no records found.' : '',
   });
 
   const locCount = count('LocalizationSummary');
   features.push({
     feature: 'Multi-Language',
-    status: locCount > 0 ? 'Active' : 'Not Detected',
+    status: locCount > 0 ? 'Active Usage' : 'Not Detected',
     detail: locCount > 0 ? `${locCount} localizations detected.` : '',
   });
 
@@ -822,11 +1074,27 @@ function buildFeatureUtilization(
 // Glance Dashboard Builder
 // ============================================================================
 
+/**
+ * Canonical report counts — computed once, shared across glance and section builders.
+ * Ensures At-a-Glance numbers always match section detail.
+ */
+export interface ReportCounts {
+  activePriceRules: number;
+  totalPriceRules: number;
+  activeProductRules: number;
+  totalProductRules: number;
+  totalQuotes: number;
+  totalQuoteLines: number;
+  discountScheduleTotal: number;
+  discountScheduleUnique: number;
+}
+
 function buildGlanceSections(
   findings: AssessmentFindingInput[],
   _settingValues: AssessmentFindingInput[],
   technicalDebt: Array<{ category: string; count: number; detail: string }>,
-  featureUtilization: Array<{ feature: string; status: string; detail: string }>
+  featureUtilization: Array<{ feature: string; status: string; detail: string }>,
+  counts: ReportCounts
 ): Record<string, Array<{ label: string; value: string; confidence: string }>> {
   // Count by artifact type — handle both short and full SF API names
   const count = (...types: string[]) =>
@@ -875,12 +1143,12 @@ function buildGlanceSections(
     'Pricing & Rules': [
       {
         label: 'Price Rules (Active)',
-        value: String(count('PriceRule', 'SBQQ__PriceRule__c') || dataCount('PriceRule')),
+        value: String(counts.activePriceRules),
         confidence: 'Confirmed',
       },
       {
         label: 'Product Rules (Active)',
-        value: String(count('ProductRule', 'SBQQ__ProductRule__c') || dataCount('ProductRule')),
+        value: String(counts.activeProductRules),
         confidence: 'Confirmed',
       },
       {
@@ -910,6 +1178,14 @@ function buildGlanceSections(
         value: String(dataCount('QuoteLine') || dataCount('SBQQ__QuoteLine')),
         confidence: 'Confirmed',
       },
+      // Task 2.1: Avg Lines / Quote
+      {
+        label: 'Avg Lines / Quote',
+        value: counts.totalQuotes > 0 && counts.totalQuoteLines > 0
+          ? String(Math.round((counts.totalQuoteLines / counts.totalQuotes) * 10) / 10)
+          : 'N/A',
+        confidence: counts.totalQuotes > 0 && counts.totalQuoteLines > 0 ? 'Confirmed' : 'Not extracted',
+      },
     ],
     'Users & Licenses': [
       {
@@ -918,6 +1194,15 @@ function buildGlanceSections(
           findings
             .find((f) => f.artifactType === 'UserAdoption')
             ?.evidenceRefs?.find((r) => r.label === 'CPQ Licenses')?.value ?? 'N/A',
+        confidence: 'Confirmed',
+      },
+      // Task 2.1: Active Users (90d)
+      {
+        label: 'Active Users (90d)',
+        value: String(
+          findings.find((f) => f.artifactType === 'UserAdoption')?.countValue ??
+          (findings.filter((f) => f.artifactType === 'UserBehavior').reduce((s, u) => s + (u.countValue ?? 0), 0) || '0')
+        ),
         confidence: 'Confirmed',
       },
     ],
@@ -993,16 +1278,18 @@ function computeComplexityScores(
 
   const catalogScore = score('catalog');
   const pricingScore = score('pricing');
-  const customScore = score('customization');
+  // Task 1.2: dependency domain → customizationLevel (was technicalDebt)
+  const customScore = Math.max(score('customization'), score('dependency'));
   const usageScore = score('usage');
-  const depScore = score('dependency');
+  // Task 1.2: technicalDebt from actual debt indicators, not code volume
+  const techDebtScore = scoreTechnicalDebt(findings);
 
   const overall = Math.round(
     catalogScore * 0.25 +
       pricingScore * 0.25 +
       customScore * 0.2 +
       usageScore * 0.15 +
-      depScore * 0.15
+      techDebtScore * 0.15
   );
 
   return {
@@ -1011,8 +1298,49 @@ function computeComplexityScores(
     pricingLogic: pricingScore,
     customizationLevel: customScore,
     dataVolumeUsage: usageScore,
-    technicalDebt: depScore,
+    technicalDebt: techDebtScore,
   };
+}
+
+/**
+ * Score technical debt from actual debt indicators (Task 1.2):
+ * dormant products, inactive rules, stale/test rules, duplicate schedules.
+ */
+function scoreTechnicalDebt(findings: AssessmentFindingInput[]): number {
+  let debtSignals = 0;
+  let totalRelevant = 0;
+
+  for (const f of findings) {
+    const isRule =
+      f.artifactType === 'PriceRule' ||
+      f.artifactType === 'SBQQ__PriceRule__c' ||
+      f.artifactType === 'ProductRule' ||
+      f.artifactType === 'SBQQ__ProductRule__c';
+    const isProduct = f.artifactType === 'Product2';
+    const isDS =
+      f.artifactType === 'DiscountSchedule' || f.artifactType === 'SBQQ__DiscountSchedule__c';
+
+    if (isRule || isProduct || isDS) {
+      totalRelevant++;
+      if (f.usageLevel === 'dormant' || f.notes?.includes('Inactive')) debtSignals++;
+      if (TECH_DEBT_PATTERNS.test(f.artifactName)) debtSignals++;
+    }
+  }
+
+  // Check duplicate discount schedule names
+  const dsNames = findings
+    .filter(
+      (f) => f.artifactType === 'DiscountSchedule' || f.artifactType === 'SBQQ__DiscountSchedule__c'
+    )
+    .map((f) => f.artifactName);
+  const dsNameCounts = new Map<string, number>();
+  for (const n of dsNames) dsNameCounts.set(n, (dsNameCounts.get(n) ?? 0) + 1);
+  const dupeDS = [...dsNameCounts.values()].filter((c) => c > 1).reduce((s, c) => s + c, 0);
+  debtSignals += dupeDS;
+  totalRelevant += dupeDS;
+
+  if (totalRelevant === 0) return 0;
+  return Math.min(100, Math.round((debtSignals / totalRelevant) * 100));
 }
 
 // ============================================================================
@@ -1020,38 +1348,61 @@ function computeComplexityScores(
 // ============================================================================
 
 function buildScoringMethodology(
-  scores: ReportData['executiveSummary']['complexityScores']
+  scores: ReportData['executiveSummary']['complexityScores'],
+  findings: AssessmentFindingInput[],
+  technicalDebt: Array<{ category: string; count: number; detail: string }>
 ): ReportData['executiveSummary']['scoringMethodology'] {
+  // Task 2.5: compute rationale strings from actual data
+  const productCount = findings.filter((f) => f.artifactType === 'Product2').length;
+  const bundleCount = findings.filter((f) => f.artifactType === 'Product2' && f.complexityLevel === 'medium').length;
+  const optionCount = findings.filter((f) => f.artifactType === 'ProductOption' || f.artifactType === 'SBQQ__ProductOption__c').length;
+  const priceRuleCount = findings.filter((f) => f.artifactType === 'PriceRule' || f.artifactType === 'SBQQ__PriceRule__c').length;
+  const dsCount = findings.filter((f) => f.artifactType === 'DiscountSchedule' || f.artifactType === 'SBQQ__DiscountSchedule__c').length;
+  const csCount = findings.filter((f) => f.artifactType === 'CustomScript' || f.artifactType === 'SBQQ__CustomScript__c').length;
+  const apexCount = findings.filter((f) => f.artifactType === 'ApexClass').length;
+  const triggerCount = findings.filter((f) => f.artifactType === 'ApexTrigger').length;
+  const flowCount = findings.filter((f) => f.artifactType === 'Flow').length;
+  const totalQuotes = findings.find((f) => f.artifactType === 'DataCount' && f.artifactName?.includes('Quote'))?.countValue ?? 0;
+
+  const debtSummary = technicalDebt.map((d) => `${d.count} ${d.category.toLowerCase()}`).join(', ');
+
   return [
     {
       dimension: 'Configuration Depth',
       weight: 25,
       score: scores.configurationDepth,
       drivers: 'Product catalog size, bundle nesting, option constraints, config attributes',
+      rationale: `Score reflects ${productCount} products, ${bundleCount} bundles, and ${optionCount || 'no'} product options. ${bundleCount > 50 ? 'High bundle density increases configuration complexity.' : 'Moderate configuration surface area.'}`,
     },
     {
       dimension: 'Pricing Logic',
       weight: 25,
       score: scores.pricingLogic,
       drivers: 'Price rules, discount schedules, custom scripts (QCP), contracted pricing',
+      rationale: `Score reflects ${priceRuleCount} price rules, ${dsCount} discount schedules${csCount > 0 ? `, and ${csCount} custom script(s) (QCP)` : ''}. ${csCount > 0 ? 'QCP presence significantly elevates pricing complexity.' : 'Standard pricing rule configuration.'}`,
     },
     {
       dimension: 'Customization Level',
       weight: 20,
       score: scores.customizationLevel,
-      drivers: 'Custom fields, validation rules, formula complexity, custom metadata',
+      drivers: 'Apex class count, trigger count, flow complexity, code dependencies, custom fields, validation rules',
+      rationale: `Score reflects ${apexCount} Apex classes, ${triggerCount} triggers, and ${flowCount} flows referencing CPQ objects. ${apexCount > 30 ? 'Substantial custom code dependency detected.' : 'Moderate customization footprint.'}`,
     },
     {
       dimension: 'Data Volume & Usage',
       weight: 15,
       score: scores.dataVolumeUsage,
       drivers: 'Quote volume, line count, user adoption, discount patterns',
+      rationale: `Score reflects ${totalQuotes} quotes in the 90-day assessment window. ${totalQuotes < 50 ? 'Low volume — some metrics may not be statistically meaningful.' : 'Adequate sample for usage analysis.'}`,
     },
     {
       dimension: 'Technical Debt',
       weight: 15,
       score: scores.technicalDebt,
-      drivers: 'Apex class count, trigger count, flow complexity, code dependencies',
+      drivers: 'Inactive price rules, stale/test rules, duplicate discount schedules, dormant products',
+      rationale: debtSummary.length > 0
+        ? `Score reflects ${debtSummary}. ${technicalDebt.length > 3 ? 'Multiple debt categories indicate cleanup opportunity.' : 'Manageable debt footprint.'}`
+        : 'No significant technical debt indicators detected.',
     },
   ];
 }
@@ -1063,7 +1414,8 @@ function buildScoringMethodology(
 function buildDefaultKeyFindings(
   findings: AssessmentFindingInput[],
   settings: AssessmentFindingInput[],
-  plugins: AssessmentFindingInput[]
+  plugins: AssessmentFindingInput[],
+  _counts: ReportCounts
 ): Array<{ title: string; detail: string; confidence: string }> {
   const kf: Array<{ title: string; detail: string; confidence: string }> = [];
 
@@ -1146,6 +1498,7 @@ function buildDefaultKeyFindings(
   }
 
   // Ensure at least 3 findings with analytical observations
+  // Task 2.4: synthesis with >=2 facts + 1 implication
   const productCount = findings.filter((f) => f.artifactType === 'Product2').length;
   if (productCount > 0 && kf.length < 5) {
     const families = new Set(
@@ -1154,9 +1507,18 @@ function buildDefaultKeyFindings(
         .map((f) => f.evidenceRefs?.find((r) => r.value === 'Product2.Family')?.label)
         .filter(Boolean)
     );
+    const dormantFamilyCount = [...families].filter((fam) => {
+      const products = findings.filter(
+        (f) => f.artifactType === 'Product2' && f.evidenceRefs?.find((r) => r.value === 'Product2.Family')?.label === fam
+      );
+      return products.length > 0 && products.every((p) => p.usageLevel === 'dormant');
+    }).length;
+    const dormantNote = dormantFamilyCount > 0
+      ? ` — ${dormantFamilyCount} of ${families.size} families show zero quoting activity in the assessment window, suggesting catalog sprawl and a cleanup opportunity.`
+      : '.';
     kf.push({
       title: `${productCount} products across ${families.size} product families`,
-      detail: `Product catalog spans ${families.size > 5 ? 'a diverse range of' : ''} families including ${[...families].slice(0, 5).join(', ')}${families.size > 5 ? ', and more' : ''}.`,
+      detail: `Product catalog spans ${families.size > 5 ? 'a diverse range of' : ''} families including ${[...families].slice(0, 5).join(', ')}${families.size > 5 ? ', and more' : ''}${dormantNote}`,
       confidence: 'Confirmed',
     });
   }
@@ -1226,6 +1588,21 @@ function detectHotspots(
     });
   }
 
+  // Task 2.10: Bundle/option density hotspot
+  const bundleHotspotCount = findings.filter(
+    (f) => f.artifactType === 'Product2' && f.complexityLevel === 'medium'
+  ).length;
+  const optHotspotCount =
+    findings.filter((f) => f.artifactType === 'ProductOption' || f.artifactType === 'SBQQ__ProductOption__c').length ||
+    (findings.find((f) => f.artifactType === 'DataCount' && f.artifactName?.toLowerCase().includes('option'))?.countValue ?? 0);
+  if (bundleHotspotCount > 50 || optHotspotCount > 200) {
+    hotspots.push({
+      name: 'Bundle & Option Configuration',
+      severity: 'High',
+      analysis: `${bundleHotspotCount} bundle products with ${optHotspotCount} product options, enforced by Selection, Validation, Filter, and Alert product rules. Nested bundle configurations increase quote calculation complexity and UI surface area.`,
+    });
+  }
+
   return hotspots;
 }
 
@@ -1237,13 +1614,27 @@ function buildApprovalsAndDocs(
   findings: AssessmentFindingInput[],
   plugins: AssessmentFindingInput[]
 ): ReportData['approvalsAndDocs'] {
-  // Approval rules from approvals collector
-  const approvalRules = findings.filter(
-    (f) =>
-      f.artifactType === 'CustomAction' ||
-      f.artifactType === 'SBQQ__CustomAction__c' ||
-      f.findingKey?.includes('advanced_approval')
+  // (1) CPQ Custom Action buttons — these are NOT approval rules (Task 0.1)
+  const customActionFindings = findings.filter(
+    (f) => f.artifactType === 'CustomAction' || f.artifactType === 'SBQQ__CustomAction__c'
   );
+
+  // (2) Advanced Approval Rules (sbaa__ApprovalRule__c)
+  const advancedApprovalFindings = findings.filter(
+    (f) => f.artifactType === 'AdvancedApprovalRule'
+  );
+
+  // (3) Standard Approval Processes (ProcessDefinition on CPQ objects)
+  const standardApprovalFindings = findings.filter(
+    (f) => f.artifactType === 'ApprovalProcess'
+  );
+
+  // (4) Approval chain/approver summary from AdvancedApprovals summary finding
+  const approvalSummary = findings.find(
+    (f) => f.artifactType === 'AdvancedApprovals' && f.artifactName === 'advanced_approvals_summary'
+  );
+  const chainCount = Number(approvalSummary?.notes?.match(/(\d+)\s*chains?/)?.[1] ?? 0);
+  const approverCount = Number(approvalSummary?.notes?.match(/(\d+)\s*approvers?/)?.[1] ?? 0);
 
   // Quote templates from templates collector
   const quoteTemplates = findings.filter(
@@ -1256,17 +1647,33 @@ function buildApprovalsAndDocs(
   );
 
   return {
-    approvalRules: approvalRules.map((r) => ({
+    customActions: customActionFindings.map((a) => ({
+      name: a.artifactName,
+      type: a.notes?.match(/Type:\s*([^,]+)/)?.[1]?.trim() ?? 'Unknown',
+      location: a.notes?.match(/Location:\s*([^,]+)/)?.[1]?.trim() ?? '',
+      status: a.usageLevel === 'dormant' || a.notes?.includes('INACTIVE') ? 'Inactive' : 'Active',
+    })),
+    advancedApprovalRules: advancedApprovalFindings.map((r) => ({
       name: r.artifactName,
-      object: r.evidenceRefs?.find((ref) => ref.label === 'TargetObject')?.value ?? '',
       conditions: r.countValue ?? 0,
       status: r.usageLevel === 'dormant' ? 'Inactive' : 'Active',
     })),
-    quoteTemplates: quoteTemplates.map((t) => ({
-      name: t.artifactName,
-      isDefault: t.notes?.includes('Default') ?? false,
-      lastModified: t.evidenceRefs?.find((ref) => ref.label === 'LastModifiedDate')?.value ?? '',
+    approvalChains: { count: chainCount, approvers: approverCount },
+    approvalRules: standardApprovalFindings.map((r) => ({
+      name: r.artifactName,
+      object: r.notes?.match(/on\s+(\w+)/)?.[1] ?? '',
+      status: r.notes?.includes('ACTIVE') ? 'Active' : 'Inactive',
     })),
+    quoteTemplates: quoteTemplates.map((t) => {
+      // Task 3.4: surface LastModifiedDate from evidence refs
+      const lmd = t.evidenceRefs?.find((ref) => ref.label === 'LastModifiedDate')?.value;
+      const formattedDate = lmd && lmd !== '' ? lmd.split('T')[0] : 'Not available';
+      return {
+        name: t.artifactName,
+        isDefault: t.notes?.includes('Default') ?? false,
+        lastModified: formattedDate,
+      };
+    }),
     documentGeneration: {
       templateCount: quoteTemplates.length,
       docuSignActive: !!docuSignPlugin,
@@ -1280,47 +1687,95 @@ function buildApprovalsAndDocs(
 
 function buildDynamicCoverage(findings: AssessmentFindingInput[]): ReportData['appendixD'] {
   const domainSet = new Set<string>(findings.map((f) => f.domain));
-  const countInDomain = (d: string) => findings.filter((f) => f.domain === d).length;
 
-  const coverage = (
+  // Task 1.7: per-category specific checks (not generic count > 5)
+  const has = (...types: string[]) => findings.some((f) => types.includes(f.artifactType));
+
+  // Product Catalog (Task 1.7)
+  const hasCatalog = has('Product2');
+  const hasOptions = has('ProductOption', 'SBQQ__ProductOption__c');
+  const catalogCov = !hasCatalog ? 'Not extracted' : hasOptions ? 'Full' : 'Partial';
+  const catalogNotes = !hasCatalog
+    ? 'Product Catalog collector did not produce findings.'
+    : hasOptions
+      ? 'Products, bundles, options, config attributes.'
+      : 'Products extracted but product options not available.';
+
+  // Pricing & Rules (Task 1.7, 2.15)
+  const hasPR = has('PriceRule', 'SBQQ__PriceRule__c');
+  const hasDS = has('DiscountSchedule', 'SBQQ__DiscountSchedule__c');
+  const hasCS = has('CustomScript', 'SBQQ__CustomScript__c');
+  const pricingCov = hasPR && hasDS && hasCS ? 'Full' : hasPR || hasDS ? 'Partial' : domainSet.has('pricing') ? 'Partial' : 'Not extracted';
+  const pricingNotes = `Price rules${hasPR ? '' : ' (not extracted)'}, discount schedules${hasDS ? '' : ' (not extracted)'}, custom scripts${hasCS ? '' : ' (not extracted)'}. Price rule usage frequency: Not extracted — requires rule-to-quote linkage data.`;
+
+  // Transactional Data (Task 1.7)
+  const hasQuotes = has('DataCount') && findings.some((f) => f.artifactType === 'DataCount' && f.artifactName?.includes('Quote'));
+  const hasUserBehavior = has('UserBehavior');
+  const txCov = hasQuotes && hasUserBehavior ? 'Full' : hasQuotes ? 'Partial' : domainSet.has('usage') ? 'Partial' : 'Not extracted';
+  const txNotes = `90-day quotes${hasQuotes ? '' : ' (not extracted)'}, quote lines, usage trends. ${!hasUserBehavior ? 'User behavior data inferred only.' : ''}`;
+
+  // Custom Fields & Validation (Task 1.7)
+  const hasVR = has('ValidationRule');
+  const hasFF = has('FormulaField');
+  const hasFC = has('FieldCompleteness');
+  const cfCov = hasVR && hasFF && hasFC ? 'Full' : hasVR || hasFF ? 'Partial' : domainSet.has('customization') ? 'Partial' : 'Not extracted';
+  const cfNotes = `Custom fields, validation rules${hasVR ? '' : ' (not extracted)'}, formulas${hasFF ? '' : ' (not extracted)'}. ${!hasFC ? 'Field completeness not extracted — requires full schema scan.' : ''}`;
+
+  // Custom Code (Task 1.7, 2.16)
+  const hasApex = has('ApexClass');
+  const hasTrigger = has('ApexTrigger');
+  const hasFlow = has('Flow');
+  const codeCov = hasApex && hasTrigger && hasFlow ? 'Full' : hasApex || hasTrigger ? 'Partial' : domainSet.has('dependency') ? 'Partial' : 'Not extracted';
+  const codeNotes = `Apex classes${hasApex ? '' : ' (not extracted)'}, triggers${hasTrigger ? '' : ' (not extracted)'}, flows${hasFlow ? '' : ' (not extracted)'}. Apex class → SBQQ object dependencies: Not extracted — requires code-level analysis.`;
+
+  // Quote Templates (Task 1.7)
+  const hasTemplate = has('QuoteTemplate', 'SBQQ__QuoteTemplate__c');
+  const hasSection = has('TemplateSection', 'SBQQ__TemplateSection__c');
+  const tmplCov = hasTemplate && hasSection ? 'Full' : hasTemplate ? 'Partial' : domainSet.has('templates') ? 'Partial' : 'Not extracted';
+  const tmplNotes = `Template structure${hasTemplate ? '' : ' (not extracted)'}, sections${hasSection ? '' : ' (not extracted)'}, content.`;
+
+  // Advanced Approvals (Task 1.6)
+  const hasAAR = has('AdvancedApprovalRule');
+  const hasCA = has('CustomAction', 'SBQQ__CustomAction__c');
+  const approvalCov = hasAAR && hasCA ? 'Full'
+    : hasCA && !hasAAR ? 'Partial'
+    : hasAAR && !hasCA ? 'Partial'
+    : domainSet.has('approvals') ? 'Partial' : 'Not extracted';
+  const approvalNotes = hasAAR && hasCA
+    ? 'Approval rules, conditions, chains, custom actions.'
+    : hasCA && !hasAAR
+      ? 'Approval action buttons detected; sbaa approval rules and chains not yet extracted.'
+      : hasAAR && !hasCA
+        ? 'Approval rules extracted; custom action buttons not extracted.'
+        : 'Approvals collector did not produce findings.';
+
+  const simpleCoverage = (
     domain: string,
     label: string,
     notes: string
   ): { category: string; coverage: string; notes: string } => {
     if (!domainSet.has(domain))
-      return {
-        category: label,
-        coverage: 'Not extracted',
-        notes: `${label} collector did not produce findings.`,
-      };
-    return { category: label, coverage: countInDomain(domain) > 5 ? 'Full' : 'Partial', notes };
+      return { category: label, coverage: 'Not extracted', notes: `${label} collector did not produce findings.` };
+    return { category: label, coverage: 'Full', notes };
   };
 
   return [
-    coverage('catalog', 'Product Catalog', 'Products, bundles, options, config attributes.'),
-    coverage('pricing', 'Pricing & Rules', 'Price rules, discount schedules, custom scripts.'),
-    coverage('usage', 'Transactional Data', '90-day quotes, quote lines, usage trends.'),
-    coverage(
-      'customization',
-      'Custom Fields & Validation',
-      'Custom fields, validation rules, formulas.'
-    ),
-    coverage(
-      'dependency',
-      'Custom Code',
-      'Apex classes, triggers, flows identified by namespace scan. Purpose and origin estimated from metadata, not verified through code review.'
-    ),
-    coverage('templates', 'Quote Templates', 'Template structure, sections, content.'),
-    coverage('approvals', 'Advanced Approvals', 'Approval rules, conditions, chains.'),
-    coverage('settings', 'CPQ Package Settings', 'Custom settings, plugin configuration.'),
-    coverage('integration', 'Integrations', 'Named credentials, platform events.'),
-    coverage('order-lifecycle', 'Order Lifecycle', 'Orders, contracts, subscriptions.'),
-    coverage('localization', 'Localization', 'Multi-language translations, custom labels.'),
+    { category: 'Product Catalog', coverage: catalogCov, notes: catalogNotes },
+    { category: 'Pricing & Rules', coverage: pricingCov, notes: pricingNotes },
+    { category: 'Transactional Data', coverage: txCov, notes: txNotes },
+    { category: 'Custom Fields & Validation', coverage: cfCov, notes: cfNotes },
+    { category: 'Custom Code', coverage: codeCov, notes: codeNotes },
+    { category: 'Quote Templates', coverage: tmplCov, notes: tmplNotes },
+    { category: 'Advanced Approvals', coverage: approvalCov, notes: approvalNotes },
+    simpleCoverage('settings', 'CPQ Package Settings', 'Custom settings, plugin configuration.'),
+    simpleCoverage('integration', 'Integrations', 'Named credentials, platform events.'),
+    simpleCoverage('order-lifecycle', 'Order Lifecycle', 'Orders, contracts, subscriptions.'),
+    simpleCoverage('localization', 'Localization', 'Multi-language translations, custom labels.'),
     {
       category: 'User Behavior',
-      coverage: findings.some((f) => f.artifactType === 'UserBehavior')
-        ? 'Estimated'
-        : 'Not extracted',
+      coverage: hasUserBehavior && findings.some((f) => f.artifactType === 'UserBehavior' && f.sourceType !== 'inferred')
+        ? 'Confirmed'
+        : hasUserBehavior ? 'Estimated' : 'Not extracted',
       notes: 'Derived from audit trail sampling.',
     },
   ];
@@ -1412,6 +1867,7 @@ function buildObjectInventoryInline(findings: AssessmentFindingInput[]): ReportD
       complexity: data.complexity,
       confidence: 'Confirmed',
       isCpqObject: isCpqObjectName(name),
+      phase: CPQ_PHASE_MAP[name] ?? '',
     }));
 }
 
@@ -1612,32 +2068,21 @@ function buildFieldCompleteness(
   const completeness = findings.filter((f) => f.artifactType === 'FieldCompleteness');
 
   if (completeness.length > 0) {
-    return completeness.map((f) => ({
+    // Only return entries that have real data (Task 0.5)
+    const mapped = completeness.map((f) => ({
       object: f.artifactName,
       totalFields: f.countValue ?? 0,
       above50pct: Number(f.evidenceRefs?.find((r) => r.label === 'above50pct')?.value ?? 0),
       below5pct: Number(f.evidenceRefs?.find((r) => r.label === 'below5pct')?.value ?? 0),
       score: f.evidenceRefs?.find((r) => r.label === 'score')?.value ?? 'N/A',
     }));
+    // If all entries are stubs with no real data, return empty array
+    const hasRealData = mapped.some((f) => f.totalFields > 0);
+    return hasRealData ? mapped : [];
   }
 
-  // Fallback: build from DataCount findings that have field completeness data in notes
-  // Discovery logs field completeness in metrics, not findings — surface what we can
-  const objects = [
-    'SBQQ__Quote__c',
-    'SBQQ__QuoteLine__c',
-    'Product2',
-    'PricebookEntry',
-    'Order',
-    'OrderItem',
-  ];
-  return objects.map((obj) => ({
-    object: obj,
-    totalFields: 0,
-    above50pct: 0,
-    below5pct: 0,
-    score: 'Not assessed',
-  }));
+  // No FieldCompleteness findings exist — return empty array instead of stub entries (Task 0.5)
+  return [];
 }
 
 // ============================================================================
@@ -1672,8 +2117,29 @@ function buildInstalledPackages(
   findings: AssessmentFindingInput[]
 ): Array<{ name: string; namespace: string; version: string; status: string }> {
   const packages: Array<{ name: string; namespace: string; version: string; status: string }> = [];
+  const seenNamespaces = new Set<string>();
 
-  if (orgFp?.notes) {
+  // (1) InstalledPackage findings from discovery collector (Task 1.1)
+  const installedPkgs = findings.filter((f) => f.artifactType === 'InstalledPackage');
+  let nonCpqCount = 0;
+  for (const pkg of installedPkgs) {
+    const ns = pkg.evidenceRefs?.find((r) => r.label === 'Namespace')?.value ?? '';
+    if (ns && CPQ_RELEVANT_NAMESPACES.has(ns)) {
+      if (seenNamespaces.has(ns)) continue;
+      seenNamespaces.add(ns);
+      packages.push({
+        name: pkg.artifactName,
+        namespace: ns,
+        version: pkg.evidenceRefs?.find((r) => r.label === 'Version')?.value ?? 'Detected',
+        status: 'Active',
+      });
+    } else {
+      nonCpqCount++;
+    }
+  }
+
+  // (2) Fallback: extract from OrgFingerprint notes if no InstalledPackage findings
+  if (packages.length === 0 && orgFp?.notes) {
     const cpqMatch = orgFp.notes.match(/CPQ\s+([v\d.]+)/);
     if (cpqMatch) {
       packages.push({
@@ -1686,18 +2152,30 @@ function buildInstalledPackages(
   }
 
   // Detect DocuSign from PluginStatus findings
-  const esig = findings.find(
-    (f) =>
-      f.artifactType === 'PluginStatus' &&
-      f.artifactName?.includes('Electronic') &&
-      (f.countValue ?? 0) > 0
-  );
-  if (esig) {
+  if (!seenNamespaces.has('dsfs')) {
+    const esig = findings.find(
+      (f) =>
+        f.artifactType === 'PluginStatus' &&
+        f.artifactName?.includes('Electronic') &&
+        (f.countValue ?? 0) > 0
+    );
+    if (esig) {
+      packages.push({
+        name: esig.notes?.includes('DocuSign') ? 'DocuSign eSignature' : 'E-Signature',
+        namespace: 'dsfs',
+        version: 'Detected',
+        status: 'Active',
+      });
+    }
+  }
+
+  // Add summary line for non-CPQ packages (Task 1.1)
+  if (nonCpqCount > 0) {
     packages.push({
-      name: esig.notes?.includes('DocuSign') ? 'DocuSign eSignature' : 'E-Signature',
-      namespace: 'dsfs',
-      version: 'Detected',
-      status: 'Active',
+      name: `${nonCpqCount} additional packages installed`,
+      namespace: '—',
+      version: '—',
+      status: 'Not CPQ-relevant',
     });
   }
 
@@ -1711,7 +2189,7 @@ function buildInstalledPackages(
 function buildProductCatalog(
   findings: AssessmentFindingInput[],
   topProducts: AssessmentFindingInput[],
-  totalQuotes: number
+  _totalQuotes: number
 ): ReportData['configurationDomain']['productCatalog'] {
   const products = findings.filter((f) => f.artifactType === 'Product2');
   if (products.length === 0) return [];
