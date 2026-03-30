@@ -6,15 +6,18 @@
  * See: Completion Plan R-03
  */
 
-import { chromium } from 'playwright';
-
 /**
  * Render HTML string to PDF buffer using Playwright's Chromium.
+ *
+ * Playwright is imported dynamically to avoid bundling Chromium in the
+ * worker Docker image. This function is not called in the current pipeline
+ * — it's reserved for future PDF report generation.
  *
  * @param html - Complete HTML document string (including <html>, <head>, <style>)
  * @returns PDF as Buffer
  */
 export async function renderPdf(html: string): Promise<Buffer> {
+  const { chromium } = await import('playwright');
   const browser = await chromium.launch();
   try {
     const page = await browser.newPage();

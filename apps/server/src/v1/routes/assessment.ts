@@ -17,22 +17,68 @@ import { fileURLToPath } from 'node:url';
 import { OpenAPIHono } from '@hono/zod-openapi';
 import type { AppEnv } from '../../types/index.ts';
 import type { AssessmentRunStatus } from '@revbrain/contract';
+import { getEnv } from '../../lib/env.ts';
+import { logger } from '../../lib/logger.ts';
 
 // ---------------------------------------------------------------------------
-// Local worker dispatch (development only)
+// Worker dispatch — local (dev) or Cloud Run trigger proxy (staging/prod)
 // ---------------------------------------------------------------------------
 
-function dispatchWorkerLocally(runId: string, connectionId: string): void {
+async function dispatchWorker(runId: string, connectionId: string): Promise<void> {
   const isLocal =
-    (process.env.APP_ENV || '').startsWith('local') || process.env.NODE_ENV === 'development';
+    (getEnv('APP_ENV') || '').startsWith('local') || getEnv('NODE_ENV') === 'development';
 
-  if (!isLocal) {
-    console.log(
-      `[assessment] Cloud Run dispatch not yet implemented — run ${runId} awaits external trigger`
-    );
+  if (isLocal) {
+    dispatchWorkerLocally(runId, connectionId);
     return;
   }
 
+  // Production/staging: call Cloud Run trigger proxy
+  await dispatchWorkerCloudRun(runId, connectionId);
+}
+
+async function dispatchWorkerCloudRun(runId: string, connectionId: string): Promise<void> {
+  const triggerUrl = getEnv('CLOUD_RUN_TRIGGER_URL');
+  const triggerSecret = getEnv('INTERNAL_API_SECRET');
+
+  if (!triggerUrl || !triggerSecret) {
+    logger.error('cloud_run_dispatch_missing_config', {
+      hasTriggerUrl: !!triggerUrl,
+      hasSecret: !!triggerSecret,
+    });
+    return;
+  }
+
+  try {
+    const res = await fetch(`${triggerUrl}/trigger`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${triggerSecret}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        jobId: `job-${Date.now()}`,
+        runId,
+        connectionId,
+      }),
+    });
+
+    if (!res.ok) {
+      const body = await res.text();
+      logger.error('cloud_run_dispatch_failed', { status: res.status, body, runId });
+      return;
+    }
+
+    logger.info('cloud_run_dispatch_success', { runId });
+  } catch (err) {
+    logger.error('cloud_run_dispatch_error', {
+      error: err instanceof Error ? err.message : String(err),
+      runId,
+    });
+  }
+}
+
+function dispatchWorkerLocally(runId: string, connectionId: string): void {
   const workerEntry = resolve(
     dirname(fileURLToPath(import.meta.url)),
     '../../../../worker/src/index.ts'
@@ -197,7 +243,8 @@ assessmentRouter.post('/:projectId/assessment/run', async (c) => {
   }
 
   // 9. Trigger worker (local spawn in dev, Cloud Run in production)
-  dispatchWorkerLocally(dispatched.id, sourceConnection.id);
+  // Fire-and-forget: don't await — the run is already persisted, worker picks it up
+  dispatchWorker(dispatched.id, sourceConnection.id).catch(() => {});
 
   return c.json(
     {

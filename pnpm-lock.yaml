@@ -325,6 +325,9 @@ importers:
       postgres:
         specifier: ^3.4.3
         version: 3.4.8
+      zod:
+        specifier: ^4.3.6
+        version: 4.3.6
     devDependencies:
       '@eslint/js':
         specifier: ^9.39.1
@@ -338,6 +341,9 @@ importers:
       globals:
         specifier: ^16.5.0
         version: 16.5.0
+      playwright:
+        specifier: ^1.58.2
+        version: 1.58.2
       tsx:
         specifier: ^4.7.0
         version: 4.21.0

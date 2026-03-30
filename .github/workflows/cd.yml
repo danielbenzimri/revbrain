@@ -2,11 +2,11 @@
 # CD - Continuous Deployment
 # =============================================================================
 # Runs on: Push to main or staging (after CI passes)
-# Purpose: Deploy backend (Supabase Edge Functions) + frontend (Vercel)
+# Purpose: Deploy backend (Supabase) + frontend (Vercel) + worker (Cloud Run)
 #
 # Flow:
-#   staging branch → revbrain-stg (Supabase) + revbrain-stg (Vercel)
-#   main branch    → revbrain-prd (Supabase) + revbrain (Vercel)
+#   staging branch → revbrain-stg (Supabase) + revbrain-stg (Vercel) + cpq-worker-stg (Cloud Run)
+#   main branch    → revbrain-prd (Supabase) + revbrain (Vercel) + cpq-worker-prod (Cloud Run)
 #
 # Required GitHub Secrets:
 #   SUPABASE_ACCESS_TOKEN     — Supabase CLI auth token
@@ -17,6 +17,12 @@
 #   VERCEL_ORG_ID             — Vercel team/org ID
 #   VERCEL_PROJECT_ID_STG     — Vercel project ID for staging
 #   VERCEL_PROJECT_ID_PROD    — Vercel project ID for production
+#
+# Required GitHub Secrets (GCP — for worker deployment):
+#   GCP_WORKLOAD_IDENTITY_PROVIDER_STG  — WIF provider for staging
+#   GCP_WORKLOAD_IDENTITY_PROVIDER_PROD — WIF provider for production
+#   GCP_DEPLOY_SA_STG                   — Deploy SA email for staging
+#   GCP_DEPLOY_SA_PROD                  — Deploy SA email for production
 # =============================================================================
 
 name: CD
@@ -135,3 +141,104 @@ jobs:
         run: |
           URL=$(vercel deploy --prebuilt --prod --token=$VERCEL_TOKEN)
           echo "✓ Deployed to: $URL"
+
+  # ---------------------------------------------------------------------------
+  # Deploy Worker (GCP Cloud Run Job)
+  # ---------------------------------------------------------------------------
+  # Only builds & deploys when worker-related code changes.
+  # Uses Workload Identity Federation (keyless auth from GitHub Actions).
+  # ---------------------------------------------------------------------------
+  deploy-worker:
+    name: Deploy Worker
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write # Required for Workload Identity Federation
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_branch }}
+          fetch-depth: 2
+
+      - name: Detect worker changes
+        id: changes
+        run: |
+          # Check if worker-related files changed in the latest commit
+          CHANGED=$(git diff --name-only HEAD~1 HEAD -- \
+            'apps/worker/' \
+            'packages/contract/' \
+            'packages/database/' \
+            2>/dev/null || echo "apps/worker/")
+          if [ -n "$CHANGED" ]; then
+            echo "worker_changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "worker_changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Determine environment
+        if: steps.changes.outputs.worker_changed == 'true'
+        run: |
+          BRANCH="${{ github.event.workflow_run.head_branch }}"
+          if [ "$BRANCH" == "main" ]; then
+            echo "GCP_PROJECT_ID=revbrain-prod" >> $GITHUB_ENV
+            echo "GCP_WIF_PROVIDER=${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER_PROD }}" >> $GITHUB_ENV
+            echo "GCP_DEPLOY_SA=${{ secrets.GCP_DEPLOY_SA_PROD }}" >> $GITHUB_ENV
+            echo "ENV_SUFFIX=prod" >> $GITHUB_ENV
+          else
+            echo "GCP_PROJECT_ID=revbrain-stg" >> $GITHUB_ENV
+            echo "GCP_WIF_PROVIDER=${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER_STG }}" >> $GITHUB_ENV
+            echo "GCP_DEPLOY_SA=${{ secrets.GCP_DEPLOY_SA_STG }}" >> $GITHUB_ENV
+            echo "ENV_SUFFIX=stg" >> $GITHUB_ENV
+          fi
+          echo "GCP_REGION=us-central1" >> $GITHUB_ENV
+
+      - name: Authenticate to GCP
+        if: steps.changes.outputs.worker_changed == 'true'
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ env.GCP_WIF_PROVIDER }}
+          service_account: ${{ env.GCP_DEPLOY_SA }}
+
+      - name: Set up Cloud SDK
+        if: steps.changes.outputs.worker_changed == 'true'
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        if: steps.changes.outputs.worker_changed == 'true'
+        run: gcloud auth configure-docker ${GCP_REGION}-docker.pkg.dev --quiet
+
+      - name: Build and push Docker image
+        if: steps.changes.outputs.worker_changed == 'true'
+        run: |
+          IMAGE="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/revbrain/worker"
+          SHORT_SHA="${GITHUB_SHA::8}"
+
+          docker build \
+            -f apps/worker/Dockerfile \
+            -t "${IMAGE}:${SHORT_SHA}" \
+            -t "${IMAGE}:latest" \
+            .
+
+          docker push "${IMAGE}:${SHORT_SHA}"
+          docker push "${IMAGE}:latest"
+          echo "✓ Pushed ${IMAGE}:${SHORT_SHA}"
+
+      - name: Update Cloud Run Job
+        if: steps.changes.outputs.worker_changed == 'true'
+        run: |
+          IMAGE="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/revbrain/worker"
+          SHORT_SHA="${GITHUB_SHA::8}"
+
+          gcloud run jobs update "cpq-worker-${ENV_SUFFIX}" \
+            --image="${IMAGE}:${SHORT_SHA}" \
+            --region=${GCP_REGION} \
+            --project=${GCP_PROJECT_ID}
+          echo "✓ Updated cpq-worker-${ENV_SUFFIX} to ${SHORT_SHA}"
+
+      - name: Skip (no worker changes)
+        if: steps.changes.outputs.worker_changed == 'false'
+        run: echo "⏭ No worker changes detected — skipping deployment"
