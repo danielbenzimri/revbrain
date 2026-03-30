@@ -5,6 +5,8 @@
  * a structured object matching the 22-page benchmark report format.
  *
  * See: Completion Plan R-01
+ * Updated: Redline mitigation R0–R2 (percentage fixes, active filtering,
+ *          output state system, section coverage, migration language removal)
  */
 
 import type { AssessmentFindingInput } from '@revbrain/contract';
@@ -23,6 +25,7 @@ export interface ReportData {
     cpqVersion: string;
     sbaaVersion: string | null;
     generatedBy: string;
+    lowVolumeWarning: string | null;
   };
   executiveSummary: {
     keyFindings: Array<{ title: string; detail: string; confidence: string }>;
@@ -34,8 +37,15 @@ export interface ReportData {
       dataVolumeUsage: number;
       technicalDebt: number;
     };
+    scoringMethodology: Array<{
+      dimension: string;
+      weight: number;
+      score: number;
+      drivers: string;
+    }>;
   };
   cpqAtAGlance: Record<string, Array<{ label: string; value: string; confidence: string }>>;
+  dataConfidenceSummary: { confirmed: number; estimated: number; partial: number } | null;
   packageSettings: {
     installedPackages: Array<{ name: string; namespace: string; version: string; status: string }>;
     coreSettings: Array<{ setting: string; value: string; notes: string; confidence: string }>;
@@ -48,22 +58,26 @@ export interface ReportData {
       active: number;
       inactive: number;
       quoted90d: number;
-      percentQuoted: number;
+      percentQuoted: string;
       confidence: string;
     }>;
     priceRules: Array<{
       name: string;
       description: string;
       complexity: string;
-      usage: string;
+      status: string;
       confidence: string;
     }>;
     productRules: Array<{
       name: string;
+      type: string;
       description: string;
       complexity: string;
+      status: string;
       confidence: string;
     }>;
+    activePriceRuleSummary: string;
+    activeProductRuleSummary: string;
   };
   usageAdoption: {
     quotingActivity: Array<{ metric: string; value: string; trend: string; confidence: string }>;
@@ -74,7 +88,7 @@ export interface ReportData {
       conversionRate: number;
       confidence: string;
     }>;
-    discountDistribution: Array<{ range: string; count: number; percent: number }>;
+    discountDistribution: Array<{ range: string; count: number; percent: string }>;
     overrideAnalysis: { count: number; rate: number; revenueImpact: number } | null;
     userBehavior: Array<{
       profile: string;
@@ -86,7 +100,7 @@ export interface ReportData {
       name: string;
       category: string;
       quotedCount: number;
-      percentQuotes: number;
+      percentQuotes: string;
     }>;
   };
   dataQuality: {
@@ -110,6 +124,68 @@ export interface ReportData {
   }>;
   appendixB: Array<{ name: string; description: string }>;
   appendixD: Array<{ category: string; coverage: string; notes: string }>;
+}
+
+// ============================================================================
+// Helpers
+// ============================================================================
+
+/** Format a percentage with (N of M) context when denominator < 10 */
+function pct(numerator: number, denominator: number): string {
+  if (denominator === 0) return '0%';
+  const value = Math.round((numerator / denominator) * 100);
+  if (denominator < 10) return `${value}% (${numerator} of ${denominator})`;
+  return `${value}%`;
+}
+
+/** Detect if a rule name looks like tech debt */
+const TECH_DEBT_PATTERNS =
+  /\b(delete|test|draft|deprecated|copy of|old|backup|temp|do not use|todo)\b/i;
+
+/** Infer Apex class purpose from name */
+function inferApexPurpose(name: string, notes: string | undefined): string {
+  if (notes && notes.length > 0 && !notes.startsWith('CPQ-related')) {
+    return notes.split('.')[0];
+  }
+  const lower = name.toLowerCase();
+  if (lower.includes('test')) return 'Test class';
+  if (lower.includes('plugin') || lower.includes('calculator')) return 'CPQ Plugin';
+  if (lower.includes('quote')) return 'Quote processing';
+  if (lower.includes('contract')) return 'Contract management';
+  if (lower.includes('order')) return 'Order processing';
+  if (lower.includes('trigger')) return 'Trigger handler';
+  if (lower.includes('search')) return 'Product search';
+  if (lower.includes('batch') || lower.includes('schedule')) return 'Batch/Scheduled job';
+  if (lower.includes('invoice') || lower.includes('billing')) return 'Billing integration';
+  if (lower.includes('handler')) return 'Event handler';
+  if (lower.includes('util') || lower.includes('helper')) return 'Utility class';
+  return 'CPQ-related Apex';
+}
+
+/** Detect origin from namespace */
+function inferApexOrigin(name: string): string {
+  if (name.startsWith('SBQQ')) return 'Managed (CPQ)';
+  if (name.startsWith('sbaa')) return 'Managed (AA)';
+  if (name.startsWith('dsfs') || name.startsWith('SBQQDS')) return 'Managed (DocuSign)';
+  if (name.startsWith('blng')) return 'Managed (Billing)';
+  if (name.startsWith('dlrs')) return 'Managed (DLRS)';
+  return 'Custom';
+}
+
+/** Parse validation rule object from domain/notes */
+function parseValidationObject(domain: string, artifactName: string): string {
+  // Try to parse "Object.RuleName" pattern from the artifactName
+  const dotIdx = artifactName.indexOf('.');
+  if (dotIdx > 0) {
+    const obj = artifactName.substring(0, dotIdx);
+    // Check if it looks like an object name
+    if (obj.includes('__c') || obj.includes('__') || /^[A-Z]/.test(obj)) {
+      return obj;
+    }
+  }
+  // Fall back to domain
+  if (domain === 'customization') return 'CPQ Object';
+  return domain;
 }
 
 // ============================================================================
@@ -168,14 +244,13 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
   const productRules = get('ProductRule', 'SBQQ__ProductRule__c');
   const discountSchedules = get('DiscountSchedule', 'SBQQ__DiscountSchedule__c');
   const customScripts = get('CustomScript', 'SBQQ__CustomScript__c');
-  const contractedPrices = get('ContractedPrice', 'SBQQ__ContractedPrice__c');
 
   // Catalog
-  const productOptions = get('ProductOption', 'SBQQ__ProductOption__c');
-  const productFeatures = get('ProductFeature', 'SBQQ__ProductFeature__c');
+  const _productOptions = get('ProductOption', 'SBQQ__ProductOption__c');
+  const _productFeatures = get('ProductFeature', 'SBQQ__ProductFeature__c');
 
   // Templates
-  const quoteTemplates = get('QuoteTemplate', 'SBQQ__QuoteTemplate__c');
+  const _quoteTemplates = get('QuoteTemplate', 'SBQQ__QuoteTemplate__c');
 
   // Presentation
   const hotspots = get('ComplexityHotspot');
@@ -185,18 +260,84 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
   const qualityFlags = get('DataQualityFlag');
 
   // Custom actions (approvals)
-  const customActions = get('CustomAction', 'SBQQ__CustomAction__c');
+  const _customActions = get('CustomAction', 'SBQQ__CustomAction__c');
+
+  // ---- Derived values ----
+  const totalQuotes =
+    findings.find(
+      (f) =>
+        f.artifactType === 'DataCount' &&
+        (f.artifactName?.includes('Quote') || f.artifactName?.includes('SBQQ__Quote'))
+    )?.countValue ?? 0;
+
+  // Active/Inactive filtering for rules
+  const activePriceRules = priceRules.filter(
+    (r) => r.usageLevel !== 'dormant' && !r.notes?.includes('Inactive')
+  );
+  const inactivePriceRules = priceRules.length - activePriceRules.length;
+  const activeProductRules = productRules.filter(
+    (r) => r.usageLevel !== 'dormant' && !r.notes?.includes('Inactive')
+  );
+  const inactiveProductRules = productRules.length - activeProductRules.length;
+
+  // Low volume detection
+  const activeUsers = findings.find((f) => f.artifactType === 'UserAdoption')?.countValue ?? 0;
+  const isLowVolume = totalQuotes < 50 || activeUsers < 5;
+  const lowVolumeWarning = isLowVolume
+    ? `Low activity detected in assessment window (${totalQuotes} quotes, ${activeUsers} active users). Some metrics may not be statistically meaningful.`
+    : null;
+
+  // Assessment period calculation
+  const assessmentDate = new Date().toISOString().split('T')[0];
+  const endDate = new Date();
+  const startDate = new Date(endDate.getTime() - 90 * 24 * 60 * 60 * 1000);
+  const formatDate = (d: Date) =>
+    d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  const assessmentPeriod = `${formatDate(startDate)} – ${formatDate(endDate)} (90 Days)`;
+
+  // Discount distribution percentage calculation
+  const discountRefs = discountDist?.evidenceRefs ?? [];
+  const discountTotal = discountRefs.reduce((sum, r) => sum + Number(r.value ?? 0), 0);
+
+  // Top products percentage calculation
+  const totalTopProductQuoted = topProducts.reduce((sum, p) => sum + (p.countValue ?? 0), 0);
+  const topProductDenominator = totalQuotes > 0 ? totalQuotes : totalTopProductQuoted;
+
+  // Complexity scores
+  const complexityScores = computeComplexityScores(findings);
+
+  // Confidence summary
+  const dataConfidenceSummary = computeConfidenceSummary(findings);
+
+  // Technical debt
+  const technicalDebt = buildTechnicalDebt(findings, priceRules, productRules, discountSchedules);
+
+  // Feature utilization
+  const featureUtilization = buildFeatureUtilization(findings);
+
+  // sbaa version detection
+  const sbaaVersion =
+    orgFp?.notes?.match(/sbaa\s+([v\d.]+)/i)?.[1] ??
+    findings
+      .find(
+        (f) =>
+          f.artifactType === 'OrgFingerprint' &&
+          f.notes?.toLowerCase().includes('advanced approval')
+      )
+      ?.notes?.match(/([v\d.]+)/)?.[1] ??
+    null;
 
   return {
     metadata: {
       clientName: 'Assessment Client',
       orgId: orgFp?.artifactId ?? 'Unknown',
       environment: orgFp?.notes?.includes('sandbox') ? 'Sandbox' : 'Production',
-      assessmentDate: new Date().toISOString().split('T')[0],
-      assessmentPeriod: '90 Days',
+      assessmentDate,
+      assessmentPeriod,
       cpqVersion: orgFp?.notes?.match(/CPQ\s+([v\d.]+)/)?.[1] ?? 'Unknown',
-      sbaaVersion: null,
+      sbaaVersion,
       generatedBy: 'RevBrain CPQ Assessment Tool v1.0',
+      lowVolumeWarning,
     },
 
     executiveSummary: {
@@ -208,10 +349,13 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
               confidence: 'Confirmed',
             }))
           : buildDefaultKeyFindings(findings, settingValues, plugins),
-      complexityScores: computeComplexityScores(findings),
+      complexityScores,
+      scoringMethodology: buildScoringMethodology(complexityScores),
     },
 
-    cpqAtAGlance: buildGlanceSections(findings, settingValues),
+    cpqAtAGlance: buildGlanceSections(findings, settingValues, technicalDebt, featureUtilization),
+
+    dataConfidenceSummary,
 
     packageSettings: {
       installedPackages: buildInstalledPackages(orgFp, findings),
@@ -240,29 +384,58 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
     ],
 
     configurationDomain: {
-      productCatalog: buildProductCatalog(findings),
-      priceRules: priceRules.map((r) => ({
-        name: r.artifactName,
-        description: r.notes ?? '',
-        complexity: r.complexityLevel ?? 'medium',
-        usage: '~100%',
-        confidence: 'Confirmed',
-      })),
-      productRules: productRules.map((r) => ({
-        name: r.artifactName,
-        description: r.notes ?? '',
-        complexity: r.complexityLevel ?? 'medium',
-        confidence: 'Confirmed',
-      })),
+      productCatalog: buildProductCatalog(findings, topProducts, totalQuotes),
+      priceRules: priceRules.map((r) => {
+        const isActive = r.usageLevel !== 'dormant' && !r.notes?.includes('Inactive');
+        const isTechDebt = TECH_DEBT_PATTERNS.test(r.artifactName);
+        return {
+          name: r.artifactName + (isTechDebt ? ' ⚠ Potential tech debt' : ''),
+          description: r.notes ?? '',
+          complexity: r.complexityLevel ?? 'unknown',
+          status: isActive ? 'Active' : 'Inactive',
+          confidence: 'Confirmed',
+        };
+      }),
+      productRules: productRules.map((r) => {
+        const isActive = r.usageLevel !== 'dormant' && !r.notes?.includes('Inactive');
+        const ruleType = r.evidenceRefs?.find((ref) => ref.label === 'Type')?.value ?? 'Unknown';
+        const isTechDebt = TECH_DEBT_PATTERNS.test(r.artifactName);
+        return {
+          name: r.artifactName + (isTechDebt ? ' ⚠ Potential tech debt' : ''),
+          type: ruleType,
+          description: r.notes ?? '',
+          complexity: r.complexityLevel ?? 'unknown',
+          status: isActive ? 'Active' : 'Inactive',
+          confidence: 'Confirmed',
+        };
+      }),
+      activePriceRuleSummary:
+        priceRules.length > 0
+          ? `${activePriceRules.length} active of ${priceRules.length} total`
+          : 'None detected',
+      activeProductRuleSummary:
+        productRules.length > 0
+          ? `${activeProductRules.length} active of ${productRules.length} total`
+          : 'None detected',
     },
 
     usageAdoption: {
-      quotingActivity: trends.map((t) => ({
-        metric: t.artifactName,
-        value: String(t.countValue ?? ''),
-        trend: t.evidenceRefs?.find((r) => r.label === 'Trend')?.value ?? 'Stable',
-        confidence: 'Confirmed',
-      })),
+      quotingActivity:
+        trends.length > 0
+          ? trends.map((t) => ({
+              metric: t.artifactName,
+              value: String(t.countValue ?? ''),
+              trend: t.evidenceRefs?.find((r) => r.label === 'Trend')?.value ?? 'Stable',
+              confidence: 'Confirmed',
+            }))
+          : [
+              {
+                metric: 'Quoting Activity',
+                value: 'Not extracted',
+                trend: 'N/A',
+                confidence: 'Not extracted',
+              },
+            ],
       conversionBySize: segments.map((s) => ({
         segment: s.artifactName,
         percentQuotes: Number(s.evidenceRefs?.find((r) => r.label === '% of quotes')?.value ?? 0),
@@ -270,11 +443,14 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
         conversionRate: Number(s.evidenceRefs?.find((r) => r.label === 'conversion %')?.value ?? 0),
         confidence: 'Estimated',
       })),
-      discountDistribution: (discountDist?.evidenceRefs ?? []).map((r) => ({
-        range: r.label ?? '',
-        count: Number(r.value ?? 0),
-        percent: 0,
-      })),
+      discountDistribution: discountRefs.map((r) => {
+        const count = Number(r.value ?? 0);
+        return {
+          range: r.label ?? '',
+          count,
+          percent: discountTotal > 0 ? pct(count, discountTotal) : '0%',
+        };
+      }),
       overrideAnalysis: overrides
         ? {
             count: overrides.countValue ?? 0,
@@ -296,7 +472,7 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
         name: p.artifactName,
         category: p.evidenceRefs?.find((r) => r.value === 'Product2.Family')?.label ?? 'Unknown',
         quotedCount: p.countValue ?? 0,
-        percentQuotes: 0,
+        percentQuotes: pct(p.countValue ?? 0, topProductDenominator),
       })),
     },
 
@@ -307,16 +483,16 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
           (f.countValue ?? 0) > 0 ? 'Flagged' : f.countValue === null ? 'Not Assessed' : 'Clean',
         detail: f.notes ?? '',
       })),
-      technicalDebt: [],
-      featureUtilization: [],
+      technicalDebt,
+      featureUtilization,
     },
 
     customCode: {
       apexClasses: apexClasses.map((a) => ({
         name: a.artifactName,
         lines: a.countValue ?? 0,
-        purpose: a.notes?.split('.')[0] ?? '',
-        origin: 'SI-Built',
+        purpose: inferApexPurpose(a.artifactName, a.notes ?? undefined),
+        origin: inferApexOrigin(a.artifactName),
       })),
       triggersFlows: [
         ...triggers.map((t) => ({
@@ -333,9 +509,11 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
         })),
       ],
       validationRules: validationRules.map((v) => ({
-        object: v.domain,
-        rule: v.artifactName,
-        status: 'Active',
+        object: parseValidationObject(v.domain, v.artifactName),
+        rule: v.artifactName.includes('.')
+          ? v.artifactName.split('.').slice(1).join('.')
+          : v.artifactName,
+        status: v.usageLevel === 'dormant' ? 'Inactive' : 'Active',
         complexity: v.complexityLevel ?? 'low',
       })),
     },
@@ -380,29 +558,181 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
             coverage: c.notes?.split(':')[0] ?? 'Unknown',
             notes: c.notes ?? '',
           }))
-        : [
-            {
-              category: 'CPQ Config Objects',
-              coverage: 'Full',
-              notes: 'All SBQQ objects detected.',
-            },
-            {
-              category: 'Transactional Data',
-              coverage: 'Full',
-              notes: '90-day SOQL extracts complete.',
-            },
-            {
-              category: 'Custom Code',
-              coverage: 'Full',
-              notes: 'Triggers, flows, Apex confirmed.',
-            },
-            {
-              category: 'User Behavior',
-              coverage: 'Estimated',
-              notes: 'Derived from audit trail sampling.',
-            },
-          ],
+        : buildDynamicCoverage(findings),
   };
+}
+
+// ============================================================================
+// Confidence Summary
+// ============================================================================
+
+function computeConfidenceSummary(
+  findings: AssessmentFindingInput[]
+): { confirmed: number; estimated: number; partial: number } | null {
+  const total = findings.length;
+  if (total === 0) return null;
+
+  // Use sourceType as proxy for confidence
+  let confirmed = 0;
+  let estimated = 0;
+  let partial = 0;
+  for (const f of findings) {
+    if (f.sourceType === 'object' || f.sourceType === 'metadata' || f.sourceType === 'tooling') {
+      confirmed++;
+    } else if (f.sourceType === 'inferred') {
+      estimated++;
+    } else {
+      partial++;
+    }
+  }
+  return {
+    confirmed: Math.round((confirmed / total) * 100),
+    estimated: Math.round((estimated / total) * 100),
+    partial: Math.round((partial / total) * 100),
+  };
+}
+
+// ============================================================================
+// Technical Debt Builder
+// ============================================================================
+
+function buildTechnicalDebt(
+  findings: AssessmentFindingInput[],
+  priceRules: AssessmentFindingInput[],
+  productRules: AssessmentFindingInput[],
+  discountSchedules: AssessmentFindingInput[]
+): Array<{ category: string; count: number; detail: string }> {
+  const debt: Array<{ category: string; count: number; detail: string }> = [];
+
+  // Dormant products
+  const dormant = findings.filter(
+    (f) => f.artifactType === 'Product2' && f.usageLevel === 'dormant'
+  ).length;
+  if (dormant > 0) {
+    debt.push({
+      category: 'Dormant Products',
+      count: dormant,
+      detail: 'Products not quoted in the 90-day assessment window.',
+    });
+  }
+
+  // Inactive price rules
+  const inactivePR = priceRules.filter(
+    (r) => r.usageLevel === 'dormant' || r.notes?.includes('Inactive')
+  ).length;
+  if (inactivePR > 0) {
+    debt.push({
+      category: 'Inactive Price Rules',
+      count: inactivePR,
+      detail: 'Price rules marked inactive. Review for cleanup.',
+    });
+  }
+
+  // Inactive product rules
+  const inactiveProdR = productRules.filter(
+    (r) => r.usageLevel === 'dormant' || r.notes?.includes('Inactive')
+  ).length;
+  if (inactiveProdR > 0) {
+    debt.push({
+      category: 'Inactive Product Rules',
+      count: inactiveProdR,
+      detail: 'Product rules marked inactive. Review for cleanup.',
+    });
+  }
+
+  // Rules with DELETE/TEST/DRAFT in name
+  const staleRules = [...priceRules, ...productRules].filter((r) =>
+    TECH_DEBT_PATTERNS.test(r.artifactName)
+  ).length;
+  if (staleRules > 0) {
+    debt.push({
+      category: 'Stale/Test Rules',
+      count: staleRules,
+      detail: 'Rules with DELETE, TEST, DRAFT, or similar in name — likely cleanup candidates.',
+    });
+  }
+
+  // Duplicate discount schedule names
+  const dsNames = discountSchedules.map((d) => d.artifactName);
+  const nameCounts = new Map<string, number>();
+  for (const name of dsNames) {
+    nameCounts.set(name, (nameCounts.get(name) ?? 0) + 1);
+  }
+  const duplicateDS = [...nameCounts.entries()].filter(([, count]) => count > 1);
+  if (duplicateDS.length > 0) {
+    const totalDupes = duplicateDS.reduce((sum, [, count]) => sum + count, 0);
+    debt.push({
+      category: 'Duplicate Discount Schedules',
+      count: totalDupes,
+      detail: `${duplicateDS.length} schedule name(s) appear multiple times: ${duplicateDS.map(([n, c]) => `"${n}" (${c}×)`).join(', ')}.`,
+    });
+  }
+
+  return debt;
+}
+
+// ============================================================================
+// Feature Utilization Builder
+// ============================================================================
+
+function buildFeatureUtilization(
+  findings: AssessmentFindingInput[]
+): Array<{ feature: string; status: string; detail: string }> {
+  const count = (...types: string[]) =>
+    findings.filter((f) => types.includes(f.artifactType)).length;
+
+  const features: Array<{ feature: string; status: string; detail: string }> = [];
+
+  const bundleCount = count('ProductOption', 'SBQQ__ProductOption__c');
+  features.push({
+    feature: 'Product Bundles',
+    status: bundleCount > 0 ? 'Active' : 'Not Detected',
+    detail: bundleCount > 0 ? `${bundleCount} product options detected.` : '',
+  });
+
+  const dsCount = count('DiscountSchedule', 'SBQQ__DiscountSchedule__c');
+  features.push({
+    feature: 'Discount Schedules',
+    status: dsCount > 0 ? 'Active' : 'Not Detected',
+    detail: dsCount > 0 ? `${dsCount} schedules detected.` : '',
+  });
+
+  const csCount = count('CustomScript', 'SBQQ__CustomScript__c');
+  features.push({
+    feature: 'Custom Scripts (QCP)',
+    status: csCount > 0 ? 'Active' : 'Not Detected',
+    detail: csCount > 0 ? `${csCount} custom scripts detected.` : '',
+  });
+
+  const tmplCount = count('QuoteTemplate', 'SBQQ__QuoteTemplate__c');
+  features.push({
+    feature: 'Quote Templates',
+    status: tmplCount > 0 ? 'Active' : 'Not Detected',
+    detail: tmplCount > 0 ? `${tmplCount} templates detected.` : '',
+  });
+
+  const approvalCount = count('CustomAction', 'SBQQ__CustomAction__c');
+  features.push({
+    feature: 'Advanced Approvals',
+    status: approvalCount > 0 ? 'Active' : 'Not Detected',
+    detail: approvalCount > 0 ? `${approvalCount} approval actions detected.` : '',
+  });
+
+  const cpCount = count('ContractedPrice', 'SBQQ__ContractedPrice__c');
+  features.push({
+    feature: 'Contracted Pricing',
+    status: cpCount > 0 ? 'Active' : 'Not Detected',
+    detail: cpCount > 0 ? `${cpCount} contracted prices detected.` : '',
+  });
+
+  const locCount = count('LocalizationSummary');
+  features.push({
+    feature: 'Multi-Language',
+    status: locCount > 0 ? 'Active' : 'Not Detected',
+    detail: locCount > 0 ? `${locCount} localizations detected.` : '',
+  });
+
+  return features;
 }
 
 // ============================================================================
@@ -411,7 +741,9 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
 
 function buildGlanceSections(
   findings: AssessmentFindingInput[],
-  _settingValues: AssessmentFindingInput[]
+  _settingValues: AssessmentFindingInput[],
+  technicalDebt: Array<{ category: string; count: number; detail: string }>,
+  featureUtilization: Array<{ feature: string; status: string; detail: string }>
 ): Record<string, Array<{ label: string; value: string; confidence: string }>> {
   // Count by artifact type — handle both short and full SF API names
   const count = (...types: string[]) =>
@@ -460,9 +792,7 @@ function buildGlanceSections(
       },
       {
         label: 'Discount Schedules',
-        value: String(
-          count('DiscountSchedule', 'SBQQ__DiscountSchedule__c') || dataCount('DiscountSchedule')
-        ),
+        value: `~${count('DiscountSchedule', 'SBQQ__DiscountSchedule__c') || dataCount('DiscountSchedule')}`,
         confidence: 'Estimated',
       },
       {
@@ -505,6 +835,19 @@ function buildGlanceSections(
         confidence: 'Confirmed',
       },
     ],
+    'Technical Debt':
+      technicalDebt.length > 0
+        ? technicalDebt.map((d) => ({
+            label: d.category,
+            value: String(d.count),
+            confidence: 'Confirmed',
+          }))
+        : [{ label: 'No tech debt detected', value: '—', confidence: 'Confirmed' }],
+    'Feature Utilization': featureUtilization.slice(0, 5).map((f) => ({
+      label: f.feature,
+      value: f.status,
+      confidence: f.status === 'Active' ? 'Confirmed' : 'Estimated',
+    })),
   };
 }
 
@@ -561,6 +904,47 @@ function computeComplexityScores(
 }
 
 // ============================================================================
+// Scoring Methodology Table
+// ============================================================================
+
+function buildScoringMethodology(
+  scores: ReportData['executiveSummary']['complexityScores']
+): ReportData['executiveSummary']['scoringMethodology'] {
+  return [
+    {
+      dimension: 'Configuration Depth',
+      weight: 25,
+      score: scores.configurationDepth,
+      drivers: 'Product catalog size, bundle nesting, option constraints, config attributes',
+    },
+    {
+      dimension: 'Pricing Logic',
+      weight: 25,
+      score: scores.pricingLogic,
+      drivers: 'Price rules, discount schedules, custom scripts (QCP), contracted pricing',
+    },
+    {
+      dimension: 'Customization Level',
+      weight: 20,
+      score: scores.customizationLevel,
+      drivers: 'Custom fields, validation rules, formula complexity, custom metadata',
+    },
+    {
+      dimension: 'Data Volume & Usage',
+      weight: 15,
+      score: scores.dataVolumeUsage,
+      drivers: 'Quote volume, line count, user adoption, discount patterns',
+    },
+    {
+      dimension: 'Technical Debt',
+      weight: 15,
+      score: scores.technicalDebt,
+      drivers: 'Apex class count, trigger count, flow complexity, code dependencies',
+    },
+  ];
+}
+
+// ============================================================================
 // Default Key Findings (when no hotspots detected)
 // ============================================================================
 
@@ -579,12 +963,22 @@ function buildDefaultKeyFindings(
     confidence: 'Confirmed',
   });
 
-  const priceRules = findings.filter((f) => f.artifactType === 'PriceRule').length;
-  const productRules = findings.filter((f) => f.artifactType === 'ProductRule').length;
-  if (priceRules > 0 || productRules > 0) {
+  const priceRules = findings.filter(
+    (f) => f.artifactType === 'PriceRule' || f.artifactType === 'SBQQ__PriceRule__c'
+  );
+  const productRules = findings.filter(
+    (f) => f.artifactType === 'ProductRule' || f.artifactType === 'SBQQ__ProductRule__c'
+  );
+  const activePR = priceRules.filter(
+    (r) => r.usageLevel !== 'dormant' && !r.notes?.includes('Inactive')
+  ).length;
+  const activeProdR = productRules.filter(
+    (r) => r.usageLevel !== 'dormant' && !r.notes?.includes('Inactive')
+  ).length;
+  if (priceRules.length > 0 || productRules.length > 0) {
     kf.push({
-      title: `${priceRules} price rules and ${productRules} product rules detected`,
-      detail: `Pricing logic encoded in business-specific rules that require mapping to RCA Pricing Procedures.`,
+      title: `${activePR} active price rules and ${activeProdR} active product rules detected`,
+      detail: `Heavy rule density indicates significant business logic encoded in CPQ configuration. Pricing logic concentrated in business-specific rules.`,
       confidence: 'Confirmed',
     });
   }
@@ -595,7 +989,7 @@ function buildDefaultKeyFindings(
   if (qcpPlugin && (qcpPlugin.countValue ?? 0) > 0) {
     kf.push({
       title: 'Custom Quote Calculator Plugin (QCP) detected',
-      detail: `JavaScript-based pricing logic must be converted to declarative RCA Pricing Procedures. This is typically the highest-effort migration item.`,
+      detail: `JavaScript-based pricing logic injected into every calculation. This fundamentally changes the complexity profile and is typically the highest-effort assessment item.`,
       confidence: 'Confirmed',
     });
   }
@@ -607,7 +1001,7 @@ function buildDefaultKeyFindings(
   if (totalProducts > 0 && dormantProducts > totalProducts * 0.2) {
     kf.push({
       title: `Product catalog shows ${Math.round((dormantProducts / totalProducts) * 100)}% dormancy`,
-      detail: `${dormantProducts} of ${totalProducts} products were not quoted in the 90-day window. Consider cleanup before migration.`,
+      detail: `${dormantProducts} of ${totalProducts} products were not quoted in the 90-day window. Consider cleanup to reduce configuration surface area.`,
       confidence: 'Confirmed',
     });
   }
@@ -618,17 +1012,27 @@ function buildDefaultKeyFindings(
       kf.push({
         title: 'Multi-currency enabled',
         detail:
-          'The org uses multi-currency pricing. RCA supports multi-currency natively but field mappings need verification.',
+          'The org uses multi-currency pricing. Field mappings and currency handling require verification.',
         confidence: 'Confirmed',
       });
     }
+  }
+
+  // Apex/custom code density
+  const apexCount = findings.filter((f) => f.artifactType === 'ApexClass').length;
+  if (apexCount > 20 && kf.length < 5) {
+    kf.push({
+      title: `${apexCount} Apex classes reference CPQ objects`,
+      detail: `Substantial custom code dependency suggests significant customization beyond standard CPQ configuration.`,
+      confidence: 'Confirmed',
+    });
   }
 
   // Ensure at least 3 findings
   while (kf.length < 3) {
     kf.push({
       title: 'Assessment complete',
-      detail: `Full CPQ environment assessment extracted ${totalFindings} artifacts for migration planning.`,
+      detail: `Full CPQ environment assessment extracted ${totalFindings} configuration artifacts.`,
       confidence: 'Confirmed',
     });
   }
@@ -680,11 +1084,63 @@ function detectHotspots(
     hotspots.push({
       name: 'Custom Code Dependencies',
       severity: 'High',
-      analysis: `${apexCount} Apex classes + ${triggerCount} triggers reference CPQ objects. Code review required before migration.`,
+      analysis: `${apexCount} Apex classes + ${triggerCount} triggers reference CPQ objects. Code review required for full assessment.`,
     });
   }
 
   return hotspots;
+}
+
+// ============================================================================
+// Dynamic Extraction Coverage (replaces hardcoded "Full" defaults)
+// ============================================================================
+
+function buildDynamicCoverage(findings: AssessmentFindingInput[]): ReportData['appendixD'] {
+  const domainSet = new Set<string>(findings.map((f) => f.domain));
+  const countInDomain = (d: string) => findings.filter((f) => f.domain === d).length;
+
+  const coverage = (
+    domain: string,
+    label: string,
+    notes: string
+  ): { category: string; coverage: string; notes: string } => {
+    if (!domainSet.has(domain))
+      return {
+        category: label,
+        coverage: 'Not extracted',
+        notes: `${label} collector did not produce findings.`,
+      };
+    return { category: label, coverage: countInDomain(domain) > 5 ? 'Full' : 'Partial', notes };
+  };
+
+  return [
+    coverage('catalog', 'Product Catalog', 'Products, bundles, options, config attributes.'),
+    coverage('pricing', 'Pricing & Rules', 'Price rules, discount schedules, custom scripts.'),
+    coverage('usage', 'Transactional Data', '90-day quotes, quote lines, usage trends.'),
+    coverage(
+      'customization',
+      'Custom Fields & Validation',
+      'Custom fields, validation rules, formulas.'
+    ),
+    coverage(
+      'dependency',
+      'Custom Code',
+      'Apex classes, triggers, flows identified by namespace scan. Purpose and origin estimated from metadata, not verified through code review.'
+    ),
+    coverage('templates', 'Quote Templates', 'Template structure, sections, content.'),
+    coverage('approvals', 'Advanced Approvals', 'Approval rules, conditions, chains.'),
+    coverage('settings', 'CPQ Package Settings', 'Custom settings, plugin configuration.'),
+    coverage('integration', 'Integrations', 'Named credentials, platform events.'),
+    coverage('order-lifecycle', 'Order Lifecycle', 'Orders, contracts, subscriptions.'),
+    coverage('localization', 'Localization', 'Multi-language translations, custom labels.'),
+    {
+      category: 'User Behavior',
+      coverage: findings.some((f) => f.artifactType === 'UserBehavior')
+        ? 'Estimated'
+        : 'Not extracted',
+      notes: 'Derived from audit trail sampling.',
+    },
+  ];
 }
 
 // ============================================================================
@@ -817,20 +1273,28 @@ function buildInstalledPackages(
 // ============================================================================
 
 function buildProductCatalog(
-  findings: AssessmentFindingInput[]
+  findings: AssessmentFindingInput[],
+  topProducts: AssessmentFindingInput[],
+  totalQuotes: number
 ): ReportData['configurationDomain']['productCatalog'] {
   const products = findings.filter((f) => f.artifactType === 'Product2');
   if (products.length === 0) return [];
 
+  // Build a set of quoted product names from top products
+  const quotedProducts = new Set(topProducts.map((p) => p.artifactName));
+
   // Group by Family (from evidenceRefs or notes)
-  const families: Record<string, { active: number; inactive: number }> = {};
+  const families: Record<string, { active: number; inactive: number; quoted: number }> = {};
   for (const p of products) {
     const family = p.evidenceRefs?.find((r) => r.label === 'Family')?.value ?? 'Other';
-    if (!families[family]) families[family] = { active: 0, inactive: 0 };
+    if (!families[family]) families[family] = { active: 0, inactive: 0, quoted: 0 };
     if (p.usageLevel === 'dormant') {
       families[family].inactive++;
     } else {
       families[family].active++;
+    }
+    if (quotedProducts.has(p.artifactName)) {
+      families[family].quoted++;
     }
   }
 
@@ -838,8 +1302,11 @@ function buildProductCatalog(
     category,
     active: counts.active,
     inactive: counts.inactive,
-    quoted90d: 0,
-    percentQuoted: 0,
+    quoted90d: counts.quoted,
+    percentQuoted:
+      counts.active + counts.inactive > 0
+        ? pct(counts.quoted, counts.active + counts.inactive)
+        : '0%',
     confidence: 'Confirmed',
   }));
 }
