@@ -218,13 +218,15 @@ export default function CPQIntelligence({ assessment }: CPQIntelligenceProps) {
             <div className="space-y-3">
               {assessment.conversionSegments.map((s, i) => {
                 // Support both transformed data (percentQuotes number) and raw data (evidenceRefs)
-                const seg = s as Record<string, unknown>;
-                const pctQuotes =
+                const seg = s as unknown as Record<string, unknown>;
+                const pctQuotes = String(
                   seg.percentQuotes ??
-                  (s.evidenceRefs?.find((r: { label?: string; value?: string }) => r.label === '% of quotes')?.value ?? '0');
-                const conversion =
+                  ((s.evidenceRefs as Array<{ label?: string; value?: string }> | undefined)?.find(r => r.label === '% of quotes')?.value ?? '0')
+                );
+                const conversion = String(
                   seg.conversionRate ??
-                  (s.evidenceRefs?.find((r: { label?: string; value?: string }) => r.label === 'conversion %')?.value ?? '0');
+                  ((s.evidenceRefs as Array<{ label?: string; value?: string }> | undefined)?.find(r => r.label === 'conversion %')?.value ?? '0')
+                );
                 return (
                   <div key={i}>
                     <div className="flex justify-between text-xs mb-1">

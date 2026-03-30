@@ -215,13 +215,14 @@ export function transformFindingsToAssessmentData(
 
   // ── Key Findings ──
   const hotspots = findings.filter((f) => f.artifactType === 'ComplexityHotspot');
-  const keyFindings = [
+  const keyFindings: Array<{ id: string; text: string; severity: 'success' | 'warning' | 'error'; domain: DomainId | null }> = [
     ...(qcpScripts.length > 0
       ? [
           {
             id: 'kf-qcp',
             text: `Custom Quote Calculator Plugin (QCP) detected: ${qcpScripts.length} script(s). JavaScript-based pricing logic fundamentally changes the complexity profile.`,
             severity: 'warning' as const,
+            domain: 'pricing' as DomainId,
           },
         ]
       : []),
@@ -231,6 +232,7 @@ export function transformFindingsToAssessmentData(
             id: 'kf-rules',
             text: `${activePriceRules} active price rules detected. Heavy rule density indicates significant business logic in CPQ configuration.`,
             severity: 'success' as const,
+            domain: 'pricing' as DomainId,
           },
         ]
       : []),
@@ -238,6 +240,7 @@ export function transformFindingsToAssessmentData(
       id: `kf-hotspot-${i}`,
       text: `${h.artifactName}: ${h.notes ?? ''}`,
       severity: (h.riskLevel === 'critical' ? 'error' : 'warning') as 'error' | 'warning',
+      domain: null as DomainId | null,
     })),
   ];
 
@@ -282,9 +285,9 @@ export function transformFindingsToAssessmentData(
 
   // ── Completeness from domain counts ──
   const completeness = Object.entries(domainItemCounts).map(([id, count]) => ({
-    category: id,
-    items: count,
-    coverage: count > 5 ? 100 : count > 0 ? 75 : 0,
+    id,
+    labelKey: id,
+    completed: count > 0,
   }));
 
   // ══════════════════════════════════════════════════════════════
@@ -297,6 +300,7 @@ export function transformFindingsToAssessmentData(
     .map((f) => ({
       setting: f.artifactName,
       value: (f.evidenceRefs as EvidenceRef[])?.[0]?.label ?? 'Unknown',
+      fieldRef: f.sourceRef ?? f.artifactName,
       notes: f.notes ?? '',
     }));
 
@@ -372,9 +376,8 @@ export function transformFindingsToAssessmentData(
     .map((u) => ({
       profile: u.artifactName,
       users: u.countValue ?? 0,
-      percentQuotes: Number(getRef(u.evidenceRefs, '% of quotes') ?? 0),
-      conversionRate: Number(getRef(u.evidenceRefs, 'Conversion %') ?? 0),
       notes: u.notes ?? '',
+      evidenceRefs: (u.evidenceRefs ?? []) as Array<{ type: string; value: string; label: string }>,
     }));
 
   // Discount Distribution
@@ -646,5 +649,5 @@ export function transformFindingsToAssessmentData(
     lowVolumeWarning,
     scoringMethodology,
     complexityScores,
-  } as AssessmentData;
+  } as unknown as AssessmentData;
 }

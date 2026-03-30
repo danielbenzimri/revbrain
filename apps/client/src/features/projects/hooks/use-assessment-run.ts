@@ -55,6 +55,8 @@ export interface AssessmentFindingResponse {
   migrationRelevance: string | null;
   rcaTargetConcept: string | null;
   rcaMappingComplexity: string | null;
+  usageLevel: string | null;
+  sourceRef: string | null;
   evidenceRefs: unknown[];
   notes: string | null;
   countValue: number | null;
