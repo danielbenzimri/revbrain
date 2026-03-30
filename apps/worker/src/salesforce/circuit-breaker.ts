@@ -41,9 +41,26 @@ export class CircuitBreaker {
       this.onSuccess();
       return result;
     } catch (e) {
-      this.onFailure();
+      // Only count transient errors (5xx, 429, network) toward the circuit breaker.
+      // Client errors (400, 404) are expected (schema differences between SF editions)
+      // and should NOT trip the breaker.
+      if (this.isTransientError(e)) {
+        this.onFailure();
+      }
       throw e;
     }
+  }
+
+  private isTransientError(e: unknown): boolean {
+    if (e && typeof e === 'object' && 'statusCode' in e) {
+      const status = (e as { statusCode: number }).statusCode;
+      // 400, 403, 404 are client errors — not transient
+      if (status >= 400 && status < 500 && status !== 429) {
+        return false;
+      }
+    }
+    // Network errors, 5xx, 429 are transient
+    return true;
   }
 
   private onSuccess(): void {
