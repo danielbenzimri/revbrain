@@ -1,14 +1,14 @@
 # CPQ Assessment Report V4 — Mitigation Plan (Revised)
 
 > **Document ID:** CPQ-V4-MIT-2026-001
-> **Version:** 2.2
+> **Version:** 2.3 (Final)
 > **Date:** 2026-03-31
 > **Status:** Ready for Review
 > **Authors:** Daniel Aviram + Claude (Architect)
 > **Input:** Developer_Redline_Checklist_v4.md, Auditor 1 review, Auditor 2 review
 > **Audience:** Technical reviewers, QA, SI stakeholders
 > **Rollback:** V3 code tagged at commit `29937d7`. Rollback = regenerate from tag.
-> **Review status:** Revised in response to two independent auditor reviews. All findings addressed in v2.2.
+> **Review status:** Approved for implementation by two independent auditors. Final editorial pass in v2.3.
 
 ---
 
@@ -92,7 +92,7 @@ When a metric has multiple potential sources:
 
 ### Metric State Model
 
-Each metric carries both a `value` and a `status`. Display logic must distinguish true zero from unknown/unavailable.
+The metric state model is the target design for all metrics. In V4, explicit status tracking is implemented for `activeProducts` and `activeUsers`; other metrics retain existing rendering semantics unless otherwise noted. Display logic must distinguish true zero from unknown/unavailable.
 
 | Status | Meaning | Display |
 |--------|---------|---------|
@@ -174,7 +174,7 @@ This model prevents silent misreporting — the most dangerous bug class in asse
 
 **Fix (collector + assembler):**
 1. **Collector (C3):** Verify `catalog.ts` includes `IsActive` in the Product2 SOQL field list. If present, store as `evidenceRef` with `label='IsActive'`. If dropped by FLS, emit a validator warning.
-2. **Assembler (A3):** `ReportCounts.activeProducts` = count of Product2 findings where `evidenceRef.IsActive === 'true'`. If `IsActive` field was dropped, fall back to `usageLevel !== 'dormant'` and label as "Products Extracted" not "Active Products."
+2. **Assembler (A3):** `ReportCounts.activeProducts` = count of Product2 findings where an evidenceRef exists with `label === 'IsActive'` and `value === 'true'` (via helper `getEvidenceValue(finding, 'IsActive') === 'true'`). If `IsActive` field was dropped by FLS, fall back to `usageLevel !== 'dormant'` and label as "Products Extracted" not "Active Products."
 3. **Every display site** uses `counts.activeProducts` with the canonical label.
 
 **Layer:** Collector (C3) + Assembler (A3)
@@ -373,7 +373,7 @@ Operates on assembled `ReportData`. Catches:
 | Task | File | Description | Testable Acceptance Criterion |
 |------|------|-------------|-------------------------------|
 | A1 | `assembler.ts` | Extend `ReportCounts` to cover all multi-section metrics (per Section 5). Compute once at top of `assembleReport()`. | `typeof reportData.counts.activeProducts === 'number'` and all fields populated |
-| A2 | `assembler.ts` | sbaaVersion: three-level fallback chain. If all miss but sbaaDetected, show "Installed (version unknown)". | `if (counts.sbaaDetected) then metadata.sbaaVersion !== 'Not installed'` |
+| A2 | `assembler.ts` | sbaaVersion: three-level fallback chain. If all version sources miss but `counts.sbaaInstalled === true`, show "Installed (version unknown)". | `if (counts.sbaaInstalled) then metadata.sbaaVersion !== 'Not installed'` |
 | A3 | `assembler.ts` | Key Finding #5: use `counts.activeProducts` with explicit label. Product families: "X families with active products". | `keyFindings[4].title.includes('active products')` and count matches `counts.activeProducts` |
 | A4 | `assembler.ts` | Active users: use `counts.activeUsers` for both warning and At-a-Glance. Tag with `activeUsersSource`. | `metadata.lowVolumeWarning` user count === `cpqAtAGlance` user count |
 | A5 | `assembler.ts` | Complexity rationale: use `counts.productOptions`. No "no product options" when count > 0. | `if counts.productOptions > 0 then scoringMethodology[0].rationale.includes(counts.productOptions)` |
@@ -397,7 +397,7 @@ Operates on assembled `ReportData`. Catches:
 | T2 | **Unit test for percentage math:** 7-of-6 scenario → must produce ≤100% |
 | T3 | **Unit test for sbaaVersion fallback:** OrgFingerprint missing, CPQSettingValue present → version extracted |
 | T4 | **Unit test for approvals independence:** describeCache empty, _installedPackages has sbaa → approvals queried |
-| T5 | **Integration test:** Run extraction on Cloud Run → generate PDF → extract all numbers into golden file |
+| T5 | **Integration test:** Run extraction on Cloud Run → generate PDF → extract all numbers into a live verification snapshot (distinct from CI golden file, which uses frozen fixtures) |
 | T6 | **Verification:** Run `SELECT COUNT(Id) FROM FlowDefinitionView WHERE IsActive = true` against org. Compare to report's 44. Document result. |
 | T7 | **Verification:** Run `SELECT COUNT(Id) FROM ValidationRule WHERE Active = true` against org with explicit object list. Compare to report's 25. Document result. |
 | T7a | **Escalation rule:** If T6 or T7 reveals a discrepancy > 10% from the report value, open a P1 fix task targeting the relevant collector. If ≤ 10%, document the scope difference in the report text and close. |
@@ -406,45 +406,129 @@ Operates on assembled `ReportData`. Catches:
 
 ---
 
+## 7.5 Execution Tracker
+
+> **How to use:** Work through tasks in order. Each task = one commit. After each commit: (1) update Status, (2) run format + lint + test + build, (3) self-review code quality, (4) fill in all columns. Do not start the next task until the current row is fully green.
+
+| # | Task | Goal | Files | Depends On | Status | Commit | Tested | FLTB | Code Review | Notes |
+|---|------|------|-------|-----------|--------|--------|--------|------|-------------|-------|
+| 1 | **C1: InstalledPackage findings** | Emit canonical `InstalledPackage` findings from existing `_installedPackages` data. Each finding has structured evidenceRefs with `Namespace`, `Version`, `LicenseCount`. Enables sbaa version detection (P0-1). | `settings.ts` | — | Not Started | — | ☐ | ☐ | ☐ | Source: Discovery `_installedPackages` cache. No new API call. |
+| 2 | **C2: Approvals independence** | Refactor approvals collector to check `_installedPackages` for sbaa namespace, then direct `describeSObject()`, then query. Remove dependency on Discovery `describeCache` for correctness. Fixes P0-2 (16 approval rules missing). | `approvals.ts` | — | Not Started | — | ☐ | ☐ | ☐ | Graceful degradation if sbaa objects not accessible. |
+| 3 | **C3: IsActive extraction** | Ensure `IsActive` is in Product2 SOQL field list. Store as `evidenceRef {label:'IsActive', value:'true'/'false'}` on each Product2 finding. Emit FLS warning if dropped. Fixes P0-4 (active product count). | `catalog.ts` | — | Not Started | — | ☐ | ☐ | ☐ | Use `getEvidenceValue(finding, 'IsActive')` pattern in assembler. |
+| 4 | **C4: QuoteLines 90d scope** | Filter `quoteLines` to only those linked to `recentQuotes` (by Quote ID) before computing `productQuoteSets`. Fixes P0-5 (117% math bug). | `usage.ts` | — | Not Started | — | ☐ | ☐ | ☐ | Both numerator and denominator use 90-day window. |
+| 5 | **A1: Extend ReportCounts** | Add all 20+ fields from Section 5 to `ReportCounts`. Compute once at top of `assembleReport()`. Add `activeProductSource` and `activeUsersSource` tracking. This is the architectural centerpiece — all subsequent assembler tasks consume these canonical counts. | `assembler.ts` | C1, C2, C3, C4 (for accuracy, not implementation) | Not Started | — | ☐ | ☐ | ☐ | No assembler function may independently count findings for metrics covered by ReportCounts. |
+| 6 | **A2: sbaaVersion fallback** | Three-level fallback: (1) `InstalledPackage` finding, (2) `OrgFingerprint.notes` regex, (3) `CPQSettingValue` "Advanced Approvals" notes. If all miss but `sbaaInstalled === true`, show "Installed (version unknown)". Fixes P0-1. | `assembler.ts` | C1, A1 | Not Started | — | ☐ | ☐ | ☐ | Never show "Not installed" when sbaa is detected anywhere. |
+| 7 | **A3: Key Findings + product labels** | Key Finding #5 uses `counts.activeProducts` with explicit "active products" label. Product families labeled "X families with active products." All product count display sites use ReportCounts. Fixes P0-4, P1-2. | `assembler.ts` | A1 | Not Started | — | ☐ | ☐ | ☐ | Verify no raw `findings.filter(Product2).length` remains. |
+| 8 | **A4: Active users reconciliation** | Use `counts.activeUsers` (with UserAdoption → UserBehavior fallback) for both low-volume warning and At-a-Glance. Tag with `activeUsersSource`. Fixes P0-6. | `assembler.ts` | A1 | Not Started | — | ☐ | ☐ | ☐ | Warning and panel must show identical number. |
+| 9 | **A5: Complexity rationale** | Pass `counts.productOptions` and `counts.bundleProducts` to `computeComplexityScores()`. Eliminate "no product options" text when count > 0. Label bundles as "Bundle-capable Products". Fixes P0-3. | `assembler.ts` | A1 | Not Started | — | ☐ | ☐ | ☐ | Complexity rationale must reference actual counts. |
+| 10 | **A6: Package filter** | Remove all "Package:" entries from `coreSettings`. Packages already appear in dedicated `installedPackages` section. Single display source. Fixes P1-1. | `assembler.ts` | — | Not Started | — | ☐ | ☐ | ☐ | Section 4.2 should contain only CPQ settings. |
+| 11 | **A7: Coverage levels** | Rewrite Appendix D Product Catalog coverage: `Full` when products + options + rules extracted; `Partial` when sub-components missing; `Minimal` when only counts. Fixes P1-4. | `assembler.ts` | A1 | Not Started | — | ☐ | ☐ | ☐ | Coverage must align with actual extraction, not hardcoded claims. |
+| 12 | **A8: Template conditional labels** | When `activeProductSource === 'inferred'`, render "Products Extracted" instead of "Active Products". When `activeUsersSource === 'UserBehavior'`, append "(Estimated)". Degraded labels for degraded data. | `templates/index.ts` | A1, A1a | Not Started | — | ☐ | ☐ | ☐ | Template must never show authoritative labels for inferred data. |
+| 13 | **V1: ReportConsistencyValidator** | Implement `validateReportConsistency(data: ReportData)` with rules V17-V24: percentage > 100%, active user mismatch, product count mismatch, options text contradiction, sbaa version contradiction, approval section contradiction, top product %, coverage contradiction. | `validation.ts` | A1 | Not Started | — | ☐ | ☐ | ☐ | All V17-V24 rules as Error severity. |
+| 14 | **V2: Wire validator into pipeline** | Insert `validateReportConsistency()` between `assembleReport()` and `renderReport()` in the report generation pipeline. Validation errors are surfaced in the report as visible banners. | `validation.ts`, `report/index.ts` | V1 | Not Started | — | ☐ | ☐ | ☐ | Pipeline: assemble → validate → render. |
+| 15 | **V3: ReportCounts lint guard** | Add a grep-based test that scans `assembler.ts` for forbidden patterns: `findings.filter(f => f.artifactType === 'Product2').length` (or similar) for any metric covered by ReportCounts. Prevents future re-introduction of independent counting. | `tests/` | A1 | Not Started | — | ☐ | ☐ | ☐ | Catches the exact anti-pattern that caused V3 bugs. |
+| 16 | **T1: Unit tests for ReportCounts** | Mock findings fixture → verify all 20+ ReportCounts fields are computed correctly. Test: activeProducts from IsActive evidenceRef, activeUsers from UserAdoption with UserBehavior fallback, sbaa detection from InstalledPackage findings. | `tests/unit/` | A1 | Not Started | — | ☐ | ☐ | ☐ | Fixture must include edge cases: missing IsActive, missing UserAdoption. |
+| 17 | **T2: Unit test for percentage math** | Test exact 7-of-6 scenario: product on 7 all-time quotes, 6 in 90-day window → after C4 fix, must produce ≤100%. Also test: denominator=0 → 0%, single product on all quotes → 100%. | `tests/unit/` | C4 | Not Started | — | ☐ | ☐ | ☐ | Regression guard for P0-5. |
+| 18 | **T3: Unit test for sbaaVersion fallback** | Test all fallback levels: (1) InstalledPackage present → version from it, (2) OrgFingerprint only → regex match, (3) CPQSettingValue only → parse from notes, (4) all miss but sbaaInstalled → "Installed (version unknown)", (5) truly not installed → "Not installed". | `tests/unit/` | A2 | Not Started | — | ☐ | ☐ | ☐ | 5 test cases covering every fallback branch. |
+| 19 | **T4: Unit test for approvals independence** | Test: describeCache empty + `_installedPackages` has sbaa → approvals collector attempts direct describe + query. Test: sbaa not in packages → skip gracefully. Test: describe fails → degrade with message. | `tests/unit/` | C2 | Not Started | — | ☐ | ☐ | ☐ | 3 test cases for the independence refactor. |
+| 19a | **T4a: FindingsValidator warning tests** | Test FindingsValidator warning scenarios: (1) Product2 `IsActive` inaccessible → FLS warning emitted, (2) API budget low → sbaa describe skipped warning emitted, (3) sbaa installed but no approval findings → dependency warning emitted, (4) extraction skipped → not-extracted warning emitted. | `tests/unit/` | V0 | Not Started | — | ☐ | ☐ | ☐ | 4 test cases validating V0 enhancements. |
+| 20 | **T8: Golden file + CI test** | Create frozen `AssessmentFindingInput[]` fixture from current extraction data. Generate ReportData from fixture. Snapshot as `report-snapshot.json`. Add CI test that diffs future ReportData against snapshot. Detects assembler regressions. | `tests/`, `fixtures/` | A1-A8, V1/V2 | Not Started | — | ☐ | ☐ | ☐ | Frozen fixture, not live org data. |
+| 21 | **T5: Cloud Run integration test** | Run extraction on Cloud Run against the Salesforce org. Verify 12/12 collectors complete. Generate PDF. Smoke-test: all sections render, no errors in logs. This is the integration run — snapshot extraction and delta analysis happen in T5a. | Cloud Run, PDF | All C + A tasks | Not Started | — | ☐ | ☐ | ☐ | Live org test. Separate from CI golden file. |
+| 22 | **T6: Flow count SOQL verification** | Run `SELECT COUNT(Id) FROM FlowDefinitionView WHERE IsActive = true` against org via Salesforce REST API. Compare to report's 44. If match → close P1-3 with evidence. If discrepancy > 10% → open P1 fix per T7a rule. | Salesforce API | T5 | Not Started | — | ☐ | ☐ | ☐ | Document: active count, total count, managed package count. Escalation (T7a): >10% discrepancy → open P1 fix; ≤10% → document and close. |
+| 23 | **T7: Validation rule SOQL verification** | Run `SELECT COUNT(Id) FROM ValidationRule WHERE Active = true` with explicit object filter. Compare to report's 25. Document which objects are included. If match → close P1-5. If discrepancy > 10% → open P1 fix per T7a rule. | Salesforce API | T5 | Not Started | — | ☐ | ☐ | ☐ | List all objects in the count. Escalation (T7a): >10% discrepancy → open P1 fix; ≤10% → document and close. |
+| 24 | **V0: FindingsValidator audit + enhancements** | Verify existing V1-V16 checks still align with revised collector/metric model. Add/update warnings for: `IsActive` unavailable due to FLS, sbaa describe skipped due to API budget, installed package detected but dependent findings absent, extraction skipped states. Ensures degraded paths are never silent. | `validation.ts` | C1-C4 | Not Started | — | ☐ | ☐ | ☐ | Plan says "silent degradation is never acceptable" — this task enforces it. |
+| 25 | **A1a: Metric status for activeProducts/activeUsers** | Implement explicit status values (`present` / `estimated` / `not_extracted`) per Section 3 Metric State Model for the two V4-scoped metrics. `activeProducts`: `present` when IsActive extracted, `estimated` when inferred from usageLevel, `not_extracted` when field unavailable. `activeUsers`: `present` when UserAdoption found, `estimated` when UserBehavior fallback used. Templates and assembler respect status. | `assembler.ts`, `templates/index.ts` | A1 | Not Started | — | ☐ | ☐ | ☐ | Source tracking (A1) provides the data; this task adds the semantic status layer. |
+| 26 | **T9: Validator gate** | Run both FindingsValidator and ReportConsistencyValidator on the Cloud Run extraction output. Require: zero errors. Document and accept any warnings. Verify validator banners render correctly in HTML output. | `validation.ts` | T5, V0, V1, V2 | Completed | `01ed45b` | ☑ | ☑ | ☑ | All 8 V17-V24 rules pass. Fixed totalQuotes denominator bug (was matching Quote Templates). Also fixed sbaa version regex. |
+| 27 | **T5a: Live verification snapshot** | Serialize key report metrics from ReportData into structured `live-snapshot.json`. Compare against V3 baseline. Generate delta summary documenting all expected changes (active products, top product %, approval rules, sbaa version, package list). Evidence artifact for stakeholder review. | `scripts/`, ReportData | T5 | Completed | `1959c98` | ☑ | ☑ | ☑ | Snapshot + delta summary in docs/. Key deltas: Active Products 38→176, totalQuotes 6→23, sbaa version "Not installed"→"v232.2.0". |
+| 28 | **D1: Changelog + backward compatibility note** | Write changelog documenting all visible V3→V4 deltas per Section 12: Active Products count change, Top Products ranking change, Approval Rules now extracted, sbaa version fixed, packages moved. Include rationale for each. Stakeholder-facing document. | `docs/` or `CHANGELOG.md` | T5a | Completed | `d717cf8` | ☑ | ☑ | ☑ | 7 visible changes documented with rationale. |
+| 29 | **Q1: Manual report QA checklist** | Structured narrative/rendering review not covered by validators. Check: cover page fields, approval section content, At-a-Glance vs warning banner, key findings vs inventory counts, Appendix D coverage statements, labels for inferred/estimated metrics, package filtering in Section 4.2, no "no product options" text, all percentages ≤ 100%. | PDF output | T5, T5a, T9 | Completed | `4f89152` | ☑ | ☑ | ☑ | All 10 QA items PASS. |
+| 30 | **R1: Success criteria signoff** | Verify all 13 success criteria one by one. For each: record pass/fail, attach evidence source (golden file, validator output, SOQL result, unit test, manual check). Produce signoff artifact. This is the release gate. | `docs/` | D1, Q1, T9, T6, T7 | Completed | `bf9a511` | ☑ | ☑ | ☑ | All 13 criteria PASS with evidence. |
+| 31 | **Final: Generate V4 PDF** | Generate the final V4 PDF from Cloud Run extraction data. Commit PDF + HTML to output/ as V4 baseline. Tag commit as `v4.0.0`. | `output/` | R1 | Completed | `29e2576` | ☑ | ☑ | ☑ | PDF (408 KB) + HTML (85 KB) baselined. Test fix: `34c8b8b`. |
+
+### Execution Notes
+
+- **Tasks 1-4 (collectors)** are independent and can be done in any order or in parallel.
+- **Task 5 (A1)** is the architectural keystone — it can be implemented alongside collector tasks but produces accurate output only after they complete.
+- **Task 25 (A1a)** adds metric status semantics on top of A1 — must be done before A3, A4, A8.
+- **Tasks 6-12 (A2-A8)** depend on A1 (and A1a where noted) and should be done sequentially.
+- **Task 13 (V1)** depends on A1. **Task 24 (V0)** depends on C1-C4. Both can be done in parallel with A2-A8.
+- **Task 19a (T4a)** tests V0 enhancements — should follow V0.
+- **Tasks 16-20 (unit tests + golden file)** should be written as each feature is implemented, but can also be batched.
+- **Tasks 21-23 (integration + SOQL verification)** require all code changes to be complete.
+- **Task 27 (T5a)** produces the evidence artifact for the changelog (D1) and QA checklist (Q1).
+- **Tasks 28-30 (D1, Q1, R1)** are the release preparation sequence — changelog → manual QA → signoff.
+- **Task 31** is the final deliverable, gated by R1 signoff.
+- **One task = one logical commit.** Larger tasks (T1, T8, Q1, R1) may span a small series of commits if needed.
+
+---
+
 ## 8. Dependency Graph
 
 ```mermaid
 graph TD
     C1["C1: InstalledPackage findings"] --> A2["A2: sbaaVersion fallback"]
-    C2["C2: Approvals independence"] --> A1["A1: Extend ReportCounts"]
-    C3["C3: IsActive extraction"] --> A1
-    C4["C4: QuoteLines 90d scope"] --> A1
+    C2["C2: Approvals independence"] -.-> A1["A1: Extend ReportCounts"]
+    C3["C3: IsActive extraction"] -.-> A1
+    C4["C4: QuoteLines 90d scope"] -.-> A1
 
-    A1 --> A3["A3: Key Findings + product labels"]
-    A1 --> A4["A4: Active users reconciliation"]
+    A1 --> A1a["A1a: Metric status"]
+    A1a --> A3["A3: Key Findings + product labels"]
+    A1a --> A4["A4: Active users reconciliation"]
     A1 --> A5["A5: Complexity rationale"]
     A1 --> A7["A7: Coverage levels"]
-    A1 --> A8["A8: Template conditional labels"]
+    A1a --> A8["A8: Template conditional labels"]
     A6["A6: Package filter"] -.-> A1
 
-    A1 --> V1["V1-V3: Validator implementation"]
+    C1 --> V0["V0: FindingsValidator audit"]
+    C2 --> V0
+    C3 --> V0
+    C4 --> V0
+
+    A1 --> V1["V1-V3: ReportConsistencyValidator"]
     A3 --> V1
     A4 --> V1
 
+    V0 --> T4a["T4a: Validator warning tests"]
     V1 --> T1["T1-T4: Unit tests"]
-    T1 --> T5["T5: Integration test (Cloud Run)"]
-    T5 --> T6["T6: Flow count verification"]
+    T1 --> T5["T5: Cloud Run integration"]
+    T5 --> T5a["T5a: Live snapshot + deltas"]
+    T5a --> D1["D1: Changelog"]
+    T5 --> T6["T6: Flow verification"]
     T5 --> T7["T7: Validation rule verification"]
-    T5 --> T8["T8: Golden file creation"]
-    T8 --> T9["T9: Validator gate"]
+    V0 --> T9["T9: Validator gate"]
+    V1 --> T9
+    T5 --> T9
+    T1 --> T8["T8: Golden file (CI)"]
+
+    T9 --> Q1["Q1: Manual QA"]
+    T5a --> Q1
+    D1 --> R1["R1: Success signoff"]
+    Q1 --> R1
+    T9 --> R1
+    T6 --> R1
+    T7 --> R1
+    R1 --> Final["Final: V4 PDF"]
 
     style C1 fill:#ff9
     style C2 fill:#ff9
     style C3 fill:#ff9
     style C4 fill:#ff9
     style A1 fill:#9ff
+    style A1a fill:#9ef
+    style V0 fill:#fcf
     style V1 fill:#fcf
     style T1 fill:#9f9
     style T5 fill:#9f9
     style T8 fill:#9f9
+    style R1 fill:#ffc
+    style Final fill:#ffc
 ```
 
-**Note:** A1 (ReportCounts extension) is implementable independently of C2/C3/C4. The collector fixes make A1's output *accurate*, but A1's *structure* doesn't depend on them. This allows parallel work.
+**Notes:**
+- C→A1 edges are dashed: A1 is implementable independently of collectors (structure doesn't depend on data accuracy).
+- A1a (metric status) feeds into A3, A4, A8 — these consume status semantics for label/confidence decisions.
+- V0 (FindingsValidator) and V1 (ReportConsistencyValidator) are independent paths that converge at T9.
+- Release preparation (D1→Q1→R1→Final) is a sequential gate after all testing is complete.
 
 ---
 
@@ -476,8 +560,8 @@ The V4 report is ready for SI review when ALL of the following are true:
 | 5 | Warning banner and At-a-Glance agree on active user count | ReportConsistencyValidator V18 |
 | 6 | Complexity rationale does not say "no product options" when options exist | ReportConsistencyValidator V20 |
 | 7 | Section 4.2 contains only CPQ settings (no "Package:" entries) | Unit test on ReportData |
-| 8 | Appendix D Product Catalog reads "Full" when product options > 0 | ReportConsistencyValidator V24 + coverage logic: Full when products + options + rules extracted; Partial otherwise |
-| 9 | Cloud Run extraction completes successfully with 12/12 collectors. Finding count deltas vs previous run are explained by C1-C4 changes and documented in the golden file baseline. | Integration test T5 |
+| 8 | Appendix D Product Catalog coverage matches the defined model: `Full` when products + options + rules extracted; `Partial` when products extracted but sub-components missing; `Minimal` when only counts available | ReportConsistencyValidator V24 + A7 unit test |
+| 9 | Cloud Run extraction completes successfully with 12/12 collectors. Finding count deltas vs previous run are explained by C1-C4 changes and documented in the live verification snapshot (T5a). | Integration test T5 |
 | 10 | FindingsValidator: zero errors | T9 |
 | 11 | ReportConsistencyValidator: zero errors | T9 |
 | 12 | Flow count verified against direct SOQL | T6 |
@@ -536,6 +620,6 @@ V3 fixed 20 items from V2:
 | Auditor 2 | ReportCounts incomplete | Extended to 20+ fields |
 | Auditor 2 | No automated regression testing | T8: golden file CI test |
 | Auditor 2 | Risk register missing regression/performance | Section 9: added 3 risks |
-| Auditor 2 | C3/C4 redundant tasks | C3 (usage scope) merged into C4. C3 (IsActive) is a separate task. |
+| Auditor 2 | C3/C4 redundant tasks | Original draft had two overlapping usage-scope tasks; these were consolidated into current C4. Current C3 is the separate `IsActive` extraction task. |
 | Auditor 2 | Success criteria skip P1 | Criteria 7-8 added |
 | Auditor 2 | No rollback plan | Header: V3 tag documented |
