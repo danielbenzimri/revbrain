@@ -484,8 +484,16 @@ export class UsageCollector extends BaseCollector {
     // G-08: Top 10 Quoted Products (distinct quotes, not lines)
     // ================================================================
     if (quoteLines.length > 0) {
+      // C4: Scope quote lines to 90-day window so numerator (distinct quotes per product)
+      // and denominator (recentQuotes.length) use the same time window.
+      // Without this, products on all-time quotes produce >100% percentages.
+      const recentQuoteIds = new Set(recentQuotes.map((q) => q.Id as string));
+      const scopedLines = quoteLines.filter((ql) =>
+        recentQuoteIds.has(ql.SBQQ__Quote__c as string)
+      );
+
       const productQuoteSets = new Map<string, Set<string>>();
-      for (const ql of quoteLines) {
+      for (const ql of scopedLines) {
         const pid = ql.SBQQ__Product__c as string;
         const qid = ql.SBQQ__Quote__c as string;
         if (!pid || !qid) continue;
