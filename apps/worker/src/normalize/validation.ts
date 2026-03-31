@@ -996,6 +996,7 @@ export function validateReportConsistency(data: ReportData): ReportValidationRes
   rules.push(checkV24_CoverageContradiction(data));
   rules.push(checkV25_ApprovalCountCrossCheck(data));
   rules.push(checkV26_BrandConsistency(data));
+  rules.push(checkV28_PercentageDenominatorContext(data));
 
   for (const rule of rules) {
     if (!rule.passed) {
@@ -1301,4 +1302,52 @@ function checkV26_BrandConsistency(data: ReportData): ValidationRule {
   }
 
   return { id: 'V26', name: 'Brand consistency check', severity: 'warning', passed: true, message: 'OK' };
+}
+
+/**
+ * V28: Warn if percentage tables exist without denominator context.
+ * Checks that percentage-bearing sections have non-zero denominators.
+ */
+function checkV28_PercentageDenominatorContext(data: ReportData): ValidationRule {
+  const issues: string[] = [];
+
+  // Top products: must have totalQuotes as denominator
+  if (data.usageAdoption.topProducts.length > 0 && data.counts.totalQuotes === 0) {
+    issues.push('Top products have percentage but totalQuotes = 0');
+  }
+
+  // Conversion by size: must have totalQuotes as denominator
+  if (data.usageAdoption.conversionBySize.length > 0 && data.counts.totalQuotes === 0) {
+    issues.push('Conversion segments have percentage but totalQuotes = 0');
+  }
+
+  // Discount distribution: must have at least some count values
+  if (data.usageAdoption.discountDistribution.length > 0) {
+    const totalCount = data.usageAdoption.discountDistribution.reduce((s, d) => s + d.count, 0);
+    if (totalCount === 0) {
+      issues.push('Discount distribution has percentage but all counts = 0');
+    }
+  }
+
+  // Product catalog: % Quoted requires active products
+  if (data.configurationDomain.productCatalog.length > 0) {
+    const hasPercentage = data.configurationDomain.productCatalog.some(
+      (c) => c.percentQuoted !== '0%' && c.percentQuoted !== 'N/A'
+    );
+    if (hasPercentage && data.counts.activeProducts === 0) {
+      issues.push('Product catalog has % Quoted but activeProducts = 0');
+    }
+  }
+
+  if (issues.length > 0) {
+    return {
+      id: 'V28',
+      name: 'Percentage tables have denominator context',
+      severity: 'warning',
+      passed: false,
+      message: `Percentage tables lack denominator context: ${issues.join('; ')}.`,
+    };
+  }
+
+  return { id: 'V28', name: 'Percentage tables have denominator context', severity: 'warning', passed: true, message: 'OK' };
 }

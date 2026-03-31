@@ -290,7 +290,7 @@ function renderConfigDomain(data: ReportData): string {
               escapeHtml(c.percentQuoted),
               badge(c.confidence),
             ])
-          )
+          ) + `<p style="font-size:0.85em;color:#666;margin-top:4px;"><em>% Quoted = products quoted in 90-day window &divide; active products in category.</em></p>`
         : '<p><em>Product catalog breakdown available from Catalog collector.</em></p>'
     }
     ${
@@ -393,7 +393,7 @@ function renderUsage(data: ReportData): string {
               `${s.conversionRate}%`,
               badge(s.confidence),
             ])
-          )
+          ) + `<p style="font-size:0.85em;color:#666;margin-top:4px;"><em>% Quotes = quotes in segment &divide; total quotes (${data.counts.totalQuotes}). % Revenue = segment revenue &divide; total quoted revenue. Conversion = ordered quotes &divide; total quotes per segment.</em></p>`
         : '<p><em>No conversion data available.</em></p>'
     }
 
@@ -407,7 +407,7 @@ function renderUsage(data: ReportData): string {
               String(d.count),
               escapeHtml(d.percent),
             ])
-          )
+          ) + `<p style="font-size:0.85em;color:#666;margin-top:4px;"><em>% = quote lines in range &divide; total discounted quote lines. Count = number of discounted quote lines in each range.</em></p>`
         : '<p><em>No discount data available.</em></p>'
     }
 
