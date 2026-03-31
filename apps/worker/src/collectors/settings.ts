@@ -421,6 +421,7 @@ export class SettingsCollector extends BaseCollector {
           | undefined;
         if (discoveredPackages) {
           for (const pkg of discoveredPackages) {
+            // Legacy CPQSettingValue finding (backward compat)
             findings.push(
               createFinding({
                 domain: 'settings',
@@ -434,6 +435,59 @@ export class SettingsCollector extends BaseCollector {
                 evidenceRefs: [
                   { type: 'field-ref' as const, value: pkg.namespace, label: `v${pkg.version}` },
                 ],
+              })
+            );
+
+            // C1: Canonical InstalledPackage finding with structured evidenceRefs
+            // Enables sbaa version detection (P0-1) and package-level queries
+            findings.push(
+              createFinding({
+                domain: 'settings',
+                collector: 'settings',
+                artifactType: 'InstalledPackage',
+                artifactName: pkg.name,
+                findingType: 'installed_package',
+                sourceType: 'object',
+                riskLevel: 'info',
+                migrationRelevance: 'should-migrate',
+                evidenceRefs: [
+                  { type: 'field-ref' as const, label: 'Namespace', value: pkg.namespace },
+                  { type: 'field-ref' as const, label: 'Version', value: pkg.version },
+                ],
+                notes: `${pkg.name} (${pkg.namespace}) v${pkg.version}`,
+              })
+            );
+          }
+        }
+      }
+
+      // ================================================================
+      // C1: Canonical InstalledPackage findings (always emitted)
+      // When settings were found from Custom Settings, the fallback path
+      // above is skipped — so we emit InstalledPackage findings here too.
+      // ================================================================
+      const hasSettingsFromCustomObjects = settingValueCount > 0;
+      if (hasSettingsFromCustomObjects) {
+        const discoveredPackagesMain = this.ctx.describeCache.get('_installedPackages') as
+          | Array<{ namespace: string; name: string; version: string }>
+          | undefined;
+        if (discoveredPackagesMain) {
+          for (const pkg of discoveredPackagesMain) {
+            findings.push(
+              createFinding({
+                domain: 'settings',
+                collector: 'settings',
+                artifactType: 'InstalledPackage',
+                artifactName: pkg.name,
+                findingType: 'installed_package',
+                sourceType: 'object',
+                riskLevel: 'info',
+                migrationRelevance: 'should-migrate',
+                evidenceRefs: [
+                  { type: 'field-ref' as const, label: 'Namespace', value: pkg.namespace },
+                  { type: 'field-ref' as const, label: 'Version', value: pkg.version },
+                ],
+                notes: `${pkg.name} (${pkg.namespace}) v${pkg.version}`,
               })
             );
           }
