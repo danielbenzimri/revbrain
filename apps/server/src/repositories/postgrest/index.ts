@@ -15,13 +15,11 @@ import { PostgRESTOrganizationRepository } from './organization.repository.ts';
 import { PostgRESTPlanRepository } from './plan.repository.ts';
 import { PostgRESTAuditLogRepository } from './audit-log.repository.ts';
 import { PostgRESTProjectRepository } from './project.repository.ts';
-import {
-  StubSalesforceConnectionRepository,
-  StubSalesforceConnectionSecretsRepository,
-  StubOauthPendingFlowRepository,
-  StubSalesforceConnectionLogRepository,
-  StubAssessmentRepository,
-} from '../salesforce-stubs.ts';
+import { PostgRESTSalesforceConnectionRepository } from './salesforce-connection.repository.ts';
+import { PostgRESTSalesforceConnectionSecretsRepository } from './salesforce-connection-secrets.repository.ts';
+import { PostgRESTSalesforceConnectionLogRepository } from './salesforce-connection-log.repository.ts';
+import { PostgRESTOauthPendingFlowRepository } from './oauth-pending-flow.repository.ts';
+import { PostgRESTAssessmentRepository } from './assessment.repository.ts';
 
 // Re-export individual repositories
 export { PostgRESTUserRepository } from './user.repository.ts';
@@ -29,6 +27,11 @@ export { PostgRESTOrganizationRepository } from './organization.repository.ts';
 export { PostgRESTPlanRepository } from './plan.repository.ts';
 export { PostgRESTAuditLogRepository } from './audit-log.repository.ts';
 export { PostgRESTProjectRepository } from './project.repository.ts';
+export { PostgRESTSalesforceConnectionRepository } from './salesforce-connection.repository.ts';
+export { PostgRESTSalesforceConnectionSecretsRepository } from './salesforce-connection-secrets.repository.ts';
+export { PostgRESTSalesforceConnectionLogRepository } from './salesforce-connection-log.repository.ts';
+export { PostgRESTOauthPendingFlowRepository } from './oauth-pending-flow.repository.ts';
+export { PostgRESTAssessmentRepository } from './assessment.repository.ts';
 
 /**
  * Create all PostgREST repositories.
@@ -42,11 +45,10 @@ export function createPostgRESTRepositories(supabase: SupabaseClient): Repositor
     plans: new PostgRESTPlanRepository(supabase),
     auditLogs: new PostgRESTAuditLogRepository(supabase),
     projects: new PostgRESTProjectRepository(supabase),
-    // Salesforce repos — stubs for PostgREST engine (Salesforce ops use Drizzle directly)
-    salesforceConnections: new StubSalesforceConnectionRepository(),
-    salesforceConnectionSecrets: new StubSalesforceConnectionSecretsRepository(),
-    oauthPendingFlows: new StubOauthPendingFlowRepository(),
-    salesforceConnectionLogs: new StubSalesforceConnectionLogRepository(),
-    assessmentRuns: new StubAssessmentRepository(),
+    salesforceConnections: new PostgRESTSalesforceConnectionRepository(supabase),
+    salesforceConnectionSecrets: new PostgRESTSalesforceConnectionSecretsRepository(supabase),
+    oauthPendingFlows: new PostgRESTOauthPendingFlowRepository(supabase),
+    salesforceConnectionLogs: new PostgRESTSalesforceConnectionLogRepository(supabase),
+    assessmentRuns: new PostgRESTAssessmentRepository(supabase),
   };
 }
