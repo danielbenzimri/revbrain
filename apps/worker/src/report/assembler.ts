@@ -1848,10 +1848,12 @@ function buildApprovalsAndDocs(
   const allQuoteTemplates = findings.filter(
     (f) => f.artifactType === 'QuoteTemplate' || f.artifactType === 'SBQQ__QuoteTemplate__c'
   );
-  const totalTemplateRecords = allQuoteTemplates.length;
+  // quoteTemplates = actual template records (excluding synthetic summary findings)
   const quoteTemplates = allQuoteTemplates.filter(
     (f) => !f.findingKey?.includes('unused_templates_summary') && !f.artifactName?.includes('unused_templates_summary')
   );
+  // totalTemplateRecords = raw record count (one finding per SOQL row, no synthetics)
+  const totalTemplateRecords = quoteTemplates.length;
   const usableTemplates = quoteTemplates.filter(
     (f) => !TECH_DEBT_PATTERNS.test(f.artifactName) && f.usageLevel !== 'dormant'
   );
