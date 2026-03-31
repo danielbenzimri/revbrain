@@ -991,7 +991,7 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
             isCpqObject: isCpqObjectName(inv.artifactName),
             phase: CPQ_PHASE_MAP[inv.artifactName] ?? '',
           }))
-        : buildObjectInventoryInline(findings);
+        : buildObjectInventoryInline(findings, reportCounts);
       return items;
     })(),
 
@@ -2043,7 +2043,7 @@ const REPORT_SKIP_TYPES = new Set([
   'ExternalIdField',
 ]);
 
-function buildObjectInventoryInline(findings: AssessmentFindingInput[]): ReportData['appendixA'] {
+function buildObjectInventoryInline(findings: AssessmentFindingInput[], counts: ReportCounts): ReportData['appendixA'] {
   const objectMap = new Map<string, { count: number; complexity: string }>();
 
   for (const f of findings) {
@@ -2063,6 +2063,12 @@ function buildObjectInventoryInline(findings: AssessmentFindingInput[]): ReportD
     if (newIdx > currentIdx) existing.complexity = f.complexityLevel ?? 'low';
 
     objectMap.set(sfName, existing);
+  }
+
+  // V5-5: override Flow count with canonical flowCountActive from ReportCounts
+  if (objectMap.has('Flow') && counts.flowCountActive > 0) {
+    const flowEntry = objectMap.get('Flow')!;
+    flowEntry.count = counts.flowCountActive;
   }
 
   return [...objectMap.entries()]

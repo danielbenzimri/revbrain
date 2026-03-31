@@ -546,6 +546,9 @@ function renderCustomCode(data: ReportData): string {
     )}
 
     <h3>9.2 Triggers & Flows</h3>
+    ${data.counts.flowCountActive > 0
+      ? `<p><em>${data.counts.flowCountActive} active flows (${data.counts.flowCountCpqRelated} CPQ-related${data.counts.flowCountActive > data.counts.flowCountCpqRelated ? `, ${data.counts.flowCountActive - data.counts.flowCountCpqRelated} additional active flows in org` : ''}).</em></p>`
+      : ''}
     ${
       data.customCode.triggersFlows.length > 0
         ? table(
