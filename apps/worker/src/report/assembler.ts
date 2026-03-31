@@ -1396,14 +1396,13 @@ function buildGlanceSections(
             ?.evidenceRefs?.find((r) => r.label === 'CPQ Licenses')?.value ?? 'N/A',
         confidence: 'Confirmed',
       },
-      // Task 2.1: Active Users (90d)
+      // A4: Active Users — uses canonical counts.activeUsers for both warning and glance
       {
-        label: 'Active Users (90d)',
-        value: String(
-          findings.find((f) => f.artifactType === 'UserAdoption')?.countValue ??
-          (findings.filter((f) => f.artifactType === 'UserBehavior').reduce((s, u) => s + (u.countValue ?? 0), 0) || '0')
-        ),
-        confidence: 'Confirmed',
+        label: counts.activeUsersSource === 'UserBehavior'
+          ? 'Active Users (90d) (Estimated)'
+          : 'Active Users (90d)',
+        value: counts.activeUserStatus === 'not_extracted' ? 'Not extracted' : String(counts.activeUsers),
+        confidence: counts.activeUsersSource === 'UserAdoption' ? 'Confirmed' : counts.activeUsersSource === 'UserBehavior' ? 'Estimated' : 'Not extracted',
       },
     ],
     'Automation & Code': [
