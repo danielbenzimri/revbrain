@@ -575,7 +575,7 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
     ? safeRefs(sbaaInstalledPkg).find((r) => String(r.label) === 'Version')?.value
     : null;
   const sbaaVersionFromFp =
-    orgFp?.notes?.match(/sbaa\s+([v\d.]+)/i)?.[1] ?? null;
+    orgFp?.notes?.match(/sbaa\s+(v\d[\d.]+)/i)?.[1] ?? null;
   const sbaaVersionFromSettings =
     findings
       .find(
@@ -583,7 +583,7 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
           f.artifactType === 'CPQSettingValue' &&
           f.artifactName?.toLowerCase().includes('advanced approval')
       )
-      ?.notes?.match(/([v\d.]+)/)?.[1] ?? null;
+      ?.notes?.match(/\b(v\d[\d.]+)/)?.[1] ?? null;
   const sbaaVersionRaw = (sbaaVersionFromPkg ? String(sbaaVersionFromPkg) : null) ?? sbaaVersionFromFp ?? sbaaVersionFromSettings;
 
   let sbaaVersionDisplay: string;
