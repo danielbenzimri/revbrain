@@ -1205,9 +1205,10 @@ function buildFeatureUtilization(
   });
 
   const csCount = count('CustomScript', 'SBQQ__CustomScript__c');
+  // V5-16: "Configured" not "Active Usage" — metadata detection proves presence, not runtime execution
   features.push({
     feature: 'Custom Scripts (QCP)',
-    status: csCount > 0 ? 'Active Usage' : 'Not Detected',
+    status: csCount > 0 ? 'Configured' : 'Not Detected',
     detail: csCount > 0 ? `${csCount} custom scripts detected.` : '',
   });
 
