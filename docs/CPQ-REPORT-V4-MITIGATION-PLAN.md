@@ -1,14 +1,14 @@
 # CPQ Assessment Report V4 — Mitigation Plan (Revised)
 
 > **Document ID:** CPQ-V4-MIT-2026-001
-> **Version:** 2.1
+> **Version:** 2.2
 > **Date:** 2026-03-31
 > **Status:** Ready for Review
 > **Authors:** Daniel Aviram + Claude (Architect)
 > **Input:** Developer_Redline_Checklist_v4.md, Auditor 1 review, Auditor 2 review
 > **Audience:** Technical reviewers, QA, SI stakeholders
 > **Rollback:** V3 code tagged at commit `29937d7`. Rollback = regenerate from tag.
-> **Review status:** Approved with minor revisions by two independent auditors. All audit findings addressed in v2.1.
+> **Review status:** Revised in response to two independent auditor reviews. All findings addressed in v2.2.
 
 ---
 
@@ -67,21 +67,21 @@ Every disputed metric must have a formal definition. This is the **single source
 |--------|-----------------|--------------------|--------------------|-----------|-------------|----------|--------------|
 | **Active Products** | Products available for quoting | `Product2` findings | `IsActive=true` (must be extracted by collector) | All-time | `Product2` | Count of Product2 findings with `detected=true` (degraded: label as "Products Extracted") | "Active Products (IsActive=true)" |
 | **Total Products** | All products in org | `Product2` findings | None (count all) | All-time | `Product2` | Always available | "Total Products" |
-| **Bundle-capable Products** | Products that can have child options | `Product2` findings | `SBQQ__ConfigurationType__c IN ('Allowed','Required')` | All-time | `Product2` | Zero if field not extracted | "Bundle-capable Products" |
-| **Product Options** | Child options linked to bundles | `ProductOption` findings or catalog metric | `SBQQ__ProductOption__c` record count | All-time | `SBQQ__ProductOption__c` | Zero if not extracted | "Product Options" |
+| **Bundle-capable Products** | Products that can have child options | `Product2` findings | `SBQQ__ConfigurationType__c IN ('Allowed','Required')` | All-time | `Product2` | `not_extracted` if configuration field unavailable; `zero` only if query succeeds with no matching records | "Bundle-capable Products" |
+| **Product Options** | Child options linked to bundles | `ProductOption` findings or catalog metric | `SBQQ__ProductOption__c` record count | All-time | `SBQQ__ProductOption__c` | `not_extracted` if extraction skipped; `zero` if query returned no records | "Product Options" |
 | **Product Families** | Distinct families with active products | Derived from `Product2.Family` field | Distinct non-null Family values on active products | All-time | `Product2` | "(none)" excluded from count | "Product Families (with active products)" |
 | **Active Price Rules** | Price rules that fire on quotes | `PriceRule` / `SBQQ__PriceRule__c` findings | `SBQQ__Active__c=true` (collector preserves this in `usageLevel`) | All-time | `SBQQ__PriceRule__c` | Count where `usageLevel !== 'dormant'` | "Active Price Rules" |
 | **Active Product Rules** | Product rules that fire on configs | `ProductRule` / `SBQQ__ProductRule__c` findings | `SBQQ__Active__c=true` | All-time | `SBQQ__ProductRule__c` | Count where `usageLevel !== 'dormant'` | "Active Product Rules" |
-| **Total Quotes (90d)** | Quotes created in assessment window | `DataCount` finding or `recentQuotes` array | `SBQQ__Quote__c WHERE CreatedDate >= 90d ago` | 90-day | `SBQQ__Quote__c` | 0 if not extracted | "Quotes (90 Days)" |
-| **Total Quote Lines (90d)** | Lines on 90-day quotes only | `DataCount` finding or derived | `SBQQ__QuoteLine__c WHERE Quote.CreatedDate >= 90d ago` | 90-day | `SBQQ__QuoteLine__c` | 0 | "Quote Lines (90 Days)" |
+| **Total Quotes (90d)** | Quotes created in assessment window | `DataCount` finding or `recentQuotes` array | `SBQQ__Quote__c WHERE CreatedDate >= 90d ago` | 90-day | `SBQQ__Quote__c` | `not_extracted` if extraction skipped; `zero` if query returned no records | "Quotes (90 Days)" |
+| **Total Quote Lines (90d)** | Lines on 90-day quotes only | `DataCount` finding or derived | `SBQQ__QuoteLine__c WHERE Quote.CreatedDate >= 90d ago` | 90-day | `SBQQ__QuoteLine__c` | `not_extracted` if extraction skipped; `zero` if query returned no records | "Quote Lines (90 Days)" |
 | **Top Quoted Product %** | % of 90-day quotes containing this product | Derived from `TopQuotedProduct` findings | Numerator: distinct 90-day quotes with this product. Denominator: total 90-day quotes. | **90-day for BOTH** | `SBQQ__QuoteLine__c` → `SBQQ__Quote__c` | 0% if denominator is 0 | "% of Quotes (90d)" |
 | **Active Users (90d)** | Users who created/modified quotes in 90d | `UserAdoption` finding (primary) | `countValue` from usage collector's user activity query | 90-day | Quote creators/modifiers | **Fallback:** sum of `UserBehavior` finding `countValue` fields. **Label fallback as "Estimated"** | "Active Users (90d)" |
-| **Approval Rules** | sbaa approval rules configured | `AdvancedApprovalRule` findings | `sbaa__ApprovalRule__c` record count | All-time | `sbaa__ApprovalRule__c` | 0 if sbaa not installed or query fails | "Approval Rules (sbaa)" |
+| **Approval Rules** | sbaa approval rules configured | `AdvancedApprovalRule` findings | `sbaa__ApprovalRule__c` record count | All-time | `sbaa__ApprovalRule__c` | `not_applicable` if sbaa not installed; `not_extracted` if query fails; `zero` if query succeeds with no rules | "Approval Rules (sbaa)" |
 | **sbaa Version** | Advanced Approvals package version | `InstalledPackage` finding (primary) | `NamespacePrefix='sbaa'` from `InstalledSubscriberPackage` | All-time | `InstalledSubscriberPackage` | **Fallback chain:** (1) OrgFingerprint notes, (2) CPQSettingValue "Package: Advanced Approvals" notes. **If all miss:** "Installed (version unknown)" — never "Not installed" if package is detected elsewhere | "Adv. Approvals Version" |
-| **Active Flows** | Active flow definitions | `Flow` findings from dependencies collector | `FlowDefinitionView WHERE IsActive=true` | All-time | `FlowDefinitionView` | 0 | "Active Flows" |
-| **Validation Rules** | Active validation rules on CPQ objects | `ValidationRule` findings from customizations collector | `ValidationRule WHERE Active=true` | All-time | All objects with SBQQ fields | 0 | "Validation Rules" |
-| **Apex Classes** | Apex classes referencing CPQ objects | `ApexClass` findings | Class name contains SBQQ reference or is in dependency graph | All-time | `ApexClass` | 0 | "Apex Classes (CPQ-related)" |
-| **Triggers** | Triggers on CPQ objects | `ApexTrigger` findings | Trigger object is SBQQ-namespaced | All-time | `ApexTrigger` | 0 | "Triggers (CPQ-related)" |
+| **Active Flows** | Active flow definitions | `Flow` findings from dependencies collector | `FlowDefinitionView WHERE IsActive=true` | All-time | `FlowDefinitionView` | `not_extracted` if extraction skipped; `zero` if query returned no records | "Active Flows" |
+| **Validation Rules** | Active validation rules on CPQ objects | `ValidationRule` findings from customizations collector | `ValidationRule WHERE Active=true` | All-time | All objects with SBQQ fields | `not_extracted` if extraction skipped; `zero` if query returned no records | "Validation Rules" |
+| **Apex Classes** | Apex classes referencing CPQ objects | `ApexClass` findings | Class name contains SBQQ reference or is in dependency graph | All-time | `ApexClass` | `not_extracted` if extraction skipped; `zero` if no CPQ-related classes found | "Apex Classes (CPQ-related)" |
+| **Triggers** | Triggers on CPQ objects | `ApexTrigger` findings | Trigger object is SBQQ-namespaced | All-time | `ApexTrigger` | `not_extracted` if extraction skipped; `zero` if no CPQ triggers found | "Triggers (CPQ-related)" |
 
 ### Metric Precedence Rules
 
@@ -103,6 +103,8 @@ Each metric carries both a `value` and a `status`. Display logic must distinguis
 | `not_applicable` | Package/feature not installed | Show "N/A" or omit section |
 
 This model prevents silent misreporting — the most dangerous bug class in assessment reports.
+
+> **V4 scope:** V4 implements status tracking for `activeProducts` and `activeUsers` only (the two metrics with confirmed cross-section contradictions). Generalization to all metrics is a V5 backlog item.
 
 ---
 
@@ -346,9 +348,9 @@ Operates on assembled `ReportData`. Catches:
 |------|-------|----------|
 | V17 | Any percentage metric > 100% in assembled report | Error |
 | V18 | `metadata.lowVolumeWarning` active users matches `cpqAtAGlance` active users | Error |
-| V19 | `keyFindings.activeProducts === cpqAtAGlance.activeProducts` AND `inventory.totalProducts === counts.totalProducts` AND `bundleCount === counts.bundleProducts` (per-metric, not generic "product count") | Error |
+| V19 | For each metric in [activeProducts, totalProducts, bundleProducts]: every rendered instance in ReportData must equal counts.{metric}. Per-metric validation, not generic "product count". | Error |
 | V20 | Complexity rationale mentions "no product options" when `counts.productOptions > 0` | Error |
-| V21 | `metadata.sbaaVersion` is "Not installed" when `counts.sbaaDetected === true` | Error |
+| V21 | `counts.sbaaInstalled === true` AND rendered sbaa version display equals "Not installed" | Error |
 | V22 | Approval rules section says "not detected" when `counts.approvalRuleCount > 0` | Error |
 | V23 | Every Top Quoted Product has `percentQuotes <= 100` | Error |
 | V24 | Appendix D Product Catalog says "not available" when `counts.productOptions > 0` | Error |
@@ -361,7 +363,7 @@ Operates on assembled `ReportData`. Catches:
 
 | Task | File | Description | Testable Acceptance Criterion |
 |------|------|-------------|-------------------------------|
-| C1 | `settings.ts` | Emit canonical `InstalledPackage` findings with namespace, version, licenseCount for each installed package | `findings.filter(f => f.artifactType === 'InstalledPackage' && f.notes.includes('sbaa')).length === 1` |
+| C1 | `settings.ts` | Emit canonical `InstalledPackage` findings with namespace, version, licenseCount for each installed package. Source: existing `_installedPackages` data from Discovery collector (no new API call needed). | `findings.some(f => f.artifactType === 'InstalledPackage' && f.evidenceRefs?.some(r => r.label === 'Namespace' && r.value === 'sbaa'))` |
 | C2 | `approvals.ts` | Refactor: check `_installedPackages` for sbaa, then direct `describeSObject()`, then query. No dependency on Discovery describeCache for correctness. | When sbaa is installed, `findings.filter(f => f.artifactType === 'AdvancedApprovalRule').length > 0` regardless of Discovery cache state |
 | C3 | `catalog.ts` | Ensure `IsActive` is included in the Product2 SOQL field list (add if absent). Store as `evidenceRef {label:'IsActive', value:'true/false'}` on each Product2 finding. If dropped by FLS, emit validator warning. Note: a first-class `attributes.isActive` field would be architecturally preferable to evidenceRef parsing, but evidenceRef is consistent with the current finding schema. | `findings.filter(f => f.artifactType === 'Product2').every(f => f.evidenceRefs.some(r => r.label === 'IsActive'))` — or a FLS warning is emitted |
 | C4 | `usage.ts` | Filter `quoteLines` to only those linked to `recentQuotes` (by Quote ID) before computing `productQuoteSets`. Merge C3/C4 from original plan (per Auditor 2). | `topQuotedProducts.every(p => p.quotedCount <= recentQuotes.length)` |
@@ -376,7 +378,7 @@ Operates on assembled `ReportData`. Catches:
 | A4 | `assembler.ts` | Active users: use `counts.activeUsers` for both warning and At-a-Glance. Tag with `activeUsersSource`. | `metadata.lowVolumeWarning` user count === `cpqAtAGlance` user count |
 | A5 | `assembler.ts` | Complexity rationale: use `counts.productOptions`. No "no product options" when count > 0. | `if counts.productOptions > 0 then scoringMethodology[0].rationale.includes(counts.productOptions)` |
 | A6 | `assembler.ts` | Remove "Package:" entries from `coreSettings`. Single display source for packages. | `coreSettings.filter(s => s.setting.startsWith('Package:')).length === 0` |
-| A7 | `assembler.ts` | Product Catalog coverage: check `counts.productOptions > 0` for options coverage. Use explicit coverage levels (Full/Partial/Minimal). | `if counts.productOptions > 0 then appendixD['Product Catalog'].coverage !== 'Partial'` |
+| A7 | `assembler.ts` | Product Catalog coverage: check `counts.productOptions > 0` for options coverage. Use explicit coverage levels (Full/Partial/Minimal). | `coverage === 'Full'` when products + options + rules all extracted; `'Partial'` when products extracted but sub-components missing; `'Minimal'` when only counts available |
 | A8 | `templates/index.ts` | Conditional label rendering: when `counts.activeProductSource === 'inferred'`, render "Products Extracted" instead of "Active Products". Same for `activeUsersSource === 'UserBehavior'` → append "(Estimated)" to the label. | Template renders degraded labels when source tracking fields indicate non-primary source |
 
 ### Phase 3: Validator Additions (prevent recurrence)
@@ -417,6 +419,7 @@ graph TD
     A1 --> A4["A4: Active users reconciliation"]
     A1 --> A5["A5: Complexity rationale"]
     A1 --> A7["A7: Coverage levels"]
+    A1 --> A8["A8: Template conditional labels"]
     A6["A6: Package filter"] -.-> A1
 
     A1 --> V1["V1-V3: Validator implementation"]
@@ -455,7 +458,7 @@ graph TD
 | `IsActive` dropped by FLS | `activeProducts` falls back to proxy | Medium | Emit validator warning. Label as "Products Extracted" not "Active Products" |
 | sbaa queries fail on orgs without sbaa | False "not detected" | Low | Graceful degradation: "sbaa not installed" when package truly absent |
 | API call budget exceeded by additional describes | Extraction fails on API-limited orgs | Low | Check remaining API calls before adding sbaa describes. Skip if < 100 remaining. **If skipped, emit validator warning:** 'sbaa describe skipped due to API budget — approval rules may be underreported.' Silent degradation is never acceptable. |
-| Golden file becomes stale after org changes | False CI failures | Medium | Golden file is regenerated per-org, not shared across orgs |
+| Golden file becomes stale after org changes | False CI failures | Medium | CI golden files are based on frozen fixtures, not live org data. Live org verification artifacts may be regenerated per org for manual comparison but are not CI baselines. |
 | Validator creates false confidence | New bug class missed | Medium | Validator is safety net, not substitute for golden-file testing and manual review |
 
 ---
@@ -473,7 +476,7 @@ The V4 report is ready for SI review when ALL of the following are true:
 | 5 | Warning banner and At-a-Glance agree on active user count | ReportConsistencyValidator V18 |
 | 6 | Complexity rationale does not say "no product options" when options exist | ReportConsistencyValidator V20 |
 | 7 | Section 4.2 contains only CPQ settings (no "Package:" entries) | Unit test on ReportData |
-| 8 | Appendix D Product Catalog reads "Full" when product options > 0 | ReportConsistencyValidator V24 |
+| 8 | Appendix D Product Catalog reads "Full" when product options > 0 | ReportConsistencyValidator V24 + coverage logic: Full when products + options + rules extracted; Partial otherwise |
 | 9 | Cloud Run extraction completes successfully with 12/12 collectors. Finding count deltas vs previous run are explained by C1-C4 changes and documented in the golden file baseline. | Integration test T5 |
 | 10 | FindingsValidator: zero errors | T9 |
 | 11 | ReportConsistencyValidator: zero errors | T9 |
@@ -521,7 +524,7 @@ V3 fixed 20 items from V2:
 
 | Auditor | Finding | How Addressed |
 |---------|---------|--------------|
-| Auditor 1 | Need canonical metric definitions | Section 3: full registry with 14 metrics |
+| Auditor 1 | Need canonical metric definitions | Section 3: full registry with 16 metrics |
 | Auditor 1 | `activeProducts` definition too weak | C3: explicit `IsActive` field extraction |
 | Auditor 1 | Validator should be two layers | Section 6: FindingsValidator + ReportConsistencyValidator |
 | Auditor 1 | P1-3, P1-5 dismissed too quickly | T6, T7: SOQL verification steps added |
@@ -533,6 +536,6 @@ V3 fixed 20 items from V2:
 | Auditor 2 | ReportCounts incomplete | Extended to 20+ fields |
 | Auditor 2 | No automated regression testing | T8: golden file CI test |
 | Auditor 2 | Risk register missing regression/performance | Section 9: added 3 risks |
-| Auditor 2 | C3/C4 redundant tasks | Merged into C4 |
+| Auditor 2 | C3/C4 redundant tasks | C3 (usage scope) merged into C4. C3 (IsActive) is a separate task. |
 | Auditor 2 | Success criteria skip P1 | Criteria 7-8 added |
 | Auditor 2 | No rollback plan | Header: V3 tag documented |
