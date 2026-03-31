@@ -159,7 +159,7 @@ export interface ReportData {
     /** Standard Approval Processes (ProcessDefinition on CPQ objects) */
     approvalRules: Array<{ name: string; object: string; status: string }>;
     quoteTemplates: Array<{ name: string; isDefault: boolean; lastModified: string }>;
-    documentGeneration: { templateCount: number; docuSignActive: boolean };
+    documentGeneration: { templateCount: number; totalTemplateRecords: number; usableTemplateCount: number; docuSignActive: boolean };
   };
   /** Canonical counts — single source of truth for all metrics (A1) */
   counts: ReportCounts;
@@ -1209,11 +1209,17 @@ function buildFeatureUtilization(
     detail: csCount > 0 ? `${csCount} custom scripts detected.` : '',
   });
 
-  const tmplCount = count('QuoteTemplate', 'SBQQ__QuoteTemplate__c');
+  // V5-9: filter synthetic summary findings from template count
+  const tmplFindings = findings.filter(
+    (f) => (f.artifactType === 'QuoteTemplate' || f.artifactType === 'SBQQ__QuoteTemplate__c')
+      && !f.findingKey?.includes('unused_templates_summary')
+      && !f.artifactName?.includes('unused_templates_summary')
+  );
+  const tmplCount = tmplFindings.length;
   features.push({
     feature: 'Quote Templates',
     status: tmplCount > 0 ? 'Configured' : 'Not Detected',
-    detail: tmplCount > 0 ? `${tmplCount} templates detected. Usage not tracked.` : '',
+    detail: tmplCount > 0 ? `${tmplCount} configured templates. Usage not tracked.` : '',
   });
 
   const advApprovalCount = count('AdvancedApprovalRule');
@@ -1836,9 +1842,16 @@ function buildApprovalsAndDocs(
   const chainCount = Number(approvalSummary?.notes?.match(/(\d+)\s*chains?/)?.[1] ?? 0);
   const approverCount = Number(approvalSummary?.notes?.match(/(\d+)\s*approvers?/)?.[1] ?? 0);
 
-  // Quote templates from templates collector
-  const quoteTemplates = findings.filter(
+  // Quote templates from templates collector — V5-9: filter out synthetic summary findings
+  const allQuoteTemplates = findings.filter(
     (f) => f.artifactType === 'QuoteTemplate' || f.artifactType === 'SBQQ__QuoteTemplate__c'
+  );
+  const totalTemplateRecords = allQuoteTemplates.length;
+  const quoteTemplates = allQuoteTemplates.filter(
+    (f) => !f.findingKey?.includes('unused_templates_summary') && !f.artifactName?.includes('unused_templates_summary')
+  );
+  const usableTemplates = quoteTemplates.filter(
+    (f) => !TECH_DEBT_PATTERNS.test(f.artifactName) && f.usageLevel !== 'dormant'
   );
 
   // DocuSign status from plugins
@@ -1879,6 +1892,8 @@ function buildApprovalsAndDocs(
     }),
     documentGeneration: {
       templateCount: quoteTemplates.length,
+      totalTemplateRecords: totalTemplateRecords,
+      usableTemplateCount: usableTemplates.length,
       docuSignActive: !!docuSignPlugin,
     },
   };

@@ -700,7 +700,7 @@ function renderApprovalsAndDocs(data: ReportData): string {
     }
 
     <h3>6.6.5 Document Generation</h3>
-    <p>${documentGeneration.templateCount} quote template(s) configured. DocuSign integration: <strong>${documentGeneration.docuSignActive ? 'Active' : 'Not detected'}</strong>.</p>
+    <p>${documentGeneration.templateCount} configured quote template(s)${documentGeneration.totalTemplateRecords !== documentGeneration.templateCount ? ` (${documentGeneration.totalTemplateRecords} total SBQQ__QuoteTemplate__c records, ${documentGeneration.usableTemplateCount} usable)` : ''}. DocuSign integration: <strong>${documentGeneration.docuSignActive ? 'Active' : 'Not detected'}</strong>.</p>
     ${!hasContent ? '<p><em>Approvals and document generation data requires Tier 2 collectors (templates, approvals) to complete successfully.</em></p>' : ''}
   </div>`;
 }
