@@ -8,8 +8,8 @@ import { logger } from '../lib/logger.ts';
 let _db: DrizzleDB | null = null;
 async function getDb(): Promise<DrizzleDB> {
   if (!_db) {
-    const { db } = await import('@revbrain/database/client');
-    _db = db;
+    const mod = await import('@revbrain/database/client'); await mod.initDB();
+    _db = mod.db;
   }
   return _db;
 }

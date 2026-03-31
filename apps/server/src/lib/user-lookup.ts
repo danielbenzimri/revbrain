@@ -98,7 +98,7 @@ export async function lookupUserWithOrg(
       .maybeSingle();
     return { ...user, organizationName: data?.name ?? undefined };
   } else {
-    const { db } = await import('@revbrain/database/client');
+    const _dbMod = await import('@revbrain/database/client'); await _dbMod.initDB(); const db = _dbMod.db;
     const { organizations } = await import('@revbrain/database');
     const { eq } = await import('drizzle-orm');
     const result = await db.query.organizations.findFirst({
@@ -138,7 +138,7 @@ async function postgrestLookup(column: string, value: string): Promise<UserEntit
 
 async function drizzleLookup(field: string, value: string): Promise<UserEntity | null> {
   // Dynamic import — only loads postgres.js when actually needed on Node.js
-  const { db } = await import('@revbrain/database/client');
+  const _dbMod = await import('@revbrain/database/client'); await _dbMod.initDB(); const db = _dbMod.db;
   const { users } = await import('@revbrain/database');
   const { eq } = await import('drizzle-orm');
 

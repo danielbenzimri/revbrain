@@ -71,6 +71,7 @@ const mockEmailService = vi.hoisted(() => ({
 
 // Mock dependencies - split across @revbrain/database/client, @revbrain/database, and drizzle-orm
 vi.mock('@revbrain/database/client', () => ({
+  initDB: vi.fn().mockResolvedValue({}),
   db: {
     query: {
       plans: {

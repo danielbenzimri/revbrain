@@ -13,10 +13,11 @@ import { AppError, ErrorCodes } from '@revbrain/contract';
 import { adminNotifications } from '@revbrain/database';
 import { eq, and, desc, sql } from 'drizzle-orm';
 
-// Lazy database accessor — prevents postgres.js from loading on Edge Functions (Deno)
+// Lazy database accessor — initializes postgres.js on first call (safe on Edge via polyfills)
 async function getDb() {
-  const { db } = await import('@revbrain/database/client');
-  return db;
+  const mod = await import('@revbrain/database/client');
+  await mod.initDB();
+  return mod.db;
 }
 import type { AppEnv } from '../../../types/index.ts';
 

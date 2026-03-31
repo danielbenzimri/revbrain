@@ -12,6 +12,7 @@ import type {
 const mockSubscriptionsFindFirst = vi.hoisted(() => vi.fn());
 
 vi.mock('@revbrain/database/client', () => ({
+  initDB: vi.fn().mockResolvedValue({}),
   db: {
     query: {
       subscriptions: {
