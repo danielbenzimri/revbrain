@@ -2033,6 +2033,7 @@ const REPORT_ARTIFACT_TO_SF: Record<string, string> = {
   TemplateSection: 'SBQQ__TemplateSection__c',
   TemplateContent: 'SBQQ__TemplateContent__c',
   CustomAction: 'SBQQ__CustomAction__c',
+  AdvancedApprovalRule: 'sbaa__ApprovalRule__c',
   ApexClass: 'ApexClass',
   ApexTrigger: 'ApexTrigger',
   ValidationRule: 'ValidationRule',
@@ -2095,6 +2096,12 @@ function buildObjectInventoryInline(findings: AssessmentFindingInput[], counts: 
   if (objectMap.has('Flow') && counts.flowCountActive > 0) {
     const flowEntry = objectMap.get('Flow')!;
     flowEntry.count = counts.flowCountActive;
+  }
+
+  // V5-15: override AdvancedApprovalRule count with canonical approvalRuleCount from ReportCounts
+  if (objectMap.has('AdvancedApprovalRule') && counts.approvalRuleCount > 0) {
+    const aarEntry = objectMap.get('AdvancedApprovalRule')!;
+    aarEntry.count = counts.approvalRuleCount;
   }
 
   return [...objectMap.entries()]
