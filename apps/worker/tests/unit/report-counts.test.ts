@@ -206,7 +206,7 @@ describe('ReportCounts — T1 comprehensive tests', () => {
       expect(report.counts.sbaaInstalled).toBe(true);
       expect(report.counts.sbaaVersionRaw).toBe('3.4.0');
       expect(report.counts.sbaaVersionDisplay).toBe('sbaa v3.4.0 (Active)');
-      expect(report.metadata.sbaaVersion).toBe('3.4.0');
+      expect(report.metadata.sbaaVersion).toBe('sbaa v3.4.0 (Active)');
     });
 
     it('falls back to OrgFingerprint for sbaa version', () => {

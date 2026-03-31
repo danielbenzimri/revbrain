@@ -651,7 +651,7 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
     : null;
 
   // sbaa version: use canonical counts (A2 three-level fallback)
-  const sbaaVersion = reportCounts.sbaaVersionRaw ?? (reportCounts.sbaaInstalled ? 'Installed (version unknown)' : null);
+  const sbaaVersion = reportCounts.sbaaVersionDisplay !== 'Not installed' ? reportCounts.sbaaVersionDisplay : null;
 
   return {
     metadata: {
