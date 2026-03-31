@@ -10,7 +10,7 @@ export function escapeHtml(str: string): string {
 /** Confidence badge */
 export function badge(confidence: string): string {
   const cls =
-    confidence === 'Confirmed'
+    confidence === 'Confirmed' || confidence === 'Full'
       ? 'badge-confirmed'
       : confidence === 'Estimated'
         ? 'badge-estimated'

@@ -1914,8 +1914,8 @@ function buildDynamicCoverage(findings: AssessmentFindingInput[], counts: Report
   // Transactional Data (Task 1.7)
   const hasQuotes = has('DataCount') && findings.some((f) => f.artifactType === 'DataCount' && f.artifactName?.includes('Quote'));
   const hasUserBehavior = has('UserBehavior');
-  const txCov = hasQuotes && hasUserBehavior ? 'Full' : hasQuotes ? 'Partial' : domainSet.has('usage') ? 'Partial' : 'Not extracted';
-  const txNotes = `90-day quotes${hasQuotes ? '' : ' (not extracted)'}, quote lines, usage trends. ${!hasUserBehavior ? 'User behavior data inferred only.' : ''}`;
+  const txCov = hasQuotes ? 'Partial' : domainSet.has('usage') ? 'Partial' : 'Not extracted';
+  const txNotes = `90-day quotes${hasQuotes ? '' : ' (not extracted)'}, quote lines, usage trends. Quote modification history and field-level change tracking not extracted.`;
 
   // Custom Fields & Validation (Task 1.7)
   const hasVR = has('ValidationRule');
@@ -1940,12 +1940,12 @@ function buildDynamicCoverage(findings: AssessmentFindingInput[], counts: Report
   // Advanced Approvals (Task 1.6)
   const hasAAR = has('AdvancedApprovalRule');
   const hasCA = has('CustomAction', 'SBQQ__CustomAction__c');
-  const approvalCov = hasAAR && hasCA ? 'Full'
+  const approvalCov = hasAAR && hasCA ? 'Partial'
     : hasCA && !hasAAR ? 'Partial'
     : hasAAR && !hasCA ? 'Partial'
     : domainSet.has('approvals') ? 'Partial' : 'Not extracted';
   const approvalNotes = hasAAR && hasCA
-    ? 'Approval rules, conditions, chains, custom actions.'
+    ? 'Approval rules, conditions, chains, custom actions extracted. Approval-to-quote usage linkage not surfaced.'
     : hasCA && !hasAAR
       ? 'Approval action buttons detected; sbaa approval rules and chains not yet extracted.'
       : hasAAR && !hasCA
@@ -1976,10 +1976,8 @@ function buildDynamicCoverage(findings: AssessmentFindingInput[], counts: Report
     simpleCoverage('localization', 'Localization', 'Multi-language translations, custom labels.'),
     {
       category: 'User Behavior',
-      coverage: hasUserBehavior && findings.some((f) => f.artifactType === 'UserBehavior' && f.sourceType !== 'inferred')
-        ? 'Confirmed'
-        : hasUserBehavior ? 'Estimated' : 'Not extracted',
-      notes: 'Derived from audit trail sampling.',
+      coverage: hasUserBehavior ? 'Partial' : 'Not extracted',
+      notes: 'Derived from audit trail sampling. Full user session analysis and adoption scoring not extracted.',
     },
   ];
 }
