@@ -1209,7 +1209,7 @@ function buildFeatureUtilization(
     detail: tmplCount > 0 ? `${tmplCount} templates detected. Usage not tracked.` : '',
   });
 
-  const advApprovalCount = count('AdvancedApprovalRule', 'AdvancedApprovals');
+  const advApprovalCount = count('AdvancedApprovalRule');
   const customActionCount = count('CustomAction', 'SBQQ__CustomAction__c');
   features.push({
     feature: 'Advanced Approvals',
