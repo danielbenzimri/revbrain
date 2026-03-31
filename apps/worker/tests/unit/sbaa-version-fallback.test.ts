@@ -53,7 +53,7 @@ describe('sbaaVersion fallback chain — T3', () => {
     expect(report.counts.sbaaInstalled).toBe(true);
     // InstalledPackage version takes precedence over OrgFingerprint regex
     expect(report.counts.sbaaVersionRaw).toBe('3.4.0');
-    expect(report.counts.sbaaVersionDisplay).toBe('3.4.0');
+    expect(report.counts.sbaaVersionDisplay).toBe('sbaa v3.4.0 (Active)');
     expect(report.metadata.sbaaVersion).toBe('3.4.0');
   });
 
@@ -70,7 +70,7 @@ describe('sbaaVersion fallback chain — T3', () => {
     const report = assembleReport(findings);
     expect(report.counts.sbaaInstalled).toBe(true);
     expect(report.counts.sbaaVersionRaw).toBe('v232.2.0');
-    expect(report.counts.sbaaVersionDisplay).toBe('v232.2.0');
+    expect(report.counts.sbaaVersionDisplay).toBe('sbaa v232.2.0 (Active)');
     expect(report.metadata.sbaaVersion).toBe('v232.2.0');
   });
 
@@ -92,7 +92,7 @@ describe('sbaaVersion fallback chain — T3', () => {
     const report = assembleReport(findings);
     expect(report.counts.sbaaInstalled).toBe(true);
     expect(report.counts.sbaaVersionRaw).toBe('v3.6.1');
-    expect(report.counts.sbaaVersionDisplay).toBe('v3.6.1');
+    expect(report.counts.sbaaVersionDisplay).toBe('sbaa v3.6.1 (Active)');
     expect(report.metadata.sbaaVersion).toBe('v3.6.1');
   });
 

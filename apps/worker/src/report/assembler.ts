@@ -586,9 +586,16 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
       ?.notes?.match(/\b(v\d[\d.]+)/)?.[1] ?? null;
   const sbaaVersionRaw = (sbaaVersionFromPkg ? String(sbaaVersionFromPkg) : null) ?? sbaaVersionFromFp ?? sbaaVersionFromSettings;
 
+  // V5-4: sbaa version display includes namespace and status from InstalledPackage evidenceRefs
+  const sbaaStatusFromPkg = sbaaInstalledPkg
+    ? safeRefs(sbaaInstalledPkg).find((r) => String(r.label) === 'Status')?.value
+    : null;
+  const sbaaStatusLabel = sbaaStatusFromPkg ? String(sbaaStatusFromPkg) : 'Active';
+
   let sbaaVersionDisplay: string;
   if (sbaaVersionRaw) {
-    sbaaVersionDisplay = sbaaVersionRaw;
+    const vPrefix = sbaaVersionRaw.startsWith('v') ? '' : 'v';
+    sbaaVersionDisplay = `sbaa ${vPrefix}${sbaaVersionRaw} (${sbaaStatusLabel})`;
   } else if (sbaaInstalled) {
     sbaaVersionDisplay = 'Installed (version unknown)';
   } else {

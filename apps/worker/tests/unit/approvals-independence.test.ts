@@ -96,7 +96,7 @@ describe('Approvals independence — T4', () => {
     expect(report.counts.sbaaInstalled).toBe(true);
     expect(report.counts.approvalRuleCount).toBe(0);
     // The sbaa version should still be detected
-    expect(report.counts.sbaaVersionDisplay).toBe('3.4.0');
+    expect(report.counts.sbaaVersionDisplay).toBe('sbaa v3.4.0 (Active)');
     // V22 should catch this when validator runs (tested in T4a)
   });
 });
