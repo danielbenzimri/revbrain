@@ -994,6 +994,7 @@ export function validateReportConsistency(data: ReportData): ReportValidationRes
   rules.push(checkV22_ApprovalSectionContradiction(data));
   rules.push(checkV23_TopProductPercentage(data));
   rules.push(checkV24_CoverageContradiction(data));
+  rules.push(checkV25_ApprovalCountCrossCheck(data));
 
   for (const rule of rules) {
     if (!rule.passed) {
@@ -1243,4 +1244,37 @@ function checkV24_CoverageContradiction(data: ReportData): ValidationRule {
   }
 
   return { id: 'V24', name: 'Coverage claims match data', severity: 'error', passed: true, message: 'OK' };
+}
+
+/**
+ * V25: Section 6.6.1 advanced approval rule count must equal Section 8.3 feature utilization approval count.
+ */
+function checkV25_ApprovalCountCrossCheck(data: ReportData): ValidationRule {
+  const sectionCount = data.approvalsAndDocs.advancedApprovalRules.length;
+
+  // Find the Advanced Approvals entry in feature utilization
+  const approvalFeature = data.dataQuality.featureUtilization.find(
+    (f) => f.feature === 'Advanced Approvals'
+  );
+
+  if (!approvalFeature) {
+    // No feature utilization entry — nothing to cross-check
+    return { id: 'V25', name: 'Approval rule count cross-section check', severity: 'error', passed: true, message: 'OK — no approval feature utilization entry.' };
+  }
+
+  // Extract count from feature detail (e.g., "5 advanced approval rules detected.")
+  const detailMatch = approvalFeature.detail.match(/^(\d+)\s+advanced approval rule/);
+  const featureCount = detailMatch ? Number(detailMatch[1]) : null;
+
+  if (featureCount !== null && featureCount !== sectionCount) {
+    return {
+      id: 'V25',
+      name: 'Approval rule count cross-section check',
+      severity: 'error',
+      passed: false,
+      message: `Section 6.6.1 shows ${sectionCount} advanced approval rules but Section 8.3 feature utilization reports ${featureCount}.`,
+    };
+  }
+
+  return { id: 'V25', name: 'Approval rule count cross-section check', severity: 'error', passed: true, message: 'OK' };
 }
