@@ -1615,7 +1615,7 @@ function buildDefaultKeyFindings(
   findings: AssessmentFindingInput[],
   settings: AssessmentFindingInput[],
   plugins: AssessmentFindingInput[],
-  _counts: ReportCounts
+  counts: ReportCounts
 ): Array<{ title: string; detail: string; confidence: string }> {
   const kf: Array<{ title: string; detail: string; confidence: string }> = [];
 
@@ -1630,19 +1630,9 @@ function buildDefaultKeyFindings(
   );
   const hasQcp = (qcpPlugin && (qcpPlugin.countValue ?? 0) > 0) || qcpScripts.length > 0;
 
-  // --- Price/Product rules ---
-  const priceRules = findings.filter(
-    (f) => f.artifactType === 'PriceRule' || f.artifactType === 'SBQQ__PriceRule__c'
-  );
-  const productRules = findings.filter(
-    (f) => f.artifactType === 'ProductRule' || f.artifactType === 'SBQQ__ProductRule__c'
-  );
-  const activePR = priceRules.filter(
-    (r) => r.usageLevel !== 'dormant' && !r.notes?.includes('Inactive')
-  ).length;
-  const activeProdR = productRules.filter(
-    (r) => r.usageLevel !== 'dormant' && !r.notes?.includes('Inactive')
-  ).length;
+  // Use canonical counts (A3)
+  const activePR = counts.activePriceRules;
+  const activeProdR = counts.activeProductRules;
 
   // First finding: analytical observation, not extraction status
   if (hasQcp) {
@@ -1655,7 +1645,7 @@ function buildDefaultKeyFindings(
     });
   }
 
-  if (priceRules.length > 0 || productRules.length > 0) {
+  if (counts.totalPriceRules > 0 || counts.totalProductRules > 0) {
     kf.push({
       title: `${activePR} active price rules and ${activeProdR} active product rules detected`,
       detail: `Heavy rule density indicates significant business logic encoded in CPQ configuration. Pricing logic concentrated in business-specific rules.`,
@@ -1663,14 +1653,11 @@ function buildDefaultKeyFindings(
     });
   }
 
-  const dormantProducts = findings.filter(
-    (f) => f.artifactType === 'Product2' && f.usageLevel === 'dormant'
-  ).length;
-  const totalProducts = findings.filter((f) => f.artifactType === 'Product2').length;
-  if (totalProducts > 0 && dormantProducts > totalProducts * 0.2) {
+  const dormantProducts = counts.totalProducts - counts.activeProducts;
+  if (counts.totalProducts > 0 && dormantProducts > counts.totalProducts * 0.2) {
     kf.push({
-      title: `Product catalog shows ${Math.round((dormantProducts / totalProducts) * 100)}% dormancy`,
-      detail: `${dormantProducts} of ${totalProducts} products were not quoted in the 90-day window. Consider cleanup to reduce configuration surface area.`,
+      title: `Product catalog shows ${Math.round((dormantProducts / counts.totalProducts) * 100)}% dormancy`,
+      detail: `${dormantProducts} of ${counts.totalProducts} products were not quoted in the 90-day window. Consider cleanup to reduce configuration surface area.`,
       confidence: 'Confirmed',
     });
   }
@@ -1687,11 +1674,10 @@ function buildDefaultKeyFindings(
     }
   }
 
-  // Apex/custom code density
-  const apexCount = findings.filter((f) => f.artifactType === 'ApexClass').length;
-  if (apexCount > 20 && kf.length < 5) {
+  // Apex/custom code density — use canonical count (A3)
+  if (counts.apexClassCount > 20 && kf.length < 5) {
     kf.push({
-      title: `${apexCount} Apex classes reference CPQ objects`,
+      title: `${counts.apexClassCount} Apex classes reference CPQ objects`,
       detail: `Substantial custom code dependency suggests significant customization beyond standard CPQ configuration.`,
       confidence: 'Confirmed',
     });
@@ -1699,27 +1685,28 @@ function buildDefaultKeyFindings(
 
   // Ensure at least 3 findings with analytical observations
   // Task 2.4: synthesis with >=2 facts + 1 implication
-  const productCount = findings.filter((f) => f.artifactType === 'Product2').length;
-  if (productCount > 0 && kf.length < 5) {
+  // A3: use counts.activeProducts with "active products" label; "X families with active products"
+  if (counts.totalProducts > 0 && kf.length < 5) {
     const families = new Set(
       findings
         .filter((f) => f.artifactType === 'Product2')
-        .map((f) => f.evidenceRefs?.find((r) => r.value === 'Product2.Family')?.label)
+        .map((f) => safeRefs(f).find((r) => String(r.value) === 'Product2.Family')?.label)
         .filter(Boolean)
     );
     const dormantFamilyCount = [...families].filter((fam) => {
       const products = findings.filter(
-        (f) => f.artifactType === 'Product2' && f.evidenceRefs?.find((r) => r.value === 'Product2.Family')?.label === fam
+        (f) => f.artifactType === 'Product2' && safeRefs(f).find((r) => String(r.value) === 'Product2.Family')?.label === fam
       );
       return products.length > 0 && products.every((p) => p.usageLevel === 'dormant');
     }).length;
     const dormantNote = dormantFamilyCount > 0
-      ? ` — ${dormantFamilyCount} of ${families.size} families show zero quoting activity in the assessment window, suggesting catalog sprawl and a cleanup opportunity.`
+      ? ` — ${dormantFamilyCount} of ${counts.productFamilies} families show zero quoting activity in the assessment window, suggesting catalog sprawl and a cleanup opportunity.`
       : '.';
+    const productLabel = counts.activeProductSource === 'IsActive' ? 'active products' : 'products extracted';
     kf.push({
-      title: `${productCount} products across ${families.size} product families`,
-      detail: `Product catalog spans ${families.size > 5 ? 'a diverse range of' : ''} families including ${[...families].slice(0, 5).join(', ')}${families.size > 5 ? ', and more' : ''}${dormantNote}`,
-      confidence: 'Confirmed',
+      title: `${counts.activeProducts} ${productLabel} across ${counts.productFamilies} families with active products`,
+      detail: `Product catalog spans ${counts.productFamilies > 5 ? 'a diverse range of' : ''} families including ${[...families].slice(0, 5).join(', ')}${families.size > 5 ? ', and more' : ''}${dormantNote}`,
+      confidence: counts.activeProductSource === 'IsActive' ? 'Confirmed' : 'Estimated',
     });
   }
 
