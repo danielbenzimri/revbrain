@@ -153,7 +153,7 @@ export interface ReportData {
     /** CPQ Custom Action buttons (SBQQ__CustomAction__c) — NOT approval rules */
     customActions: Array<{ name: string; type: string; location: string; status: string }>;
     /** Advanced Approval Rules (sbaa__ApprovalRule__c) */
-    advancedApprovalRules: Array<{ name: string; conditions: number; status: string }>;
+    advancedApprovalRules: Array<{ name: string; conditions: number; status: string; targetObject: string }>;
     /** Approval chain summary */
     approvalChains: { count: number; approvers: number };
     /** Standard Approval Processes (ProcessDefinition on CPQ objects) */
@@ -1857,6 +1857,9 @@ function buildApprovalsAndDocs(
       name: r.artifactName,
       conditions: r.countValue ?? 0,
       status: r.usageLevel === 'dormant' ? 'Inactive' : 'Active',
+      targetObject: safeRefs(r).find((ref) => String(ref.label) === 'TargetObject')?.value
+        ? String(safeRefs(r).find((ref) => String(ref.label) === 'TargetObject')!.value)
+        : (r.notes?.match(/Target:\s*(\S+)/)?.[1] ?? ''),
     })),
     approvalChains: { count: chainCount, approvers: approverCount },
     approvalRules: standardApprovalFindings.map((r) => ({

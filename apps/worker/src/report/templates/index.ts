@@ -640,9 +640,10 @@ function renderApprovalsAndDocs(data: ReportData): string {
     ${
       hasAdvanced
         ? table(
-            ['Rule Name', 'Conditions', 'Status'],
+            ['Rule Name', 'Target Object', 'Conditions', 'Status'],
             advancedApprovalRules.map((r) => [
               escapeHtml(r.name),
+              escapeHtml(r.targetObject || '—'),
               String(r.conditions),
               escapeHtml(r.status),
             ])
