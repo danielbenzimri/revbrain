@@ -141,6 +141,10 @@ export async function validateExtraction(
   const criticalDrops = checkCriticalFieldDrops(allDroppedFields);
   warnings.push(...criticalDrops);
 
+  // ── V0: Enhanced degradation warnings (V4 Mitigation Plan) ──
+  const v0Warnings = checkV0_DegradationWarnings(allFindings, allDroppedFields, failedCollectors);
+  warnings.push(...v0Warnings);
+
   // ── V1–V8: Cross-section consistency rules ──
 
   rules.push(checkV1_QuoteLineReconciliation(allFindings));
@@ -200,6 +204,88 @@ export async function validateExtraction(
   );
 
   return result;
+}
+
+// ============================================================================
+// V0: Enhanced degradation warnings (V4 Mitigation Plan — Task V0)
+// ============================================================================
+
+/**
+ * V0: Check for degraded extraction paths that should never be silent.
+ * - IsActive unavailable due to FLS
+ * - sbaa describe skipped (API budget or other reason)
+ * - Installed package detected but dependent findings absent
+ * - Extraction skipped states
+ */
+function checkV0_DegradationWarnings(
+  findings: AssessmentFindingInput[],
+  droppedFields: Array<{ collector: string; object: string; fields: string[] }>,
+  failedCollectors: string[]
+): string[] {
+  const warnings: string[] = [];
+
+  // (1) IsActive unavailable due to FLS
+  const isActiveDrop = droppedFields.find(
+    (d) => d.object === 'Product2' && d.fields.includes('IsActive')
+  );
+  if (isActiveDrop) {
+    warnings.push(
+      `[V0-FLS] Product2.IsActive field was dropped (likely FLS restriction) in ${isActiveDrop.collector}. ` +
+      `Active product count will use usageLevel proxy instead of explicit IsActive field.`
+    );
+  }
+
+  // (2) sbaa describe skipped — look for installed package but no approval findings
+  const installedPackages = findings.filter((f) => f.artifactType === 'InstalledPackage');
+  const sbaaPackage = installedPackages.find((f) => {
+    const refs = Array.isArray(f.evidenceRefs) ? f.evidenceRefs : [];
+    return refs.some((r) => String(r.label) === 'Namespace' && String(r.value) === 'sbaa');
+  });
+  const sbaaDetectedInOrg = sbaaPackage || findings.some(
+    (f) => f.artifactType === 'OrgFingerprint' && f.notes?.includes('sbaa')
+  );
+  const hasApprovalFindings = findings.some(
+    (f) => f.artifactType === 'AdvancedApprovalRule'
+  );
+
+  if (sbaaDetectedInOrg && !hasApprovalFindings) {
+    warnings.push(
+      `[V0-DEP] sbaa package detected but no AdvancedApprovalRule findings extracted. ` +
+      `Approvals collector may have failed or sbaa objects may not be accessible.`
+    );
+  }
+
+  // (3) Installed package detected but expected findings absent
+  const packageNamespaces = new Set<string>();
+  for (const pkg of installedPackages) {
+    const refs = Array.isArray(pkg.evidenceRefs) ? pkg.evidenceRefs : [];
+    const ns = refs.find((r) => String(r.label) === 'Namespace');
+    if (ns) packageNamespaces.add(String(ns.value));
+  }
+
+  // If SBQQ package is installed, we must have at least some CPQ findings
+  if (packageNamespaces.has('SBQQ') && !findings.some((f) => f.domain === 'catalog')) {
+    warnings.push(
+      `[V0-DEP] SBQQ package installed but no catalog domain findings. ` +
+      `Catalog collector may have failed to extract Product2 data.`
+    );
+  }
+
+  // (4) Extraction skipped states — check if collectors that should have run are absent
+  const expectedCollectorDomains = ['catalog', 'pricing', 'usage'];
+  for (const domain of expectedCollectorDomains) {
+    const hasDomainFindings = findings.some((f) => f.domain === domain);
+    const collectorFailed = failedCollectors.some((c) => c === domain);
+    if (!hasDomainFindings && !collectorFailed) {
+      // Domain has no findings and collector didn't fail — it may have been skipped
+      warnings.push(
+        `[V0-SKIP] Domain "${domain}" has no findings and no collector failure recorded. ` +
+        `Extraction may have been skipped.`
+      );
+    }
+  }
+
+  return warnings;
 }
 
 // ============================================================================
