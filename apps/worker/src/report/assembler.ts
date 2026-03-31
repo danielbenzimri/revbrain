@@ -1187,12 +1187,13 @@ function buildFeatureUtilization(
   const detectedBundles = bundleProducts || optionCount || optionDataCount;
   // Task 2.7: 5-level status model — Active Usage, Configured, Low Usage, Detected / Unverified, Not Detected
   // V5-13: "Configured" for metadata-only detection; "Active Usage" reserved for transaction-backed evidence
+  // V5-14: clarifying note distinguishes capability (ConfigurationType) from active configuration
   features.push({
     feature: 'Product Bundles',
     status: detectedBundles > 0 ? 'Configured' : 'Not Detected',
     detail:
       detectedBundles > 0
-        ? `${bundleProducts} bundle products, ${optionDataCount || optionCount} product options.`
+        ? `${bundleProducts} products have bundle configuration enabled (SBQQ__ConfigurationType__c), ${optionDataCount || optionCount} product options. Note: bundle-capable count reflects metadata capability, not necessarily fully configured bundles with nested options.`
         : '',
   });
 

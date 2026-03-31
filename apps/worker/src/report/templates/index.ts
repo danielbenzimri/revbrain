@@ -191,6 +191,9 @@ function renderGlance(data: ReportData): string {
               badge(m.confidence),
             ])
           )}
+          ${title === 'Product Catalog' && metrics.some((m) => m.label === 'Bundle-capable Products' && m.value !== '0')
+            ? `<p style="font-size:0.85em;color:#666;margin-top:4px;"><em>Bundle-capable = products with SBQQ__ConfigurationType__c set. This is a metadata capability flag, not a count of fully configured bundles with nested options.</em></p>`
+            : ''}
         </div>
       `
         )
