@@ -420,12 +420,18 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
   const _customActions = get('CustomAction', 'SBQQ__CustomAction__c');
 
   // ---- Derived values ----
+  // Total quotes: prefer 90-day scoped count, fallback to all-time, then 0.
+  // Be specific to avoid matching "Quote Templates" or "Quote Lines".
+  const quotes90d = findings.find(
+    (f) => f.artifactType === 'DataCount' && f.artifactName?.includes('Quotes (90d)')
+  );
+  const quotesAll = findings.find(
+    (f) => f.artifactType === 'DataCount' && f.artifactName?.includes('Quotes (all)')
+  );
   const totalQuotes =
-    findings.find(
-      (f) =>
-        f.artifactType === 'DataCount' &&
-        (f.artifactName?.includes('Quote') || f.artifactName?.includes('SBQQ__Quote'))
-    )?.countValue ?? 0;
+    (quotes90d?.countValue ?? 0) > 0
+      ? quotes90d!.countValue!
+      : quotesAll?.countValue ?? 0;
 
   // Active/Inactive filtering for rules
   const activePriceRules = priceRules.filter(
