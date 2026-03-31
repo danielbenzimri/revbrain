@@ -1252,7 +1252,7 @@ function buildFeatureUtilization(
   const locCount = count('LocalizationSummary');
   features.push({
     feature: 'Multi-Language',
-    status: locCount > 0 ? 'Active Usage' : 'Not Detected',
+    status: locCount > 0 ? 'Configured' : 'Not Detected',
     detail: locCount > 0 ? `${locCount} localizations detected.` : '',
   });
 
