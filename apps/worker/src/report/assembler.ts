@@ -1186,9 +1186,10 @@ function buildFeatureUtilization(
     )?.countValue ?? 0;
   const detectedBundles = bundleProducts || optionCount || optionDataCount;
   // Task 2.7: 5-level status model — Active Usage, Configured, Low Usage, Detected / Unverified, Not Detected
+  // V5-13: "Configured" for metadata-only detection; "Active Usage" reserved for transaction-backed evidence
   features.push({
     feature: 'Product Bundles',
-    status: detectedBundles > 0 ? 'Active Usage' : 'Not Detected',
+    status: detectedBundles > 0 ? 'Configured' : 'Not Detected',
     detail:
       detectedBundles > 0
         ? `${bundleProducts} bundle products, ${optionDataCount || optionCount} product options.`
@@ -1198,7 +1199,7 @@ function buildFeatureUtilization(
   const dsCount = count('DiscountSchedule', 'SBQQ__DiscountSchedule__c');
   features.push({
     feature: 'Discount Schedules',
-    status: dsCount > 0 ? 'Active Usage' : 'Not Detected',
+    status: dsCount > 0 ? 'Configured' : 'Not Detected',
     detail: dsCount > 0 ? `${dsCount} schedules detected.` : '',
   });
 
@@ -1226,7 +1227,7 @@ function buildFeatureUtilization(
   const customActionCount = count('CustomAction', 'SBQQ__CustomAction__c');
   features.push({
     feature: 'Advanced Approvals',
-    status: advApprovalCount > 0 ? 'Active Usage' : customActionCount > 0 ? 'Detected / Unverified' : 'Not Detected',
+    status: advApprovalCount > 0 ? 'Configured' : customActionCount > 0 ? 'Detected / Unverified' : 'Not Detected',
     detail:
       advApprovalCount > 0
         ? `${advApprovalCount} advanced approval rules detected.`
@@ -1242,7 +1243,7 @@ function buildFeatureUtilization(
   );
   features.push({
     feature: 'Contracted Pricing',
-    status: cpCount > 0 ? 'Active Usage' : cpConfigured ? 'Configured' : 'Not Detected',
+    status: cpCount > 0 ? 'Configured' : cpConfigured ? 'Configured' : 'Not Detected',
     detail: cpCount > 0 ? `${cpCount} contracted prices detected.` : cpConfigured ? 'ContractedPrice setting enabled but no records found.' : '',
   });
 
