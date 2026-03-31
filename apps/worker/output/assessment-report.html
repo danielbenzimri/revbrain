@@ -62,7 +62,7 @@
 <tr><td>Salesforce Org ID</td><td>00D3x000001AjYCEA0</td></tr>
 <tr><td>Environment</td><td>Production</td></tr>
 <tr><td>Assessment Date</td><td>2026-03-31</td></tr>
-<tr><td>Assessment Period</td><td>Dec 31, 2025 – Mar 31, 2026 (90 Days)</td></tr>
+<tr><td>Assessment Period</td><td>Dec 31, 2025 – Apr 1, 2026 (90 Days)</td></tr>
 <tr><td>CPQ Package Version</td><td>232.2.0</td></tr>
 <tr><td>Adv. Approvals Version</td><td>232.2.0</td></tr>
 <tr><td>Document Version</td><td>1.0</td></tr>
@@ -173,7 +173,7 @@
     <p><em>Scores are directional indicators of relative complexity, not absolute measures.</em></p>
 
     <h3>2.3 Scoring Methodology</h3>
-    <table><thead><tr><th>Dimension</th><th>Weight</th><th>Score</th><th>Drivers</th></tr></thead><tbody><tr><td>Configuration Depth</td><td>25%</td><td>28/100</td><td>Product catalog size, bundle nesting, option constraints, config attributes<br/><em style="font-size:0.9em;color:#555;">Score reflects 179 products, 76 bundle-capable products, and 475 product options. High bundle density increases configuration complexity.</em></td></tr>
+    <table><thead><tr><th>Dimension</th><th>Weight</th><th>Score</th><th>Drivers</th></tr></thead><tbody><tr><td>Configuration Depth</td><td>25%</td><td>28/100</td><td>Product catalog size, bundle nesting, option constraints, config attributes<br/><em style="font-size:0.9em;color:#555;">Score reflects 179 total products (176 active), 76 bundle-capable products, and 475 product options. High bundle density increases configuration complexity.</em></td></tr>
 <tr><td>Pricing Logic</td><td>25%</td><td>35/100</td><td>Price rules, discount schedules, custom scripts (QCP), contracted pricing<br/><em style="font-size:0.9em;color:#555;">Score reflects 28 price rules, 22 discount schedules, and 5 custom script(s) (QCP). QCP presence significantly elevates pricing complexity.</em></td></tr>
 <tr><td>Customization Level</td><td>20%</td><td>32/100</td><td>Apex class count, trigger count, flow complexity, code dependencies, custom fields, validation rules<br/><em style="font-size:0.9em;color:#555;">Score reflects 67 Apex classes, 5 triggers, and 13 flows referencing CPQ objects. Substantial custom code dependency detected.</em></td></tr>
 <tr><td>Data Volume &amp; Usage</td><td>15%</td><td>21/100</td><td>Quote volume, line count, user adoption, discount patterns<br/><em style="font-size:0.9em;color:#555;">Score reflects 23 quotes in the 90-day assessment window. Low volume — some metrics may not be statistically meaningful.</em></td></tr>
@@ -190,6 +190,7 @@
           <table><thead><tr><th>Metric</th><th>Value</th><th>Conf.</th></tr></thead><tbody><tr><td>Active Products</td><td><strong>176</strong></td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
 <tr><td>Bundle-capable Products</td><td><strong>76</strong></td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
 <tr><td>Price Books</td><td><strong>N/A</strong></td><td><span class="badge badge-confirmed">Confirmed</span></td></tr></tbody></table>
+          <p style="font-size:0.85em;color:#666;margin-top:4px;"><em>Bundle-capable = products with SBQQ__ConfigurationType__c set. This is a metadata capability flag, not a count of fully configured bundles with nested options.</em></p>
         </div>
       
         <div class="glance-section">
@@ -198,6 +199,7 @@
 <tr><td>Product Rules (Active)</td><td><strong>37</strong></td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
 <tr><td>Discount Schedules</td><td><strong>~22</strong></td><td><span class="badge badge-estimated">Estimated</span></td></tr>
 <tr><td>Custom Scripts (QCP)</td><td><strong>5 Detected</strong></td><td><span class="badge badge-confirmed">Confirmed</span></td></tr></tbody></table>
+          
         </div>
       
         <div class="glance-section">
@@ -205,12 +207,14 @@
           <table><thead><tr><th>Metric</th><th>Value</th><th>Conf.</th></tr></thead><tbody><tr><td>Quotes Created</td><td><strong>23</strong></td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
 <tr><td>Quote Lines</td><td><strong>73</strong></td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
 <tr><td>Avg Lines / Quote</td><td><strong>3.2</strong></td><td><span class="badge badge-confirmed">Confirmed</span></td></tr></tbody></table>
+          
         </div>
       
         <div class="glance-section">
           <h4>Users &amp; Licenses</h4>
           <table><thead><tr><th>Metric</th><th>Value</th><th>Conf.</th></tr></thead><tbody><tr><td>CPQ Licenses</td><td><strong>345</strong></td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
 <tr><td>Active Users (90d) (Estimated)</td><td><strong>1</strong></td><td><span class="badge badge-estimated">Estimated</span></td></tr></tbody></table>
+          
         </div>
       
         <div class="glance-section">
@@ -218,6 +222,7 @@
           <table><thead><tr><th>Metric</th><th>Value</th><th>Conf.</th></tr></thead><tbody><tr><td>Active Triggers</td><td><strong>5</strong></td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
 <tr><td>Active Flows</td><td><strong>44 total (13 CPQ-related)</strong></td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
 <tr><td>Validation Rules</td><td><strong>25</strong></td><td><span class="badge badge-confirmed">Confirmed</span></td></tr></tbody></table>
+          
         </div>
       
         <div class="glance-section">
@@ -227,15 +232,17 @@
 <tr><td>Inactive Product Rules</td><td><strong>1</strong></td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
 <tr><td>Stale/Test Rules</td><td><strong>3</strong></td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
 <tr><td>Duplicate Discount Schedules</td><td><strong>11</strong></td><td><span class="badge badge-confirmed">Confirmed</span></td></tr></tbody></table>
+          
         </div>
       
         <div class="glance-section">
           <h4>Feature Utilization</h4>
-          <table><thead><tr><th>Metric</th><th>Value</th><th>Conf.</th></tr></thead><tbody><tr><td>Product Bundles</td><td><strong>Active Usage</strong></td><td><span class="badge badge-estimated">Estimated</span></td></tr>
-<tr><td>Discount Schedules</td><td><strong>Active Usage</strong></td><td><span class="badge badge-estimated">Estimated</span></td></tr>
+          <table><thead><tr><th>Metric</th><th>Value</th><th>Conf.</th></tr></thead><tbody><tr><td>Product Bundles</td><td><strong>Configured</strong></td><td><span class="badge badge-estimated">Estimated</span></td></tr>
+<tr><td>Discount Schedules</td><td><strong>Configured</strong></td><td><span class="badge badge-estimated">Estimated</span></td></tr>
 <tr><td>Custom Scripts (QCP)</td><td><strong>Active Usage</strong></td><td><span class="badge badge-estimated">Estimated</span></td></tr>
 <tr><td>Quote Templates</td><td><strong>Configured</strong></td><td><span class="badge badge-estimated">Estimated</span></td></tr>
-<tr><td>Advanced Approvals</td><td><strong>Active Usage</strong></td><td><span class="badge badge-estimated">Estimated</span></td></tr></tbody></table>
+<tr><td>Advanced Approvals</td><td><strong>Configured</strong></td><td><span class="badge badge-estimated">Estimated</span></td></tr></tbody></table>
+          
         </div>
       
     </div>
@@ -312,7 +319,7 @@
 <tr><td>Subscription Device</td><td>1</td><td>0</td><td>0</td><td>0% (0 of 1)</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
 <tr><td>Insurance</td><td>5</td><td>0</td><td>0</td><td>0% (0 of 5)</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
 <tr><td>Commercial</td><td>2</td><td>0</td><td>1</td><td>50% (1 of 2)</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>Residential</td><td>6</td><td>0</td><td>1</td><td>17% (1 of 6)</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr></tbody></table>
+<tr><td>Residential</td><td>6</td><td>0</td><td>1</td><td>17% (1 of 6)</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr></tbody></table><p style="font-size:0.85em;color:#666;margin-top:4px;"><em>% Quoted = products quoted in 90-day window &divide; active products in category.</em></p>
     <p><em>16 of 21 product families show zero quoting activity in the 90-day window — including Hardware, Bundle, COBRA, and others. This may indicate dormant catalog segments, seasonal patterns, or a narrow active use-case.</em></p>
 
     <h3>6.2 Price Rules</h3>
@@ -350,43 +357,44 @@
     <h3>6.3 Product Rules</h3>
     <p><em>37 active of 38 total</em></p>
     <p>23 Selection, 8 Alert, 6 Validation, 1 Filter rules active. 1 inactive, 1 stale/test flagged.</p>
-    <table><thead><tr><th>Rule</th><th>Type</th><th>Description</th><th>Complexity</th><th>Status</th><th>Conf.</th></tr></thead><tbody><tr><td>PowerSlide Server: Selection (Configuration Attribute = Security)</td><td>Selection</td><td></td><td><span class="severity-not assessed">Not assessed</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>Rack Enclosure: Validation Software Maintenance (Software SKUs Included)</td><td>Validation</td><td></td><td><span class="severity-not assessed">Not assessed</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>Rack Enclosure: Selection Windows Server (Remove Software Maintenance)</td><td>Selection</td><td></td><td><span class="severity-not assessed">Not assessed</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>Rack Enclosure: Selection (Show C19-20 Cables)</td><td>Selection</td><td></td><td><span class="severity-not assessed">Not assessed</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>Rack Enclosure: Selection Hide Monthly Subs (Account Renewal Model = Asset)</td><td>Selection</td><td></td><td><span class="severity-not assessed">Not assessed</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>Rack Enclosure: Selection (Hide L5-20 Cables)</td><td>Selection</td><td></td><td><span class="severity-not assessed">Not assessed</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>Rack Enclosure: Alert (U's Less than Allowed: 6)</td><td>Alert</td><td></td><td><span class="severity-not assessed">Not assessed</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>Rack Enclosure: Selection Windows Server (Select Software Maintenance)</td><td>Selection</td><td></td><td><span class="severity-not assessed">Not assessed</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>Rack Enclosure: Validation (U's Greater than Allowed: 8)</td><td>Validation</td><td></td><td><span class="severity-not assessed">Not assessed</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>Rack Enclosure: Alert Windows Datacenter (Recommend Software Maintenance)</td><td>Alert</td><td></td><td><span class="severity-not assessed">Not assessed</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>Rack Enclosure: Alert (U's Less than Allowed: 8)</td><td>Alert</td><td></td><td><span class="severity-not assessed">Not assessed</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>Rack Enclosure: Validation (U's Greater than Allowed: 10)</td><td>Validation</td><td></td><td><span class="severity-not assessed">Not assessed</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>Rack Enclosure: Selection (Show L5-20 Cables)</td><td>Selection</td><td></td><td><span class="severity-not assessed">Not assessed</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>Rack Enclosure: Selection (Show C13-14 Cables)</td><td>Selection</td><td></td><td><span class="severity-not assessed">Not assessed</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>Rack Enclosure: Selection (Hide C13-14 Cables)</td><td>Selection</td><td></td><td><span class="severity-not assessed">Not assessed</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>Rack Enclosure: Validation (U's Greater than Allowed: 6)</td><td>Validation</td><td></td><td><span class="severity-not assessed">Not assessed</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>Rack Enclosure: Selection (Hide C19-20 Cables)</td><td>Selection</td><td></td><td><span class="severity-not assessed">Not assessed</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>PowerSlide Server: Selection (Memory Config Attribute = Memory Mirroring)</td><td>Selection</td><td></td><td><span class="severity-not assessed">Not assessed</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>PowerSlide Server: Selection (Configuration Attribute = Value)</td><td>Selection</td><td></td><td><span class="severity-not assessed">Not assessed</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>Rack Enclosure: Alert (U's Less than Allowed: 10)</td><td>Alert</td><td></td><td><span class="severity-not assessed">Not assessed</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>SmartBytes: Filter (Security Operations Feature)</td><td>Filter</td><td></td><td><span class="severity-not assessed">Not assessed</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>SmartBytes: Validation Paid Data Plan (Require Real Time Alerts)</td><td>Validation</td><td></td><td><span class="severity-not assessed">Not assessed</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>SmartBytes: Selection Enterprise Core License (Platform Attribute = Enterprise)</td><td>Selection</td><td></td><td><span class="severity-not assessed">Not assessed</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>DELETE MAYBE: SmartBytes Bundle: Training Alert ⚠ Potential tech debt</td><td>Alert</td><td>Inactive</td><td><span class="severity-not assessed">Not assessed</span></td><td>Inactive</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>SmartBytes: Alert Unlimited Data Plan (Recommend Real Time Alerts)</td><td>Alert</td><td></td><td><span class="severity-not assessed">Not assessed</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>SmartBytes: Selection PS Scope or Quick Start (Enables Ongoing PS)</td><td>Selection</td><td></td><td><span class="severity-not assessed">Not assessed</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>SmartBytes: Selection PS Project (Disables Ongoing PS)</td><td>Selection</td><td></td><td><span class="severity-not assessed">Not assessed</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>SmartBytes: Selection Show Enterprise &amp; Cloud Core (Platform Attribute = Blank)</td><td>Selection</td><td></td><td><span class="severity-not assessed">Not assessed</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>SmartBytes: Selection Cloud Core License (Platform Attribute = Cloud)</td><td>Selection</td><td></td><td><span class="severity-not assessed">Not assessed</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>PowerSlide Server: Selection (Configuration Attribute = Performance)</td><td>Selection</td><td></td><td><span class="severity-not assessed">Not assessed</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>PowerSlide Server: Selection (Memory Config Attribute = Performance Optimized)</td><td>Selection</td><td></td><td><span class="severity-not assessed">Not assessed</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>PowerSlide Server: Selection (Memory Config Attribute = Optimize with Sparing)</td><td>Selection</td><td></td><td><span class="severity-not assessed">Not assessed</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>Lite Software Bundle - Upsell Alert</td><td>Alert</td><td></td><td><span class="severity-not assessed">Not assessed</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>Software License Validation</td><td>Validation</td><td></td><td><span class="severity-not assessed">Not assessed</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>Complete Software Bundle - Upsell Alert</td><td>Alert</td><td></td><td><span class="severity-not assessed">Not assessed</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>SmartBytes: Selection Lookup Show/Hide Add-ons for Core Platform (Load)</td><td>Selection</td><td></td><td><span class="severity-not assessed">Not assessed</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>SmartBytes: Selection Lookup Show/Hide Add-ons for Core Platform (Edit)</td><td>Selection</td><td></td><td><span class="severity-not assessed">Not assessed</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr></tbody></table>
+    <table><thead><tr><th>Rule</th><th>Type</th><th>Description</th><th>Complexity</th><th>Status</th><th>Conf.</th></tr></thead><tbody><tr><td>PowerSlide Server: Selection (Configuration Attribute = Security)</td><td>Selection</td><td></td><td><span class="severity-—">—</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>Rack Enclosure: Validation Software Maintenance (Software SKUs Included)</td><td>Validation</td><td></td><td><span class="severity-—">—</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>Rack Enclosure: Selection Windows Server (Remove Software Maintenance)</td><td>Selection</td><td></td><td><span class="severity-—">—</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>Rack Enclosure: Selection (Show C19-20 Cables)</td><td>Selection</td><td></td><td><span class="severity-—">—</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>Rack Enclosure: Selection Hide Monthly Subs (Account Renewal Model = Asset)</td><td>Selection</td><td></td><td><span class="severity-—">—</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>Rack Enclosure: Selection (Hide L5-20 Cables)</td><td>Selection</td><td></td><td><span class="severity-—">—</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>Rack Enclosure: Alert (U's Less than Allowed: 6)</td><td>Alert</td><td></td><td><span class="severity-—">—</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>Rack Enclosure: Selection Windows Server (Select Software Maintenance)</td><td>Selection</td><td></td><td><span class="severity-—">—</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>Rack Enclosure: Validation (U's Greater than Allowed: 8)</td><td>Validation</td><td></td><td><span class="severity-—">—</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>Rack Enclosure: Alert Windows Datacenter (Recommend Software Maintenance)</td><td>Alert</td><td></td><td><span class="severity-—">—</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>Rack Enclosure: Alert (U's Less than Allowed: 8)</td><td>Alert</td><td></td><td><span class="severity-—">—</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>Rack Enclosure: Validation (U's Greater than Allowed: 10)</td><td>Validation</td><td></td><td><span class="severity-—">—</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>Rack Enclosure: Selection (Show L5-20 Cables)</td><td>Selection</td><td></td><td><span class="severity-—">—</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>Rack Enclosure: Selection (Show C13-14 Cables)</td><td>Selection</td><td></td><td><span class="severity-—">—</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>Rack Enclosure: Selection (Hide C13-14 Cables)</td><td>Selection</td><td></td><td><span class="severity-—">—</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>Rack Enclosure: Validation (U's Greater than Allowed: 6)</td><td>Validation</td><td></td><td><span class="severity-—">—</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>Rack Enclosure: Selection (Hide C19-20 Cables)</td><td>Selection</td><td></td><td><span class="severity-—">—</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>PowerSlide Server: Selection (Memory Config Attribute = Memory Mirroring)</td><td>Selection</td><td></td><td><span class="severity-—">—</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>PowerSlide Server: Selection (Configuration Attribute = Value)</td><td>Selection</td><td></td><td><span class="severity-—">—</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>Rack Enclosure: Alert (U's Less than Allowed: 10)</td><td>Alert</td><td></td><td><span class="severity-—">—</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>SmartBytes: Filter (Security Operations Feature)</td><td>Filter</td><td></td><td><span class="severity-—">—</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>SmartBytes: Validation Paid Data Plan (Require Real Time Alerts)</td><td>Validation</td><td></td><td><span class="severity-—">—</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>SmartBytes: Selection Enterprise Core License (Platform Attribute = Enterprise)</td><td>Selection</td><td></td><td><span class="severity-—">—</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>DELETE MAYBE: SmartBytes Bundle: Training Alert ⚠ Potential tech debt</td><td>Alert</td><td>Inactive</td><td><span class="severity-—">—</span></td><td>Inactive</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>SmartBytes: Alert Unlimited Data Plan (Recommend Real Time Alerts)</td><td>Alert</td><td></td><td><span class="severity-—">—</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>SmartBytes: Selection PS Scope or Quick Start (Enables Ongoing PS)</td><td>Selection</td><td></td><td><span class="severity-—">—</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>SmartBytes: Selection PS Project (Disables Ongoing PS)</td><td>Selection</td><td></td><td><span class="severity-—">—</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>SmartBytes: Selection Show Enterprise &amp; Cloud Core (Platform Attribute = Blank)</td><td>Selection</td><td></td><td><span class="severity-—">—</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>SmartBytes: Selection Cloud Core License (Platform Attribute = Cloud)</td><td>Selection</td><td></td><td><span class="severity-—">—</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>PowerSlide Server: Selection (Configuration Attribute = Performance)</td><td>Selection</td><td></td><td><span class="severity-—">—</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>PowerSlide Server: Selection (Memory Config Attribute = Performance Optimized)</td><td>Selection</td><td></td><td><span class="severity-—">—</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>PowerSlide Server: Selection (Memory Config Attribute = Optimize with Sparing)</td><td>Selection</td><td></td><td><span class="severity-—">—</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>Lite Software Bundle - Upsell Alert</td><td>Alert</td><td></td><td><span class="severity-—">—</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>Software License Validation</td><td>Validation</td><td></td><td><span class="severity-—">—</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>Complete Software Bundle - Upsell Alert</td><td>Alert</td><td></td><td><span class="severity-—">—</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>SmartBytes: Selection Lookup Show/Hide Add-ons for Core Platform (Load)</td><td>Selection</td><td></td><td><span class="severity-—">—</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>SmartBytes: Selection Lookup Show/Hide Add-ons for Core Platform (Edit)</td><td>Selection</td><td></td><td><span class="severity-—">—</span></td><td>Active</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr></tbody></table>
+    <p style="font-size:0.85em;color:#666;margin-top:4px;"><em>"—" in Complexity column = structural complexity not extracted. Requires condition/action scope analysis beyond current metadata extraction.</em></p>
 
     
     <h3>6.4 Discount Schedules</h3>
@@ -413,22 +421,22 @@
     <h2>6.6 Approvals & Document Generation</h2>
 
     <h3>6.6.1 Advanced Approval Rules (sbaa)</h3>
-    <table><thead><tr><th>Rule Name</th><th>Conditions</th><th>Status</th></tr></thead><tbody><tr><td>Compliance Review</td><td>0</td><td>Active</td></tr>
-<tr><td>Non Standard Terms And Conditions</td><td>1</td><td>Active</td></tr>
-<tr><td>Greater than $25</td><td>1</td><td>Active</td></tr>
-<tr><td>Discount &gt;= 35%</td><td>1</td><td>Active</td></tr>
-<tr><td>Discount &gt;= 25%</td><td>1</td><td>Active</td></tr>
-<tr><td>Greater than $1000</td><td>1</td><td>Active</td></tr>
-<tr><td>Modified Terms And Conditions</td><td>1</td><td>Active</td></tr>
-<tr><td>Discount &gt;= 15%</td><td>1</td><td>Active</td></tr>
-<tr><td>Non Standard Payment Terms</td><td>1</td><td>Active</td></tr>
-<tr><td>Finance Period Standard Closure - Controller Approval</td><td>1</td><td>Active</td></tr>
-<tr><td>Greater than $100</td><td>1</td><td>Active</td></tr>
-<tr><td>Special Handling</td><td>0</td><td>Active</td></tr>
-<tr><td>Review Draft Invoices</td><td>0</td><td>Active</td></tr>
-<tr><td>Milestone Completed</td><td>0</td><td>Active</td></tr>
-<tr><td>Non Standard Billing Frequency/Type</td><td>1</td><td>Active</td></tr>
-<tr><td>Invoice Run Confirmation</td><td>0</td><td>Active</td></tr></tbody></table>
+    <table><thead><tr><th>Rule Name</th><th>Target Object</th><th>Conditions</th><th>Status</th></tr></thead><tbody><tr><td>Compliance Review</td><td>blng__Invoice__c</td><td>0</td><td>Active</td></tr>
+<tr><td>Non Standard Terms And Conditions</td><td>SBQQ__Quote__c</td><td>1</td><td>Active</td></tr>
+<tr><td>Greater than $25</td><td>blng__CreditNote__c</td><td>1</td><td>Active</td></tr>
+<tr><td>Discount &gt;= 35%</td><td>SBQQ__Quote__c</td><td>1</td><td>Active</td></tr>
+<tr><td>Discount &gt;= 25%</td><td>SBQQ__Quote__c</td><td>1</td><td>Active</td></tr>
+<tr><td>Greater than $1000</td><td>blng__CreditNote__c</td><td>1</td><td>Active</td></tr>
+<tr><td>Modified Terms And Conditions</td><td>SBQQ__Quote__c</td><td>1</td><td>Active</td></tr>
+<tr><td>Discount &gt;= 15%</td><td>SBQQ__Quote__c</td><td>1</td><td>Active</td></tr>
+<tr><td>Non Standard Payment Terms</td><td>SBQQ__Quote__c</td><td>1</td><td>Active</td></tr>
+<tr><td>Finance Period Standard Closure - Controller Approval</td><td>blng__FinancePeriod__c</td><td>1</td><td>Active</td></tr>
+<tr><td>Greater than $100</td><td>blng__CreditNote__c</td><td>1</td><td>Active</td></tr>
+<tr><td>Special Handling</td><td>blng__Invoice__c</td><td>0</td><td>Active</td></tr>
+<tr><td>Review Draft Invoices</td><td>blng__InvoiceRun__c</td><td>0</td><td>Active</td></tr>
+<tr><td>Milestone Completed</td><td>blng__Invoice__c</td><td>0</td><td>Active</td></tr>
+<tr><td>Non Standard Billing Frequency/Type</td><td>SBQQ__Quote__c</td><td>1</td><td>Active</td></tr>
+<tr><td>Invoice Run Confirmation</td><td>blng__InvoiceRun__c</td><td>0</td><td>Active</td></tr></tbody></table>
     <p>8 approval chain(s) configured with 7 approver(s).</p>
 
     <h3>6.6.2 CPQ Custom Action Buttons</h3>
@@ -503,13 +511,12 @@
     <table><thead><tr><th>Template</th><th>Default</th><th>Last Modified</th></tr></thead><tbody><tr><td>Quote</td><td>No</td><td>Not available</td></tr>
 <tr><td>Contract</td><td>No</td><td>Not available</td></tr>
 <tr><td>Proposal</td><td>No</td><td>Not available</td></tr>
-<tr><td>unused_templates_summary</td><td>No</td><td>Not available</td></tr>
 <tr><td>Proposal w/ Subs and One-Time Prods</td><td>No</td><td>Not available</td></tr>
 <tr><td>Proposal Multilanguage</td><td>No</td><td>Not available</td></tr>
 <tr><td>Proposal With Usage</td><td>No</td><td>Not available</td></tr></tbody></table>
 
     <h3>6.6.5 Document Generation</h3>
-    <p>7 quote template(s) configured. DocuSign integration: <strong>Active</strong>.</p>
+    <p>6 configured quote template(s) (7 total SBQQ__QuoteTemplate__c records, 6 usable). DocuSign integration: <strong>Active</strong>.</p>
     
   </div>
   
@@ -526,14 +533,14 @@
     <h3>7.2 Conversion by Quote Size</h3>
     <table><thead><tr><th>Size</th><th>% Quotes</th><th>% Revenue</th><th>Conversion</th><th>Conf.</th></tr></thead><tbody><tr><td>Large ($25K-$100K)</td><td>9%</td><td>49%</td><td>100%</td><td><span class="badge badge-estimated">Estimated</span></td></tr>
 <tr><td>Medium ($5K-$25K)</td><td>35%</td><td>42%</td><td>75%</td><td><span class="badge badge-estimated">Estimated</span></td></tr>
-<tr><td>Small (&lt;$5K)</td><td>52%</td><td>9%</td><td>25%</td><td><span class="badge badge-estimated">Estimated</span></td></tr></tbody></table>
+<tr><td>Small (&lt;$5K)</td><td>52%</td><td>9%</td><td>25%</td><td><span class="badge badge-estimated">Estimated</span></td></tr></tbody></table><p style="font-size:0.85em;color:#666;margin-top:4px;"><em>% Quotes = quotes in segment &divide; total quotes (23). % Revenue = segment revenue &divide; total quoted revenue. Conversion = ordered quotes &divide; total quotes per segment.</em></p>
 
     <h3>7.3 Discount Distribution</h3>
     <table><thead><tr><th>Range</th><th>Count</th><th>% Discounted</th></tr></thead><tbody><tr><td>0-5%</td><td>0</td><td>0% (0 of 7)</td></tr>
 <tr><td>6-10%</td><td>0</td><td>0% (0 of 7)</td></tr>
 <tr><td>11-15%</td><td>0</td><td>0% (0 of 7)</td></tr>
 <tr><td>16-20%</td><td>0</td><td>0% (0 of 7)</td></tr>
-<tr><td>&gt;20%</td><td>7</td><td>100% (7 of 7)</td></tr></tbody></table>
+<tr><td>&gt;20%</td><td>7</td><td>100% (7 of 7)</td></tr></tbody></table><p style="font-size:0.85em;color:#666;margin-top:4px;"><em>% = quote lines in range &divide; total discounted quote lines. Count = number of discounted quote lines in each range.</em></p>
 
     
     <h3>7.4 Manual Price Overrides</h3>
@@ -553,7 +560,7 @@
 <tr><td>7</td><td>Paid Data Plan</td><td>Usage</td><td>3</td><td>13%</td></tr>
 <tr><td>8</td><td>Quick Start Enablement</td><td>Services</td><td>3</td><td>13%</td></tr>
 <tr><td>9</td><td>Application Monitoring</td><td>Software</td><td>3</td><td>13%</td></tr>
-<tr><td>10</td><td>High Availability</td><td>Software</td><td>3</td><td>13%</td></tr></tbody></table>
+<tr><td>10</td><td>High Availability</td><td>Software</td><td>3</td><td>13%</td></tr></tbody></table><p style="font-size:0.85em;color:#666;margin-top:4px;"><em>% = distinct quotes containing product &divide; total quotes (23)</em></p>
   </div>
   
   <div class="page-break">
@@ -574,11 +581,11 @@
 <tr><td>Duplicate Discount Schedules</td><td>11</td><td>1 schedule name(s) appear multiple times: &quot;Named Users Discount Schedule&quot; (11×).</td></tr></tbody></table>
 
     <h3>8.3 Feature Utilization</h3>
-    <table><thead><tr><th>Feature</th><th>Status</th><th>Detail</th></tr></thead><tbody><tr><td>Product Bundles</td><td><strong>Active Usage</strong></td><td>76 bundle products, 475 product options.</td></tr>
-<tr><td>Discount Schedules</td><td><strong>Active Usage</strong></td><td>22 schedules detected.</td></tr>
+    <table><thead><tr><th>Feature</th><th>Status</th><th>Detail</th></tr></thead><tbody><tr><td>Product Bundles</td><td><strong>Configured</strong></td><td>76 products have bundle configuration enabled (SBQQ__ConfigurationType__c), 475 product options. Note: bundle-capable count reflects metadata capability, not necessarily fully configured bundles with nested options.</td></tr>
+<tr><td>Discount Schedules</td><td><strong>Configured</strong></td><td>22 schedules detected.</td></tr>
 <tr><td>Custom Scripts (QCP)</td><td><strong>Active Usage</strong></td><td>5 custom scripts detected.</td></tr>
-<tr><td>Quote Templates</td><td><strong>Configured</strong></td><td>7 templates detected. Usage not tracked.</td></tr>
-<tr><td>Advanced Approvals</td><td><strong>Active Usage</strong></td><td>17 advanced approval rules detected.</td></tr>
+<tr><td>Quote Templates</td><td><strong>Configured</strong></td><td>6 configured templates. Usage not tracked.</td></tr>
+<tr><td>Advanced Approvals</td><td><strong>Configured</strong></td><td>16 advanced approval rules detected.</td></tr>
 <tr><td>Contracted Pricing</td><td><strong>Configured</strong></td><td>ContractedPrice setting enabled but no records found.</td></tr>
 <tr><td>Multi-Language</td><td><strong>Active Usage</strong></td><td>1 localizations detected.</td></tr></tbody></table>
 
@@ -659,6 +666,7 @@
 <tr><td>CleanOrg</td><td>1142</td><td>Org maintenance</td><td>Custom</td></tr></tbody></table>
 
     <h3>9.2 Triggers & Flows</h3>
+    <p><em>44 active flows (13 CPQ-related, 31 additional active flows in org).</em></p>
     <table><thead><tr><th>Component</th><th>Type</th><th>Object</th><th>Status</th></tr></thead><tbody><tr><td>Billing_Automation_v2_0</td><td>Trigger</td><td>OrderItem</td><td>Active</td></tr>
 <tr><td>TemplateQuoteBefore</td><td>Trigger</td><td>SBQQ__Quote__c</td><td>Active</td></tr>
 <tr><td>CdemoProductBefore</td><td>Trigger</td><td>Product2</td><td>Active</td></tr>
@@ -679,6 +687,7 @@
 <tr><td>sfdc_Checkout_Notify_On_Order_Summary_Created_Event</td><td>Flow</td><td></td><td>Active</td></tr></tbody></table>
 
     <h3>9.3 Validation Rules</h3>
+    <p><em>25 validation rules across 7 CPQ-related objects (OrderItem, SBQQ__QuoteLine__c, SBQQ__Quote__c, Order, Opportunity, SBQQ__QuoteLineGroup__c, Product2).</em></p>
     <table><thead><tr><th>Object</th><th>Rule</th><th>Status</th><th>Complexity</th></tr></thead><tbody><tr><td>OrderItem</td><td>CannotChangeBookingIndicatorOnActivation</td><td>Active</td><td><span class="severity-low">low</span></td></tr>
 <tr><td>SBQQ__QuoteLine__c</td><td>Dynamic_Invoicing_Amendment</td><td>Active</td><td><span class="severity-low">low</span></td></tr>
 <tr><td>SBQQ__QuoteLine__c</td><td>Additional_discount_percent_or_amount</td><td>Active</td><td><span class="severity-low">low</span></td></tr>
@@ -738,7 +747,7 @@
 
     <h3>A.1 CPQ Configuration Objects</h3>
     <table><thead><tr><th>ID</th><th>Object(s)</th><th>API Name</th><th>Count</th><th>Complexity</th><th>Phase</th><th>Conf.</th></tr></thead><tbody><tr><td>1</td><td>SBQQ__Localization__c</td><td><code>SBQQ__Localization__c</code></td><td>269</td><td><span class="severity-medium">medium</span></td><td>—</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>2</td><td>Product2</td><td><code>Product2</code></td><td>179</td><td><span class="severity-medium">medium</span></td><td>Phase 1</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>2</td><td>Product2 (total records)</td><td><code>Product2</code></td><td>179</td><td><span class="severity-medium">medium</span></td><td>Phase 1</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
 <tr><td>3</td><td>SBQQ__CustomScript__c</td><td><code>SBQQ__CustomScript__c</code></td><td>108</td><td><span class="severity-medium">medium</span></td><td>Phase 2</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
 <tr><td>4</td><td>SBQQ__CustomAction__c</td><td><code>SBQQ__CustomAction__c</code></td><td>63</td><td><span class="severity-medium">medium</span></td><td>Phase 3</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
 <tr><td>5</td><td>SBQQ__ProductRule__c</td><td><code>SBQQ__ProductRule__c</code></td><td>38</td><td><span class="severity-low">low</span></td><td>Phase 1</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
@@ -753,7 +762,7 @@
     <table><thead><tr><th>ID</th><th>Object(s)</th><th>API Name</th><th>Count</th><th>Complexity</th><th>Phase</th><th>Conf.</th></tr></thead><tbody><tr><td>1</td><td>ApexClass</td><td><code>ApexClass</code></td><td>1142</td><td><span class="severity-high">high</span></td><td>Phase 3</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
 <tr><td>2</td><td>CustomField (Formula)</td><td><code>CustomField (Formula)</code></td><td>49</td><td><span class="severity-medium">medium</span></td><td>—</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
 <tr><td>3</td><td>PlatformEventChannel</td><td><code>PlatformEventChannel</code></td><td>47</td><td><span class="severity-low">low</span></td><td>—</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>4</td><td>Flow</td><td><code>Flow</code></td><td>41</td><td><span class="severity-low">low</span></td><td>—</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>4</td><td>Flow</td><td><code>Flow</code></td><td>44</td><td><span class="severity-low">low</span></td><td>—</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
 <tr><td>5</td><td>InstalledPackage</td><td><code>InstalledPackage</code></td><td>35</td><td><span class="severity-low">low</span></td><td>—</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
 <tr><td>6</td><td>ValidationRule</td><td><code>ValidationRule</code></td><td>25</td><td><span class="severity-low">low</span></td><td>—</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
 <tr><td>7</td><td>PermissionSet</td><td><code>PermissionSet</code></td><td>16</td><td><span class="severity-low">low</span></td><td>—</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
@@ -860,18 +869,19 @@
 <tr><td>QCP</td><td>Quote Calculator Plugin — JavaScript custom calculation injection</td></tr></tbody></table>
 
     <h2>Appendix D: Extraction Coverage</h2>
-    <table><thead><tr><th>Category</th><th>Coverage</th><th>Notes</th></tr></thead><tbody><tr><td>Product Catalog</td><td><span class="badge badge-partial">Full</span></td><td>Products, bundles, 475 options, 38 product rules.</td></tr>
-<tr><td>Pricing &amp; Rules</td><td><span class="badge badge-partial">Full</span></td><td>Price rules, discount schedules, custom scripts. Price rule usage frequency: Not extracted — requires rule-to-quote linkage data.</td></tr>
-<tr><td>Transactional Data</td><td><span class="badge badge-partial">Full</span></td><td>90-day quotes, quote lines, usage trends. </td></tr>
-<tr><td>Custom Fields &amp; Validation</td><td><span class="badge badge-partial">Full</span></td><td>Custom fields, validation rules, formulas. </td></tr>
-<tr><td>Custom Code</td><td><span class="badge badge-partial">Full</span></td><td>Apex classes, triggers, flows. Apex class → SBQQ object dependencies: Not extracted — requires code-level analysis.</td></tr>
-<tr><td>Quote Templates</td><td><span class="badge badge-partial">Full</span></td><td>Template structure, sections, content.</td></tr>
-<tr><td>Advanced Approvals</td><td><span class="badge badge-partial">Full</span></td><td>Approval rules, conditions, chains, custom actions.</td></tr>
-<tr><td>CPQ Package Settings</td><td><span class="badge badge-partial">Full</span></td><td>Custom settings, plugin configuration.</td></tr>
-<tr><td>Integrations</td><td><span class="badge badge-partial">Full</span></td><td>Named credentials, platform events.</td></tr>
-<tr><td>Order Lifecycle</td><td><span class="badge badge-partial">Full</span></td><td>Orders, contracts, subscriptions.</td></tr>
-<tr><td>Localization</td><td><span class="badge badge-partial">Full</span></td><td>Multi-language translations, custom labels.</td></tr>
-<tr><td>User Behavior</td><td><span class="badge badge-confirmed">Confirmed</span></td><td>Derived from audit trail sampling.</td></tr></tbody></table>
+    <table><thead><tr><th>Category</th><th>Coverage</th><th>Notes</th></tr></thead><tbody><tr><td>Product Catalog</td><td><span class="badge badge-confirmed">Full</span></td><td>Products, bundles, 475 options, 38 product rules.</td></tr>
+<tr><td>Pricing &amp; Rules</td><td><span class="badge badge-confirmed">Full</span></td><td>Price rules, discount schedules, custom scripts. Price rule usage frequency: Not extracted — requires rule-to-quote linkage data.</td></tr>
+<tr><td>Transactional Data</td><td><span class="badge badge-partial">Partial</span></td><td>90-day quotes, quote lines, usage trends. Quote modification history and field-level change tracking not extracted.</td></tr>
+<tr><td>Custom Fields &amp; Validation</td><td><span class="badge badge-confirmed">Full</span></td><td>Custom fields, validation rules, formulas. </td></tr>
+<tr><td>Custom Code</td><td><span class="badge badge-confirmed">Full</span></td><td>Apex classes, triggers, flows. Apex class → SBQQ object dependencies: Not extracted — requires code-level analysis.</td></tr>
+<tr><td>Quote Templates</td><td><span class="badge badge-confirmed">Full</span></td><td>Template structure, sections, content.</td></tr>
+<tr><td>Advanced Approvals</td><td><span class="badge badge-partial">Partial</span></td><td>Approval rules, conditions, chains, custom actions extracted. Approval-to-quote usage linkage not surfaced.</td></tr>
+<tr><td>CPQ Package Settings</td><td><span class="badge badge-confirmed">Full</span></td><td>Custom settings, plugin configuration.</td></tr>
+<tr><td>Integrations</td><td><span class="badge badge-confirmed">Full</span></td><td>Named credentials, platform events.</td></tr>
+<tr><td>Order Lifecycle</td><td><span class="badge badge-confirmed">Full</span></td><td>Orders, contracts, subscriptions.</td></tr>
+<tr><td>Localization</td><td><span class="badge badge-confirmed">Full</span></td><td>Multi-language translations, custom labels.</td></tr>
+<tr><td>User Behavior</td><td><span class="badge badge-partial">Partial</span></td><td>Derived from audit trail sampling. Full user session analysis and adoption scoring not extracted.</td></tr>
+<tr><td>Product Rule Complexity</td><td><span class="badge badge-partial">Not extracted</span></td><td>Product rule structural complexity: Not extracted — requires condition/action scope analysis beyond current metadata extraction.</td></tr></tbody></table>
   </div>
 </body>
 </html>
