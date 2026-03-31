@@ -97,6 +97,15 @@ export class CatalogCollector extends BaseCollector {
       'product_query_built'
     );
 
+    // C3: Check if IsActive was dropped by FLS
+    const isActiveAccessible = productQuery.includedFields.includes('IsActive');
+    if (!isActiveAccessible) {
+      warnings.push(
+        'Product2.IsActive field not accessible (FLS restriction) — active product counts will be inferred, not authoritative'
+      );
+      this.log.warn('product2_isactive_not_accessible_fls');
+    }
+
     const products = await this.ctx.restApi.queryAll<Record<string, unknown>>(
       productQuery.query,
       this.signal
@@ -149,9 +158,44 @@ export class CatalogCollector extends BaseCollector {
     metrics.externallyConfigurableCount = products.filter(
       (p) => p.SBQQ__ExternallyConfigurable__c === true
     ).length;
+    metrics.isActiveAccessible = isActiveAccessible;
 
     // Create findings per product
     for (const p of products) {
+      // C3: Build evidenceRefs with IsActive field when accessible
+      const productEvidenceRefs: Array<{
+        type: 'record-id' | 'field-ref';
+        value: string;
+        label: string;
+        referencedObjects?: string[];
+      }> = [
+        {
+          type: 'record-id',
+          value: p.Id as string,
+          label: p.Name as string,
+          referencedObjects: ['Product2'],
+        },
+        {
+          type: 'field-ref',
+          value: 'Product2.Family',
+          label: (p.Family as string) ?? 'Other',
+        },
+        {
+          type: 'field-ref',
+          value: 'Product2.ProductCode',
+          label: (p.ProductCode as string) ?? '',
+        },
+      ];
+
+      // C3: Add IsActive evidenceRef for canonical active product count
+      if (isActiveAccessible) {
+        productEvidenceRefs.push({
+          type: 'field-ref',
+          label: 'IsActive',
+          value: String(p.IsActive ?? false),
+        });
+      }
+
       findings.push(
         createFinding({
           domain: 'catalog',
@@ -166,24 +210,7 @@ export class CatalogCollector extends BaseCollector {
           rcaTargetConcept: 'ProductSellingModel',
           rcaMappingComplexity: p.SBQQ__ConfigurationType__c ? 'transform' : 'direct',
           usageLevel: p.IsActive ? undefined : 'dormant',
-          evidenceRefs: [
-            {
-              type: 'record-id',
-              value: p.Id as string,
-              label: p.Name as string,
-              referencedObjects: ['Product2'],
-            },
-            {
-              type: 'field-ref',
-              value: 'Product2.Family',
-              label: (p.Family as string) ?? 'Other',
-            },
-            {
-              type: 'field-ref',
-              value: 'Product2.ProductCode',
-              label: (p.ProductCode as string) ?? '',
-            },
-          ],
+          evidenceRefs: productEvidenceRefs,
         })
       );
     }
