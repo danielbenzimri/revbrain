@@ -1,13 +1,14 @@
 # CPQ Assessment Report V4 — Mitigation Plan (Revised)
 
 > **Document ID:** CPQ-V4-MIT-2026-001
-> **Version:** 2.0
+> **Version:** 2.1
 > **Date:** 2026-03-31
 > **Status:** Ready for Review
 > **Authors:** Daniel Aviram + Claude (Architect)
 > **Input:** Developer_Redline_Checklist_v4.md, Auditor 1 review, Auditor 2 review
 > **Audience:** Technical reviewers, QA, SI stakeholders
 > **Rollback:** V3 code tagged at commit `29937d7`. Rollback = regenerate from tag.
+> **Review status:** Approved with minor revisions by two independent auditors. All audit findings addressed in v2.1.
 
 ---
 
@@ -79,6 +80,8 @@ Every disputed metric must have a formal definition. This is the **single source
 | **sbaa Version** | Advanced Approvals package version | `InstalledPackage` finding (primary) | `NamespacePrefix='sbaa'` from `InstalledSubscriberPackage` | All-time | `InstalledSubscriberPackage` | **Fallback chain:** (1) OrgFingerprint notes, (2) CPQSettingValue "Package: Advanced Approvals" notes. **If all miss:** "Installed (version unknown)" — never "Not installed" if package is detected elsewhere | "Adv. Approvals Version" |
 | **Active Flows** | Active flow definitions | `Flow` findings from dependencies collector | `FlowDefinitionView WHERE IsActive=true` | All-time | `FlowDefinitionView` | 0 | "Active Flows" |
 | **Validation Rules** | Active validation rules on CPQ objects | `ValidationRule` findings from customizations collector | `ValidationRule WHERE Active=true` | All-time | All objects with SBQQ fields | 0 | "Validation Rules" |
+| **Apex Classes** | Apex classes referencing CPQ objects | `ApexClass` findings | Class name contains SBQQ reference or is in dependency graph | All-time | `ApexClass` | 0 | "Apex Classes (CPQ-related)" |
+| **Triggers** | Triggers on CPQ objects | `ApexTrigger` findings | Trigger object is SBQQ-namespaced | All-time | `ApexTrigger` | 0 | "Triggers (CPQ-related)" |
 
 ### Metric Precedence Rules
 
@@ -86,6 +89,20 @@ When a metric has multiple potential sources:
 1. **Primary source** is always preferred (explicit SOQL result, dedicated finding type)
 2. **Fallback source** is used only when primary is absent, and the value is tagged with lower confidence
 3. **If both miss**, display "Not extracted" — never display 0 for a metric that was supposed to be extracted
+
+### Metric State Model
+
+Each metric carries both a `value` and a `status`. Display logic must distinguish true zero from unknown/unavailable.
+
+| Status | Meaning | Display |
+|--------|---------|---------|
+| `present` | Value extracted and confirmed | Show value with Confirmed badge |
+| `zero` | Query succeeded, count is genuinely zero | Show "0 — Confirmed" |
+| `estimated` | Derived from fallback source | Show value with Estimated badge |
+| `not_extracted` | Extraction failed or was skipped | Show "Not extracted" (never show 0) |
+| `not_applicable` | Package/feature not installed | Show "N/A" or omit section |
+
+This model prevents silent misreporting — the most dangerous bug class in assessment reports.
 
 ---
 
@@ -292,8 +309,9 @@ interface ReportCounts {
   discountScheduleUnique: number;
 
   // Packages
-  sbaaVersion: string | null;     // null = "Not installed" / string = version
-  sbaaDetected: boolean;          // true if namespace found anywhere
+  sbaaInstalled: boolean;          // true if namespace found in installed packages
+  sbaaVersionRaw: string | null;   // raw version string, null if unknown
+  sbaaVersionDisplay: string;      // "v232.2.0" | "Installed (version unknown)" | "Not installed"
 
   // Code & automation
   approvalRuleCount: number;
@@ -328,12 +346,12 @@ Operates on assembled `ReportData`. Catches:
 |------|-------|----------|
 | V17 | Any percentage metric > 100% in assembled report | Error |
 | V18 | `metadata.lowVolumeWarning` active users matches `cpqAtAGlance` active users | Error |
-| V19 | Product count in Key Findings matches `cpqAtAGlance` product count | Error |
+| V19 | `keyFindings.activeProducts === cpqAtAGlance.activeProducts` AND `inventory.totalProducts === counts.totalProducts` AND `bundleCount === counts.bundleProducts` (per-metric, not generic "product count") | Error |
 | V20 | Complexity rationale mentions "no product options" when `counts.productOptions > 0` | Error |
 | V21 | `metadata.sbaaVersion` is "Not installed" when `counts.sbaaDetected === true` | Error |
 | V22 | Approval rules section says "not detected" when `counts.approvalRuleCount > 0` | Error |
 | V23 | Every Top Quoted Product has `percentQuotes <= 100` | Error |
-| V24 | Appendix D Product Catalog says "not available" when `counts.productOptions > 0` | Warning |
+| V24 | Appendix D Product Catalog says "not available" when `counts.productOptions > 0` | Error |
 
 ---
 
@@ -345,7 +363,7 @@ Operates on assembled `ReportData`. Catches:
 |------|------|-------------|-------------------------------|
 | C1 | `settings.ts` | Emit canonical `InstalledPackage` findings with namespace, version, licenseCount for each installed package | `findings.filter(f => f.artifactType === 'InstalledPackage' && f.notes.includes('sbaa')).length === 1` |
 | C2 | `approvals.ts` | Refactor: check `_installedPackages` for sbaa, then direct `describeSObject()`, then query. No dependency on Discovery describeCache for correctness. | When sbaa is installed, `findings.filter(f => f.artifactType === 'AdvancedApprovalRule').length > 0` regardless of Discovery cache state |
-| C3 | `catalog.ts` | Verify `IsActive` is in Product2 SOQL wishlist. If present, store as `evidenceRef {label:'IsActive', value:'true/false'}`. If dropped by FLS, emit validator warning. | `findings.filter(f => f.artifactType === 'Product2').every(f => f.evidenceRefs.some(r => r.label === 'IsActive'))` — or a FLS warning is emitted |
+| C3 | `catalog.ts` | Ensure `IsActive` is included in the Product2 SOQL field list (add if absent). Store as `evidenceRef {label:'IsActive', value:'true/false'}` on each Product2 finding. If dropped by FLS, emit validator warning. Note: a first-class `attributes.isActive` field would be architecturally preferable to evidenceRef parsing, but evidenceRef is consistent with the current finding schema. | `findings.filter(f => f.artifactType === 'Product2').every(f => f.evidenceRefs.some(r => r.label === 'IsActive'))` — or a FLS warning is emitted |
 | C4 | `usage.ts` | Filter `quoteLines` to only those linked to `recentQuotes` (by Quote ID) before computing `productQuoteSets`. Merge C3/C4 from original plan (per Auditor 2). | `topQuotedProducts.every(p => p.quotedCount <= recentQuotes.length)` |
 
 ### Phase 2: Assembler Fixes (single source of truth)
@@ -359,6 +377,7 @@ Operates on assembled `ReportData`. Catches:
 | A5 | `assembler.ts` | Complexity rationale: use `counts.productOptions`. No "no product options" when count > 0. | `if counts.productOptions > 0 then scoringMethodology[0].rationale.includes(counts.productOptions)` |
 | A6 | `assembler.ts` | Remove "Package:" entries from `coreSettings`. Single display source for packages. | `coreSettings.filter(s => s.setting.startsWith('Package:')).length === 0` |
 | A7 | `assembler.ts` | Product Catalog coverage: check `counts.productOptions > 0` for options coverage. Use explicit coverage levels (Full/Partial/Minimal). | `if counts.productOptions > 0 then appendixD['Product Catalog'].coverage !== 'Partial'` |
+| A8 | `templates/index.ts` | Conditional label rendering: when `counts.activeProductSource === 'inferred'`, render "Products Extracted" instead of "Active Products". Same for `activeUsersSource === 'UserBehavior'` → append "(Estimated)" to the label. | Template renders degraded labels when source tracking fields indicate non-primary source |
 
 ### Phase 3: Validator Additions (prevent recurrence)
 
@@ -379,7 +398,8 @@ Operates on assembled `ReportData`. Catches:
 | T5 | **Integration test:** Run extraction on Cloud Run → generate PDF → extract all numbers into golden file |
 | T6 | **Verification:** Run `SELECT COUNT(Id) FROM FlowDefinitionView WHERE IsActive = true` against org. Compare to report's 44. Document result. |
 | T7 | **Verification:** Run `SELECT COUNT(Id) FROM ValidationRule WHERE Active = true` against org with explicit object list. Compare to report's 25. Document result. |
-| T8 | **Golden file regression:** Create `report-snapshot.json` from T5 output. Add CI test that diffs future ReportData against golden file. Breaks on unexpected count changes. |
+| T7a | **Escalation rule:** If T6 or T7 reveals a discrepancy > 10% from the report value, open a P1 fix task targeting the relevant collector. If ≤ 10%, document the scope difference in the report text and close. |
+| T8 | **Golden file regression:** Create `report-snapshot.json` from a frozen `AssessmentFindingInput[]` fixture (not live org data). CI test assembles ReportData from the fixture and diffs against the golden file. Live org verification (T5) is performed separately and is not a CI gate. Golden file tests catch assembler regressions; live tests catch collector regressions. |
 | T9 | **Validator gate:** Run both FindingsValidator and ReportConsistencyValidator. Zero errors. Warnings documented and accepted. |
 
 ---
@@ -434,7 +454,7 @@ graph TD
 | Active product count changes visibly (38 → ~176) | SI sees different number vs V3 | High | Expected and correct. Label change ("Active Products") makes the basis explicit |
 | `IsActive` dropped by FLS | `activeProducts` falls back to proxy | Medium | Emit validator warning. Label as "Products Extracted" not "Active Products" |
 | sbaa queries fail on orgs without sbaa | False "not detected" | Low | Graceful degradation: "sbaa not installed" when package truly absent |
-| API call budget exceeded by additional describes | Extraction fails on API-limited orgs | Low | Check remaining API calls before adding sbaa describes. Skip if < 100 remaining |
+| API call budget exceeded by additional describes | Extraction fails on API-limited orgs | Low | Check remaining API calls before adding sbaa describes. Skip if < 100 remaining. **If skipped, emit validator warning:** 'sbaa describe skipped due to API budget — approval rules may be underreported.' Silent degradation is never acceptable. |
 | Golden file becomes stale after org changes | False CI failures | Medium | Golden file is regenerated per-org, not shared across orgs |
 | Validator creates false confidence | New bug class missed | Medium | Validator is safety net, not substitute for golden-file testing and manual review |
 
@@ -454,7 +474,7 @@ The V4 report is ready for SI review when ALL of the following are true:
 | 6 | Complexity rationale does not say "no product options" when options exist | ReportConsistencyValidator V20 |
 | 7 | Section 4.2 contains only CPQ settings (no "Package:" entries) | Unit test on ReportData |
 | 8 | Appendix D Product Catalog reads "Full" when product options > 0 | ReportConsistencyValidator V24 |
-| 9 | Cloud Run extraction produces same finding counts as previous run (12/12 collectors) | Integration test T5 |
+| 9 | Cloud Run extraction completes successfully with 12/12 collectors. Finding count deltas vs previous run are explained by C1-C4 changes and documented in the golden file baseline. | Integration test T5 |
 | 10 | FindingsValidator: zero errors | T9 |
 | 11 | ReportConsistencyValidator: zero errors | T9 |
 | 12 | Flow count verified against direct SOQL | T6 |
