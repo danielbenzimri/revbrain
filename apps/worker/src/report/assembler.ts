@@ -1327,9 +1327,10 @@ function buildGlanceSections(
   return {
     'Product Catalog': [
       {
-        label: 'Active Products',
-        value: String(dataCount('Product') || count('Product2')),
-        confidence: 'Confirmed',
+        // A8: conditional label — "Products Extracted" when inferred, "Active Products" when from IsActive
+        label: counts.activeProductSource === 'inferred' ? 'Products Extracted' : 'Active Products',
+        value: counts.activeProductStatus === 'not_extracted' ? 'Not extracted' : String(counts.activeProducts),
+        confidence: counts.activeProductSource === 'IsActive' ? 'Confirmed' : counts.activeProductSource === 'inferred' ? 'Estimated' : 'Not extracted',
       },
       {
         label: 'Bundle-capable Products',
