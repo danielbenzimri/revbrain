@@ -161,6 +161,8 @@ export interface ReportData {
     quoteTemplates: Array<{ name: string; isDefault: boolean; lastModified: string }>;
     documentGeneration: { templateCount: number; docuSignActive: boolean };
   };
+  /** Canonical counts — single source of truth for all metrics (A1) */
+  counts: ReportCounts;
   /** Validation banners to display prominently in the report */
   reportBanners: string[];
   complexityHotspots: Array<{ name: string; severity: string; analysis: string }>;
@@ -435,12 +437,8 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
   );
   const _inactiveProductRules = productRules.length - activeProductRules.length;
 
-  // Low volume detection
-  const activeUsers = findings.find((f) => f.artifactType === 'UserAdoption')?.countValue ?? 0;
-  const isLowVolume = totalQuotes < 50 || activeUsers < 5;
-  const lowVolumeWarning = isLowVolume
-    ? `Low activity detected in assessment window (${totalQuotes} quotes, ${activeUsers} active users). Some metrics may not be statistically meaningful.`
-    : null;
+  // Low volume detection — placeholder; re-evaluated after reportCounts are built
+  // (see lowVolumeWarning below)
 
   // Assessment period calculation
   const assessmentDate = new Date().toISOString().split('T')[0];
@@ -470,7 +468,7 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
   // Feature utilization
   const featureUtilization = buildFeatureUtilization(findings);
 
-  // Canonical counts — computed once, passed to both glance and section builders (Task 0.8)
+  // Canonical counts — computed once, passed to both glance and section builders (Task 0.8, A1)
   const totalQuoteLines =
     findings.find(
       (f) =>
@@ -479,28 +477,168 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
     )?.countValue ?? 0;
 
   const dsNameSet = new Set(discountSchedules.map((d) => d.artifactName));
+
+  // ── A1: Product counts ──
+  const productFindings = findings.filter((f) => f.artifactType === 'Product2');
+  const totalProducts = productFindings.length;
+
+  // activeProducts: prefer IsActive evidenceRef, fallback to usageLevel proxy
+  const productsWithIsActive = productFindings.filter((f) =>
+    safeRefs(f).some((r) => String(r.label) === 'IsActive')
+  );
+  let activeProducts: number;
+  let activeProductSource: 'IsActive' | 'inferred' | 'unknown';
+  let activeProductStatus: MetricStatus;
+  if (productsWithIsActive.length > 0) {
+    activeProducts = productsWithIsActive.filter((f) =>
+      safeRefs(f).some((r) => String(r.label) === 'IsActive' && String(r.value) === 'true')
+    ).length;
+    activeProductSource = 'IsActive';
+    activeProductStatus = 'present';
+  } else if (totalProducts > 0) {
+    activeProducts = productFindings.filter((f) => f.usageLevel !== 'dormant').length;
+    activeProductSource = 'inferred';
+    activeProductStatus = 'estimated';
+  } else {
+    activeProducts = 0;
+    activeProductSource = 'unknown';
+    activeProductStatus = 'not_extracted';
+  }
+
+  const bundleProducts = productFindings.filter(
+    (f) => f.complexityLevel === 'medium' // catalog sets medium for ConfigurationType products
+  ).length;
+
+  const productOptionCount =
+    _productOptions.length > 0
+      ? _productOptions.length
+      : (findings.find(
+          (f) =>
+            f.artifactType === 'DataCount' &&
+            f.artifactName?.toLowerCase().replace(/\s/g, '').includes('productoption')
+        )?.countValue ?? 0);
+
+  const productFamilySet = new Set(
+    productFindings
+      .filter((f) => f.usageLevel !== 'dormant')
+      .map((f) => {
+        const familyRef = safeRefs(f).find((r) => String(r.value) === 'Product2.Family');
+        return familyRef ? String(familyRef.label) : null;
+      })
+      .filter((f): f is string => f != null && f !== '' && f !== '(none)')
+  );
+  const productFamilies = productFamilySet.size;
+
+  // ── A1: Active users ──
+  const userAdoptionFinding = findings.find((f) => f.artifactType === 'UserAdoption');
+  let activeUsersCount: number;
+  let activeUsersSource: 'UserAdoption' | 'UserBehavior' | 'unknown';
+  let activeUserStatus: MetricStatus;
+  if (userAdoptionFinding && (userAdoptionFinding.countValue ?? 0) > 0) {
+    activeUsersCount = userAdoptionFinding.countValue!;
+    activeUsersSource = 'UserAdoption';
+    activeUserStatus = 'present';
+  } else {
+    const ubSum = userBehavior.reduce((s, u) => s + (u.countValue ?? 0), 0);
+    if (ubSum > 0) {
+      activeUsersCount = ubSum;
+      activeUsersSource = 'UserBehavior';
+      activeUserStatus = 'estimated';
+    } else {
+      activeUsersCount = 0;
+      activeUsersSource = 'unknown';
+      activeUserStatus = 'not_extracted';
+    }
+  }
+
+  // ── A1: sbaa detection ──
+  const installedPackageFindings = get('InstalledPackage');
+  const sbaaInstalledPkg = installedPackageFindings.find((f) =>
+    safeRefs(f).some((r) => String(r.label) === 'Namespace' && String(r.value) === 'sbaa')
+  );
+  const sbaaFromDescribe = findings.some(
+    (f) => f.artifactType === 'OrgFingerprint' && f.notes?.includes('sbaa')
+  );
+  const sbaaFromSettings = settingValues.some(
+    (f) => f.artifactName?.toLowerCase().includes('advanced approval')
+  );
+  const sbaaInstalled = !!sbaaInstalledPkg || sbaaFromDescribe || sbaaFromSettings;
+
+  // sbaaVersionRaw: three-level extraction
+  const sbaaVersionFromPkg = sbaaInstalledPkg
+    ? safeRefs(sbaaInstalledPkg).find((r) => String(r.label) === 'Version')?.value
+    : null;
+  const sbaaVersionFromFp =
+    orgFp?.notes?.match(/sbaa\s+([v\d.]+)/i)?.[1] ?? null;
+  const sbaaVersionFromSettings =
+    findings
+      .find(
+        (f) =>
+          f.artifactType === 'CPQSettingValue' &&
+          f.artifactName?.toLowerCase().includes('advanced approval')
+      )
+      ?.notes?.match(/([v\d.]+)/)?.[1] ?? null;
+  const sbaaVersionRaw = (sbaaVersionFromPkg ? String(sbaaVersionFromPkg) : null) ?? sbaaVersionFromFp ?? sbaaVersionFromSettings;
+
+  let sbaaVersionDisplay: string;
+  if (sbaaVersionRaw) {
+    sbaaVersionDisplay = sbaaVersionRaw;
+  } else if (sbaaInstalled) {
+    sbaaVersionDisplay = 'Installed (version unknown)';
+  } else {
+    sbaaVersionDisplay = 'Not installed';
+  }
+
+  // ── A1: Code & automation counts ──
+  const advancedApprovalRuleFindings = get('AdvancedApprovalRule');
+  const approvalRuleCount = advancedApprovalRuleFindings.length;
+  const flowCountCpqRelated = flows.length;
+  const summaryFlow = findings.find(
+    (f) =>
+      f.artifactType === 'Flow' &&
+      (f.findingKey?.includes('non_cpq_summary') ||
+        f.artifactName?.includes('additional active flows'))
+  );
+  const flowCountActive = summaryFlow ? flowCountCpqRelated + (summaryFlow.countValue ?? 0) : flowCountCpqRelated;
+
   const reportCounts: ReportCounts = {
+    totalProducts,
+    activeProducts,
+    activeProductSource,
+    activeProductStatus,
+    bundleProducts,
+    productOptions: productOptionCount,
+    productFamilies,
     activePriceRules: activePriceRules.length,
     totalPriceRules: priceRules.length,
     activeProductRules: activeProductRules.length,
     totalProductRules: productRules.length,
     totalQuotes,
     totalQuoteLines,
+    activeUsers: activeUsersCount,
+    activeUsersSource,
+    activeUserStatus,
     discountScheduleTotal: discountSchedules.length,
     discountScheduleUnique: dsNameSet.size,
+    sbaaInstalled,
+    sbaaVersionRaw,
+    sbaaVersionDisplay,
+    approvalRuleCount,
+    flowCountActive,
+    flowCountCpqRelated,
+    validationRuleCount: validationRules.length,
+    apexClassCount: apexClasses.length,
+    triggerCount: triggers.length,
   };
 
-  // sbaa version detection
-  const sbaaVersion =
-    orgFp?.notes?.match(/sbaa\s+([v\d.]+)/i)?.[1] ??
-    findings
-      .find(
-        (f) =>
-          f.artifactType === 'OrgFingerprint' &&
-          f.notes?.toLowerCase().includes('advanced approval')
-      )
-      ?.notes?.match(/([v\d.]+)/)?.[1] ??
-    null;
+  // Low volume detection (A4: uses canonical activeUsers count)
+  const isLowVolume = totalQuotes < 50 || reportCounts.activeUsers < 5;
+  const lowVolumeWarning = isLowVolume
+    ? `Low activity detected in assessment window (${totalQuotes} quotes, ${reportCounts.activeUsers} active users). Some metrics may not be statistically meaningful.`
+    : null;
+
+  // sbaa version: use canonical counts (A2 three-level fallback)
+  const sbaaVersion = reportCounts.sbaaVersionRaw ?? (reportCounts.sbaaInstalled ? 'Installed (version unknown)' : null);
 
   return {
     metadata: {
@@ -805,6 +943,8 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
 
     approvalsAndDocs: buildApprovalsAndDocs(findings, plugins),
 
+    counts: reportCounts,
+
     reportBanners: [],
 
     complexityHotspots:
@@ -1098,19 +1238,55 @@ function buildFeatureUtilization(
 // Glance Dashboard Builder
 // ============================================================================
 
+/** Metric status — distinguishes true zero from unknown/unavailable (V4 Metric State Model) */
+export type MetricStatus = 'present' | 'estimated' | 'not_extracted';
+
 /**
  * Canonical report counts — computed once, shared across glance and section builders.
  * Ensures At-a-Glance numbers always match section detail.
+ *
+ * ENFORCEMENT RULE: No assembler function may independently count findings for
+ * any metric covered by ReportCounts. All access goes through `counts.X`.
  */
 export interface ReportCounts {
+  // Products
+  totalProducts: number;
+  activeProducts: number;
+  activeProductSource: 'IsActive' | 'inferred' | 'unknown';
+  activeProductStatus: MetricStatus;
+  bundleProducts: number;
+  productOptions: number;
+  productFamilies: number;
+
+  // Rules
   activePriceRules: number;
   totalPriceRules: number;
   activeProductRules: number;
   totalProductRules: number;
+
+  // Usage (90-day scope)
   totalQuotes: number;
   totalQuoteLines: number;
+  activeUsers: number;
+  activeUsersSource: 'UserAdoption' | 'UserBehavior' | 'unknown';
+  activeUserStatus: MetricStatus;
+
+  // Discount schedules
   discountScheduleTotal: number;
   discountScheduleUnique: number;
+
+  // Packages
+  sbaaInstalled: boolean;
+  sbaaVersionRaw: string | null;
+  sbaaVersionDisplay: string;
+
+  // Code & automation
+  approvalRuleCount: number;
+  flowCountActive: number;
+  flowCountCpqRelated: number;
+  validationRuleCount: number;
+  apexClassCount: number;
+  triggerCount: number;
 }
 
 function buildGlanceSections(
