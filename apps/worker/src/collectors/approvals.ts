@@ -220,10 +220,52 @@ export class ApprovalsCollector extends BaseCollector {
     // ================================================================
     this.ctx.progress.updateSubstep('approvals', 'advanced_approvals');
 
-    const sbaaInstalled = this.isSbaaInstalled();
+    // C2: Independent sbaa detection (not reliant on Discovery describeCache)
+    const sbaaDetection = await this.detectSbaa();
+    const sbaaInstalled = sbaaDetection.installed;
     metrics.advancedApprovalsInstalled = sbaaInstalled;
 
-    if (sbaaInstalled) {
+    if (sbaaDetection.installed && !sbaaDetection.accessible) {
+      // sbaa package detected but objects not accessible — degrade gracefully
+      warnings.push(sbaaDetection.degradedReason!);
+      findings.push(
+        createFinding({
+          domain: 'approvals',
+          collector: 'approvals',
+          artifactType: 'AdvancedApprovals',
+          artifactName: 'advanced_approvals_degraded',
+          findingType: 'advanced_approvals_degraded',
+          sourceType: 'inferred',
+          riskLevel: 'high',
+          complexityLevel: 'high',
+          migrationRelevance: 'must-migrate',
+          rcaTargetConcept: 'Flow-based approval orchestration',
+          rcaMappingComplexity: 'redesign',
+          detected: true,
+          notes: sbaaDetection.degradedReason!,
+        })
+      );
+    }
+
+    if (sbaaDetection.installed && sbaaDetection.accessible) {
+      // C2: Ensure all sbaa objects are described (may not be in cache if Discovery missed them)
+      const sbaaObjects = [
+        'sbaa__ApprovalCondition__c',
+        'sbaa__ApprovalChain__c',
+        'sbaa__Approver__c',
+        'sbaa__ApprovalVariable__c',
+      ];
+      for (const objName of sbaaObjects) {
+        if (!this.ctx.describeCache.has(objName)) {
+          try {
+            const desc = await this.ctx.restApi.describe(objName, this.signal);
+            this.ctx.describeCache.set(objName, desc);
+          } catch {
+            this.log.warn({ object: objName }, 'sbaa_object_describe_failed');
+          }
+        }
+      }
+
       // 8.4a: Approval Rules
       try {
         const describe = this.ctx.describeCache.get('sbaa__ApprovalRule__c') as
@@ -455,13 +497,50 @@ export class ApprovalsCollector extends BaseCollector {
   }
 
   /**
-   * Check if Advanced Approvals (sbaa__ namespace) is installed
-   * by looking for sbaa__ objects in the Describe cache.
+   * C2: Check if Advanced Approvals (sbaa__ namespace) is installed.
+   *
+   * Three-level detection (independent of Discovery describeCache):
+   * 1. Fast path: check describeCache for sbaa__ keys (optimization)
+   * 2. Check _installedPackages for any package with 'sbaa' namespace
+   * 3. Direct describeSObject('sbaa__ApprovalRule__c') to confirm accessibility
+   *
+   * Returns: { installed: boolean; accessible: boolean; degradedReason?: string }
    */
-  private isSbaaInstalled(): boolean {
+  private async detectSbaa(): Promise<{
+    installed: boolean;
+    accessible: boolean;
+    degradedReason?: string;
+  }> {
+    // Fast path: describeCache already has sbaa objects (from Discovery)
     for (const [key] of this.ctx.describeCache) {
-      if (key.startsWith('sbaa__')) return true;
+      if (key.startsWith('sbaa__')) return { installed: true, accessible: true };
     }
-    return false;
+
+    // Check _installedPackages for sbaa namespace
+    const installedPackages = this.ctx.describeCache.get('_installedPackages') as
+      | Array<{ namespace: string; name: string; version: string }>
+      | undefined;
+    const sbaaPackage = installedPackages?.find(
+      (pkg) => pkg.namespace.toLowerCase() === 'sbaa'
+    );
+
+    if (!sbaaPackage) {
+      return { installed: false, accessible: false };
+    }
+
+    // sbaa package detected — attempt direct describe to confirm accessibility
+    try {
+      const describe = await this.ctx.restApi.describe('sbaa__ApprovalRule__c', this.signal);
+      // Cache the result for use in the extraction loop
+      this.ctx.describeCache.set('sbaa__ApprovalRule__c', describe);
+      return { installed: true, accessible: true };
+    } catch {
+      // Package installed but objects not accessible (FLS, permissions, etc.)
+      return {
+        installed: true,
+        accessible: false,
+        degradedReason: `sbaa package detected (${sbaaPackage.name} v${sbaaPackage.version}) but sbaa__ApprovalRule__c is not accessible — check FLS/permissions`,
+      };
+    }
   }
 }
