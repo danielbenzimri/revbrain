@@ -29,7 +29,7 @@ adminSupportRouter.openapi(
     tags: ['Admin Support'],
     summary: 'List All Tickets',
     description: 'List all support tickets with filters and pagination.',
-    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), listLimiter),
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin', 'org_owner'), listLimiter),
     request: {
       query: z.object({
         limit: z.coerce.number().min(1).max(MAX_LIMIT).optional(),
@@ -153,7 +153,7 @@ adminSupportRouter.openapi(
     tags: ['Admin Support'],
     summary: 'Get Ticket Statistics',
     description: 'Get aggregate statistics for support tickets.',
-    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), adminLimiter),
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin', 'org_owner'), adminLimiter),
     responses: {
       200: {
         content: {
@@ -197,7 +197,7 @@ adminSupportRouter.openapi(
     tags: ['Admin Support'],
     summary: 'Get Ticket Details',
     description: 'Get full ticket details including internal notes.',
-    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), adminLimiter),
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin', 'org_owner'), adminLimiter),
     request: {
       params: z.object({
         id: z.string().uuid('Invalid ticket ID'),
@@ -286,7 +286,7 @@ adminSupportRouter.openapi(
     tags: ['Admin Support'],
     summary: 'Update Ticket',
     description: 'Update ticket status, priority, category, or assignment.',
-    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), adminLimiter),
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin', 'org_owner'), adminLimiter),
     request: {
       params: z.object({
         id: z.string().uuid('Invalid ticket ID'),
@@ -396,7 +396,7 @@ adminSupportRouter.openapi(
     tags: ['Admin Support'],
     summary: 'Reply to Ticket',
     description: 'Add a message to a ticket (can be internal note or customer-visible reply).',
-    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), adminLimiter),
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin', 'org_owner'), adminLimiter),
     request: {
       params: z.object({
         id: z.string().uuid('Invalid ticket ID'),
@@ -490,7 +490,7 @@ adminSupportRouter.openapi(
     tags: ['Admin Support'],
     summary: 'Assign Ticket',
     description: 'Assign or unassign a ticket to an admin user.',
-    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), adminLimiter),
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin', 'org_owner'), adminLimiter),
     request: {
       params: z.object({
         id: z.string().uuid('Invalid ticket ID'),
@@ -563,7 +563,7 @@ adminSupportRouter.openapi(
     summary: 'Create Ticket on Behalf',
     description:
       'Admin creates a support ticket on behalf of a customer (e.g., from phone/email report).',
-    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), adminLimiter),
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin', 'org_owner'), adminLimiter),
     request: {
       body: {
         content: {

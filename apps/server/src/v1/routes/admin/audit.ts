@@ -117,7 +117,7 @@ adminAuditRouter.openapi(
     tags: ['Admin Audit'],
     summary: 'List Audit Log Entries',
     description: 'List audit log entries with optional filters and pagination.',
-    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), adminLimiter),
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin', 'org_owner'), adminLimiter),
     request: {
       query: z.object({
         limit: z.coerce.number().min(1).max(MAX_LIMIT).optional(),
@@ -199,7 +199,7 @@ adminAuditRouter.openapi(
     tags: ['Admin Audit'],
     summary: 'Export Audit Log as CSV',
     description: 'Export audit log entries as CSV. Limited to 10,000 rows.',
-    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), adminLimiter),
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin', 'org_owner'), adminLimiter),
     request: {
       query: z.object({
         action: z.string().optional(),

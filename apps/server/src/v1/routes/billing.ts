@@ -174,6 +174,13 @@ billingRouter.openapi(
     },
   }),
   async (c) => {
+    if (!isStripeConfigured()) {
+      return c.json({
+        success: true,
+        data: { subscription: null, plan: null },
+      });
+    }
+
     const user = c.get('user');
     const billingService = new BillingService();
 

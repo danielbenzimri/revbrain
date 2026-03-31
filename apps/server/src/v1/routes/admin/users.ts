@@ -26,7 +26,7 @@ adminUsersRouter.openapi(
     tags: ['Admin'],
     summary: 'Invite User',
     description: 'System admin invites a user to any organization.',
-    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), adminLimiter),
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin', 'org_owner'), adminLimiter),
     request: {
       body: {
         content: {
@@ -144,7 +144,7 @@ adminUsersRouter.openapi(
     tags: ['Admin'],
     summary: 'List All Users',
     description: 'Fetch users with their organization details. Supports pagination.',
-    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), listLimiter),
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin', 'org_owner'), listLimiter),
     request: {
       query: z.object({
         limit: z.coerce.number().min(1).max(MAX_LIMIT).optional(),
@@ -238,7 +238,7 @@ adminUsersRouter.openapi(
     tags: ['Admin'],
     summary: 'Update User',
     description: 'Update user profile details.',
-    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), adminLimiter),
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin', 'org_owner'), adminLimiter),
     request: {
       params: z.object({
         id: z.string().uuid('Invalid user ID format'),
@@ -355,7 +355,7 @@ adminUsersRouter.openapi(
     tags: ['Admin'],
     summary: 'Delete User',
     description: 'Soft-delete a user and remove from Supabase Auth. Frees email for re-invitation.',
-    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), adminLimiter),
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin', 'org_owner'), adminLimiter),
     request: {
       params: z.object({
         id: z.string().uuid('Invalid user ID format'),

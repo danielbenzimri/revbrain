@@ -32,7 +32,7 @@ adminNotificationsRouter.openapi(
     tags: ['Admin Notifications'],
     summary: 'List Notifications',
     description: 'List notifications for the current admin user.',
-    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), listLimiter),
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin', 'org_owner'), listLimiter),
     request: {
       query: z.object({
         unread: z.string().optional(),
@@ -87,7 +87,7 @@ adminNotificationsRouter.openapi(
     tags: ['Admin Notifications'],
     summary: 'Unread Count',
     description: 'Get unread notification count for the current admin user.',
-    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), listLimiter),
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin', 'org_owner'), listLimiter),
     request: {},
     responses: {
       200: {
@@ -131,7 +131,7 @@ adminNotificationsRouter.openapi(
     tags: ['Admin Notifications'],
     summary: 'Mark as Read',
     description: 'Mark a single notification as read.',
-    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), adminLimiter),
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin', 'org_owner'), adminLimiter),
     request: {
       params: z.object({
         id: z.string().uuid(),
@@ -183,7 +183,7 @@ adminNotificationsRouter.openapi(
     tags: ['Admin Notifications'],
     summary: 'Mark All as Read',
     description: 'Mark all notifications as read for the current admin user.',
-    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), adminLimiter),
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin', 'org_owner'), adminLimiter),
     request: {},
     responses: {
       200: {

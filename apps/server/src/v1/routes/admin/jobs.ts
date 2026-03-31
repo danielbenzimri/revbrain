@@ -27,7 +27,7 @@ adminJobsRouter.openapi(
     path: '/stats',
     summary: 'Get Job Queue Stats',
     description: 'Returns counts of pending, processing, completed, failed, and dead jobs.',
-    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), listLimiter),
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin', 'org_owner'), listLimiter),
     responses: {
       200: {
         content: {
@@ -64,7 +64,7 @@ adminJobsRouter.openapi(
     path: '/dead',
     summary: 'List Dead Jobs',
     description: 'Returns recently failed and dead jobs for investigation.',
-    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), listLimiter),
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin', 'org_owner'), listLimiter),
     request: {
       query: z.object({
         limit: z.coerce.number().min(1).max(100).optional(),
@@ -119,7 +119,7 @@ adminJobsRouter.openapi(
     path: '/{id}/retry',
     summary: 'Retry Dead Job',
     description: 'Retry a dead or failed job. Only idempotent-safe job types can be retried.',
-    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), adminLimiter),
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin', 'org_owner'), adminLimiter),
     request: {
       params: z.object({
         id: z.string().uuid(),

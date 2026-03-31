@@ -21,7 +21,7 @@ onboardingRouter.openapi(
     tags: ['Admin'],
     summary: 'Onboard Organization',
     description: 'System admin onboards a new organization + first admin user.',
-    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), adminLimiter),
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin', 'org_owner'), adminLimiter),
     request: {
       body: {
         content: {

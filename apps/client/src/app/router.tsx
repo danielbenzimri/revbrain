@@ -161,7 +161,7 @@ const router = createBrowserRouter([
       {
         path: 'admin',
         element: (
-          <ProtectedRoute requiredRoles={['system_admin']}>
+          <ProtectedRoute requiredRoles={['system_admin', 'org_owner']}>
             <Outlet />
           </ProtectedRoute>
         ),

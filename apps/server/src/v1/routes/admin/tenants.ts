@@ -25,7 +25,7 @@ adminTenantsRouter.openapi(
     tags: ['Admin'],
     summary: 'List All Tenants',
     description: 'Fetch tenants with plan details. Supports pagination.',
-    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), listLimiter),
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin', 'org_owner'), listLimiter),
     request: {
       query: z.object({
         limit: z.coerce.number().min(1).max(MAX_LIMIT).optional(),
@@ -101,7 +101,7 @@ adminTenantsRouter.openapi(
     tags: ['Admin'],
     summary: 'Get Tenant Detail',
     description: 'Fetch full tenant details with aggregated data.',
-    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), listLimiter),
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin', 'org_owner'), listLimiter),
     request: {
       params: z.object({
         id: z.string().uuid('Invalid tenant ID format'),
@@ -198,7 +198,7 @@ adminTenantsRouter.openapi(
     tags: ['Admin'],
     summary: 'Update Tenant',
     description: 'Update tenant details.',
-    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), adminLimiter),
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin', 'org_owner'), adminLimiter),
     request: {
       params: z.object({
         id: z.string().uuid('Invalid tenant ID format'),
@@ -300,7 +300,7 @@ adminTenantsRouter.openapi(
     tags: ['Admin'],
     summary: 'Deactivate Tenant',
     description: 'Soft delete/deactivate a tenant.',
-    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), adminLimiter),
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin', 'org_owner'), adminLimiter),
     request: {
       params: z.object({
         id: z.string().uuid('Invalid tenant ID format'),
@@ -367,7 +367,7 @@ adminTenantsRouter.openapi(
     tags: ['Admin Tenants'],
     summary: 'Tenant Admin Access Log',
     description: 'List admin actions performed on this tenant (stub for customer-visible audit).',
-    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), listLimiter),
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin', 'org_owner'), listLimiter),
     request: {
       params: z.object({ id: z.string().uuid() }),
       query: z.object({
