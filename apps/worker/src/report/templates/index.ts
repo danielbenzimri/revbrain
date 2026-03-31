@@ -564,6 +564,12 @@ function renderCustomCode(data: ReportData): string {
     }
 
     <h3>9.3 Validation Rules</h3>
+    ${data.customCode.validationRules.length > 0
+      ? (() => {
+          const objects = [...new Set(data.customCode.validationRules.map((v) => v.object))].filter((o) => o && o !== 'CPQ Object');
+          return `<p><em>${data.customCode.validationRules.length} validation rules across ${objects.length > 0 ? `${objects.length} CPQ-related objects (${objects.join(', ')})` : 'CPQ-related objects'}.</em></p>`;
+        })()
+      : ''}
     ${
       data.customCode.validationRules.length > 0
         ? table(
