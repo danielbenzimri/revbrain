@@ -664,7 +664,7 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
             }))
           : buildDefaultKeyFindings(findings, settingValues, plugins, reportCounts),
       complexityScores,
-      scoringMethodology: buildScoringMethodology(complexityScores, findings, technicalDebt),
+      scoringMethodology: buildScoringMethodology(complexityScores, findings, technicalDebt, reportCounts),
     },
 
     cpqAtAGlance: buildGlanceSections(findings, settingValues, technicalDebt, featureUtilization, reportCounts),
@@ -1329,10 +1329,10 @@ function buildGlanceSections(
         confidence: 'Confirmed',
       },
       {
-        label: 'Product Bundles',
+        label: 'Bundle-capable Products',
         value:
-          bundleProductCount > 0 ? String(bundleProductCount) : bundleCount > 0 ? 'Detected' : '0',
-        confidence: bundleProductCount > 0 ? 'Confirmed' : 'Estimated',
+          counts.bundleProducts > 0 ? String(counts.bundleProducts) : bundleCount > 0 ? 'Detected' : '0',
+        confidence: counts.bundleProducts > 0 ? 'Confirmed' : 'Estimated',
       },
       {
         label: 'Price Books',
@@ -1548,22 +1548,19 @@ function scoreTechnicalDebt(findings: AssessmentFindingInput[]): number {
 
 function buildScoringMethodology(
   scores: ReportData['executiveSummary']['complexityScores'],
-  findings: AssessmentFindingInput[],
-  technicalDebt: Array<{ category: string; count: number; detail: string }>
+  _findings: AssessmentFindingInput[],
+  technicalDebt: Array<{ category: string; count: number; detail: string }>,
+  counts: ReportCounts
 ): ReportData['executiveSummary']['scoringMethodology'] {
-  // Task 2.5: compute rationale strings from actual data
-  const productCount = findings.filter((f) => f.artifactType === 'Product2').length;
-  const bundleCount = findings.filter((f) => f.artifactType === 'Product2' && f.complexityLevel === 'medium').length;
-  const optionCount = findings.filter((f) => f.artifactType === 'ProductOption' || f.artifactType === 'SBQQ__ProductOption__c').length;
-  const priceRuleCount = findings.filter((f) => f.artifactType === 'PriceRule' || f.artifactType === 'SBQQ__PriceRule__c').length;
-  const dsCount = findings.filter((f) => f.artifactType === 'DiscountSchedule' || f.artifactType === 'SBQQ__DiscountSchedule__c').length;
-  const csCount = findings.filter((f) => f.artifactType === 'CustomScript' || f.artifactType === 'SBQQ__CustomScript__c').length;
-  const apexCount = findings.filter((f) => f.artifactType === 'ApexClass').length;
-  const triggerCount = findings.filter((f) => f.artifactType === 'ApexTrigger').length;
-  const flowCount = findings.filter((f) => f.artifactType === 'Flow').length;
-  const totalQuotes = findings.find((f) => f.artifactType === 'DataCount' && f.artifactName?.includes('Quote'))?.countValue ?? 0;
+  // A5: use canonical counts for complexity rationale — no independent counting
+  const csCount = _findings.filter((f) => f.artifactType === 'CustomScript' || f.artifactType === 'SBQQ__CustomScript__c').length;
 
   const debtSummary = technicalDebt.map((d) => `${d.count} ${d.category.toLowerCase()}`).join(', ');
+
+  // A5: options text uses canonical count — eliminates "no product options" contradiction
+  const optionText = counts.productOptions > 0
+    ? `${counts.productOptions} product options`
+    : 'product options not extracted';
 
   return [
     {
@@ -1571,28 +1568,28 @@ function buildScoringMethodology(
       weight: 25,
       score: scores.configurationDepth,
       drivers: 'Product catalog size, bundle nesting, option constraints, config attributes',
-      rationale: `Score reflects ${productCount} products, ${bundleCount} bundles, and ${optionCount || 'no'} product options. ${bundleCount > 50 ? 'High bundle density increases configuration complexity.' : 'Moderate configuration surface area.'}`,
+      rationale: `Score reflects ${counts.totalProducts} products, ${counts.bundleProducts} bundle-capable products, and ${optionText}. ${counts.bundleProducts > 50 ? 'High bundle density increases configuration complexity.' : 'Moderate configuration surface area.'}`,
     },
     {
       dimension: 'Pricing Logic',
       weight: 25,
       score: scores.pricingLogic,
       drivers: 'Price rules, discount schedules, custom scripts (QCP), contracted pricing',
-      rationale: `Score reflects ${priceRuleCount} price rules, ${dsCount} discount schedules${csCount > 0 ? `, and ${csCount} custom script(s) (QCP)` : ''}. ${csCount > 0 ? 'QCP presence significantly elevates pricing complexity.' : 'Standard pricing rule configuration.'}`,
+      rationale: `Score reflects ${counts.totalPriceRules} price rules, ${counts.discountScheduleTotal} discount schedules${csCount > 0 ? `, and ${csCount} custom script(s) (QCP)` : ''}. ${csCount > 0 ? 'QCP presence significantly elevates pricing complexity.' : 'Standard pricing rule configuration.'}`,
     },
     {
       dimension: 'Customization Level',
       weight: 20,
       score: scores.customizationLevel,
       drivers: 'Apex class count, trigger count, flow complexity, code dependencies, custom fields, validation rules',
-      rationale: `Score reflects ${apexCount} Apex classes, ${triggerCount} triggers, and ${flowCount} flows referencing CPQ objects. ${apexCount > 30 ? 'Substantial custom code dependency detected.' : 'Moderate customization footprint.'}`,
+      rationale: `Score reflects ${counts.apexClassCount} Apex classes, ${counts.triggerCount} triggers, and ${counts.flowCountCpqRelated} flows referencing CPQ objects. ${counts.apexClassCount > 30 ? 'Substantial custom code dependency detected.' : 'Moderate customization footprint.'}`,
     },
     {
       dimension: 'Data Volume & Usage',
       weight: 15,
       score: scores.dataVolumeUsage,
       drivers: 'Quote volume, line count, user adoption, discount patterns',
-      rationale: `Score reflects ${totalQuotes} quotes in the 90-day assessment window. ${totalQuotes < 50 ? 'Low volume — some metrics may not be statistically meaningful.' : 'Adequate sample for usage analysis.'}`,
+      rationale: `Score reflects ${counts.totalQuotes} quotes in the 90-day assessment window. ${counts.totalQuotes < 50 ? 'Low volume — some metrics may not be statistically meaningful.' : 'Adequate sample for usage analysis.'}`,
     },
     {
       dimension: 'Technical Debt',
