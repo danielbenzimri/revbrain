@@ -785,7 +785,7 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
                     ? 'medium'
                     : condCount >= 1
                       ? 'low'
-                      : 'Not assessed';
+                      : '—';
             return {
               name: r.artifactName + (isTechDebt ? ' ⚠ Potential tech debt' : ''),
               type: ruleType,
@@ -2005,6 +2005,12 @@ function buildDynamicCoverage(findings: AssessmentFindingInput[], counts: Report
       category: 'User Behavior',
       coverage: hasUserBehavior ? 'Partial' : 'Not extracted',
       notes: 'Derived from audit trail sampling. Full user session analysis and adoption scoring not extracted.',
+    },
+    // V5-16: honestly document product rule complexity as not extracted
+    {
+      category: 'Product Rule Complexity',
+      coverage: 'Not extracted',
+      notes: 'Product rule structural complexity: Not extracted — requires condition/action scope analysis beyond current metadata extraction.',
     },
   ];
 }

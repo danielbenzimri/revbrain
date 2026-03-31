@@ -327,6 +327,9 @@ function renderConfigDomain(data: ReportData): string {
         badge(r.confidence),
       ])
     )}
+    ${data.configurationDomain.productRules.some((r) => r.complexity === '—')
+      ? `<p style="font-size:0.85em;color:#666;margin-top:4px;"><em>"—" in Complexity column = structural complexity not extracted. Requires condition/action scope analysis beyond current metadata extraction.</em></p>`
+      : ''}
 
     ${
       data.configurationDomain.discountScheduleAnalysis.length > 0
