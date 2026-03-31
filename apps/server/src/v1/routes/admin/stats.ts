@@ -21,7 +21,7 @@ adminStatsRouter.openapi(
     tags: ['Admin'],
     summary: 'Dashboard Stats',
     description: 'Returns aggregated platform statistics for the admin dashboard.',
-    middleware: routeMiddleware(authMiddleware, requireRole('system_admin', 'org_owner'), adminLimiter),
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), adminLimiter),
     responses: {
       200: {
         content: {

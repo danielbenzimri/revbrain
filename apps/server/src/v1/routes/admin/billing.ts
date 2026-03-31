@@ -33,7 +33,7 @@ adminBillingRouter.openapi(
     tags: ['Admin', 'Billing'],
     summary: 'Get Payment Details',
     description: 'Fetch detailed payment information including refund status.',
-    middleware: routeMiddleware(authMiddleware, requireRole('system_admin', 'org_owner'), adminLimiter),
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), adminLimiter),
     request: {
       params: z.object({
         id: z.string().uuid(),
@@ -100,7 +100,7 @@ adminBillingRouter.openapi(
     tags: ['Admin', 'Billing'],
     summary: 'Issue Refund',
     description: 'Issue a full or partial refund for a payment. Requires system_admin role.',
-    middleware: routeMiddleware(authMiddleware, requireRole('system_admin', 'org_owner'), adminLimiter),
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), adminLimiter),
     request: {
       body: {
         content: {

@@ -42,7 +42,7 @@ export function Sidebar({ className }: SidebarProps) {
 
   const isHebrew = i18n.language === 'he';
 
-  const isSystemAdmin = user?.role === 'system_admin' || user?.role === 'org_owner';
+  const isSystemAdmin = user?.role === 'system_admin';
   const isImpersonating = useImpersonationStore((s) => s.isImpersonating);
 
   const mainItems = [

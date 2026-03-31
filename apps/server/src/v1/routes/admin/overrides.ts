@@ -30,7 +30,7 @@ adminOverridesRouter.openapi(
     tags: ['Admin', 'Overrides'],
     summary: 'List Tenant Overrides',
     description: 'Fetch active (non-revoked, non-expired) overrides for a tenant.',
-    middleware: routeMiddleware(authMiddleware, requireRole('system_admin', 'org_owner'), adminLimiter),
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), adminLimiter),
     request: {
       params: z.object({
         orgId: z.string().uuid(),
@@ -71,7 +71,7 @@ adminOverridesRouter.openapi(
     tags: ['Admin', 'Overrides'],
     summary: 'Grant Override',
     description: 'Grant a feature override for a specific tenant.',
-    middleware: routeMiddleware(authMiddleware, requireRole('system_admin', 'org_owner'), adminLimiter),
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), adminLimiter),
     request: {
       params: z.object({
         orgId: z.string().uuid(),
@@ -146,7 +146,7 @@ adminOverridesRouter.openapi(
     tags: ['Admin', 'Overrides'],
     summary: 'Revoke Override',
     description: 'Revoke a tenant feature override.',
-    middleware: routeMiddleware(authMiddleware, requireRole('system_admin', 'org_owner'), adminLimiter),
+    middleware: routeMiddleware(authMiddleware, requireRole('system_admin'), adminLimiter),
     request: {
       params: z.object({
         id: z.string().uuid(),
