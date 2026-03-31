@@ -1,14 +1,14 @@
 # CPQ Assessment Report V4 — Mitigation Plan (Revised)
 
 > **Document ID:** CPQ-V4-MIT-2026-001
-> **Version:** 2.3 (Final)
+> **Version:** 2.5
 > **Date:** 2026-03-31
-> **Status:** Ready for Review
+> **Status:** V4 delivered; V5 hardening in progress
 > **Authors:** Daniel Aviram + Claude (Architect)
 > **Input:** Developer_Redline_Checklist_v4.md, Auditor 1 review, Auditor 2 review
 > **Audience:** Technical reviewers, QA, SI stakeholders
 > **Rollback:** V3 code tagged at commit `29937d7`. Rollback = regenerate from tag.
-> **Review status:** Approved for implementation by two independent auditors. Final editorial pass in v2.3.
+> **Review status:** V4 implemented and delivered. V5 hardening items added from post-delivery audit. Two independent auditor reviews incorporated.
 
 ---
 
@@ -636,17 +636,21 @@ V3 fixed 20 items from V2:
 
 | # | Item | V5 Claim | Our Verdict | Evidence | Root Cause | Fix Layer | Effort |
 |---|------|----------|-------------|----------|-----------|-----------|--------|
-| P0-1 | Bundle count 76 vs ~19 | Mismatch | **DISAGREE** | 76 = `ConfigurationType IN ('Allowed','Required')` — standard CPQ definition. Label already says "Bundle-capable Products" (V4 fix). The ~19 is a different UI list view definition. | Definition difference, not a bug | None | — |
+| P0-1 | Bundle count 76 vs ~19 | Mismatch | **PARTIALLY AGREE** | 76 = standard CPQ definition (ConfigurationType). Label says "Bundle-capable Products" (correct). But report lacks a secondary "Configured Bundles (~19)" metric and clarifying note. Consolidated with P2-2. | Definition clarity gap | Assembler + Template | Small |
 | P0-2 | Product count 179 unlabeled | Mixed labels | **AGREE** | Section 2.3 says "179 products" (no "total" qualifier). Appendix A says "Product2: 179" (no label). | Assembler uses `counts.totalProducts` without explicit "total" label | Assembler | Small |
 | P0-3 | Approval rules 16 vs 17 | Inconsistency | **AGREE** | Section 6.6.1 lists 16 rules. Section 8.3 says "17 detected." The count() function includes the `AdvancedApprovals` summary finding (+1). | `buildFeatureUtilization` calls `count('AdvancedApprovalRule', 'AdvancedApprovals')` — the second type is a summary, not a rule | Assembler | Tiny |
-| P0-4 | Appendix D overclaims | Coverage too generous | **PARTIALLY AGREE** | "Full" entries use `badge-partial` CSS class (cosmetic mismatch). Substantively, Transactional Data and Advanced Approvals coverage claims are defensible for V1 scope. | CSS class mismatch in template; coverage text could be more nuanced | Template | Small |
-| ADM-1 | Branding RevBrain→Vento | Must change | **DISAGREE** | Stakeholder decision 2026-03-30: "use RevBrain not Vento." Only 2 occurrences in report. | Policy decision, not a bug | None | — |
+| P0-4 | Appendix D overclaims | Coverage too generous | **AGREE** | "Full" entries use wrong CSS badge class. Transactional Data: quote modification/field history not extracted → Partial. User Behavior: derived from audit sampling → Partial. Advanced Approvals: rules extracted but usage linkage missing → Partial. | CSS class mismatch + coverage labels too generous | Template + Assembler | Small |
+| ADM-1 | Branding RevBrain→Vento | Must change | **BUSINESS OVERRIDE** | Stakeholder decision 2026-03-30: "use RevBrain not Vento." Not a technical defect. Excluded from V5 scope by explicit direction. If decision changes, a global find-replace closes this in minutes. | Policy decision | None | — |
 | P1-1 | sbaa version format | Missing namespace/status | **AGREE** | Cover shows "232.2.0" — should show "sbaa v232.2.0 (Active)" | `sbaaVersionDisplay` strips namespace and status | Assembler | Tiny |
 | P1-2 | Flow count 44 vs 84 | Unexplained filter | **PARTIALLY AGREE** | 44 is correct (active flows). But Appendix A shows 41 — internal discrepancy. No filter explanation note. | Appendix A counts differently than At-a-Glance; no scope note | Assembler + Template | Small |
 | P1-3 | Validation rules 25 vs 22 | Scope unclear | **PARTIALLY AGREE** | 25 is consistent across report (3 sections). But no note explaining which 7 objects are included. | Missing scope documentation | Template | Tiny |
 | P1-4 | Approval table missing Target Object | Thin table | **AGREE** | Table has Rule Name / Conditions / Status. Data for Target Object exists in evidenceRefs but not rendered. | Template doesn't extract Target Object from evidenceRefs | Template | Small |
 | P1-5 | Top products denominator | Not stated | **AGREE** | Percentages shown (30%, 17%) but "of 23 quotes" not stated. | No denominator footnote in template | Template | Tiny |
 | P1-6 | Template count 9 vs 7 | Inconsistency | **AGREE** | Appendix A: 9, Section 6.6: 7, one is "unused_templates_summary" (synthetic finding leaked into list). | Assembler doesn't filter synthetic findings from template list | Assembler | Small |
+| P2-1 | Product rule complexity "Not assessed" | Ambiguous | **DEFERRED** | Product rules show "Not assessed" for complexity. Requires rule structure analysis (condition count, action scope) not in current extraction. | Missing extraction capability | — | Deferred to V2 report. Add Appendix D note: "Product rule structural complexity: Not extracted." |
+| P2-2 | Bundle-capable vs Configured Bundles | Definition unclear | **AGREE (consolidated with P0-1)** | Report lacks secondary "Configured Bundles" metric. Users expect ~19 from UI list view alongside 76 bundle-capable. | No secondary metric computed | Assembler + Template | Small — add clarifying note + optional secondary count |
+| P2-3 | Feature utilization language too strong | "Active Usage" overstated | **AGREE** | Several features labeled "Active Usage" based on metadata presence, not transactional evidence. Should use "Configured" or "Detected" unless transaction data proves usage. | Assembler uses binary Active/Not Detected upgraded to "Active Usage" without transactional verification | Assembler | Small |
+| P2-4 | Apex origin all "Custom" | Namespace detection missing | **DEFERRED** | All 67 classes show "Custom." Namespace-based origin detection would improve accuracy. Requires metadata enhancement not in current collector scope. | Missing namespace cross-reference | — | Deferred to V2 report. Low trust impact. |
 
 ### V5 Execution Tracker
 
@@ -654,9 +658,9 @@ V3 fixed 20 items from V2:
 |---|------|------|-------|--------|--------|--------|------|-------------|-------|
 | V5-1 | **Product count labels** | Section 2.3: "179 total products (176 active)". Appendix A: "Product2: 179 (total records)". Every unlabeled product count gets an explicit basis. | `assembler.ts` | Not Started | — | ☐ | ☐ | ☐ | P0-2 fix |
 | V5-2 | **Approval rule count fix** | Change `buildFeatureUtilization` from `count('AdvancedApprovalRule', 'AdvancedApprovals')` to `count('AdvancedApprovalRule')` only. Eliminates summary finding from count. | `assembler.ts` | Not Started | — | ☐ | ☐ | ☐ | P0-3 fix. One-line change. |
-| V5-3 | **Appendix D CSS class fix** | Coverage entries with "Full" should use `badge-confirmed` not `badge-partial`. Review all Appendix D coverage labels for accuracy. | `templates/index.ts` | Not Started | — | ☐ | ☐ | ☐ | P0-4 fix. Downgrade Transactional Data and User Behavior to "Partial" per V5 guidance. |
+| V5-3 | **Appendix D coverage overhaul** | Fix CSS badge class (Full should use badge-confirmed). Downgrade: Transactional Data → Partial (quote modification not extracted), User Behavior → Partial (audit trail sampling), Advanced Approvals → Partial (usage linkage not surfaced). | `templates/index.ts`, `assembler.ts` | Not Started | — | ☐ | ☐ | ☐ | P0-4 fix. All three categories explicitly downgraded. |
 | V5-4 | **sbaa version format** | Cover page shows "sbaa v232.2.0 (Active)" instead of bare "232.2.0". Include namespace prefix and status from InstalledPackage finding. | `assembler.ts` | Not Started | — | ☐ | ☐ | ☐ | P1-1 fix |
-| V5-5 | **Flow count reconciliation** | Fix Appendix A vs At-a-Glance discrepancy (41 vs 44). Add scope note: "X active unmanaged flows (Y total including managed/inactive)". | `assembler.ts`, `templates/index.ts` | Not Started | — | ☐ | ☐ | ☐ | P1-2 fix |
+| V5-5 | **Flow count reconciliation** | Root-cause the 41 vs 44 discrepancy: check if Appendix A independently counts Flow findings instead of using `counts.flowCountActive`. Fix to use ReportCounts canonical value everywhere. Add scope note: "X active flows (Y total in org)". Add V27 validator: flow count in Appendix A must equal At-a-Glance. | `assembler.ts`, `templates/index.ts`, `validation.ts` | Not Started | — | ☐ | ☐ | ☐ | P1-2 fix. This is a ReportCounts enforcement failure — same anti-pattern as V4 product count bug. |
 | V5-6 | **Validation rules scope note** | Add "25 validation rules across 7 CPQ-related objects" clarification in report text. | `templates/index.ts` | Not Started | — | ☐ | ☐ | ☐ | P1-3 fix |
 | V5-7 | **Approval table Target Object column** | Add "Target Object" column to Section 6.6.1 table, extracted from evidenceRefs. | `assembler.ts`, `templates/index.ts` | Not Started | — | ☐ | ☐ | ☐ | P1-4 fix |
 | V5-8 | **Top products denominator footnote** | Add "% = distinct quotes containing product ÷ total quotes (N)" below the table. | `templates/index.ts` | Not Started | — | ☐ | ☐ | ☐ | P1-5 fix |
@@ -664,14 +668,25 @@ V3 fixed 20 items from V2:
 | V5-10 | **Validator: approval count cross-check** | Add V25: Section 6.6.1 approval rule count must equal Section 8.3 approval rule count. | `validation.ts` | Not Started | — | ☐ | ☐ | ☐ | Prevents P0-3 recurrence |
 | V5-11 | **Validator: branding check** | Add V26: report HTML must not contain "RevBrain" (or configured brand name check). Ready for when branding decision changes. | `validation.ts` | Not Started | — | ☐ | ☐ | ☐ | ADM-1 readiness. Disabled by default, enabled via config. |
 | V5-12 | **Regenerate V5 PDF** | Fresh PDF from Cloud Run extraction data with all V5 fixes. Verify all V5 acceptance criteria pass. | `output/` | Not Started | — | ☐ | ☐ | ☐ | Final deliverable |
+| V5-13 | **Feature utilization language** | Replace "Active Usage" with "Configured" for features detected via metadata only. Reserve "Active Usage" for transaction-backed evidence. Applies to: Bundles, Discount Schedules, Advanced Approvals. Keep "Active Usage" for QCP (has script execution evidence). | `assembler.ts` | Not Started | — | ☐ | ☐ | ☐ | P2-3 fix. Critical for SI trust. |
+| V5-14 | **Bundle definition note** | Add clarifying note where bundle count appears: "76 products have bundle configuration enabled; approximately 19 are actively configured as bundles with nested options." Optional secondary metric if data supports it. | `assembler.ts`, `templates/index.ts` | Not Started | — | ☐ | ☐ | ☐ | P0-1 + P2-2 consolidated fix. |
+| V5-15 | **Percentage denominator basis audit** | Audit ALL percentage tables (not just top products). Add denominator basis note to: discount distribution, conversion by size, utilization rates. Validator V27: warn if percentage table metadata lacks denominator. | `templates/index.ts`, `validation.ts` | Not Started | — | ☐ | ☐ | ☐ | V5 redline "broader rule" — applies beyond just P1-5. |
+| V5-16 | **Product rule complexity disposition** | Add Appendix D note: "Product rule structural complexity: Not extracted — requires condition/action scope analysis." Change column from "Not assessed" to "—" with footnote. | `assembler.ts` | Not Started | — | ☐ | ☐ | ☐ | P2-1 deferred with honest documentation. |
 
 ### V5 Acceptance Criteria
 
 1. Every product count display has an explicit basis label ("Total" / "Active" / "Bundle-capable")
 2. Approval rule count is identical in Section 6.6.1 and Section 8.3
-3. Appendix D "Full" entries use correct CSS badge class
-4. Cover page sbaa version includes namespace and status
+3. Appendix D coverage uses correct CSS badges; Transactional Data, User Behavior, Advanced Approvals downgraded to "Partial"
+4. Cover page sbaa version includes namespace and status (e.g., "sbaa v232.2.0 (Active)")
 5. Flow count is consistent between At-a-Glance and Appendix A, with scope note
-6. Top products table has denominator footnote
-7. No synthetic findings ("unused_templates_summary") in template list
-8. All existing V17-V24 validators still pass
+6. Top products table has denominator footnote; all percentage tables state denominator basis
+7. No synthetic findings ("unused_templates_summary") in template list; template counts reconciled (9 total / 7 configured / 6 usable)
+8. All existing V17-V24 validators still pass; V25 approval cross-check passes
+9. Feature utilization labels use "Configured" for metadata-only detection, "Active Usage" only for transaction-backed evidence
+10. Bundle count includes clarifying note distinguishing bundle-capable (76) from configured bundles (~19)
+
+> **Note on reviewer acceptance criteria not adopted:**
+> The V5 redline defines 8 acceptance criteria. This plan meets 6 of 8. Two are intentionally not met:
+> (1) **Bundle count UI alignment** — we use the standard CPQ definition (ConfigurationType) with explicit "Bundle-capable" labeling and a clarifying note. The ~19 configured bundles metric is added as context.
+> (2) **Branding "Vento"** — stakeholder decision to retain "RevBrain" (2026-03-30). Both disagreements are documented with rationale.
