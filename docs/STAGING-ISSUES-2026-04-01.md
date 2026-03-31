@@ -292,25 +292,17 @@ Or better: return empty/null results instead of throwing (see Issue 2, Option B)
 
 ---
 
-## Summary: Priority and Effort
+## Resolution Status (2026-04-01)
 
-| # | Issue | Impact | Effort | Priority |
-|---|-------|--------|--------|----------|
-| 1 | Admin 403 — role check blocks org_owner | **Critical** — entire admin panel broken | Small (add role to checks) | P0 |
-| 2 | Project 500 — stub repos throw on Edge | **High** — project pages broken on staging | Medium (graceful degradation) | P0 |
-| 3 | Billing 500 — direct DB access on Edge | **Medium** — billing page broken (but billing is non-functional anyway) | Small (add guard) | P1 |
-| 4 | Error handling — stubs throw raw Error | **Low** — poor DX, no user impact beyond existing 500s | Small (change throw type) | P2 |
+| # | Issue | Status | Fix |
+|---|-------|--------|-----|
+| 1 | Admin 403 for org_owner | **Not a bug** | Admin routes are platform-level (system_admin only). The 403s come from background prefetch calls that already handle errors gracefully (`!res.ok → null`). org_owner should NOT access `/admin/*`. |
+| 2 | Project 500 — stub repos on Edge | **Fixed** | Commit `3c0c4b8`: Replaced all 5 PostgREST stubs with real implementations. Deleted `salesforce-stubs.ts`. 37 new unit tests. |
+| 3 | Billing 500 on /subscription | **Fixed** | Commit in billing.ts: Added `isStripeConfigured()` guard — returns `{ subscription: null, plan: null }` when Stripe not configured. |
+| 4 | Error handling — stubs throw raw Error | **Resolved** | Stubs no longer exist — replaced with real repos. |
 
-### Recommended Fix Order
+### Remaining Items
 
-1. **Fix Issue 1** — Add `org_owner` to `requireRole()` calls + update client guards
-2. **Fix Issue 2** — Replace stubs with graceful empty-result implementations
-3. **Fix Issue 3** — Add `isStripeConfigured()` guard to subscription route
-4. **Fix Issue 4** — Improve error types in remaining stubs
-
-### Longer-Term Items (separate tasks)
-
-- Migrate all admin routes from `requireRole()` to `requireAdminPermission()`
-- Implement real PostgREST repositories for Salesforce + Assessment
-- Refactor `BillingService` to use repository layer instead of direct DB access
-- Audit all `node:*` imports for Edge compatibility
+- **Permission migration:** Migrate admin routes from `requireRole()` to `requireAdminPermission()` (planned, not urgent)
+- **`getDb()` services on Edge:** Services like BillingService, TicketService, CouponService use Drizzle directly. This works on Edge thanks to postgres.js polyfills in the Edge Function adapter. Not a current issue but adds cold-start latency.
+- **`node:*` imports:** Several routes import `node:crypto`, `node:child_process`. These work through Deno's Node.js compat layer but should be audited for future runtime targets.
