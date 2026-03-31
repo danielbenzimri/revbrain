@@ -885,3 +885,276 @@ function checkV12_PercentageMath(data: ReportData): ValidationRule {
     message: 'OK',
   };
 }
+
+// ============================================================================
+// V17–V24: ReportConsistencyValidator (V4 Mitigation Plan — Task V1)
+// ============================================================================
+
+/**
+ * Post-assembly consistency validator — catches cross-section contradictions
+ * in the assembled ReportData that can't be detected from raw findings alone.
+ *
+ * All rules are Error severity per the V4 Mitigation Plan.
+ */
+export function validateReportConsistency(data: ReportData): ReportValidationResult {
+  const rules: ValidationRule[] = [];
+  const reportBanners: string[] = [];
+
+  rules.push(checkV17_PercentageOver100(data));
+  rules.push(checkV18_ActiveUserMismatch(data));
+  rules.push(checkV19_ProductCountMismatch(data));
+  rules.push(checkV20_OptionsTextContradiction(data));
+  rules.push(checkV21_SbaaVersionContradiction(data));
+  rules.push(checkV22_ApprovalSectionContradiction(data));
+  rules.push(checkV23_TopProductPercentage(data));
+  rules.push(checkV24_CoverageContradiction(data));
+
+  for (const rule of rules) {
+    if (!rule.passed) {
+      reportBanners.push(`⚠ Consistency: ${rule.message}`);
+    }
+  }
+
+  const valid = rules.every((r) => r.passed);
+
+  log.info(
+    {
+      valid,
+      rulesPassed: rules.filter((r) => r.passed).length,
+      rulesFailed: rules.filter((r) => !r.passed).length,
+      reportBanners: reportBanners.length,
+    },
+    'report_consistency_validation_complete'
+  );
+
+  return { valid, rules, reportBanners };
+}
+
+/**
+ * V17: Any percentage metric > 100% in assembled report.
+ */
+function checkV17_PercentageOver100(data: ReportData): ValidationRule {
+  const issues: string[] = [];
+
+  // Check top products
+  for (const p of data.usageAdoption.topProducts) {
+    const pctMatch = p.percentQuotes.match(/^(\d+)%/);
+    if (pctMatch && Number(pctMatch[1]) > 100) {
+      issues.push(`Top product "${p.name}" shows ${p.percentQuotes}`);
+    }
+  }
+
+  // Check conversion segments
+  for (const s of data.usageAdoption.conversionBySize) {
+    if (s.percentQuotes > 100) issues.push(`Conversion segment "${s.segment}" %Quotes = ${s.percentQuotes}%`);
+    if (s.percentRevenue > 100) issues.push(`Conversion segment "${s.segment}" %Revenue = ${s.percentRevenue}%`);
+    if (s.conversionRate > 100) issues.push(`Conversion segment "${s.segment}" conversion = ${s.conversionRate}%`);
+  }
+
+  // Check product catalog percentQuoted
+  for (const c of data.configurationDomain.productCatalog) {
+    const pctMatch = c.percentQuoted.match(/^(\d+)%/);
+    if (pctMatch && Number(pctMatch[1]) > 100) {
+      issues.push(`Product family "${c.category}" shows ${c.percentQuoted} quoted`);
+    }
+  }
+
+  if (issues.length > 0) {
+    return {
+      id: 'V17',
+      name: 'No percentage metric exceeds 100%',
+      severity: 'error',
+      passed: false,
+      message: `Percentage > 100% detected: ${issues.join('; ')}.`,
+    };
+  }
+
+  return { id: 'V17', name: 'No percentage metric exceeds 100%', severity: 'error', passed: true, message: 'OK' };
+}
+
+/**
+ * V18: lowVolumeWarning active users must match cpqAtAGlance active users.
+ */
+function checkV18_ActiveUserMismatch(data: ReportData): ValidationRule {
+  if (!data.metadata.lowVolumeWarning) {
+    return { id: 'V18', name: 'Active user count consistent across sections', severity: 'error', passed: true, message: 'OK — no low-volume warning.' };
+  }
+
+  const warningMatch = data.metadata.lowVolumeWarning.match(/(\d+)\s*active users/);
+  const warningCount = warningMatch ? Number(warningMatch[1]) : null;
+
+  const glanceUsers = data.cpqAtAGlance['Users & Licenses']?.find((m) =>
+    m.label.includes('Active Users')
+  );
+  const glanceCount = glanceUsers ? Number(glanceUsers.value) : null;
+
+  if (warningCount !== null && glanceCount !== null && !isNaN(glanceCount) && warningCount !== glanceCount) {
+    return {
+      id: 'V18',
+      name: 'Active user count consistent across sections',
+      severity: 'error',
+      passed: false,
+      message: `Low-volume warning says ${warningCount} active users but At-a-Glance shows ${glanceCount}.`,
+    };
+  }
+
+  return { id: 'V18', name: 'Active user count consistent across sections', severity: 'error', passed: true, message: 'OK' };
+}
+
+/**
+ * V19: For each metric in [activeProducts, totalProducts, bundleProducts],
+ * every rendered instance in ReportData must equal counts.{metric}.
+ */
+function checkV19_ProductCountMismatch(data: ReportData): ValidationRule {
+  if (!data.counts) {
+    return { id: 'V19', name: 'Product counts consistent', severity: 'error', passed: true, message: 'OK — no counts available.' };
+  }
+
+  const issues: string[] = [];
+  const glanceCatalog = data.cpqAtAGlance['Product Catalog'] ?? [];
+
+  // Check active products in glance
+  const activeEntry = glanceCatalog.find((m) =>
+    m.label === 'Active Products' || m.label === 'Products Extracted'
+  );
+  if (activeEntry && activeEntry.value !== 'Not extracted') {
+    const glanceVal = Number(activeEntry.value);
+    if (!isNaN(glanceVal) && glanceVal !== data.counts.activeProducts) {
+      issues.push(`Active Products: Glance=${glanceVal}, counts=${data.counts.activeProducts}`);
+    }
+  }
+
+  // Check bundle products in glance
+  const bundleEntry = glanceCatalog.find((m) => m.label === 'Bundle-capable Products');
+  if (bundleEntry && bundleEntry.value !== 'Detected' && bundleEntry.value !== '0') {
+    const glanceVal = Number(bundleEntry.value);
+    if (!isNaN(glanceVal) && glanceVal !== data.counts.bundleProducts) {
+      issues.push(`Bundle Products: Glance=${glanceVal}, counts=${data.counts.bundleProducts}`);
+    }
+  }
+
+  if (issues.length > 0) {
+    return {
+      id: 'V19',
+      name: 'Product counts consistent',
+      severity: 'error',
+      passed: false,
+      message: `Product count mismatch: ${issues.join('; ')}.`,
+    };
+  }
+
+  return { id: 'V19', name: 'Product counts consistent', severity: 'error', passed: true, message: 'OK' };
+}
+
+/**
+ * V20: Complexity rationale mentions "no product options" when counts.productOptions > 0.
+ */
+function checkV20_OptionsTextContradiction(data: ReportData): ValidationRule {
+  if (!data.counts || data.counts.productOptions === 0) {
+    return { id: 'V20', name: 'No "no product options" when options exist', severity: 'error', passed: true, message: 'OK' };
+  }
+
+  for (const m of data.executiveSummary.scoringMethodology) {
+    if (m.rationale.toLowerCase().includes('no product options')) {
+      return {
+        id: 'V20',
+        name: 'No "no product options" when options exist',
+        severity: 'error',
+        passed: false,
+        message: `Scoring rationale says "no product options" but counts.productOptions = ${data.counts.productOptions}.`,
+      };
+    }
+  }
+
+  return { id: 'V20', name: 'No "no product options" when options exist', severity: 'error', passed: true, message: 'OK' };
+}
+
+/**
+ * V21: sbaaInstalled=true AND rendered sbaa version display equals "Not installed".
+ */
+function checkV21_SbaaVersionContradiction(data: ReportData): ValidationRule {
+  if (!data.counts || !data.counts.sbaaInstalled) {
+    return { id: 'V21', name: 'sbaa version not contradicted', severity: 'error', passed: true, message: 'OK' };
+  }
+
+  if (!data.metadata.sbaaVersion || data.metadata.sbaaVersion === 'Not installed') {
+    return {
+      id: 'V21',
+      name: 'sbaa version not contradicted',
+      severity: 'error',
+      passed: false,
+      message: `sbaa package is installed (counts.sbaaInstalled=true) but metadata.sbaaVersion shows "Not installed" or is null.`,
+    };
+  }
+
+  return { id: 'V21', name: 'sbaa version not contradicted', severity: 'error', passed: true, message: 'OK' };
+}
+
+/**
+ * V22: Approval rules section says "not detected" when counts.approvalRuleCount > 0.
+ */
+function checkV22_ApprovalSectionContradiction(data: ReportData): ValidationRule {
+  if (!data.counts || data.counts.approvalRuleCount === 0) {
+    return { id: 'V22', name: 'Approval rules section consistent', severity: 'error', passed: true, message: 'OK' };
+  }
+
+  if (data.approvalsAndDocs.advancedApprovalRules.length === 0) {
+    return {
+      id: 'V22',
+      name: 'Approval rules section consistent',
+      severity: 'error',
+      passed: false,
+      message: `counts.approvalRuleCount = ${data.counts.approvalRuleCount} but approvalsAndDocs shows 0 advanced approval rules.`,
+    };
+  }
+
+  return { id: 'V22', name: 'Approval rules section consistent', severity: 'error', passed: true, message: 'OK' };
+}
+
+/**
+ * V23: Every Top Quoted Product has percentQuotes <= 100%.
+ */
+function checkV23_TopProductPercentage(data: ReportData): ValidationRule {
+  const violations: string[] = [];
+
+  for (const p of data.usageAdoption.topProducts) {
+    const pctMatch = p.percentQuotes.match(/^(\d+)%/);
+    if (pctMatch && Number(pctMatch[1]) > 100) {
+      violations.push(`"${p.name}" at ${p.percentQuotes}`);
+    }
+  }
+
+  if (violations.length > 0) {
+    return {
+      id: 'V23',
+      name: 'Top product percentages <= 100%',
+      severity: 'error',
+      passed: false,
+      message: `Top quoted products with > 100%: ${violations.join(', ')}.`,
+    };
+  }
+
+  return { id: 'V23', name: 'Top product percentages <= 100%', severity: 'error', passed: true, message: 'OK' };
+}
+
+/**
+ * V24: Appendix D Product Catalog says "not available" when counts.productOptions > 0.
+ */
+function checkV24_CoverageContradiction(data: ReportData): ValidationRule {
+  if (!data.counts || data.counts.productOptions === 0) {
+    return { id: 'V24', name: 'Coverage claims match data', severity: 'error', passed: true, message: 'OK' };
+  }
+
+  const catalogCoverage = data.appendixD.find((d) => d.category === 'Product Catalog');
+  if (catalogCoverage && catalogCoverage.notes.toLowerCase().includes('not available')) {
+    return {
+      id: 'V24',
+      name: 'Coverage claims match data',
+      severity: 'error',
+      passed: false,
+      message: `Appendix D says product options "not available" but counts.productOptions = ${data.counts.productOptions}.`,
+    };
+  }
+
+  return { id: 'V24', name: 'Coverage claims match data', severity: 'error', passed: true, message: 'OK' };
+}
