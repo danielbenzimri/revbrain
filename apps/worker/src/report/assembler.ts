@@ -673,12 +673,15 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
 
     packageSettings: {
       installedPackages: buildInstalledPackages(orgFp, findings),
-      coreSettings: settingValues.map((s) => ({
-        setting: s.artifactName,
-        value: s.evidenceRefs?.[0]?.label ?? 'Unknown',
-        notes: s.notes ?? '',
-        confidence: 'Confirmed',
-      })),
+      // A6: Remove "Package:" entries — they already appear in installedPackages section
+      coreSettings: settingValues
+        .filter((s) => !s.artifactName.startsWith('Package:'))
+        .map((s) => ({
+          setting: s.artifactName,
+          value: s.evidenceRefs?.[0]?.label ?? 'Unknown',
+          notes: s.notes ?? '',
+          confidence: 'Confirmed',
+        })),
       plugins: plugins.map((p) => {
         // Override QCP status if CustomScript findings exist (settings collector may not
         // detect custom settings, but pricing collector finds SBQQ__CustomScript__c records)
