@@ -1036,7 +1036,7 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
             coverage: c.notes?.split(':')[0] ?? 'Unknown',
             notes: c.notes ?? '',
           }))
-        : buildDynamicCoverage(findings),
+        : buildDynamicCoverage(findings, reportCounts),
   };
 }
 
@@ -1871,21 +1871,31 @@ function buildApprovalsAndDocs(
 // Dynamic Extraction Coverage (replaces hardcoded "Full" defaults)
 // ============================================================================
 
-function buildDynamicCoverage(findings: AssessmentFindingInput[]): ReportData['appendixD'] {
+function buildDynamicCoverage(findings: AssessmentFindingInput[], counts: ReportCounts): ReportData['appendixD'] {
   const domainSet = new Set<string>(findings.map((f) => f.domain));
 
   // Task 1.7: per-category specific checks (not generic count > 5)
   const has = (...types: string[]) => findings.some((f) => types.includes(f.artifactType));
 
-  // Product Catalog (Task 1.7)
+  // Product Catalog (A7: explicit Full/Partial/Minimal model)
   const hasCatalog = has('Product2');
-  const hasOptions = has('ProductOption', 'SBQQ__ProductOption__c');
-  const catalogCov = !hasCatalog ? 'Not extracted' : hasOptions ? 'Full' : 'Partial';
-  const catalogNotes = !hasCatalog
-    ? 'Product Catalog collector did not produce findings.'
-    : hasOptions
-      ? 'Products, bundles, options, config attributes.'
-      : 'Products extracted but product options not available.';
+  const hasOptions = counts.productOptions > 0;
+  const hasRules = counts.totalProductRules > 0;
+  let catalogCov: string;
+  let catalogNotes: string;
+  if (!hasCatalog) {
+    catalogCov = 'Not extracted';
+    catalogNotes = 'Product Catalog collector did not produce findings.';
+  } else if (hasOptions && hasRules) {
+    catalogCov = 'Full';
+    catalogNotes = `Products, bundles, ${counts.productOptions} options, ${counts.totalProductRules} product rules.`;
+  } else if (hasCatalog && !hasOptions && !hasRules) {
+    catalogCov = 'Minimal';
+    catalogNotes = 'Product counts available. Options and rules not extracted.';
+  } else {
+    catalogCov = 'Partial';
+    catalogNotes = `Products extracted${hasOptions ? `, ${counts.productOptions} options` : ', options not extracted'}${hasRules ? `, ${counts.totalProductRules} rules` : ', rules not extracted'}.`;
+  }
 
   // Pricing & Rules (Task 1.7, 2.15)
   const hasPR = has('PriceRule', 'SBQQ__PriceRule__c');

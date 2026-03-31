@@ -389,8 +389,8 @@ describe('assembleReport', () => {
     const report = assembleReport(findings);
     const catalogCoverage = report.appendixD.find((d) => d.category === 'Product Catalog');
     expect(catalogCoverage).toBeTruthy();
-    // Task 1.7: per-category checks — Product2 present but no ProductOption → Partial
-    expect(catalogCoverage!.coverage).toBe('Partial');
+    // A7: Product2 present but no ProductOption and no ProductRule → Minimal
+    expect(catalogCoverage!.coverage).toBe('Minimal');
 
     const pricingCoverage = report.appendixD.find((d) => d.category === 'Pricing & Rules');
     expect(pricingCoverage).toBeTruthy();
