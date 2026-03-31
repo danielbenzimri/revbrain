@@ -1205,10 +1205,11 @@ function buildFeatureUtilization(
   });
 
   const csCount = count('CustomScript', 'SBQQ__CustomScript__c');
-  // V5-16: "Configured" not "Active Usage" — metadata detection proves presence, not runtime execution
+  // QCP is the ONE feature that keeps "Active Usage" — CustomScript records contain executable
+  // JavaScript that runs on every quote calculation. This is active code injection, not metadata-only.
   features.push({
     feature: 'Custom Scripts (QCP)',
-    status: csCount > 0 ? 'Configured' : 'Not Detected',
+    status: csCount > 0 ? 'Active Usage' : 'Not Detected',
     detail: csCount > 0 ? `${csCount} custom scripts detected.` : '',
   });
 
@@ -1853,8 +1854,8 @@ function buildApprovalsAndDocs(
   const quoteTemplates = allQuoteTemplates.filter(
     (f) => !f.findingKey?.includes('unused_templates_summary') && !f.artifactName?.includes('unused_templates_summary')
   );
-  // totalTemplateRecords = raw record count (one finding per SOQL row, no synthetics)
-  const totalTemplateRecords = quoteTemplates.length;
+  // totalTemplateRecords = ALL template findings including synthetics (matches Appendix A raw count)
+  const totalTemplateRecords = allQuoteTemplates.length;
   const usableTemplates = quoteTemplates.filter(
     (f) => !TECH_DEBT_PATTERNS.test(f.artifactName) && f.usageLevel !== 'dormant'
   );
@@ -2101,9 +2102,10 @@ function buildObjectInventoryInline(findings: AssessmentFindingInput[], counts: 
     flowEntry.count = counts.flowCountActive;
   }
 
-  // V5-15: override AdvancedApprovalRule count with canonical approvalRuleCount from ReportCounts
-  if (objectMap.has('AdvancedApprovalRule') && counts.approvalRuleCount > 0) {
-    const aarEntry = objectMap.get('AdvancedApprovalRule')!;
+  // V5-15: override approval rule count with canonical approvalRuleCount from ReportCounts
+  const aarKey = objectMap.has('sbaa__ApprovalRule__c') ? 'sbaa__ApprovalRule__c' : 'AdvancedApprovalRule';
+  if (objectMap.has(aarKey) && counts.approvalRuleCount > 0) {
+    const aarEntry = objectMap.get(aarKey)!;
     aarEntry.count = counts.approvalRuleCount;
   }
 
