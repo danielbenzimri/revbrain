@@ -976,7 +976,7 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
       const items = inventory.length > 0
         ? inventory.map((inv, i) => ({
             id: i + 1,
-            objectName: inv.artifactName,
+            objectName: inv.artifactName === 'Product2' ? `${inv.artifactName} (total records)` : inv.artifactName,
             apiName: inv.artifactName,
             count: inv.countValue ?? 0,
             complexity: inv.complexityLevel ?? 'low',
@@ -1578,7 +1578,7 @@ function buildScoringMethodology(
       weight: 25,
       score: scores.configurationDepth,
       drivers: 'Product catalog size, bundle nesting, option constraints, config attributes',
-      rationale: `Score reflects ${counts.totalProducts} products, ${counts.bundleProducts} bundle-capable products, and ${optionText}. ${counts.bundleProducts > 50 ? 'High bundle density increases configuration complexity.' : 'Moderate configuration surface area.'}`,
+      rationale: `Score reflects ${counts.totalProducts} total products (${counts.activeProducts} active), ${counts.bundleProducts} bundle-capable products, and ${optionText}. ${counts.bundleProducts > 50 ? 'High bundle density increases configuration complexity.' : 'Moderate configuration surface area.'}`,
     },
     {
       dimension: 'Pricing Logic',
@@ -2064,7 +2064,7 @@ function buildObjectInventoryInline(findings: AssessmentFindingInput[]): ReportD
     .sort((a, b) => b[1].count - a[1].count)
     .map(([name, data], i) => ({
       id: i + 1,
-      objectName: name,
+      objectName: name === 'Product2' ? `${name} (total records)` : name,
       apiName: name,
       count: data.count,
       complexity: data.complexity,
