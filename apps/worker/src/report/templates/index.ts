@@ -444,7 +444,7 @@ function renderUsage(data: ReportData): string {
               String(p.quotedCount),
               escapeHtml(p.percentQuotes),
             ])
-          )
+          ) + `<p style="font-size:0.85em;color:#666;margin-top:4px;"><em>% = distinct quotes containing product &divide; total quotes (${data.counts.totalQuotes})</em></p>`
         : '<p><em>No product quoting data available.</em></p>'
     }
   </div>`;
