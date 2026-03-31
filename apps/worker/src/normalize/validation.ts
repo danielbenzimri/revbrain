@@ -997,6 +997,7 @@ export function validateReportConsistency(data: ReportData): ReportValidationRes
   rules.push(checkV25_ApprovalCountCrossCheck(data));
   rules.push(checkV26_BrandConsistency(data));
   rules.push(checkV28_PercentageDenominatorContext(data));
+  rules.push(checkV29_LabelRequirement(data));
 
   for (const rule of rules) {
     if (!rule.passed) {
@@ -1350,4 +1351,58 @@ function checkV28_PercentageDenominatorContext(data: ReportData): ValidationRule
   }
 
   return { id: 'V28', name: 'Percentage tables have denominator context', severity: 'warning', passed: true, message: 'OK' };
+}
+
+/**
+ * V29: Warn if displayed count lacks basis label where multiple definitions exist.
+ * Applies to:
+ * - Product counts: Total / Active / Bundle-capable (three different definitions)
+ * - Rule counts: Active / Total (two different definitions)
+ * - Template counts: Total / Configured / Usable (three different definitions)
+ */
+function checkV29_LabelRequirement(data: ReportData): ValidationRule {
+  const issues: string[] = [];
+
+  // Check product count labels in At-a-Glance
+  const glanceCatalog = data.cpqAtAGlance['Product Catalog'] ?? [];
+  for (const m of glanceCatalog) {
+    if (m.value !== '0' && m.value !== 'Not extracted' && m.value !== 'N/A' && m.value !== 'Detected') {
+      // Check that labels disambiguate: "Active Products", "Products Extracted", "Bundle-capable Products"
+      // are acceptable. Raw "Products" without qualifier is not.
+      if (m.label === 'Products') {
+        issues.push(`Product count "${m.value}" labeled as generic "Products" — should specify Active/Total/Extracted`);
+      }
+    }
+  }
+
+  // Check rule count labels in At-a-Glance
+  const glancePricing = data.cpqAtAGlance['Pricing & Rules'] ?? [];
+  for (const m of glancePricing) {
+    if (m.label === 'Price Rules' || m.label === 'Product Rules') {
+      issues.push(`Rule count "${m.value}" labeled as "${m.label}" — should specify (Active) or (Total)`);
+    }
+  }
+
+  // Check template counts in document generation
+  const docGen = data.approvalsAndDocs.documentGeneration;
+  if (docGen.totalTemplateRecords > 0 && docGen.totalTemplateRecords !== docGen.templateCount) {
+    // Multi-definition exists — both templateCount and totalTemplateRecords
+    // The template already renders both, so this is OK. But warn if usableTemplateCount is 0
+    // when templateCount > 0, as it might indicate a labelling gap.
+    if (docGen.usableTemplateCount === 0 && docGen.templateCount > 0) {
+      issues.push(`Template count shows ${docGen.templateCount} configured but 0 usable — verify template count labels`);
+    }
+  }
+
+  if (issues.length > 0) {
+    return {
+      id: 'V29',
+      name: 'Multi-definition counts have basis labels',
+      severity: 'warning',
+      passed: false,
+      message: `Count labels missing basis qualifier: ${issues.join('; ')}.`,
+    };
+  }
+
+  return { id: 'V29', name: 'Multi-definition counts have basis labels', severity: 'warning', passed: true, message: 'OK' };
 }
