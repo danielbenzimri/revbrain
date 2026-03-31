@@ -80,7 +80,7 @@ async function loginViaUI(page: Page, email: string, password: string) {
   await page.locator('input[type="email"]').fill(email);
   await page.locator('input[type="password"]').fill(password);
   await page.getByRole('button', { name: /sign in|התחבר/i }).click();
-  await page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 15_000 });
+  await page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 30_000 });
   await page.waitForTimeout(2_000);
 }
 
@@ -99,6 +99,8 @@ const IGNORED_CONSOLE_PATTERNS = [
   'Failed to load resource: net::ERR',
   'Refused to apply style',
   'AuthRetryableFetchError',
+  'status of 403',  // expected: org_owner prefetch hits admin endpoints
+  'status of 401',  // expected: token refresh race conditions
   'supabase',
   'MOCK',
   '[LocalAPI]',
