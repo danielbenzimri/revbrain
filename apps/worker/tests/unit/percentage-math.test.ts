@@ -39,7 +39,7 @@ describe('Percentage math — T2 regression tests', () => {
     const findings = [
       makeFinding({
         artifactType: 'DataCount',
-        artifactName: 'Quote',
+        artifactName: 'Quotes (all)',
         countValue: 6,
       }),
       makeFinding({
@@ -61,7 +61,7 @@ describe('Percentage math — T2 regression tests', () => {
     const findings = [
       makeFinding({
         artifactType: 'DataCount',
-        artifactName: 'Quote',
+        artifactName: 'Quotes (all)',
         countValue: 0,
       }),
       makeFinding({
@@ -85,7 +85,7 @@ describe('Percentage math — T2 regression tests', () => {
     const findings = [
       makeFinding({
         artifactType: 'DataCount',
-        artifactName: 'Quote',
+        artifactName: 'Quotes (all)',
         countValue: 10,
       }),
       makeFinding({
@@ -105,7 +105,7 @@ describe('Percentage math — T2 regression tests', () => {
     const findings = [
       makeFinding({
         artifactType: 'DataCount',
-        artifactName: 'Quote',
+        artifactName: 'Quotes (all)',
         countValue: 6,
       }),
       makeFinding({
@@ -125,7 +125,7 @@ describe('Percentage math — T2 regression tests', () => {
     const findings = [
       makeFinding({
         artifactType: 'DataCount',
-        artifactName: 'Quote',
+        artifactName: 'Quotes (all)',
         countValue: 23,
       }),
       makeFinding({
@@ -162,7 +162,7 @@ describe('Percentage math — T2 regression tests', () => {
     const findings = [
       makeFinding({
         artifactType: 'DataCount',
-        artifactName: 'Quote',
+        artifactName: 'Quotes (all)',
         countValue: 100,
       }),
       makeFinding({

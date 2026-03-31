@@ -527,13 +527,13 @@ describe('ReportCounts — T1 comprehensive tests', () => {
       const findings = [
         makeFinding({
           artifactType: 'DataCount',
-          artifactName: 'Quote',
+          artifactName: 'Quotes (all)',
           countValue: 150,
           domain: 'usage',
         }),
         makeFinding({
           artifactType: 'DataCount',
-          artifactName: 'QuoteLine',
+          artifactName: 'Quote Lines (all)',
           countValue: 800,
           domain: 'usage',
         }),

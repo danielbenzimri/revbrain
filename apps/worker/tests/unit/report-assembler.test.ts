@@ -232,7 +232,7 @@ describe('assembleReport', () => {
     const findings: AssessmentFindingInput[] = [
       makeFinding({
         artifactType: 'DataCount',
-        artifactName: 'Quote',
+        artifactName: 'Quotes (all)',
         domain: 'usage',
         countValue: 23,
       }),
