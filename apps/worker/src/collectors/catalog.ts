@@ -205,10 +205,10 @@ export class CatalogCollector extends BaseCollector {
           artifactId: p.Id as string,
           findingType: 'product',
           sourceType: 'object',
-          complexityLevel: p.SBQQ__ConfigurationType__c ? 'medium' : 'low',
+          complexityLevel: (p.SBQQ__ConfigurationType__c === 'Required' || p.SBQQ__ConfigurationType__c === 'Allowed') ? 'medium' : 'low',
           migrationRelevance: p.IsActive ? 'must-migrate' : 'optional',
           rcaTargetConcept: 'ProductSellingModel',
-          rcaMappingComplexity: p.SBQQ__ConfigurationType__c ? 'transform' : 'direct',
+          rcaMappingComplexity: (p.SBQQ__ConfigurationType__c === 'Required' || p.SBQQ__ConfigurationType__c === 'Allowed') ? 'transform' : 'direct',
           usageLevel: p.IsActive ? undefined : 'dormant',
           evidenceRefs: productEvidenceRefs,
         })
@@ -377,7 +377,7 @@ export class CatalogCollector extends BaseCollector {
           artifactName: 'Configured Bundles',
           sourceType: 'object',
           countValue: configuredBundleCount,
-          notes: `${configuredBundleCount} products have at least one SBQQ__ProductOption__c child record (actual configured bundles, not just bundle-capable)`,
+          notes: `${configuredBundleCount} bundle-capable products have at least one SBQQ__ProductOption__c child record (configured bundles with active nested options)`,
         })
       );
 
