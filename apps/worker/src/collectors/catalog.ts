@@ -367,14 +367,12 @@ export class CatalogCollector extends BaseCollector {
       findings.push(
         createFinding({
           domain: 'catalog',
-          collectorName: 'catalog',
+          collector: 'catalog',
           artifactType: 'DataCount',
           artifactName: 'Configured Bundles',
-          findingKey: 'catalog:DataCount:ConfiguredBundles',
           sourceType: 'object',
           countValue: configuredBundleCount,
           notes: `${configuredBundleCount} products have at least one SBQQ__ProductOption__c child record (actual configured bundles, not just bundle-capable)`,
-          organizationId,
         })
       );
 
