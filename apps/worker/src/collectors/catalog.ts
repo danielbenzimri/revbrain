@@ -316,7 +316,12 @@ export class CatalogCollector extends BaseCollector {
       );
       totalOptions = options.length;
 
-      // Nested bundle detection
+      // Normalize Salesforce IDs to 15-char for consistent comparison
+      // SF IDs come as 15-char (case-sensitive) or 18-char (with checksum suffix)
+      // Lookup fields like SBQQ__ConfiguredSKU__c may return either format
+      const normalizeId = (id: string) => id?.substring(0, 15) ?? '';
+
+      // Nested bundle detection — use normalized IDs throughout
       const bundleIds = new Set(
         products
           .filter(
@@ -326,14 +331,15 @@ export class CatalogCollector extends BaseCollector {
           )
           .map((p) => p.Id as string)
       );
+      const bundleIds15 = new Set([...bundleIds].map(normalizeId));
 
-      const nestedOptions = options.filter((o) => bundleIds.has(o.SBQQ__OptionalSKU__c as string));
+      const nestedOptions = options.filter((o) => bundleIds15.has(normalizeId(o.SBQQ__OptionalSKU__c as string)));
       if (nestedOptions.length > 0) {
-        const childBundles = new Set(nestedOptions.map((o) => o.SBQQ__OptionalSKU__c as string));
+        const childBundles = new Set(nestedOptions.map((o) => normalizeId(o.SBQQ__OptionalSKU__c as string)));
         const grandchild = options.filter(
           (o) =>
-            childBundles.has(o.SBQQ__ConfiguredSKU__c as string) &&
-            bundleIds.has(o.SBQQ__OptionalSKU__c as string)
+            childBundles.has(normalizeId(o.SBQQ__ConfiguredSKU__c as string)) &&
+            bundleIds15.has(normalizeId(o.SBQQ__OptionalSKU__c as string))
         );
         maxBundleDepth = grandchild.length > 0 ? 3 : 2;
       } else if (bundleProducts > 0) {
@@ -345,12 +351,11 @@ export class CatalogCollector extends BaseCollector {
       metrics.nestedBundleCount = nestedOptions.length;
       metrics.requiredOptions = options.filter((o) => o.SBQQ__Required__c === true).length;
 
-      // G-07: Store parent→option map for post-processing attachment rate computation
-      // Key: parentProductId, Value: array of option product IDs
+      // Store parent→option map using normalized IDs
       const optionMapData: Record<string, string[]> = {};
       for (const o of options) {
-        const parent = o.SBQQ__ConfiguredSKU__c as string;
-        const option = o.SBQQ__OptionalSKU__c as string;
+        const parent = normalizeId(o.SBQQ__ConfiguredSKU__c as string);
+        const option = normalizeId(o.SBQQ__OptionalSKU__c as string);
         if (parent && option) {
           if (!optionMapData[parent]) optionMapData[parent] = [];
           optionMapData[parent].push(option);
@@ -358,10 +363,9 @@ export class CatalogCollector extends BaseCollector {
       }
       metrics.optionMap = JSON.stringify(optionMapData);
 
-      // Count bundle-capable products (ConfigurationType set) that have child options
-      // This approximates the Salesforce "Bundles" list view. The exact list view
-      // filter criteria may include additional conditions we can't extract programmatically.
-      const configuredBundleCount = Object.keys(optionMapData).filter(parentId => bundleIds.has(parentId)).length;
+      // Count bundle-capable products that have child options
+      // Uses normalized 15-char IDs to avoid 15 vs 18-char SF ID mismatch
+      const configuredBundleCount = Object.keys(optionMapData).filter(parentId => bundleIds15.has(parentId)).length;
       metrics.configuredBundleCount = configuredBundleCount;
 
       // Emit as a DataCount finding so assembler can use it in ReportCounts
