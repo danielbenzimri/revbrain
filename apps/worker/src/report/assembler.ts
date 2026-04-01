@@ -472,7 +472,8 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
   const technicalDebt = buildTechnicalDebt(findings, priceRules, productRules, discountSchedules);
 
   // Feature utilization
-  const featureUtilization = buildFeatureUtilization(findings);
+  // featureUtilization computed after reportCounts (needs counts.configuredBundles)
+  let featureUtilization: ReturnType<typeof buildFeatureUtilization> = [];
 
   // Canonical counts — computed once, passed to both glance and section builders (Task 0.8, A1)
   const totalQuoteLines =
@@ -620,6 +621,7 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
     activeProductSource,
     activeProductStatus,
     bundleProducts,
+    configuredBundles: findings.find(f => f.artifactType === 'DataCount' && f.artifactName === 'Configured Bundles')?.countValue ?? 0,
     productOptions: productOptionCount,
     productFamilies,
     activePriceRules: activePriceRules.length,
@@ -645,6 +647,9 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
   };
 
   // Low volume detection (A4: uses canonical activeUsers count)
+  // Compute featureUtilization now that reportCounts is available
+  featureUtilization = buildFeatureUtilization(findings, reportCounts);
+
   const isLowVolume = totalQuotes < 50 || reportCounts.activeUsers < 5;
   const lowVolumeWarning = isLowVolume
     ? `Low activity detected in assessment window (${totalQuotes} quote${totalQuotes === 1 ? '' : 's'}, ${reportCounts.activeUsers} active user${reportCounts.activeUsers === 1 ? '' : 's'}). Some metrics may not be statistically meaningful.`
@@ -860,8 +865,9 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
         if (optCount > 0 && hasAttachmentData) {
           return `${optCount} product options across ${bundleCount} bundle-capable products with attachment rate data.`;
         }
+        const cfgBundles = reportCounts.configuredBundles;
         return optCount > 0
-          ? `${optCount} product options across ${bundleCount} bundle-capable products. ${bundleCount} products have bundle configuration enabled (SBQQ__ConfigurationType__c). The Salesforce Bundles list view may show a smaller count (~19) representing products actively configured with nested options.`
+          ? `${optCount} product options across ${bundleCount} bundle-capable products (${cfgBundles} with active nested options). ${bundleCount} products have bundle configuration enabled (SBQQ__ConfigurationType__c); ${cfgBundles} are actively configured as bundles with child product options.`
           : null;
       })(),
     },
@@ -976,7 +982,8 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
             productRules,
             customScripts,
             discountSchedules,
-            plugins
+            plugins,
+            reportCounts
           ),
 
     appendixA: (() => {
@@ -1167,7 +1174,8 @@ function buildTechnicalDebt(
 // ============================================================================
 
 function buildFeatureUtilization(
-  findings: AssessmentFindingInput[]
+  findings: AssessmentFindingInput[],
+  counts: ReportCounts
 ): Array<{ feature: string; status: string; detail: string }> {
   const count = (...types: string[]) =>
     findings.filter((f) => types.includes(f.artifactType)).length;
@@ -1193,7 +1201,7 @@ function buildFeatureUtilization(
     status: detectedBundles > 0 ? 'Configured' : 'Not Detected',
     detail:
       detectedBundles > 0
-        ? `${bundleProducts} products have bundle configuration enabled (SBQQ__ConfigurationType__c), ${optionDataCount || optionCount} product options. Note: bundle-capable count reflects metadata capability, not necessarily fully configured bundles with nested options.`
+        ? `${bundleProducts} bundle-capable products (${counts.configuredBundles} with active nested options), ${optionDataCount || optionCount} product options.`
         : '',
   });
 
@@ -1280,7 +1288,8 @@ export interface ReportCounts {
   activeProducts: number;
   activeProductSource: 'IsActive' | 'inferred' | 'unknown';
   activeProductStatus: MetricStatus;
-  bundleProducts: number;
+  bundleProducts: number;        // 76 = bundle-capable (ConfigurationType set)
+  configuredBundles: number;     // ~19 = products with actual child options
   productOptions: number;
   productFamilies: number;
 
@@ -1358,7 +1367,9 @@ function buildGlanceSections(
       {
         label: 'Bundle-capable Products',
         value:
-          counts.bundleProducts > 0 ? String(counts.bundleProducts) : bundleCount > 0 ? 'Detected' : '0',
+          counts.bundleProducts > 0
+            ? `${counts.bundleProducts} (${counts.configuredBundles} with options)`
+            : bundleCount > 0 ? 'Detected' : '0',
         confidence: counts.bundleProducts > 0 ? 'Confirmed' : 'Estimated',
       },
       {
@@ -1773,7 +1784,8 @@ function detectHotspots(
   productRules: AssessmentFindingInput[],
   customScripts: AssessmentFindingInput[],
   discountSchedules: AssessmentFindingInput[],
-  plugins: AssessmentFindingInput[]
+  plugins: AssessmentFindingInput[],
+  counts: ReportCounts
 ): Array<{ name: string; severity: string; analysis: string }> {
   const hotspots: Array<{ name: string; severity: string; analysis: string }> = [];
 
@@ -1824,7 +1836,7 @@ function detectHotspots(
     hotspots.push({
       name: 'Bundle & Option Configuration',
       severity: 'High',
-      analysis: `${bundleHotspotCount} bundle-capable products with ${optHotspotCount} product options, enforced by Selection, Validation, Filter, and Alert product rules. Nested bundle configurations increase quote calculation complexity and UI surface area.`,
+      analysis: `${bundleHotspotCount} bundle-capable products (${counts.configuredBundles} with active nested options) and ${optHotspotCount} product options, enforced by Selection, Validation, Filter, and Alert product rules. Nested bundle configurations increase quote calculation complexity and UI surface area.`,
     });
   }
 

@@ -358,6 +358,26 @@ export class CatalogCollector extends BaseCollector {
       }
       metrics.optionMap = JSON.stringify(optionMapData);
 
+      // Count of products that actually have child options = configured bundles
+      // This is the number that matches the Salesforce "Bundles" list view (~19)
+      const configuredBundleCount = Object.keys(optionMapData).length;
+      metrics.configuredBundleCount = configuredBundleCount;
+
+      // Emit as a DataCount finding so assembler can use it in ReportCounts
+      findings.push(
+        createFinding({
+          domain: 'catalog',
+          collectorName: 'catalog',
+          artifactType: 'DataCount',
+          artifactName: 'Configured Bundles',
+          findingKey: 'catalog:DataCount:ConfiguredBundles',
+          sourceType: 'object',
+          countValue: configuredBundleCount,
+          notes: `${configuredBundleCount} products have at least one SBQQ__ProductOption__c child record (actual configured bundles, not just bundle-capable)`,
+          organizationId,
+        })
+      );
+
       if (maxBundleDepth >= 3) {
         warnings.push('Bundle nesting depth ≥ 3 — complex migration to RCA Product Compositions');
       }

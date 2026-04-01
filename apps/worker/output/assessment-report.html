@@ -188,7 +188,7 @@
         <div class="glance-section">
           <h4>Product Catalog</h4>
           <table><thead><tr><th>Metric</th><th>Value</th><th>Conf.</th></tr></thead><tbody><tr><td>Active Products</td><td><strong>176</strong></td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>Bundle-capable Products</td><td><strong>76</strong></td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>Bundle-capable Products</td><td><strong>76 (0 with options)</strong></td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
 <tr><td>Price Books</td><td><strong>N/A</strong></td><td><span class="badge badge-confirmed">Confirmed</span></td></tr></tbody></table>
           <p style="font-size:0.85em;color:#666;margin-top:4px;"><em>Bundle-capable = products with SBQQ__ConfigurationType__c set. This is a metadata capability flag, not a count of fully configured bundles with nested options.</em></p>
         </div>
@@ -413,7 +413,7 @@
 <tr><td>Finance and Reporting User Discount Schedule</td><td>Unique</td></tr></tbody></table>
 
     <h3>6.5 Product Option Attachment</h3>
-    <p>475 product options across 76 bundle-capable products. 76 products have bundle configuration enabled (SBQQ__ConfigurationType__c). The Salesforce Bundles list view may show a smaller count (~19) representing products actively configured with nested options.</p>
+    <p>475 product options across 76 bundle-capable products (0 with active nested options). 76 products have bundle configuration enabled (SBQQ__ConfigurationType__c); 0 are actively configured as bundles with child product options.</p>
     <table><thead><tr><th>Metric</th><th>Status</th></tr></thead><tbody><tr><td>Attachment Rate Analysis</td><td>Not extracted — requires quote line cross-reference data.</td></tr></tbody></table>
   </div>
   
@@ -581,7 +581,7 @@
 <tr><td>Duplicate Discount Schedules</td><td>11</td><td>1 schedule name(s) appear multiple times: &quot;Named Users Discount Schedule&quot; (11×).</td></tr></tbody></table>
 
     <h3>8.3 Feature Utilization</h3>
-    <table><thead><tr><th>Feature</th><th>Status</th><th>Detail</th></tr></thead><tbody><tr><td>Product Bundles</td><td><strong>Configured</strong></td><td>76 products have bundle configuration enabled (SBQQ__ConfigurationType__c), 475 product options. Note: bundle-capable count reflects metadata capability, not necessarily fully configured bundles with nested options.</td></tr>
+    <table><thead><tr><th>Feature</th><th>Status</th><th>Detail</th></tr></thead><tbody><tr><td>Product Bundles</td><td><strong>Configured</strong></td><td>76 bundle-capable products (0 with active nested options), 475 product options.</td></tr>
 <tr><td>Discount Schedules</td><td><strong>Configured</strong></td><td>22 schedules detected.</td></tr>
 <tr><td>Custom Scripts (QCP)</td><td><strong>Active Usage</strong></td><td>5 custom scripts detected.</td></tr>
 <tr><td>Quote Templates</td><td><strong>Configured</strong></td><td>6 configured templates. Usage not tracked.</td></tr>
@@ -739,7 +739,7 @@
     <table><thead><tr><th>Hotspot</th><th>Severity</th><th>Analysis</th></tr></thead><tbody><tr><td><strong>Quote Pricing Engine</strong></td><td><span class="severity-critical">Critical</span></td><td>20 active Price Rules + 37 active Product Rules + 22 Discount Schedules + 5 Custom Scripts (QCP) form a multi-layered calculation chain.</td></tr>
 <tr><td><strong>DocuSign Document Chain</strong></td><td><span class="severity-high">High</span></td><td>Quote PDF generation → DocuSign envelope → signing → Order creation spans CPQ, document generation, and e-signature.</td></tr>
 <tr><td><strong>Custom Code Dependencies</strong></td><td><span class="severity-high">High</span></td><td>67 Apex classes + 5 triggers reference CPQ objects. Code review required for full assessment.</td></tr>
-<tr><td><strong>Bundle &amp; Option Configuration</strong></td><td><span class="severity-high">High</span></td><td>76 bundle-capable products with 475 product options, enforced by Selection, Validation, Filter, and Alert product rules. Nested bundle configurations increase quote calculation complexity and UI surface area.</td></tr></tbody></table>
+<tr><td><strong>Bundle &amp; Option Configuration</strong></td><td><span class="severity-high">High</span></td><td>76 bundle-capable products (0 with active nested options) and 475 product options, enforced by Selection, Validation, Filter, and Alert product rules. Nested bundle configurations increase quote calculation complexity and UI surface area.</td></tr></tbody></table>
   </div>
   
   <div class="page-break">
