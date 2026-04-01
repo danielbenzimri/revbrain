@@ -18,8 +18,8 @@ import { eq } from 'drizzle-orm';
 
 // Lazy database accessor — prevents postgres.js from loading on Edge Functions (Deno)
 async function getDb() {
-  const { initDB } = await import('@revbrain/database/client');
-  return initDB();
+  const { db } = await import('@revbrain/database/client');
+  return db;
 }
 
 const projectFilesRouter = new OpenAPIHono<AppEnv>();

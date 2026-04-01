@@ -14,7 +14,6 @@ const mockWhere = vi.hoisted(() => vi.fn());
 const mockLimit = vi.hoisted(() => vi.fn());
 
 vi.mock('@revbrain/database/client', () => ({
-  initDB: vi.fn().mockResolvedValue({}),
   db: {
     select: mockSelect,
   },

@@ -36,7 +36,6 @@ const mockStripe = vi.hoisted(() => ({
  * Mock database - split across @revbrain/database/client, @revbrain/database, and drizzle-orm
  */
 vi.mock('@revbrain/database/client', () => ({
-  initDB: vi.fn().mockResolvedValue({}),
   db: {
     query: {
       coupons: {

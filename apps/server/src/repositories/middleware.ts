@@ -146,6 +146,15 @@ export const repositoryMiddleware = (options: RepositoryMiddlewareOptions = {}) 
         const repos = await getPostgRESTRepos();
         c.set('repos', repos);
         c.set('engine', 'supabase');
+        // Also initialize Drizzle so services that bypass repos (getDb() pattern) work.
+        // Without this, the db proxy throws "not initialized" on Edge Functions.
+        // TODO: Refactor services to use repos instead of direct DB access (see TECH-DEBT.md).
+        try {
+          const { initDB } = await import('@revbrain/database/client');
+          await initDB();
+        } catch {
+          // No DATABASE_URL — services using getDb() will fail individually
+        }
         break;
       }
       case 'drizzle':
