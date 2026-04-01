@@ -647,7 +647,7 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
   // Low volume detection (A4: uses canonical activeUsers count)
   const isLowVolume = totalQuotes < 50 || reportCounts.activeUsers < 5;
   const lowVolumeWarning = isLowVolume
-    ? `Low activity detected in assessment window (${totalQuotes} quotes, ${reportCounts.activeUsers} active users). Some metrics may not be statistically meaningful.`
+    ? `Low activity detected in assessment window (${totalQuotes} quote${totalQuotes === 1 ? '' : 's'}, ${reportCounts.activeUsers} active user${reportCounts.activeUsers === 1 ? '' : 's'}). Some metrics may not be statistically meaningful.`
     : null;
 
   // sbaa version: use canonical counts (A2 three-level fallback)
@@ -858,10 +858,10 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
         // Check if quote-line-to-option cross-reference data exists
         const hasAttachmentData = findings.some((f) => f.artifactType === 'OptionAttachmentRate');
         if (optCount > 0 && hasAttachmentData) {
-          return `${optCount} product options across ${bundleCount} bundle products with attachment rate data.`;
+          return `${optCount} product options across ${bundleCount} bundle-capable products with attachment rate data.`;
         }
         return optCount > 0
-          ? `${optCount} product options across ${bundleCount} bundle products.`
+          ? `${optCount} product options across ${bundleCount} bundle-capable products. ${bundleCount} products have bundle configuration enabled (SBQQ__ConfigurationType__c). The Salesforce Bundles list view may show a smaller count (~19) representing products actively configured with nested options.`
           : null;
       })(),
     },
@@ -1659,11 +1659,22 @@ function buildDefaultKeyFindings(
 
   // First finding: analytical observation, not extraction status
   if (hasQcp) {
-    const scriptName =
-      qcpScripts[0]?.artifactName ?? qcpPlugin?.notes?.match(/class:\s*(\S+)/)?.[1] ?? '';
+    // V6-1: Prefer the configured QCP class name from CPQSettingValue finding over alphabetical CustomScript order
+    const qcpSettingFinding = settings.find(
+      (s) => s.artifactName === 'Quote Calculator Plugin' || s.artifactName?.includes('QCP')
+    );
+    const configuredQcpClass = qcpSettingFinding?.evidenceRefs?.[0]?.label
+      ? String(qcpSettingFinding.evidenceRefs[0].label)
+      : null;
+    // Use configured class name; fall back to ALL script names (not just the first)
+    const scriptName = configuredQcpClass
+      ?? (qcpScripts.length > 0
+        ? qcpScripts.map((s) => s.artifactName).join(', ')
+        : (qcpPlugin?.notes?.match(/class:\s*(\S+)/)?.[1] ?? ''));
+    const allScriptNames = qcpScripts.map((s) => s.artifactName).join(', ');
     kf.push({
       title: `Custom Quote Calculator Plugin (QCP) active${scriptName ? `: ${scriptName}` : ''}`,
-      detail: `${qcpScripts.length} custom script(s) with JavaScript-based pricing logic injected into every calculation. This fundamentally changes the complexity profile.`,
+      detail: `${qcpScripts.length} custom script(s) with JavaScript-based pricing logic injected into every calculation${allScriptNames ? ` (${allScriptNames})` : ''}. This fundamentally changes the complexity profile.`,
       confidence: 'Confirmed',
     });
   }
@@ -1691,7 +1702,7 @@ function buildDefaultKeyFindings(
       kf.push({
         title: 'Multi-currency enabled',
         detail:
-          'The org uses multi-currency pricing. Field mappings and currency handling require verification.',
+          'The org uses multi-currency pricing. This increases field mapping complexity during migration — currency fields, exchange rate handling, and multi-currency price book structures require verification.',
         confidence: 'Confirmed',
       });
     }
@@ -1716,19 +1727,23 @@ function buildDefaultKeyFindings(
         .map((f) => safeRefs(f).find((r) => String(r.value) === 'Product2.Family')?.label)
         .filter(Boolean)
     );
+    // V6-4: Use quoting activity (same as Section 6.1 dormantFamilies) not usageLevel
+    const quotedProductNames = new Set(
+      findings.filter((f) => f.artifactType === 'TopQuotedProduct').map((f) => f.artifactName)
+    );
     const dormantFamilyCount = [...families].filter((fam) => {
-      const products = findings.filter(
+      const familyProducts = findings.filter(
         (f) => f.artifactType === 'Product2' && safeRefs(f).find((r) => String(r.value) === 'Product2.Family')?.label === fam
       );
-      return products.length > 0 && products.every((p) => p.usageLevel === 'dormant');
+      return familyProducts.length > 0 && familyProducts.every((p) => !quotedProductNames.has(p.artifactName));
     }).length;
     const dormantNote = dormantFamilyCount > 0
-      ? ` — ${dormantFamilyCount} of ${counts.productFamilies} families show zero quoting activity in the assessment window, suggesting catalog sprawl and a cleanup opportunity.`
-      : '.';
+      ? ` ${dormantFamilyCount} families show zero quoting activity in the assessment window — indicating potential catalog dormancy or narrow active use-case.`
+      : '';
     const productLabel = counts.activeProductSource === 'IsActive' ? 'active products' : 'products extracted';
     kf.push({
-      title: `${counts.activeProducts} ${productLabel} across ${counts.productFamilies} families with active products`,
-      detail: `Product catalog spans ${counts.productFamilies > 5 ? 'a diverse range of' : ''} families including ${[...families].slice(0, 5).join(', ')}${families.size > 5 ? ', and more' : ''}${dormantNote}`,
+      title: `${counts.activeProducts} ${productLabel} across ${counts.productFamilies} families`,
+      detail: `Product catalog spans ${counts.productFamilies} families with active products.${dormantNote}`,
       confidence: counts.activeProductSource === 'IsActive' ? 'Confirmed' : 'Estimated',
     });
   }
@@ -1809,7 +1824,7 @@ function detectHotspots(
     hotspots.push({
       name: 'Bundle & Option Configuration',
       severity: 'High',
-      analysis: `${bundleHotspotCount} bundle products with ${optHotspotCount} product options, enforced by Selection, Validation, Filter, and Alert product rules. Nested bundle configurations increase quote calculation complexity and UI surface area.`,
+      analysis: `${bundleHotspotCount} bundle-capable products with ${optHotspotCount} product options, enforced by Selection, Validation, Filter, and Alert product rules. Nested bundle configurations increase quote calculation complexity and UI surface area.`,
     });
   }
 
@@ -1854,8 +1869,19 @@ function buildApprovalsAndDocs(
   const quoteTemplates = allQuoteTemplates.filter(
     (f) => !f.findingKey?.includes('unused_templates_summary') && !f.artifactName?.includes('unused_templates_summary')
   );
-  // totalTemplateRecords = ALL template findings including synthetics (matches Appendix A raw count)
-  const totalTemplateRecords = allQuoteTemplates.length;
+  // V6-3: totalTemplateRecords should match Appendix A count — replicate inventory builder's
+  // counting logic (max of countValue, plus increments for null-countValue findings)
+  const totalTemplateRecords = (() => {
+    let count = 0;
+    for (const f of allQuoteTemplates) {
+      if (f.countValue != null && f.countValue > 0) {
+        count = Math.max(count, f.countValue);
+      } else {
+        count++;
+      }
+    }
+    return count;
+  })();
   const usableTemplates = quoteTemplates.filter(
     (f) => !TECH_DEBT_PATTERNS.test(f.artifactName) && f.usageLevel !== 'dormant'
   );
@@ -2072,6 +2098,7 @@ const REPORT_SKIP_TYPES = new Set([
   'Document',
   'LanguageTranslation',
   'ExternalIdField',
+  'AdvancedApprovals',
 ]);
 
 function buildObjectInventoryInline(findings: AssessmentFindingInput[], counts: ReportCounts): ReportData['appendixA'] {

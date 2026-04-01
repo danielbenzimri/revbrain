@@ -61,7 +61,7 @@
     <table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Client Name</td><td>Assessment Client</td></tr>
 <tr><td>Salesforce Org ID</td><td>00D3x000001AjYCEA0</td></tr>
 <tr><td>Environment</td><td>Production</td></tr>
-<tr><td>Assessment Date</td><td>2026-03-31</td></tr>
+<tr><td>Assessment Date</td><td>2026-04-01</td></tr>
 <tr><td>Assessment Period</td><td>Jan 1, 2026 – Apr 1, 2026 (90 Days)</td></tr>
 <tr><td>CPQ Package Version</td><td>232.2.0</td></tr>
 <tr><td>Adv. Approvals Version</td><td>sbaa v232.2.0 (Active)</td></tr>
@@ -103,7 +103,7 @@
       <li><strong>Complexity Scoring:</strong> Fixed weighted model (see Section 2.3) normalized against benchmark ranges.</li>
     </ol>
 
-    <p><strong>⚠ Low activity detected in assessment window (23 quotes, 1 active users). Some metrics may not be statistically meaningful.</strong></p>
+    <p><strong>⚠ Low activity detected in assessment window (23 quotes, 1 active user). Some metrics may not be statistically meaningful.</strong></p>
 
     <h3>1.3 Data Confidence Levels</h3>
     <table><thead><tr><th>Level</th><th>Label</th><th>Definition</th></tr></thead><tbody><tr><td>★★★</td><td><span class="badge badge-confirmed">Confirmed</span></td><td>Directly extracted from Salesforce metadata or SOQL query.</td></tr>
@@ -115,11 +115,11 @@
   <div class="page-break">
     <h2>2. Executive Summary</h2>
     <h3>2.1 Key Findings</h3>
-    <table><thead><tr><th>#</th><th>Finding</th><th>Detail</th><th>Confidence</th></tr></thead><tbody><tr><td>1</td><td><strong>Custom Quote Calculator Plugin (QCP) active: q2cJSPSP</strong></td><td>5 custom script(s) with JavaScript-based pricing logic injected into every calculation. This fundamentally changes the complexity profile.</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+    <table><thead><tr><th>#</th><th>Finding</th><th>Detail</th><th>Confidence</th></tr></thead><tbody><tr><td>1</td><td><strong>Custom Quote Calculator Plugin (QCP) active: q2cJSPSP, q2cJSQCP, qtc_Debugger, q2cJSPSP5ALEX, Q2CBundleSpecific</strong></td><td>5 custom script(s) with JavaScript-based pricing logic injected into every calculation (q2cJSPSP, q2cJSQCP, qtc_Debugger, q2cJSPSP5ALEX, Q2CBundleSpecific). This fundamentally changes the complexity profile.</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
 <tr><td>2</td><td><strong>20 active price rules and 37 active product rules detected</strong></td><td>Heavy rule density indicates significant business logic encoded in CPQ configuration. Pricing logic concentrated in business-specific rules.</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>3</td><td><strong>Multi-currency enabled</strong></td><td>The org uses multi-currency pricing. Field mappings and currency handling require verification.</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>3</td><td><strong>Multi-currency enabled</strong></td><td>The org uses multi-currency pricing. This increases field mapping complexity during migration — currency fields, exchange rate handling, and multi-currency price book structures require verification.</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
 <tr><td>4</td><td><strong>67 Apex classes reference CPQ objects</strong></td><td>Substantial custom code dependency suggests significant customization beyond standard CPQ configuration.</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>5</td><td><strong>176 active products across 21 families with active products</strong></td><td>Product catalog spans a diverse range of families including Software, Services, Other, Hardware, None, and more.</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr></tbody></table>
+<tr><td>5</td><td><strong>176 active products across 21 families</strong></td><td>Product catalog spans 21 families with active products. 16 families show zero quoting activity in the assessment window — indicating potential catalog dormancy or narrow active use-case.</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr></tbody></table>
 
     <h3>2.2 Complexity Scores</h3>
     
@@ -413,7 +413,7 @@
 <tr><td>Finance and Reporting User Discount Schedule</td><td>Unique</td></tr></tbody></table>
 
     <h3>6.5 Product Option Attachment</h3>
-    <p>475 product options across 76 bundle products.</p>
+    <p>475 product options across 76 bundle-capable products. 76 products have bundle configuration enabled (SBQQ__ConfigurationType__c). The Salesforce Bundles list view may show a smaller count (~19) representing products actively configured with nested options.</p>
     <table><thead><tr><th>Metric</th><th>Status</th></tr></thead><tbody><tr><td>Attachment Rate Analysis</td><td>Not extracted — requires quote line cross-reference data.</td></tr></tbody></table>
   </div>
   
@@ -516,7 +516,7 @@
 <tr><td>Proposal With Usage</td><td>No</td><td>Not available</td></tr></tbody></table>
 
     <h3>6.6.5 Document Generation</h3>
-    <p>6 usable quote template(s) (7 total SBQQ__QuoteTemplate__c records, 6 usable after excluding test/synthetic). DocuSign integration: <strong>Active</strong>.</p>
+    <p>6 usable quote template(s) (9 total SBQQ__QuoteTemplate__c records, 6 usable after excluding test/synthetic). DocuSign integration: <strong>Active</strong>.</p>
     
   </div>
   
@@ -739,7 +739,7 @@
     <table><thead><tr><th>Hotspot</th><th>Severity</th><th>Analysis</th></tr></thead><tbody><tr><td><strong>Quote Pricing Engine</strong></td><td><span class="severity-critical">Critical</span></td><td>20 active Price Rules + 37 active Product Rules + 22 Discount Schedules + 5 Custom Scripts (QCP) form a multi-layered calculation chain.</td></tr>
 <tr><td><strong>DocuSign Document Chain</strong></td><td><span class="severity-high">High</span></td><td>Quote PDF generation → DocuSign envelope → signing → Order creation spans CPQ, document generation, and e-signature.</td></tr>
 <tr><td><strong>Custom Code Dependencies</strong></td><td><span class="severity-high">High</span></td><td>67 Apex classes + 5 triggers reference CPQ objects. Code review required for full assessment.</td></tr>
-<tr><td><strong>Bundle &amp; Option Configuration</strong></td><td><span class="severity-high">High</span></td><td>76 bundle products with 475 product options, enforced by Selection, Validation, Filter, and Alert product rules. Nested bundle configurations increase quote calculation complexity and UI surface area.</td></tr></tbody></table>
+<tr><td><strong>Bundle &amp; Option Configuration</strong></td><td><span class="severity-high">High</span></td><td>76 bundle-capable products with 475 product options, enforced by Selection, Validation, Filter, and Alert product rules. Nested bundle configurations increase quote calculation complexity and UI surface area.</td></tr></tbody></table>
   </div>
   
   <div class="page-break">
@@ -768,8 +768,7 @@
 <tr><td>6</td><td>ValidationRule</td><td><code>ValidationRule</code></td><td>25</td><td><span class="severity-low">low</span></td><td>—</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
 <tr><td>7</td><td>PermissionSet</td><td><code>PermissionSet</code></td><td>16</td><td><span class="severity-low">low</span></td><td>—</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
 <tr><td>8</td><td>ApexTrigger</td><td><code>ApexTrigger</code></td><td>5</td><td><span class="severity-high">high</span></td><td>Phase 3</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>9</td><td>AdvancedApprovals</td><td><code>AdvancedApprovals</code></td><td>1</td><td><span class="severity-very-high">very-high</span></td><td>—</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>10</td><td>NamedCredential</td><td><code>NamedCredential</code></td><td>1</td><td><span class="severity-low">low</span></td><td>—</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr></tbody></table>
+<tr><td>9</td><td>NamedCredential</td><td><code>NamedCredential</code></td><td>1</td><td><span class="severity-low">low</span></td><td>—</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr></tbody></table>
   </div>
   
   <div class="page-break">
