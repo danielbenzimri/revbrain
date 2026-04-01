@@ -358,9 +358,9 @@ export class CatalogCollector extends BaseCollector {
       }
       metrics.optionMap = JSON.stringify(optionMapData);
 
-      // Count of products that actually have child options = configured bundles
-      // This is the number that matches the Salesforce "Bundles" list view (~19)
-      const configuredBundleCount = Object.keys(optionMapData).length;
+      // Count of products that are BOTH bundle-capable (ConfigurationType set) AND have child options
+      // This matches the Salesforce "Bundles" list view definition
+      const configuredBundleCount = Object.keys(optionMapData).filter(parentId => bundleIds.has(parentId)).length;
       metrics.configuredBundleCount = configuredBundleCount;
 
       // Emit as a DataCount finding so assembler can use it in ReportCounts
