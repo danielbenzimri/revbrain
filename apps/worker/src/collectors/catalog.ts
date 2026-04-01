@@ -358,9 +358,18 @@ export class CatalogCollector extends BaseCollector {
       }
       metrics.optionMap = JSON.stringify(optionMapData);
 
-      // Count of products that are BOTH bundle-capable (ConfigurationType set) AND have child options
-      // This matches the Salesforce "Bundles" list view definition
-      const configuredBundleCount = Object.keys(optionMapData).filter(parentId => bundleIds.has(parentId)).length;
+      // Count of ACTIVE products that are bundle-capable AND have child options
+      // This matches the Salesforce "Bundles" list view: ConfigurationType set + IsActive=true + has options
+      const activeBundleIds = new Set(
+        products
+          .filter(
+            (p) =>
+              (p.SBQQ__ConfigurationType__c === 'Required' || p.SBQQ__ConfigurationType__c === 'Allowed') &&
+              p.IsActive === true
+          )
+          .map((p) => p.Id as string)
+      );
+      const configuredBundleCount = Object.keys(optionMapData).filter(parentId => activeBundleIds.has(parentId)).length;
       metrics.configuredBundleCount = configuredBundleCount;
 
       // Emit as a DataCount finding so assembler can use it in ReportCounts
