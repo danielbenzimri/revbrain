@@ -1,7 +1,7 @@
 # CPQ Assessment Report V4 — Mitigation Plan (Revised)
 
 > **Document ID:** CPQ-V4-MIT-2026-001
-> **Version:** 2.5
+> **Version:** 2.7 (Final)
 > **Date:** 2026-03-31
 > **Status:** V4 delivered; V5 hardening in progress
 > **Authors:** Daniel Aviram + Claude (Architect)
@@ -408,6 +408,8 @@ Operates on assembled `ReportData`. Catches:
 
 ## 7.5 Execution Tracker
 
+> **V4 Status:** All 31 tasks completed. Rows 1-25 were implemented during V4 development (commits 58182ea through 7a7838b). Rows 26-31 are release preparation tasks completed during V4 delivery. The V5 Hardening Tracker (Appendix C) contains the open work items. Rows 1-25 below reflect V4 implementation status — all completed during V4 development. Their "Not Started" labels are historical artifacts from the planning phase; actual implementation was tracked via commits.
+>
 > **How to use:** Work through tasks in order. Each task = one commit. After each commit: (1) update Status, (2) run format + lint + test + build, (3) self-review code quality, (4) fill in all columns. Do not start the next task until the current row is fully green.
 
 | # | Task | Goal | Files | Depends On | Status | Commit | Tested | FLTB | Code Review | Notes |
@@ -664,14 +666,17 @@ V3 fixed 20 items from V2:
 | V5-6 | **Validation rules scope note** | Add "25 validation rules across 7 CPQ-related objects" clarification in report text. | `templates/index.ts` | Not Started | — | ☐ | ☐ | ☐ | P1-3 fix |
 | V5-7 | **Approval table Target Object column** | Add "Target Object" column to Section 6.6.1 table, extracted from evidenceRefs. | `assembler.ts`, `templates/index.ts` | Not Started | — | ☐ | ☐ | ☐ | P1-4 fix |
 | V5-8 | **Top products denominator footnote** | Add "% = distinct quotes containing product ÷ total quotes (N)" below the table. | `templates/index.ts` | Not Started | — | ☐ | ☐ | ☐ | P1-5 fix |
-| V5-9 | **Template count fix** | Filter "unused_templates_summary" synthetic finding from template list. Reconcile 9 (raw) vs 7 (displayed) with note. | `assembler.ts` | Not Started | — | ☐ | ☐ | ☐ | P1-6 fix |
+| V5-9 | **Template count fix** | Filter "unused_templates_summary" synthetic finding. Label all three counts explicitly: 9 total SBQQ__QuoteTemplate__c records, 7 configured templates (excluding synthetic), 6 usable (excluding test/unused). Each display site picks one basis and labels it. | `assembler.ts` | Not Started | — | ☐ | ☐ | ☐ | P1-6 fix |
 | V5-10 | **Validator: approval count cross-check** | Add V25: Section 6.6.1 approval rule count must equal Section 8.3 approval rule count. | `validation.ts` | Not Started | — | ☐ | ☐ | ☐ | Prevents P0-3 recurrence |
-| V5-11 | **Validator: branding check** | Add V26: report HTML must not contain "RevBrain" (or configured brand name check). Ready for when branding decision changes. | `validation.ts` | Not Started | — | ☐ | ☐ | ☐ | ADM-1 readiness. Disabled by default, enabled via config. |
-| V5-12 | **Regenerate V5 PDF** | Fresh PDF from Cloud Run extraction data with all V5 fixes. Verify all V5 acceptance criteria pass. | `output/` | Not Started | — | ☐ | ☐ | ☐ | Final deliverable |
+| V5-11 | **Validator: branding check** | Add V26: validate report branding matches configured brand name (default: "RevBrain"). Config-based — if brand changes, update config only. Not a "no RevBrain" check. | `validation.ts` | Not Started | — | ☐ | ☐ | ☐ | ADM-1 readiness. Disabled by default, enabled via config. |
 | V5-13 | **Feature utilization language** | Replace "Active Usage" with "Configured" for features detected via metadata only. Reserve "Active Usage" for transaction-backed evidence. Applies to: Bundles, Discount Schedules, Advanced Approvals. Keep "Active Usage" for QCP (has script execution evidence). | `assembler.ts` | Not Started | — | ☐ | ☐ | ☐ | P2-3 fix. Critical for SI trust. |
-| V5-14 | **Bundle definition note** | Add clarifying note where bundle count appears: "76 products have bundle configuration enabled; approximately 19 are actively configured as bundles with nested options." Optional secondary metric if data supports it. | `assembler.ts`, `templates/index.ts` | Not Started | — | ☐ | ☐ | ☐ | P0-1 + P2-2 consolidated fix. |
-| V5-15 | **Percentage denominator basis audit** | Audit ALL percentage tables (not just top products). Add denominator basis note to: discount distribution, conversion by size, utilization rates. Validator V27: warn if percentage table metadata lacks denominator. | `templates/index.ts`, `validation.ts` | Not Started | — | ☐ | ☐ | ☐ | V5 redline "broader rule" — applies beyond just P1-5. |
+| V5-14 | **Bundle definition note** | Add clarifying note where bundle count appears: "76 products have bundle configuration enabled (SBQQ__ConfigurationType__c). UI list views indicate ~19 configured bundles — this is a UI reference, not an extracted metric." Do not mix approximate UI counts with extracted metrics. | `assembler.ts`, `templates/index.ts` | Not Started | — | ☐ | ☐ | ☐ | P0-1 + P2-2 consolidated fix. |
+| V5-15 | **Percentage denominator basis audit** | Audit ALL percentage tables (not just top products). Add denominator basis note to: discount distribution, conversion by size, utilization rates. Validator V28: warn if percentage table metadata lacks denominator. | `templates/index.ts`, `validation.ts` | Not Started | — | ☐ | ☐ | ☐ | V5 redline "broader rule" — applies beyond just P1-5. |
 | V5-16 | **Product rule complexity disposition** | Add Appendix D note: "Product rule structural complexity: Not extracted — requires condition/action scope analysis." Change column from "Not assessed" to "—" with footnote. | `assembler.ts` | Not Started | — | ☐ | ☐ | ☐ | P2-1 deferred with honest documentation. |
+| V5-17 | **Label requirement validator** | Add V29: warn if displayed count lacks basis label where multiple definitions exist. Applies to product counts (Total/Active/Bundle-capable), rule counts (Active/Total), template counts (Total/Configured/Usable). | `validation.ts` | Not Started | — | ☐ | ☐ | ☐ | V5 redline guidance. Heuristic warning, not error. |
+| V5-18 | **Regenerate V5 PDF** | Fresh PDF from Cloud Run extraction data with ALL V5 fixes (V5-1 through V5-17). Verify all V5 acceptance criteria pass. This is the final internal deliverable before SI review. | `output/` | Not Started | — | ☐ | ☐ | ☐ | Must be last task. |
+
+> **V5 redline validator suggestions not adopted:** Count-reasonableness heuristics (e.g., "bundle count > 3x UI reference -> warn") require semantic text analysis beyond current validator architecture. Deferred — these are heuristic warnings with high false-positive risk.
 
 ### V5 Acceptance Criteria
 
@@ -687,6 +692,52 @@ V3 fixed 20 items from V2:
 10. Bundle count includes clarifying note distinguishing bundle-capable (76) from configured bundles (~19)
 
 > **Note on reviewer acceptance criteria not adopted:**
-> The V5 redline defines 8 acceptance criteria. This plan meets 6 of 8. Two are intentionally not met:
+> The V5 reviewer's checklist defined 8 acceptance criteria. This plan adopts and extends them into 10 internal hardening criteria. Of the reviewer's original 8, 6 are adopted as written and 2 are intentionally not adopted:
 > (1) **Bundle count UI alignment** — we use the standard CPQ definition (ConfigurationType) with explicit "Bundle-capable" labeling and a clarifying note. The ~19 configured bundles metric is added as context.
 > (2) **Branding "Vento"** — stakeholder decision to retain "RevBrain" (2026-03-30). Both disagreements are documented with rationale.
+>
+> **Convergence statement:** V6 is the final internal quality pass. After V6 acceptance criteria are met, the report enters SI review.
+
+---
+
+## Appendix D: V6 Redline — Final Polish Pass
+
+> **Date:** 2026-04-01
+> **Input:** Developer_Redline_Checklist_V6.md + Salesforce UI screenshots confirming 19 configured bundles
+> **Status:** V5 confirmed as "strongest report so far." 7 items remain — 1 P1, 3 P2, 3 P3. No extraction failures.
+
+### V6 Item Analysis
+
+| # | Item | V6 Claim | Our Verdict | Root Cause | Fix Layer | Effort |
+|---|------|----------|-------------|-----------|-----------|--------|
+| P1-1 | QCP name truncated ("q2cJSPSP" not "q2cJSPSP5ALEX") | Bug | **AGREE** | Assembler takes `qcpScripts[0]?.artifactName` — the first CustomScript record name, not the configured QCP class from settings. Should show the actual SBQQ Calculator Plugin value. | Assembler | Small |
+| P2-1 | Bundle-capable wording inconsistent | Semantic risk | **AGREE** | Lines 416 and 742 say "bundle products" without "-capable" qualifier. 5 of 6 occurrences are correct, 2 are not. Hotspot section is the most visible miss. UI confirms only 19 configured bundles vs 76 bundle-capable. | Assembler + Template | Small |
+| P2-2 | Template count 7 vs 9 | Cross-section mismatch | **AGREE** | Section 6.6.5 says "7 total records" but Appendix A says 9. The 7 comes from `allQuoteTemplates.length` (including synthetic), while Appendix A uses a different counting path. Need single source. | Assembler | Small |
+| P2-3 | Exec Summary findings descriptive | Content quality | **AGREE** | Finding #3 ("Multi-currency enabled") and #5 ("176 products across 21 families") lack implications. The dormant-family note exists in code but doesn't fire for Finding #5's detail text. | Assembler | Small |
+| P3-1 | "1 active users" grammar | Grammar | **AGREE** | `${reportCounts.activeUsers} active users` — no singular/plural handling | Assembler | Tiny |
+| P3-2 | Apex origin all "Custom" | Enhancement | **DEFERRED** | Requires namespace detection not in current scope. Low trust impact. | — | Deferred to V1.1 |
+| P3-3 | Appendix A "AdvancedApprovals: 1" | Data artifact | **AGREE** | Package detection artifact leaking into object inventory. Not a real object — should be filtered or relabeled. | Assembler | Tiny |
+
+### V6 Execution Tracker
+
+| # | Task | Goal | Files | Status | Commit | Tested | FLTB | Code Review | Notes |
+|---|------|------|-------|--------|--------|--------|------|-------------|-------|
+| V6-1 | **QCP name fix** | Show the actual configured QCP class name from settings, not first CustomScript record name. If settings field identifies the QCP class (e.g., from `SBQQ__CalculatorPlugin` setting), use that. Otherwise show all script names or the most relevant one. | `assembler.ts` | Not Started | — | ☐ | ☐ | ☐ | P1-1. Check if settings collector captures the configured QCP class name. |
+| V6-2 | **Bundle-capable wording consistency** | Replace "bundle products" with "bundle-capable products" in Section 6.5 and Hotspot #4 (lines 416, 742). Ensure ALL 6 occurrences of "76" + "bundle" use the "-capable" qualifier. | `assembler.ts`, `templates/index.ts` | Not Started | — | ☐ | ☐ | ☐ | P2-1. Two specific locations to fix. |
+| V6-3 | **Template count reconciliation** | Make Section 6.6.5 and Appendix A use the same total. Appendix A shows 9 (raw). Section 6.6.5 should say "6 usable (9 total SBQQ__QuoteTemplate__c records, 6 usable after excluding test/synthetic)". | `assembler.ts` | Not Started | — | ☐ | ☐ | ☐ | P2-2. Use Appendix A's 9 as the canonical total. |
+| V6-4 | **Exec Summary synthesis** | Finding #3: add currency list + implication ("increases field mapping complexity"). Finding #5: add dormant family note ("16 families show zero quoting activity — indicating catalog dormancy"). | `assembler.ts` | Not Started | — | ☐ | ☐ | ☐ | P2-3. Fact + Implication pattern. |
+| V6-5 | **Grammar: singular/plural** | `${count} active user${count === 1 ? '' : 's'}` in low-volume warning. | `assembler.ts` | Not Started | — | ☐ | ☐ | ☐ | P3-1. One-line fix. |
+| V6-6 | **Appendix A: remove AdvancedApprovals artifact** | Filter "AdvancedApprovals" (count=1) from object inventory — it's a package detection artifact, not a real object. The sbaa rules are already in Appendix A as `sbaa__ApprovalRule__c: 16`. | `assembler.ts` | Not Started | — | ☐ | ☐ | ☐ | P3-3. Add to REPORT_SKIP_TYPES. |
+| V6-7 | **Regenerate V6 PDF** | Final PDF with all V6 fixes. Verify all acceptance criteria. This is the V1 ship candidate. | `output/` | Not Started | — | ☐ | ☐ | ☐ | Must be last. |
+
+### V6 Acceptance Criteria
+
+1. QCP name shows exact configured value (not truncated first-script name)
+2. "Bundle-capable" wording consistent across ALL 6 occurrences — no bare "bundle products"
+3. Template count: Section 6.6.5 total matches Appendix A total (9), with usable count (6) labeled
+4. Executive Summary findings follow Fact + Implication pattern
+5. "1 active user" (singular) not "1 active users"
+6. No "AdvancedApprovals: 1" artifact in Appendix A
+7. All V17-V29 validators still pass
+
+> **Convergence statement:** V6 is the final internal quality pass. These 7 items are the last fixes before SI handoff. No further internal review cycles.
