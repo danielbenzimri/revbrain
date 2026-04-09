@@ -2011,7 +2011,7 @@ function buildDefaultKeyFindings(
     const allScriptNames = qcpScripts.map((s) => s.artifactName).join(', ');
     kf.push({
       title: `Custom Quote Calculator Plugin (QCP) active${scriptName ? `: ${scriptName}` : ''}`,
-      detail: `${qcpScripts.length} custom script(s) with JavaScript-based pricing logic injected into every calculation${allScriptNames ? ` (${allScriptNames})` : ''}. This fundamentally changes the complexity profile.`,
+      detail: `${qcpScripts.length} custom script(s) with JavaScript-based pricing logic injected into every calculation${allScriptNames ? ` (${allScriptNames})` : ''} — indicating a fundamentally different complexity profile than standard CPQ configuration.`,
       confidence: 'Confirmed',
     });
   }
@@ -2019,7 +2019,7 @@ function buildDefaultKeyFindings(
   if (counts.totalPriceRules > 0 || counts.totalProductRules > 0) {
     kf.push({
       title: `${activePR} active price rules and ${activeProdR} active product rules detected`,
-      detail: `Heavy rule density indicates significant business logic encoded in CPQ configuration. Pricing logic concentrated in business-specific rules.`,
+      detail: `${activePR} price rules and ${activeProdR} product rules actively configured — indicating significant business logic encoded in CPQ rule configuration.`,
       confidence: 'Confirmed',
     });
   }
@@ -2028,7 +2028,7 @@ function buildDefaultKeyFindings(
   if (counts.totalProducts > 0 && dormantProducts > counts.totalProducts * 0.2) {
     kf.push({
       title: `Product catalog shows ${Math.round((dormantProducts / counts.totalProducts) * 100)}% dormancy`,
-      detail: `${dormantProducts} of ${counts.totalProducts} products were not quoted in the 90-day window. Consider cleanup to reduce configuration surface area.`,
+      detail: `${dormantProducts} of ${counts.totalProducts} products were not quoted in the 90-day window — suggesting significant catalog dormancy that may warrant cleanup.`,
       confidence: 'Confirmed',
     });
   }
@@ -2049,7 +2049,7 @@ function buildDefaultKeyFindings(
   if (counts.apexClassCount > 20 && kf.length < 5) {
     kf.push({
       title: `${counts.apexClassCount} Apex classes reference CPQ objects`,
-      detail: `Substantial custom code dependency suggests significant customization beyond standard CPQ configuration.`,
+      detail: `${counts.apexClassCount} Apex classes reference CPQ objects — indicating substantial custom code dependency beyond standard CPQ configuration.`,
       confidence: 'Confirmed',
     });
   }
@@ -2087,7 +2087,9 @@ function buildDefaultKeyFindings(
       counts.activeProductSource === 'IsActive' ? 'active products' : 'products extracted';
     kf.push({
       title: `${counts.activeProducts} ${productLabel} across ${counts.productFamilies} families`,
-      detail: `Product catalog spans ${counts.productFamilies} families with active products.${dormantNote}`,
+      detail: dormantNote
+        ? `Product catalog spans ${counts.productFamilies} families with active products.${dormantNote}`
+        : `Product catalog spans ${counts.productFamilies} families with active products — indicating a broad product portfolio under CPQ management.`,
       confidence: counts.activeProductSource === 'IsActive' ? 'Confirmed' : 'Estimated',
     });
   }
@@ -2095,7 +2097,7 @@ function buildDefaultKeyFindings(
   while (kf.length < 3) {
     kf.push({
       title: `CPQ environment spans ${new Set(findings.map((f) => f.domain)).size} configuration domains`,
-      detail: `${totalFindings} configuration artifacts assessed across product catalog, pricing, approvals, custom code, and usage analytics.`,
+      detail: `${totalFindings} configuration artifacts assessed across product catalog, pricing, approvals, custom code, and usage analytics — indicating a broad CPQ implementation footprint.`,
       confidence: 'Confirmed',
     });
   }
