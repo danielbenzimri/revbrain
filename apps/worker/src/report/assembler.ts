@@ -1130,9 +1130,237 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
           }))
         : buildDynamicCoverage(findings, reportCounts),
 
-    // V2.1 T2 sections — null until assembler builders are implemented (A-02, A-03)
-    productDeepDive: null,
-    bundlesDeepDive: null,
+    // V2.1 T2 sections — assembled from collector findings, null if data absent
+    productDeepDive: assembleProductDeepDive(findings, reportCounts),
+    bundlesDeepDive: assembleBundlesDeepDive(findings, reportCounts),
+  };
+}
+
+// ============================================================================
+// V2.1 Section Builders — Product Deep Dive (A-02) + Bundles Deep Dive (A-03)
+// ============================================================================
+
+/**
+ * A-02: Build Product Deep Dive section data (Section 6.2).
+ * Returns null if no ProductFieldUtilization findings exist (T2 conditional).
+ */
+function assembleProductDeepDive(
+  findings: AssessmentFindingInput[],
+  counts: ReportCounts
+): ProductDeepDive | null {
+  const utilFindings = findings.filter((f) => f.artifactType === 'ProductFieldUtilization');
+  if (utilFindings.length === 0) return null;
+
+  const totalActive = counts.activeProducts;
+  if (totalActive === 0) return null;
+
+  // Build field utilization rows in field wishlist order (fixed template order, not dynamic)
+  const fieldUtilization: CheckboxRow[] = utilFindings.map((f) => {
+    const count = getCountOrNull(f);
+    const percentage =
+      count !== null && totalActive > 0 ? `${Math.round((count / totalActive) * 100)}%` : null;
+    return {
+      label: f.artifactName ?? f.textValue ?? 'Unknown',
+      category: getCheckboxCategory(count, totalActive),
+      count,
+      percentage,
+      notes: f.notes ?? '',
+    };
+  });
+
+  // Pricing method distribution
+  const pricingMethods = ['List', 'Cost', 'Block', 'Percent of Total'];
+  const pricingDistribution = pricingMethods.map((method) => {
+    const methodFinding = utilFindings.find(
+      (f) => f.textValue === 'SBQQ__PricingMethod__c' && (f.notes ?? '').includes(method)
+    );
+    // Extract count from notes if available
+    const count = methodFinding
+      ? methodFinding.notes?.match(new RegExp(`${method}\\s*\\((\\d+)\\)`))?.[1]
+        ? Number(methodFinding.notes.match(new RegExp(`${method}\\s*\\((\\d+)\\)`))?.[1])
+        : 0
+      : 0;
+    return {
+      method,
+      count,
+      percentOfActive: totalActive > 0 ? `${Math.round((count / totalActive) * 100)}%` : '0%',
+      complexity: method === 'Percent of Total' ? 'High' : method === 'List' ? 'Low' : 'Medium',
+    };
+  });
+
+  // Subscription profile
+  const subTypes = ['One-time', 'Renewable', 'Evergreen'];
+  const subscriptionProfile = subTypes.map((type) => {
+    const subFinding = utilFindings.find(
+      (f) => f.textValue === 'SBQQ__SubscriptionType__c' && (f.notes ?? '').includes(type)
+    );
+    const count = subFinding
+      ? subFinding.notes?.match(new RegExp(`${type}\\s*\\((\\d+)\\)`))?.[1]
+        ? Number(subFinding.notes.match(new RegExp(`${type}\\s*\\((\\d+)\\)`))?.[1])
+        : 0
+      : 0;
+    return {
+      type,
+      count,
+      percentOfActive: totalActive > 0 ? `${Math.round((count / totalActive) * 100)}%` : '0%',
+      notes: type === 'Evergreen' ? 'High complexity' : '',
+    };
+  });
+
+  const dormantCount = counts.totalProducts - counts.activeProducts;
+  const dormantPercent =
+    counts.totalProducts > 0 ? `${Math.round((dormantCount / counts.totalProducts) * 100)}%` : '0%';
+
+  return {
+    summary: {
+      activeProducts: counts.activeProducts,
+      inactiveProducts: counts.totalProducts - counts.activeProducts,
+      bundleCapableProducts: counts.bundleProducts,
+      priceBooks:
+        findings.filter(
+          (f) => f.artifactType === 'DataCount' && f.artifactName?.includes('PriceBook')
+        ).length > 0
+          ? (findings.find(
+              (f) => f.artifactType === 'DataCount' && f.artifactName?.includes('PriceBook')
+            )?.countValue ?? 0)
+          : 0,
+      dormantPercent,
+    },
+    fieldUtilization,
+    pricingMethodDistribution: pricingDistribution,
+    subscriptionProfile,
+    hasDenominatorFootnote: true,
+    denominatorLabel: `Active Products (${totalActive})`,
+  };
+}
+
+/**
+ * A-03: Build Bundles & Options Deep Dive section data (Section 6.6).
+ * Returns null if no ProductOption findings exist (T2 conditional).
+ */
+function assembleBundlesDeepDive(
+  findings: AssessmentFindingInput[],
+  counts: ReportCounts
+): BundlesDeepDive | null {
+  if (counts.productOptions === 0) return null;
+
+  const totalActive = counts.activeProducts;
+  const totalFeatures = findings.filter(
+    (f) => f.artifactType === 'ProductFeature' || f.artifactType === 'SBQQ__ProductFeature__c'
+  ).length;
+
+  // Helper to find DataCount by name
+  const dataCount = (name: string) => {
+    const needle = name.toLowerCase().replace(/[\s_]/g, '');
+    const f = findings.find(
+      (f) =>
+        f.artifactType === 'DataCount' &&
+        f.artifactName?.toLowerCase().replace(/[\s_]/g, '').includes(needle)
+    );
+    return f?.countValue ?? 0;
+  };
+
+  const featureOrphans = dataCount('FeatureOrphan');
+  const optionConstraints = dataCount('OptionConstraint');
+  const optionalFor = dataCount('OptionalFor');
+  const configuredBundles = counts.configuredBundles;
+  const nestedBundles =
+    findings.filter(
+      (f) => f.artifactType === 'DataCount' && f.artifactName?.toLowerCase().includes('nested')
+    ).length > 0
+      ? (findings.find(
+          (f) => f.artifactType === 'DataCount' && f.artifactName?.toLowerCase().includes('nested')
+        )?.countValue ?? 0)
+      : 0;
+
+  const avgOptions =
+    configuredBundles > 0 ? (counts.productOptions / configuredBundles).toFixed(1) : '0';
+
+  // Build related object utilization rows
+  const relatedObjectUtilization: CheckboxRow[] = [
+    {
+      label: 'Features',
+      category: getCheckboxCategory(totalFeatures > 0 ? totalFeatures : 0, totalActive),
+      count: totalFeatures,
+      percentage: totalActive > 0 ? `${Math.round((totalFeatures / totalActive) * 100)}%` : null,
+      notes: 'Products with features',
+    },
+    {
+      label: 'Feature Orphans',
+      category: getCheckboxCategory(featureOrphans, totalFeatures > 0 ? totalFeatures : 1),
+      count: featureOrphans,
+      percentage:
+        totalFeatures > 0 ? `${Math.round((featureOrphans / totalFeatures) * 100)}%` : null,
+      notes: 'Tech debt indicator',
+    },
+    {
+      label: 'Bundle-capable Products',
+      category: getCheckboxCategory(counts.bundleProducts, totalActive),
+      count: counts.bundleProducts,
+      percentage:
+        totalActive > 0 ? `${Math.round((counts.bundleProducts / totalActive) * 100)}%` : null,
+      notes: `${configuredBundles} configured bundles`,
+    },
+    {
+      label: 'Nested Bundles',
+      category: getCheckboxCategory(
+        nestedBundles,
+        counts.bundleProducts > 0 ? counts.bundleProducts : 1
+      ),
+      count: nestedBundles,
+      percentage: null,
+      notes: 'Options that are also bundles',
+    },
+    {
+      label: 'Options',
+      category: getCheckboxCategory(
+        counts.productOptions,
+        counts.productOptions > 0 ? counts.productOptions : 1
+      ),
+      count: counts.productOptions,
+      percentage: null,
+      notes: 'Total option records',
+    },
+    {
+      label: 'Optional For',
+      category: getCheckboxCategory(optionalFor, totalActive),
+      count: optionalFor,
+      percentage: totalActive > 0 ? `${Math.round((optionalFor / totalActive) * 100)}%` : null,
+      notes: 'Products as options (API only)',
+    },
+    {
+      label: 'Option Constraints',
+      category:
+        optionConstraints > 0
+          ? getCheckboxCategory(optionConstraints, optionConstraints)
+          : 'NOT_USED',
+      count: optionConstraints,
+      percentage: null,
+      notes: '(API only)',
+    },
+  ];
+
+  return {
+    summary: {
+      bundleCapable: counts.bundleProducts,
+      configuredBundles,
+      nestedBundles,
+      avgOptionsPerBundle: avgOptions,
+      totalOptions: counts.productOptions,
+      optionsWithConstraintsPercent:
+        counts.productOptions > 0
+          ? `${Math.round((optionConstraints / counts.productOptions) * 100)}%`
+          : '0%',
+      configAttributesPercent:
+        totalActive > 0
+          ? `${Math.round((findings.filter((f) => f.artifactType === 'ConfigurationAttribute' || f.artifactType === 'SBQQ__ConfigurationAttribute__c').length / totalActive) * 100)}%`
+          : '0%',
+      configRulesPercent:
+        totalActive > 0 ? `${Math.round((counts.activeProductRules / totalActive) * 100)}%` : '0%',
+    },
+    relatedObjectUtilization,
+    hasDenominatorFootnote: true,
+    denominatorLabel: `Active Products (${totalActive})`,
   };
 }
 
