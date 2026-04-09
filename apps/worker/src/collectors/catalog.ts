@@ -205,10 +205,18 @@ export class CatalogCollector extends BaseCollector {
           artifactId: p.Id as string,
           findingType: 'product',
           sourceType: 'object',
-          complexityLevel: (p.SBQQ__ConfigurationType__c === 'Required' || p.SBQQ__ConfigurationType__c === 'Allowed') ? 'medium' : 'low',
+          complexityLevel:
+            p.SBQQ__ConfigurationType__c === 'Required' ||
+            p.SBQQ__ConfigurationType__c === 'Allowed'
+              ? 'medium'
+              : 'low',
           migrationRelevance: p.IsActive ? 'must-migrate' : 'optional',
           rcaTargetConcept: 'ProductSellingModel',
-          rcaMappingComplexity: (p.SBQQ__ConfigurationType__c === 'Required' || p.SBQQ__ConfigurationType__c === 'Allowed') ? 'transform' : 'direct',
+          rcaMappingComplexity:
+            p.SBQQ__ConfigurationType__c === 'Required' ||
+            p.SBQQ__ConfigurationType__c === 'Allowed'
+              ? 'transform'
+              : 'direct',
           usageLevel: p.IsActive ? undefined : 'dormant',
           evidenceRefs: productEvidenceRefs,
         })
@@ -333,9 +341,13 @@ export class CatalogCollector extends BaseCollector {
       );
       const bundleIds15 = new Set([...bundleIds].map(normalizeId));
 
-      const nestedOptions = options.filter((o) => bundleIds15.has(normalizeId(o.SBQQ__OptionalSKU__c as string)));
+      const nestedOptions = options.filter((o) =>
+        bundleIds15.has(normalizeId(o.SBQQ__OptionalSKU__c as string))
+      );
       if (nestedOptions.length > 0) {
-        const childBundles = new Set(nestedOptions.map((o) => normalizeId(o.SBQQ__OptionalSKU__c as string)));
+        const childBundles = new Set(
+          nestedOptions.map((o) => normalizeId(o.SBQQ__OptionalSKU__c as string))
+        );
         const grandchild = options.filter(
           (o) =>
             childBundles.has(normalizeId(o.SBQQ__ConfiguredSKU__c as string)) &&
@@ -365,7 +377,9 @@ export class CatalogCollector extends BaseCollector {
 
       // Count bundle-capable products that have child options
       // Uses normalized 15-char IDs to avoid 15 vs 18-char SF ID mismatch
-      const configuredBundleCount = Object.keys(optionMapData).filter(parentId => bundleIds15.has(parentId)).length;
+      const configuredBundleCount = Object.keys(optionMapData).filter((parentId) =>
+        bundleIds15.has(parentId)
+      ).length;
       metrics.configuredBundleCount = configuredBundleCount;
 
       // Emit as a DataCount finding so assembler can use it in ReportCounts
@@ -383,6 +397,129 @@ export class CatalogCollector extends BaseCollector {
 
       if (maxBundleDepth >= 3) {
         warnings.push('Bundle nesting depth ≥ 3 — complex migration to RCA Product Compositions');
+      }
+    }
+
+    // ================================================================
+    // 5.3a: Feature orphan detection (C-03a)
+    // Features with no ProductOption referencing them = tech debt
+    // ================================================================
+    if (featureDescribe && optionDescribe && totalFeatures > 0) {
+      const featureQ = buildSafeQuery('SBQQ__ProductFeature__c', ['Id'], featureDescribe);
+      const allFeatureIds = (
+        await this.ctx.restApi.queryAll<Record<string, unknown>>(featureQ.query, this.signal)
+      ).map((f) => String(f.Id));
+
+      // Get distinct feature IDs referenced by options
+      const referencedFeatureIds = new Set(
+        (
+          await this.ctx.restApi.queryAll<Record<string, unknown>>(
+            `SELECT SBQQ__Feature__c FROM SBQQ__ProductOption__c WHERE SBQQ__Feature__c != null GROUP BY SBQQ__Feature__c`,
+            this.signal
+          )
+        ).map((o) => String(o.SBQQ__Feature__c).substring(0, 15))
+      );
+
+      const orphanCount = allFeatureIds.filter(
+        (id) => !referencedFeatureIds.has(id.substring(0, 15))
+      ).length;
+
+      findings.push(
+        createFinding({
+          domain: 'catalog',
+          collector: 'catalog',
+          artifactType: 'DataCount',
+          artifactName: 'Feature Orphans',
+          sourceType: 'object',
+          countValue: orphanCount,
+          notes: `${orphanCount} of ${totalFeatures} features are not referenced by any product option — tech debt indicator`,
+        })
+      );
+      metrics.featureOrphanCount = orphanCount;
+    }
+
+    // ================================================================
+    // 5.3b: Option constraint count (C-03b)
+    // ================================================================
+    const constraintDescribe = this.ctx.describeCache.get('SBQQ__OptionConstraint__c') as
+      | DescribeResult
+      | undefined;
+
+    if (constraintDescribe) {
+      try {
+        const constraintResult = await this.ctx.restApi.queryAll<Record<string, unknown>>(
+          'SELECT COUNT(Id) cnt FROM SBQQ__OptionConstraint__c',
+          this.signal
+        );
+        const constraintCount = Number(constraintResult[0]?.cnt ?? 0);
+        findings.push(
+          createFinding({
+            domain: 'catalog',
+            collector: 'catalog',
+            artifactType: 'DataCount',
+            artifactName: 'Option Constraints',
+            sourceType: 'object',
+            countValue: constraintCount,
+            notes: `${constraintCount} option constraint records configured`,
+          })
+        );
+        metrics.optionConstraintCount = constraintCount;
+      } catch {
+        findings.push(
+          createFinding({
+            domain: 'catalog',
+            collector: 'catalog',
+            artifactType: 'DataCount',
+            artifactName: 'Option Constraints',
+            sourceType: 'object',
+            detected: false,
+            notes: 'SBQQ__OptionConstraint__c query failed — object may not be accessible',
+          })
+        );
+      }
+    } else {
+      findings.push(
+        createFinding({
+          domain: 'catalog',
+          collector: 'catalog',
+          artifactType: 'DataCount',
+          artifactName: 'Option Constraints',
+          sourceType: 'object',
+          detected: false,
+          notes: 'SBQQ__OptionConstraint__c not found in org describe',
+        })
+      );
+    }
+
+    // ================================================================
+    // 5.3c: Optional-for count (C-03c)
+    // Products that appear as options in other bundles
+    // ================================================================
+    if (optionDescribe) {
+      try {
+        const optionalForResult = await this.ctx.restApi.queryAll<Record<string, unknown>>(
+          'SELECT COUNT(Id) cnt FROM SBQQ__ProductOption__c WHERE SBQQ__OptionalSKU__c != null',
+          this.signal
+        );
+        const distinctOptionalForResult = await this.ctx.restApi.queryAll<Record<string, unknown>>(
+          'SELECT SBQQ__OptionalSKU__c FROM SBQQ__ProductOption__c WHERE SBQQ__OptionalSKU__c != null GROUP BY SBQQ__OptionalSKU__c',
+          this.signal
+        );
+        const optionalForCount = distinctOptionalForResult.length;
+        findings.push(
+          createFinding({
+            domain: 'catalog',
+            collector: 'catalog',
+            artifactType: 'DataCount',
+            artifactName: 'Optional For',
+            sourceType: 'object',
+            countValue: optionalForCount,
+            notes: `${optionalForCount} distinct products appear as options in other bundles (${Number(optionalForResult[0]?.cnt ?? 0)} total option records)`,
+          })
+        );
+        metrics.optionalForCount = optionalForCount;
+      } catch {
+        warnings.push('Optional-for count query failed');
       }
     }
 
