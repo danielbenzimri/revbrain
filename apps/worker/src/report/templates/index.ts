@@ -46,6 +46,7 @@ export function renderReport(data: ReportData): string {
   ${renderAppendixA(data)}
   ${renderAppendixB(data)}
   ${renderAppendixCD(data)}
+  ${isSectionEnabled('appendixE', data) ? renderAppendixE(data) : ''}
 </body>
 </html>`;
 }
@@ -984,5 +985,34 @@ function renderRelatedFunctionality(data: ReportData): string {
     <h2>10. Related Functionality Analysis</h2>
     ${renderBinaryCheckboxTable(rf.items, '10.1 Related Functionality Detection')}
     ${observationsList}
+  </div>`;
+}
+
+// ============================================================================
+// Appendix E: Object Configuration Analysis [T2 — conditional] (R-10)
+// ============================================================================
+
+function renderAppendixE(data: ReportData): string {
+  const configs = data.objectConfiguration;
+  if (!configs || configs.length === 0) return '';
+
+  const objectSections = configs
+    .map((obj) => {
+      const rows = obj.items.map((item) => ({
+        label: item.configType,
+        used: item.detected,
+        notes: item.count > 0 ? `${item.count} — ${item.notes}` : item.notes,
+      }));
+      return `
+      <h4>${escapeHtml(obj.objectName)} Configuration</h4>
+      ${renderBinaryCheckboxTable(rows, '')}`;
+    })
+    .join('');
+
+  return `
+  <div class="page-break" id="appendix-e">
+    <h2>Appendix E: Object Configuration Analysis</h2>
+    <p><em>Metadata-level configuration for CPQ-related objects.</em></p>
+    ${objectSections}
   </div>`;
 }

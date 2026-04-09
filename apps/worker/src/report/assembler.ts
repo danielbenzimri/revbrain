@@ -209,6 +209,18 @@ export interface ReportData {
   productDeepDive: ProductDeepDive | null;
   bundlesDeepDive: BundlesDeepDive | null;
   relatedFunctionality: RelatedFunctionality | null;
+  objectConfiguration: ObjectConfiguration[] | null;
+}
+
+/** Object Configuration data (Appendix E) — T2 conditional, null if absent */
+export interface ObjectConfiguration {
+  objectName: string;
+  items: Array<{
+    configType: string;
+    detected: boolean;
+    count: number;
+    notes: string;
+  }>;
 }
 
 /** Related Functionality data (Section 10) — T2 conditional, null if absent */
@@ -1148,6 +1160,7 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
     productDeepDive: assembleProductDeepDive(findings, reportCounts),
     bundlesDeepDive: assembleBundlesDeepDive(findings, reportCounts),
     relatedFunctionality: assembleRelatedFunctionality(findings),
+    objectConfiguration: assembleObjectConfiguration(findings),
   };
 }
 
@@ -1495,6 +1508,40 @@ function assembleRelatedFunctionality(
   }
 
   return { items, observations };
+}
+
+/**
+ * A-12: Build Object Configuration appendix data (Appendix E).
+ * Returns null if no ObjectConfiguration findings exist (T2 conditional).
+ * Appendix-first by rule: never render in main body.
+ */
+function assembleObjectConfiguration(
+  findings: AssessmentFindingInput[]
+): ObjectConfiguration[] | null {
+  const configFindings = findings.filter((f) => f.artifactType === 'ObjectConfiguration');
+  if (configFindings.length === 0) return null;
+
+  // Group by object name (extracted from artifactName "ObjectName: ConfigType")
+  const grouped = new Map<string, ObjectConfiguration>();
+
+  for (const f of configFindings) {
+    const parts = f.artifactName.split(':');
+    const objectName = parts[0]?.trim() ?? 'Unknown';
+    const configType = parts[1]?.trim() ?? 'Unknown';
+
+    if (!grouped.has(objectName)) {
+      grouped.set(objectName, { objectName, items: [] });
+    }
+    grouped.get(objectName)!.items.push({
+      configType,
+      detected: f.detected !== false,
+      count: f.countValue ?? 0,
+      notes: f.notes ?? '',
+    });
+  }
+
+  const result = [...grouped.values()];
+  return result.length > 0 ? result : null;
 }
 
 // ============================================================================
@@ -1867,7 +1914,7 @@ export const SECTION_RENDER_RULES: Record<SectionKey, SectionConfig> = {
   appendixB: { tier: 'T1', predicate: () => true },
   appendixC: { tier: 'T1', predicate: () => true },
   appendixD: { tier: 'T1', predicate: () => true },
-  appendixE: { tier: 'T2', predicate: () => false }, // TODO: enable when objectConfiguration is added
+  appendixE: { tier: 'T2', predicate: (data) => data.objectConfiguration != null },
 };
 
 /**
