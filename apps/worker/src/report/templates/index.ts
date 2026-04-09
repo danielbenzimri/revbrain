@@ -12,7 +12,11 @@ import type { ReportData } from '../assembler.ts';
 import { isSectionEnabled } from '../assembler.ts';
 import { reportStyles } from './styles.ts';
 import { escapeHtml, badge, scoreBar, severity, table } from './partials/helpers.ts';
-import { renderCheckboxTable, renderDenominatorFootnote } from './partials/checkbox.ts';
+import {
+  renderCheckboxTable,
+  renderBinaryCheckboxTable,
+  renderDenominatorFootnote,
+} from './partials/checkbox.ts';
 import { renderSummaryBoxPair } from './partials/summary-box.ts';
 
 export function renderReport(data: ReportData): string {
@@ -37,6 +41,7 @@ export function renderReport(data: ReportData): string {
   ${renderUsage(data)}
   ${renderDataQuality(data)}
   ${renderCustomCode(data)}
+  ${isSectionEnabled('10', data) ? renderRelatedFunctionality(data) : ''}
   ${renderHotspots(data)}
   ${renderAppendixA(data)}
   ${renderAppendixB(data)}
@@ -958,5 +963,26 @@ function renderBundlesDeepDive(data: ReportData): string {
       '6.6.1 Related Object Utilization',
       `% = count / ${dd.denominatorLabel}`
     )}
+  </div>`;
+}
+
+// ============================================================================
+// Section 10: Related Functionality Analysis [T2 — conditional] (R-09)
+// ============================================================================
+
+function renderRelatedFunctionality(data: ReportData): string {
+  const rf = data.relatedFunctionality;
+  if (!rf) return '';
+
+  const observationsList =
+    rf.observations.length > 0
+      ? `<h4>Observations</h4><ul>${rf.observations.map((o) => `<li>${escapeHtml(o)}</li>`).join('')}</ul>`
+      : '';
+
+  return `
+  <div class="page-break">
+    <h2>10. Related Functionality Analysis</h2>
+    ${renderBinaryCheckboxTable(rf.items, '10.1 Related Functionality Detection')}
+    ${observationsList}
   </div>`;
 }

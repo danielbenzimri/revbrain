@@ -208,6 +208,20 @@ export interface ReportData {
   // V2.1 T2 conditional sections (null = section omitted from report)
   productDeepDive: ProductDeepDive | null;
   bundlesDeepDive: BundlesDeepDive | null;
+  relatedFunctionality: RelatedFunctionality | null;
+}
+
+/** Related Functionality data (Section 10) — T2 conditional, null if absent */
+export interface RelatedFunctionalityItem {
+  label: string;
+  used: boolean;
+  notes: string;
+  isNested?: boolean;
+}
+
+export interface RelatedFunctionality {
+  items: RelatedFunctionalityItem[];
+  observations: string[];
 }
 
 // ============================================================================
@@ -1133,6 +1147,7 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
     // V2.1 T2 sections — assembled from collector findings, null if data absent
     productDeepDive: assembleProductDeepDive(findings, reportCounts),
     bundlesDeepDive: assembleBundlesDeepDive(findings, reportCounts),
+    relatedFunctionality: assembleRelatedFunctionality(findings),
   };
 }
 
@@ -1362,6 +1377,124 @@ function assembleBundlesDeepDive(
     hasDenominatorFootnote: true,
     denominatorLabel: `Active Products (${totalActive})`,
   };
+}
+
+/**
+ * A-11: Build Related Functionality section data (Section 10).
+ * Returns null if none of the related functionality is detected (T2 conditional).
+ * If at least one item is "Used", renders the full section (showing Not Used items too).
+ */
+function assembleRelatedFunctionality(
+  findings: AssessmentFindingInput[]
+): RelatedFunctionality | null {
+  const items: RelatedFunctionalityItem[] = [];
+  const observations: string[] = [];
+
+  // Experience Cloud
+  const expCloud = findings.find((f) => f.artifactType === 'ExperienceCloud');
+  const expCloudDetected = expCloud?.detected === true && (expCloud?.countValue ?? 0) > 0;
+  items.push({
+    label: 'Experience Cloud',
+    used: expCloudDetected,
+    notes: expCloud?.notes ?? '',
+  });
+
+  // Experience Cloud sites (nested)
+  const expSites = findings.filter((f) => f.artifactType === 'ExperienceCloudSite');
+  for (const site of expSites) {
+    items.push({
+      label: site.artifactName,
+      used: true,
+      notes: site.notes ?? '',
+      isNested: true,
+    });
+  }
+
+  // Salesforce Billing
+  const billingPkg = findings.find(
+    (f) => f.artifactType === 'BillingDetection' && f.artifactName === 'Salesforce Billing Package'
+  );
+  const billingInstalled = billingPkg?.detected === true;
+  items.push({
+    label: 'Salesforce Billing',
+    used: billingInstalled,
+    notes: billingPkg?.notes ?? '',
+  });
+
+  const billingRules = findings.find(
+    (f) => f.artifactType === 'BillingDetection' && f.artifactName === 'Billing Rules on Products'
+  );
+  if (billingRules) {
+    items.push({
+      label: 'Billing Rules on Products',
+      used: billingRules.detected === true,
+      notes: billingRules.notes ?? '',
+      isNested: true,
+    });
+  }
+
+  const taxRules = findings.find(
+    (f) => f.artifactType === 'BillingDetection' && f.artifactName === 'Tax Rules on Products'
+  );
+  if (taxRules) {
+    items.push({
+      label: 'Tax Rules on Products',
+      used: taxRules.detected === true,
+      notes: taxRules.notes ?? '',
+      isNested: true,
+    });
+  }
+
+  // External Integrations
+  const namedCreds = findings.filter((f) => f.artifactType === 'NamedCredential');
+  items.push({
+    label: 'Named Credentials',
+    used: namedCreds.length > 0,
+    notes: namedCreds.length > 0 ? `${namedCreds.length} detected` : '',
+  });
+
+  const platformEvents = findings.filter(
+    (f) => f.artifactType === 'PlatformEvent' || f.artifactType === 'PlatformEventChannel'
+  );
+  items.push({
+    label: 'Platform Events',
+    used: platformEvents.length > 0,
+    notes: platformEvents.length > 0 ? `${platformEvents.length} CPQ-related` : '',
+  });
+
+  const apexCallouts = findings.filter((f) => f.artifactType === 'ApexCallout');
+  items.push({
+    label: 'Apex Callouts',
+    used: apexCallouts.length > 0,
+    notes: apexCallouts.length > 0 ? `${apexCallouts.length} classes with callouts` : '',
+  });
+
+  // Tax Calculator
+  const taxCalc = findings.find((f) => f.artifactType === 'TaxCalculator');
+  items.push({
+    label: 'Tax Calculator',
+    used: taxCalc?.detected === true,
+    notes: taxCalc?.notes ?? '',
+  });
+
+  // Check if ANY item is used
+  const anyUsed = items.some((item) => item.used);
+  if (!anyUsed) return null;
+
+  // Generate observations
+  if (expCloudDetected) {
+    observations.push('Community presence detected — adding complexity to the CPQ environment');
+  }
+  if (billingInstalled) {
+    observations.push(
+      'Salesforce Billing active — invoice handling is part of the quote-to-cash flow'
+    );
+  }
+  if (namedCreds.length > 0 || apexCallouts.length > 0) {
+    observations.push('External dependencies detected — integration points require assessment');
+  }
+
+  return { items, observations };
 }
 
 // ============================================================================
@@ -1728,7 +1861,7 @@ export const SECTION_RENDER_RULES: Record<SectionKey, SectionConfig> = {
   '7': { tier: 'T1', predicate: () => true },
   '8': { tier: 'T1', predicate: () => true },
   '9': { tier: 'T1', predicate: () => true },
-  '10': { tier: 'T2', predicate: () => false }, // TODO: enable when relatedFunctionality is added
+  '10': { tier: 'T2', predicate: (data) => data.relatedFunctionality != null },
   '11': { tier: 'T1', predicate: () => true },
   appendixA: { tier: 'T1', predicate: () => true },
   appendixB: { tier: 'T1', predicate: () => true },
