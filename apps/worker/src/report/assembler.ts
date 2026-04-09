@@ -85,7 +85,13 @@ export interface ReportData {
       confidence: string;
     }>;
     /** Pre-computed price rule summary (Task 2.3) */
-    priceRuleSummary: { active: number; total: number; highComplexity: number; inactive: number; stale: number };
+    priceRuleSummary: {
+      active: number;
+      total: number;
+      highComplexity: number;
+      inactive: number;
+      stale: number;
+    };
     productRules: Array<{
       name: string;
       type: string;
@@ -95,7 +101,14 @@ export interface ReportData {
       confidence: string;
     }>;
     /** Pre-computed product rule summary by type (Task 2.3) */
-    productRuleSummary: { selection: number; alert: number; validation: number; filter: number; inactive: number; stale: number };
+    productRuleSummary: {
+      selection: number;
+      alert: number;
+      validation: number;
+      filter: number;
+      inactive: number;
+      stale: number;
+    };
     activePriceRuleSummary: string;
     activeProductRuleSummary: string;
     discountScheduleAnalysis: Array<{ name: string; isDuplicate: boolean }>;
@@ -153,13 +166,23 @@ export interface ReportData {
     /** CPQ Custom Action buttons (SBQQ__CustomAction__c) — NOT approval rules */
     customActions: Array<{ name: string; type: string; location: string; status: string }>;
     /** Advanced Approval Rules (sbaa__ApprovalRule__c) */
-    advancedApprovalRules: Array<{ name: string; conditions: number; status: string; targetObject: string }>;
+    advancedApprovalRules: Array<{
+      name: string;
+      conditions: number;
+      status: string;
+      targetObject: string;
+    }>;
     /** Approval chain summary */
     approvalChains: { count: number; approvers: number };
     /** Standard Approval Processes (ProcessDefinition on CPQ objects) */
     approvalRules: Array<{ name: string; object: string; status: string }>;
     quoteTemplates: Array<{ name: string; isDefault: boolean; lastModified: string }>;
-    documentGeneration: { templateCount: number; totalTemplateRecords: number; usableTemplateCount: number; docuSignActive: boolean };
+    documentGeneration: {
+      templateCount: number;
+      totalTemplateRecords: number;
+      usableTemplateCount: number;
+      docuSignActive: boolean;
+    };
   };
   /** Canonical counts — single source of truth for all metrics (A1) */
   counts: ReportCounts;
@@ -181,6 +204,10 @@ export interface ReportData {
   /** Appendix B summary (Task 2.11) */
   appendixBSummary: { total: number; runLast12Mo: number; staleCount: number };
   appendixD: Array<{ category: string; coverage: string; notes: string }>;
+
+  // V2.1 T2 conditional sections (null = section omitted from report)
+  productDeepDive: ProductDeepDive | null;
+  bundlesDeepDive: BundlesDeepDive | null;
 }
 
 // ============================================================================
@@ -201,25 +228,25 @@ const TECH_DEBT_PATTERNS =
 
 /** CPQ object → deployment phase mapping (Task 2.12) */
 const CPQ_PHASE_MAP: Record<string, string> = {
-  'Product2': 'Phase 1',
-  'PricebookEntry': 'Phase 1',
-  'Pricebook2': 'Phase 1',
-  'SBQQ__ProductOption__c': 'Phase 1',
-  'SBQQ__ProductFeature__c': 'Phase 1',
-  'SBQQ__ProductRule__c': 'Phase 1',
-  'SBQQ__PriceRule__c': 'Phase 2',
-  'SBQQ__PriceCondition__c': 'Phase 2',
-  'SBQQ__PriceAction__c': 'Phase 2',
-  'SBQQ__DiscountSchedule__c': 'Phase 2',
-  'SBQQ__CustomScript__c': 'Phase 2',
-  'SBQQ__ContractedPrice__c': 'Phase 3',
-  'SBQQ__QuoteTemplate__c': 'Phase 2',
-  'SBQQ__TemplateSection__c': 'Phase 2',
-  'SBQQ__TemplateContent__c': 'Phase 2',
-  'SBQQ__CustomAction__c': 'Phase 3',
-  'sbaa__ApprovalRule__c': 'Phase 3',
-  'ApexClass': 'Phase 3',
-  'ApexTrigger': 'Phase 3',
+  Product2: 'Phase 1',
+  PricebookEntry: 'Phase 1',
+  Pricebook2: 'Phase 1',
+  SBQQ__ProductOption__c: 'Phase 1',
+  SBQQ__ProductFeature__c: 'Phase 1',
+  SBQQ__ProductRule__c: 'Phase 1',
+  SBQQ__PriceRule__c: 'Phase 2',
+  SBQQ__PriceCondition__c: 'Phase 2',
+  SBQQ__PriceAction__c: 'Phase 2',
+  SBQQ__DiscountSchedule__c: 'Phase 2',
+  SBQQ__CustomScript__c: 'Phase 2',
+  SBQQ__ContractedPrice__c: 'Phase 3',
+  SBQQ__QuoteTemplate__c: 'Phase 2',
+  SBQQ__TemplateSection__c: 'Phase 2',
+  SBQQ__TemplateContent__c: 'Phase 2',
+  SBQQ__CustomAction__c: 'Phase 3',
+  sbaa__ApprovalRule__c: 'Phase 3',
+  ApexClass: 'Phase 3',
+  ApexTrigger: 'Phase 3',
 };
 
 /** CPQ-relevant package namespaces — only these appear in Section 4.1 (Task 1.1) */
@@ -259,10 +286,13 @@ function inferApexPurpose(name: string, notes: string | undefined): string {
   if (lower.includes('batch') || lower.includes('schedule')) return 'Batch/Scheduled job';
   if (lower.includes('invoice') || lower.includes('bill')) return 'Billing integration';
   if (lower.includes('handler')) return 'Event handler';
-  if (lower.includes('util') || lower.includes('helper') || lower.includes('utils')) return 'Utility class';
+  if (lower.includes('util') || lower.includes('helper') || lower.includes('utils'))
+    return 'Utility class';
   if (lower.includes('clean')) return 'Org maintenance';
-  if (lower.includes('datacannon') || lower.includes('blaster') || lower.includes('seed')) return 'Data generation';
-  if (lower.includes('api') || lower.includes('rest') || lower.includes('callout')) return 'Integration';
+  if (lower.includes('datacannon') || lower.includes('blaster') || lower.includes('seed'))
+    return 'Data generation';
+  if (lower.includes('api') || lower.includes('rest') || lower.includes('callout'))
+    return 'Integration';
   if (lower.includes('service')) return 'Service layer';
   if (lower.includes('selector') || lower.includes('query')) return 'Data access';
   return 'CPQ-related Apex';
@@ -429,9 +459,7 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
     (f) => f.artifactType === 'DataCount' && f.artifactName?.includes('Quotes (all)')
   );
   const totalQuotes =
-    (quotes90d?.countValue ?? 0) > 0
-      ? quotes90d!.countValue!
-      : quotesAll?.countValue ?? 0;
+    (quotes90d?.countValue ?? 0) > 0 ? quotes90d!.countValue! : (quotesAll?.countValue ?? 0);
 
   // Active/Inactive filtering for rules
   const activePriceRules = priceRules.filter(
@@ -456,7 +484,10 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
 
   // Discount distribution percentage calculation
   const discountRefs = Array.isArray(discountDist?.evidenceRefs) ? discountDist.evidenceRefs : [];
-  const discountTotal = discountRefs.reduce((sum: number, r: Record<string, unknown>) => sum + Number(r.value ?? 0), 0);
+  const discountTotal = discountRefs.reduce(
+    (sum: number, r: Record<string, unknown>) => sum + Number(r.value ?? 0),
+    0
+  );
 
   // Top products percentage calculation
   const totalTopProductQuoted = topProducts.reduce((sum, p) => sum + (p.countValue ?? 0), 0);
@@ -566,8 +597,8 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
   const sbaaFromDescribe = findings.some(
     (f) => f.artifactType === 'OrgFingerprint' && f.notes?.includes('sbaa')
   );
-  const sbaaFromSettings = settingValues.some(
-    (f) => f.artifactName?.toLowerCase().includes('advanced approval')
+  const sbaaFromSettings = settingValues.some((f) =>
+    f.artifactName?.toLowerCase().includes('advanced approval')
   );
   const sbaaInstalled = !!sbaaInstalledPkg || sbaaFromDescribe || sbaaFromSettings;
 
@@ -575,8 +606,7 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
   const sbaaVersionFromPkg = sbaaInstalledPkg
     ? safeRefs(sbaaInstalledPkg).find((r) => String(r.label) === 'Version')?.value
     : null;
-  const sbaaVersionFromFp =
-    orgFp?.notes?.match(/sbaa\s+(v\d[\d.]+)/i)?.[1] ?? null;
+  const sbaaVersionFromFp = orgFp?.notes?.match(/sbaa\s+(v\d[\d.]+)/i)?.[1] ?? null;
   const sbaaVersionFromSettings =
     findings
       .find(
@@ -585,7 +615,10 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
           f.artifactName?.toLowerCase().includes('advanced approval')
       )
       ?.notes?.match(/\b(v\d[\d.]+)/)?.[1] ?? null;
-  const sbaaVersionRaw = (sbaaVersionFromPkg ? String(sbaaVersionFromPkg) : null) ?? sbaaVersionFromFp ?? sbaaVersionFromSettings;
+  const sbaaVersionRaw =
+    (sbaaVersionFromPkg ? String(sbaaVersionFromPkg) : null) ??
+    sbaaVersionFromFp ??
+    sbaaVersionFromSettings;
 
   // V5-4: sbaa version display includes namespace and status from InstalledPackage evidenceRefs
   const sbaaStatusFromPkg = sbaaInstalledPkg
@@ -613,7 +646,9 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
       (f.findingKey?.includes('non_cpq_summary') ||
         f.artifactName?.includes('additional active flows'))
   );
-  const flowCountActive = summaryFlow ? flowCountCpqRelated + (summaryFlow.countValue ?? 0) : flowCountCpqRelated;
+  const flowCountActive = summaryFlow
+    ? flowCountCpqRelated + (summaryFlow.countValue ?? 0)
+    : flowCountCpqRelated;
 
   const reportCounts: ReportCounts = {
     totalProducts,
@@ -621,7 +656,10 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
     activeProductSource,
     activeProductStatus,
     bundleProducts,
-    configuredBundles: findings.find(f => f.artifactType === 'DataCount' && f.artifactName === 'Configured Bundles')?.countValue ?? 0,
+    configuredBundles:
+      findings.find(
+        (f) => f.artifactType === 'DataCount' && f.artifactName === 'Configured Bundles'
+      )?.countValue ?? 0,
     productOptions: productOptionCount,
     productFamilies,
     activePriceRules: activePriceRules.length,
@@ -656,7 +694,8 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
     : null;
 
   // sbaa version: use canonical counts (A2 three-level fallback)
-  const sbaaVersion = reportCounts.sbaaVersionDisplay !== 'Not installed' ? reportCounts.sbaaVersionDisplay : null;
+  const sbaaVersion =
+    reportCounts.sbaaVersionDisplay !== 'Not installed' ? reportCounts.sbaaVersionDisplay : null;
 
   return {
     metadata: {
@@ -682,10 +721,21 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
             }))
           : buildDefaultKeyFindings(findings, settingValues, plugins, reportCounts),
       complexityScores,
-      scoringMethodology: buildScoringMethodology(complexityScores, findings, technicalDebt, reportCounts),
+      scoringMethodology: buildScoringMethodology(
+        complexityScores,
+        findings,
+        technicalDebt,
+        reportCounts
+      ),
     },
 
-    cpqAtAGlance: buildGlanceSections(findings, settingValues, technicalDebt, featureUtilization, reportCounts),
+    cpqAtAGlance: buildGlanceSections(
+      findings,
+      settingValues,
+      technicalDebt,
+      featureUtilization,
+      reportCounts
+    ),
 
     dataConfidenceSummary,
 
@@ -737,7 +787,7 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
         const catalog = buildProductCatalog(findings, topProducts, totalQuotes);
         return catalog
           .filter((c) => c.quoted90d === 0)
-          .sort((a, b) => (b.active + b.inactive) - (a.active + a.inactive))
+          .sort((a, b) => b.active + b.inactive - (a.active + a.inactive))
           .map((c) => ({ name: c.category, productCount: c.active + c.inactive }));
       })(),
       priceRules: priceRules.map((r) => {
@@ -769,7 +819,8 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
         const seen = new Set<string>();
         return productRules
           .filter((r) => {
-            const ruleType = r.evidenceRefs?.find((ref) => ref.label === 'Type')?.value ?? 'Unknown';
+            const ruleType =
+              r.evidenceRefs?.find((ref) => ref.label === 'Type')?.value ?? 'Unknown';
             const key = `${r.artifactName}::${ruleType}`;
             if (seen.has(key)) return false;
             seen.add(key);
@@ -777,12 +828,15 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
           })
           .map((r) => {
             const isActive = r.usageLevel !== 'dormant' && !r.notes?.includes('Inactive');
-            const ruleType = r.evidenceRefs?.find((ref) => ref.label === 'Type')?.value ?? 'Unknown';
+            const ruleType =
+              r.evidenceRefs?.find((ref) => ref.label === 'Type')?.value ?? 'Unknown';
             const isTechDebt = TECH_DEBT_PATTERNS.test(r.artifactName);
             // Task 2.2: derive complexity from condition count or fallback to 'Not assessed'
             const condCount = r.countValue ?? 0;
             const derivedComplexity =
-              r.complexityLevel && r.complexityLevel !== 'medium' && (r.complexityLevel as string) !== 'unknown'
+              r.complexityLevel &&
+              r.complexityLevel !== 'medium' &&
+              (r.complexityLevel as string) !== 'unknown'
                 ? r.complexityLevel
                 : condCount >= 5
                   ? 'high'
@@ -815,9 +869,18 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
       })(),
       // Task 2.3: Pre-computed summary for product rules by type
       productRuleSummary: (() => {
-        const typeCounts = { selection: 0, alert: 0, validation: 0, filter: 0, inactive: 0, stale: 0 };
+        const typeCounts = {
+          selection: 0,
+          alert: 0,
+          validation: 0,
+          filter: 0,
+          inactive: 0,
+          stale: 0,
+        };
         for (const r of productRules) {
-          const type = (r.evidenceRefs?.find((ref) => ref.label === 'Type')?.value ?? '').toLowerCase();
+          const type = (
+            r.evidenceRefs?.find((ref) => ref.label === 'Type')?.value ?? ''
+          ).toLowerCase();
           if (type.includes('selection')) typeCounts.selection++;
           else if (type.includes('alert')) typeCounts.alert++;
           else if (type.includes('validation')) typeCounts.validation++;
@@ -841,10 +904,12 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
       discountScheduleUniqueCount: dsNameSet.size,
       discountScheduleDuplicateDetail: (() => {
         const nameCounts = new Map<string, number>();
-        for (const ds of discountSchedules) nameCounts.set(ds.artifactName, (nameCounts.get(ds.artifactName) ?? 0) + 1);
+        for (const ds of discountSchedules)
+          nameCounts.set(ds.artifactName, (nameCounts.get(ds.artifactName) ?? 0) + 1);
         const dupes = [...nameCounts.entries()].filter(([, c]) => c > 1);
         return dupes.length > 0
-          ? dupes.map(([n, c]) => `'${n}' appears ${c} times`).join('; ') + ' — flagged as duplicate in Technical Debt inventory.'
+          ? dupes.map(([n, c]) => `'${n}' appears ${c} times`).join('; ') +
+              ' — flagged as duplicate in Technical Debt inventory.'
           : '';
       })(),
       // Task 1.5: set to null when cross-reference unavailable (clean "Not extracted" row)
@@ -932,7 +997,10 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
         name: a.artifactName,
         lines: a.countValue ?? 0,
         purpose: inferApexPurpose(a.artifactName, a.notes ?? undefined),
-        origin: inferApexOrigin(a.artifactName, a.evidenceRefs?.find((r) => r.label === 'NamespacePrefix')?.value ?? undefined),
+        origin: inferApexOrigin(
+          a.artifactName,
+          a.evidenceRefs?.find((r) => r.label === 'NamespacePrefix')?.value ?? undefined
+        ),
       })),
       triggersFlows: [
         ...triggers.map((t) => ({
@@ -987,18 +1055,22 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
           ),
 
     appendixA: (() => {
-      const items = inventory.length > 0
-        ? inventory.map((inv, i) => ({
-            id: i + 1,
-            objectName: inv.artifactName === 'Product2' ? `${inv.artifactName} (total records)` : inv.artifactName,
-            apiName: inv.artifactName,
-            count: inv.countValue ?? 0,
-            complexity: inv.complexityLevel ?? 'low',
-            confidence: 'Confirmed',
-            isCpqObject: isCpqObjectName(inv.artifactName),
-            phase: CPQ_PHASE_MAP[inv.artifactName] ?? '',
-          }))
-        : buildObjectInventoryInline(findings, reportCounts);
+      const items =
+        inventory.length > 0
+          ? inventory.map((inv, i) => ({
+              id: i + 1,
+              objectName:
+                inv.artifactName === 'Product2'
+                  ? `${inv.artifactName} (total records)`
+                  : inv.artifactName,
+              apiName: inv.artifactName,
+              count: inv.countValue ?? 0,
+              complexity: inv.complexityLevel ?? 'low',
+              confidence: 'Confirmed',
+              isCpqObject: isCpqObjectName(inv.artifactName),
+              phase: CPQ_PHASE_MAP[inv.artifactName] ?? '',
+            }))
+          : buildObjectInventoryInline(findings, reportCounts);
       return items;
     })(),
 
@@ -1019,7 +1091,7 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
       const entries = [...seenReports.entries()].map(([name, description]) => {
         const dateMatch = description.match(/(\d{4}-\d{2}-\d{2})/);
         const ts = dateMatch ? Date.parse(dateMatch[1]) : 0;
-        const isStale = ts > 0 && (now - ts) > _twoYearsMs;
+        const isStale = ts > 0 && now - ts > _twoYearsMs;
         return { name, description, isStale, _ts: ts };
       });
       entries.sort((a, b) => b._ts - a._ts);
@@ -1042,8 +1114,8 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
         const dateMatch = desc.match(/(\d{4}-\d{2}-\d{2})/);
         if (dateMatch) {
           const ts = Date.parse(dateMatch[1]);
-          if (ts > 0 && (now - ts) < oneYearMs) runLast12Mo++;
-          if (ts > 0 && (now - ts) > twoYearsMs) staleCount++;
+          if (ts > 0 && now - ts < oneYearMs) runLast12Mo++;
+          if (ts > 0 && now - ts > twoYearsMs) staleCount++;
         }
       }
       return { total: seenReports.size, runLast12Mo, staleCount };
@@ -1057,6 +1129,10 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
             notes: c.notes ?? '',
           }))
         : buildDynamicCoverage(findings, reportCounts),
+
+    // V2.1 T2 sections — null until assembler builders are implemented (A-02, A-03)
+    productDeepDive: null,
+    bundlesDeepDive: null,
   };
 }
 
@@ -1223,9 +1299,10 @@ function buildFeatureUtilization(
 
   // V5-9: filter synthetic summary findings from template count
   const tmplFindings = findings.filter(
-    (f) => (f.artifactType === 'QuoteTemplate' || f.artifactType === 'SBQQ__QuoteTemplate__c')
-      && !f.findingKey?.includes('unused_templates_summary')
-      && !f.artifactName?.includes('unused_templates_summary')
+    (f) =>
+      (f.artifactType === 'QuoteTemplate' || f.artifactType === 'SBQQ__QuoteTemplate__c') &&
+      !f.findingKey?.includes('unused_templates_summary') &&
+      !f.artifactName?.includes('unused_templates_summary')
   );
   const tmplCount = tmplFindings.length;
   features.push({
@@ -1238,7 +1315,12 @@ function buildFeatureUtilization(
   const customActionCount = count('CustomAction', 'SBQQ__CustomAction__c');
   features.push({
     feature: 'Advanced Approvals',
-    status: advApprovalCount > 0 ? 'Configured' : customActionCount > 0 ? 'Detected / Unverified' : 'Not Detected',
+    status:
+      advApprovalCount > 0
+        ? 'Configured'
+        : customActionCount > 0
+          ? 'Detected / Unverified'
+          : 'Not Detected',
     detail:
       advApprovalCount > 0
         ? `${advApprovalCount} advanced approval rules detected.`
@@ -1250,12 +1332,20 @@ function buildFeatureUtilization(
   const cpCount = count('ContractedPrice', 'SBQQ__ContractedPrice__c');
   // Task 2.7: ContractedPrice present means at least "Configured"
   const cpConfigured = findings.some(
-    (f) => f.artifactType === 'CPQSettingValue' && f.artifactName?.includes('Contracted') && f.evidenceRefs?.[0]?.label?.toLowerCase() !== 'false'
+    (f) =>
+      f.artifactType === 'CPQSettingValue' &&
+      f.artifactName?.includes('Contracted') &&
+      f.evidenceRefs?.[0]?.label?.toLowerCase() !== 'false'
   );
   features.push({
     feature: 'Contracted Pricing',
     status: cpCount > 0 ? 'Configured' : cpConfigured ? 'Configured' : 'Not Detected',
-    detail: cpCount > 0 ? `${cpCount} contracted prices detected.` : cpConfigured ? 'ContractedPrice setting enabled but no records found.' : '',
+    detail:
+      cpCount > 0
+        ? `${cpCount} contracted prices detected.`
+        : cpConfigured
+          ? 'ContractedPrice setting enabled but no records found.'
+          : '',
   });
 
   const locCount = count('LocalizationSummary');
@@ -1275,6 +1365,137 @@ function buildFeatureUtilization(
 /** Metric status — distinguishes true zero from unknown/unavailable (V4 Metric State Model) */
 export type MetricStatus = 'present' | 'estimated' | 'not_extracted';
 
+// ============================================================================
+// V2.1 Types — Checkbox tables, Product Deep Dive, Bundles Deep Dive
+// ============================================================================
+
+/** Checkbox category for 4-column utilization tables (Section 6.2, 6.6) */
+export type CheckboxCategory =
+  | 'NOT_USED'
+  | 'SOMETIMES'
+  | 'MOST_TIMES'
+  | 'ALWAYS'
+  | 'NOT_APPLICABLE';
+
+/** Thresholds for checkbox category assignment (named constants for easy tuning) */
+export const CHECKBOX_THRESHOLDS = {
+  SOMETIMES_MIN: 1, // 1% - 50%
+  MOST_TIMES_MIN: 51, // 51% - 95%
+  ALWAYS_MIN: 96, // >95%
+} as const;
+
+/**
+ * Compute checkbox category from population count and total count.
+ * Pure function — no side effects. Uses named threshold constants.
+ */
+export function getCheckboxCategory(
+  populatedCount: number | null,
+  totalCount: number
+): CheckboxCategory {
+  // null count = FLS-blocked or not computable
+  if (populatedCount === null || populatedCount === undefined) return 'NOT_APPLICABLE';
+  // zero denominator guard — never divide by zero
+  if (totalCount <= 0) return 'NOT_APPLICABLE';
+  // negative count safety
+  if (populatedCount < 0) return 'NOT_APPLICABLE';
+
+  const percentage = (populatedCount / totalCount) * 100;
+
+  if (percentage === 0) return 'NOT_USED';
+  if (percentage < CHECKBOX_THRESHOLDS.MOST_TIMES_MIN) return 'SOMETIMES';
+  if (percentage < CHECKBOX_THRESHOLDS.ALWAYS_MIN) return 'MOST_TIMES';
+  return 'ALWAYS';
+}
+
+/**
+ * Check if a finding's count value represents accessible data.
+ * Returns false if countValue is null (FLS-blocked or not extracted).
+ */
+export function isAccessible(finding: { countValue?: number | null }): boolean {
+  return finding.countValue !== null && finding.countValue !== undefined;
+}
+
+/**
+ * Get a finding's count value or null.
+ * Wraps raw countValue access to prevent sentinel value leakage.
+ */
+export function getCountOrNull(finding: { countValue?: number | null }): number | null {
+  if (finding.countValue === null || finding.countValue === undefined) return null;
+  return finding.countValue;
+}
+
+/**
+ * Type-aware check for whether a Salesforce field value is "populated".
+ * - text: empty string or whitespace = not populated
+ * - boolean: false = populated (it's a real value)
+ * - number: 0 = populated
+ * - picklist: "--None--" = not populated
+ * - null/undefined = not populated
+ */
+export function isPopulated(value: unknown): boolean {
+  if (value === null || value === undefined) return false;
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed !== '' && trimmed !== '--None--';
+  }
+  if (typeof value === 'boolean') return true; // false is a real value
+  if (typeof value === 'number') return true; // 0 is a real value
+  return true; // objects, arrays, etc. — populated
+}
+
+/** A single row in a checkbox utilization table */
+export interface CheckboxRow {
+  label: string;
+  category: CheckboxCategory;
+  count: number | null; // null = FLS-blocked / not applicable
+  percentage: string | null; // null = not computable
+  notes: string;
+  isNested?: boolean; // indented sub-item (e.g., Pricing Method → List)
+}
+
+/** Product Deep Dive data (Section 6.2) — T2 conditional, null if absent */
+export interface ProductDeepDive {
+  summary: {
+    activeProducts: number;
+    inactiveProducts: number;
+    bundleCapableProducts: number;
+    priceBooks: number;
+    dormantPercent: string;
+  };
+  fieldUtilization: CheckboxRow[];
+  pricingMethodDistribution: Array<{
+    method: string;
+    count: number;
+    percentOfActive: string;
+    complexity: string;
+  }>;
+  subscriptionProfile: Array<{
+    type: string;
+    count: number;
+    percentOfActive: string;
+    notes: string;
+  }>;
+  hasDenominatorFootnote: boolean; // structural validator field (V32)
+  denominatorLabel: string; // e.g., "Active Products (176)"
+}
+
+/** Bundles & Options Deep Dive data (Section 6.6) — T2 conditional, null if absent */
+export interface BundlesDeepDive {
+  summary: {
+    bundleCapable: number;
+    configuredBundles: number;
+    nestedBundles: number;
+    avgOptionsPerBundle: string;
+    totalOptions: number;
+    optionsWithConstraintsPercent: string;
+    configAttributesPercent: string;
+    configRulesPercent: string;
+  };
+  relatedObjectUtilization: CheckboxRow[];
+  hasDenominatorFootnote: boolean;
+  denominatorLabel: string;
+}
+
 /**
  * Canonical report counts — computed once, shared across glance and section builders.
  * Ensures At-a-Glance numbers always match section detail.
@@ -1288,8 +1509,8 @@ export interface ReportCounts {
   activeProducts: number;
   activeProductSource: 'IsActive' | 'inferred' | 'unknown';
   activeProductStatus: MetricStatus;
-  bundleProducts: number;        // 76 = bundle-capable (ConfigurationType set)
-  configuredBundles: number;     // ~19 = products with actual child options
+  bundleProducts: number; // 76 = bundle-capable (ConfigurationType set)
+  configuredBundles: number; // ~19 = products with actual child options
   productOptions: number;
   productFamilies: number;
 
@@ -1361,15 +1582,25 @@ function buildGlanceSections(
       {
         // A8: conditional label — "Products Extracted" when inferred, "Active Products" when from IsActive
         label: counts.activeProductSource === 'inferred' ? 'Products Extracted' : 'Active Products',
-        value: counts.activeProductStatus === 'not_extracted' ? 'Not extracted' : String(counts.activeProducts),
-        confidence: counts.activeProductSource === 'IsActive' ? 'Confirmed' : counts.activeProductSource === 'inferred' ? 'Estimated' : 'Not extracted',
+        value:
+          counts.activeProductStatus === 'not_extracted'
+            ? 'Not extracted'
+            : String(counts.activeProducts),
+        confidence:
+          counts.activeProductSource === 'IsActive'
+            ? 'Confirmed'
+            : counts.activeProductSource === 'inferred'
+              ? 'Estimated'
+              : 'Not extracted',
       },
       {
         label: 'Bundle-capable Products',
         value:
           counts.bundleProducts > 0
             ? `${counts.bundleProducts} (${counts.configuredBundles} with options)`
-            : bundleCount > 0 ? 'Detected' : '0',
+            : bundleCount > 0
+              ? 'Detected'
+              : '0',
         confidence: counts.bundleProducts > 0 ? 'Confirmed' : 'Estimated',
       },
       {
@@ -1419,10 +1650,12 @@ function buildGlanceSections(
       // Task 2.1: Avg Lines / Quote
       {
         label: 'Avg Lines / Quote',
-        value: counts.totalQuotes > 0 && counts.totalQuoteLines > 0
-          ? String(Math.round((counts.totalQuoteLines / counts.totalQuotes) * 10) / 10)
-          : 'N/A',
-        confidence: counts.totalQuotes > 0 && counts.totalQuoteLines > 0 ? 'Confirmed' : 'Not extracted',
+        value:
+          counts.totalQuotes > 0 && counts.totalQuoteLines > 0
+            ? String(Math.round((counts.totalQuoteLines / counts.totalQuotes) * 10) / 10)
+            : 'N/A',
+        confidence:
+          counts.totalQuotes > 0 && counts.totalQuoteLines > 0 ? 'Confirmed' : 'Not extracted',
       },
     ],
     'Users & Licenses': [
@@ -1436,11 +1669,20 @@ function buildGlanceSections(
       },
       // A4: Active Users — uses canonical counts.activeUsers for both warning and glance
       {
-        label: counts.activeUsersSource === 'UserBehavior'
-          ? 'Active Users (90d) (Estimated)'
-          : 'Active Users (90d)',
-        value: counts.activeUserStatus === 'not_extracted' ? 'Not extracted' : String(counts.activeUsers),
-        confidence: counts.activeUsersSource === 'UserAdoption' ? 'Confirmed' : counts.activeUsersSource === 'UserBehavior' ? 'Estimated' : 'Not extracted',
+        label:
+          counts.activeUsersSource === 'UserBehavior'
+            ? 'Active Users (90d) (Estimated)'
+            : 'Active Users (90d)',
+        value:
+          counts.activeUserStatus === 'not_extracted'
+            ? 'Not extracted'
+            : String(counts.activeUsers),
+        confidence:
+          counts.activeUsersSource === 'UserAdoption'
+            ? 'Confirmed'
+            : counts.activeUsersSource === 'UserBehavior'
+              ? 'Estimated'
+              : 'Not extracted',
       },
     ],
     'Automation & Code': [
@@ -1591,14 +1833,17 @@ function buildScoringMethodology(
   counts: ReportCounts
 ): ReportData['executiveSummary']['scoringMethodology'] {
   // A5: use canonical counts for complexity rationale — no independent counting
-  const csCount = _findings.filter((f) => f.artifactType === 'CustomScript' || f.artifactType === 'SBQQ__CustomScript__c').length;
+  const csCount = _findings.filter(
+    (f) => f.artifactType === 'CustomScript' || f.artifactType === 'SBQQ__CustomScript__c'
+  ).length;
 
   const debtSummary = technicalDebt.map((d) => `${d.count} ${d.category.toLowerCase()}`).join(', ');
 
   // A5: options text uses canonical count — eliminates "no product options" contradiction
-  const optionText = counts.productOptions > 0
-    ? `${counts.productOptions} product options`
-    : 'product options not extracted';
+  const optionText =
+    counts.productOptions > 0
+      ? `${counts.productOptions} product options`
+      : 'product options not extracted';
 
   return [
     {
@@ -1619,7 +1864,8 @@ function buildScoringMethodology(
       dimension: 'Customization Level',
       weight: 20,
       score: scores.customizationLevel,
-      drivers: 'Apex class count, trigger count, flow complexity, code dependencies, custom fields, validation rules',
+      drivers:
+        'Apex class count, trigger count, flow complexity, code dependencies, custom fields, validation rules',
       rationale: `Score reflects ${counts.apexClassCount} Apex classes, ${counts.triggerCount} triggers, and ${counts.flowCountCpqRelated} flows referencing CPQ objects. ${counts.apexClassCount > 30 ? 'Substantial custom code dependency detected.' : 'Moderate customization footprint.'}`,
     },
     {
@@ -1633,10 +1879,12 @@ function buildScoringMethodology(
       dimension: 'Technical Debt',
       weight: 15,
       score: scores.technicalDebt,
-      drivers: 'Inactive price rules, stale/test rules, duplicate discount schedules, dormant products',
-      rationale: debtSummary.length > 0
-        ? `Score reflects ${debtSummary}. ${technicalDebt.length > 3 ? 'Multiple debt categories indicate cleanup opportunity.' : 'Manageable debt footprint.'}`
-        : 'No significant technical debt indicators detected.',
+      drivers:
+        'Inactive price rules, stale/test rules, duplicate discount schedules, dormant products',
+      rationale:
+        debtSummary.length > 0
+          ? `Score reflects ${debtSummary}. ${technicalDebt.length > 3 ? 'Multiple debt categories indicate cleanup opportunity.' : 'Manageable debt footprint.'}`
+          : 'No significant technical debt indicators detected.',
     },
   ];
 }
@@ -1678,8 +1926,9 @@ function buildDefaultKeyFindings(
       ? String(qcpSettingFinding.evidenceRefs[0].label)
       : null;
     // Use configured class name; fall back to ALL script names (not just the first)
-    const scriptName = configuredQcpClass
-      ?? (qcpScripts.length > 0
+    const scriptName =
+      configuredQcpClass ??
+      (qcpScripts.length > 0
         ? qcpScripts.map((s) => s.artifactName).join(', ')
         : (qcpPlugin?.notes?.match(/class:\s*(\S+)/)?.[1] ?? ''));
     const allScriptNames = qcpScripts.map((s) => s.artifactName).join(', ');
@@ -1744,14 +1993,21 @@ function buildDefaultKeyFindings(
     );
     const dormantFamilyCount = [...families].filter((fam) => {
       const familyProducts = findings.filter(
-        (f) => f.artifactType === 'Product2' && safeRefs(f).find((r) => String(r.value) === 'Product2.Family')?.label === fam
+        (f) =>
+          f.artifactType === 'Product2' &&
+          safeRefs(f).find((r) => String(r.value) === 'Product2.Family')?.label === fam
       );
-      return familyProducts.length > 0 && familyProducts.every((p) => !quotedProductNames.has(p.artifactName));
+      return (
+        familyProducts.length > 0 &&
+        familyProducts.every((p) => !quotedProductNames.has(p.artifactName))
+      );
     }).length;
-    const dormantNote = dormantFamilyCount > 0
-      ? ` ${dormantFamilyCount} families show zero quoting activity in the assessment window — indicating potential catalog dormancy or narrow active use-case.`
-      : '';
-    const productLabel = counts.activeProductSource === 'IsActive' ? 'active products' : 'products extracted';
+    const dormantNote =
+      dormantFamilyCount > 0
+        ? ` ${dormantFamilyCount} families show zero quoting activity in the assessment window — indicating potential catalog dormancy or narrow active use-case.`
+        : '';
+    const productLabel =
+      counts.activeProductSource === 'IsActive' ? 'active products' : 'products extracted';
     kf.push({
       title: `${counts.activeProducts} ${productLabel} across ${counts.productFamilies} families`,
       detail: `Product catalog spans ${counts.productFamilies} families with active products.${dormantNote}`,
@@ -1830,8 +2086,13 @@ function detectHotspots(
     (f) => f.artifactType === 'Product2' && f.complexityLevel === 'medium'
   ).length;
   const optHotspotCount =
-    findings.filter((f) => f.artifactType === 'ProductOption' || f.artifactType === 'SBQQ__ProductOption__c').length ||
-    (findings.find((f) => f.artifactType === 'DataCount' && f.artifactName?.toLowerCase().includes('option'))?.countValue ?? 0);
+    findings.filter(
+      (f) => f.artifactType === 'ProductOption' || f.artifactType === 'SBQQ__ProductOption__c'
+    ).length ||
+    (findings.find(
+      (f) => f.artifactType === 'DataCount' && f.artifactName?.toLowerCase().includes('option')
+    )?.countValue ??
+      0);
   if (bundleHotspotCount > 50 || optHotspotCount > 200) {
     hotspots.push({
       name: 'Bundle & Option Configuration',
@@ -1862,9 +2123,7 @@ function buildApprovalsAndDocs(
   );
 
   // (3) Standard Approval Processes (ProcessDefinition on CPQ objects)
-  const standardApprovalFindings = findings.filter(
-    (f) => f.artifactType === 'ApprovalProcess'
-  );
+  const standardApprovalFindings = findings.filter((f) => f.artifactType === 'ApprovalProcess');
 
   // (4) Approval chain/approver summary from AdvancedApprovals summary finding
   const approvalSummary = findings.find(
@@ -1879,7 +2138,9 @@ function buildApprovalsAndDocs(
   );
   // quoteTemplates = actual template records (excluding synthetic summary findings)
   const quoteTemplates = allQuoteTemplates.filter(
-    (f) => !f.findingKey?.includes('unused_templates_summary') && !f.artifactName?.includes('unused_templates_summary')
+    (f) =>
+      !f.findingKey?.includes('unused_templates_summary') &&
+      !f.artifactName?.includes('unused_templates_summary')
   );
   // V6-3: totalTemplateRecords should match Appendix A count — replicate inventory builder's
   // counting logic (max of countValue, plus increments for null-countValue findings)
@@ -1947,7 +2208,10 @@ function buildApprovalsAndDocs(
 // Dynamic Extraction Coverage (replaces hardcoded "Full" defaults)
 // ============================================================================
 
-function buildDynamicCoverage(findings: AssessmentFindingInput[], counts: ReportCounts): ReportData['appendixD'] {
+function buildDynamicCoverage(
+  findings: AssessmentFindingInput[],
+  counts: ReportCounts
+): ReportData['appendixD'] {
   const domainSet = new Set<string>(findings.map((f) => f.domain));
 
   // Task 1.7: per-category specific checks (not generic count > 5)
@@ -1977,11 +2241,20 @@ function buildDynamicCoverage(findings: AssessmentFindingInput[], counts: Report
   const hasPR = has('PriceRule', 'SBQQ__PriceRule__c');
   const hasDS = has('DiscountSchedule', 'SBQQ__DiscountSchedule__c');
   const hasCS = has('CustomScript', 'SBQQ__CustomScript__c');
-  const pricingCov = hasPR && hasDS && hasCS ? 'Full' : hasPR || hasDS ? 'Partial' : domainSet.has('pricing') ? 'Partial' : 'Not extracted';
+  const pricingCov =
+    hasPR && hasDS && hasCS
+      ? 'Full'
+      : hasPR || hasDS
+        ? 'Partial'
+        : domainSet.has('pricing')
+          ? 'Partial'
+          : 'Not extracted';
   const pricingNotes = `Price rules${hasPR ? '' : ' (not extracted)'}, discount schedules${hasDS ? '' : ' (not extracted)'}, custom scripts${hasCS ? '' : ' (not extracted)'}. Price rule usage frequency: Not extracted — requires rule-to-quote linkage data.`;
 
   // Transactional Data (Task 1.7)
-  const hasQuotes = has('DataCount') && findings.some((f) => f.artifactType === 'DataCount' && f.artifactName?.includes('Quote'));
+  const hasQuotes =
+    has('DataCount') &&
+    findings.some((f) => f.artifactType === 'DataCount' && f.artifactName?.includes('Quote'));
   const hasUserBehavior = has('UserBehavior');
   const txCov = hasQuotes ? 'Partial' : domainSet.has('usage') ? 'Partial' : 'Not extracted';
   const txNotes = `90-day quotes${hasQuotes ? '' : ' (not extracted)'}, quote lines, usage trends. Quote modification history and field-level change tracking not extracted.`;
@@ -1990,36 +2263,64 @@ function buildDynamicCoverage(findings: AssessmentFindingInput[], counts: Report
   const hasVR = has('ValidationRule');
   const hasFF = has('FormulaField');
   const hasFC = has('FieldCompleteness');
-  const cfCov = hasVR && hasFF && hasFC ? 'Full' : hasVR || hasFF ? 'Partial' : domainSet.has('customization') ? 'Partial' : 'Not extracted';
+  const cfCov =
+    hasVR && hasFF && hasFC
+      ? 'Full'
+      : hasVR || hasFF
+        ? 'Partial'
+        : domainSet.has('customization')
+          ? 'Partial'
+          : 'Not extracted';
   const cfNotes = `Custom fields, validation rules${hasVR ? '' : ' (not extracted)'}, formulas${hasFF ? '' : ' (not extracted)'}. ${!hasFC ? 'Field completeness not extracted — requires full schema scan.' : ''}`;
 
   // Custom Code (Task 1.7, 2.16)
   const hasApex = has('ApexClass');
   const hasTrigger = has('ApexTrigger');
   const hasFlow = has('Flow');
-  const codeCov = hasApex && hasTrigger && hasFlow ? 'Full' : hasApex || hasTrigger ? 'Partial' : domainSet.has('dependency') ? 'Partial' : 'Not extracted';
+  const codeCov =
+    hasApex && hasTrigger && hasFlow
+      ? 'Full'
+      : hasApex || hasTrigger
+        ? 'Partial'
+        : domainSet.has('dependency')
+          ? 'Partial'
+          : 'Not extracted';
   const codeNotes = `Apex classes${hasApex ? '' : ' (not extracted)'}, triggers${hasTrigger ? '' : ' (not extracted)'}, flows${hasFlow ? '' : ' (not extracted)'}. Apex class → SBQQ object dependencies: Not extracted — requires code-level analysis.`;
 
   // Quote Templates (Task 1.7)
   const hasTemplate = has('QuoteTemplate', 'SBQQ__QuoteTemplate__c');
   const hasSection = has('TemplateSection', 'SBQQ__TemplateSection__c');
-  const tmplCov = hasTemplate && hasSection ? 'Full' : hasTemplate ? 'Partial' : domainSet.has('templates') ? 'Partial' : 'Not extracted';
+  const tmplCov =
+    hasTemplate && hasSection
+      ? 'Full'
+      : hasTemplate
+        ? 'Partial'
+        : domainSet.has('templates')
+          ? 'Partial'
+          : 'Not extracted';
   const tmplNotes = `Template structure${hasTemplate ? '' : ' (not extracted)'}, sections${hasSection ? '' : ' (not extracted)'}, content.`;
 
   // Advanced Approvals (Task 1.6)
   const hasAAR = has('AdvancedApprovalRule');
   const hasCA = has('CustomAction', 'SBQQ__CustomAction__c');
-  const approvalCov = hasAAR && hasCA ? 'Partial'
-    : hasCA && !hasAAR ? 'Partial'
-    : hasAAR && !hasCA ? 'Partial'
-    : domainSet.has('approvals') ? 'Partial' : 'Not extracted';
-  const approvalNotes = hasAAR && hasCA
-    ? 'Approval rules, conditions, chains, custom actions extracted. Approval-to-quote usage linkage not surfaced.'
-    : hasCA && !hasAAR
-      ? 'Approval action buttons detected; sbaa approval rules and chains not yet extracted.'
-      : hasAAR && !hasCA
-        ? 'Approval rules extracted; custom action buttons not extracted.'
-        : 'Approvals collector did not produce findings.';
+  const approvalCov =
+    hasAAR && hasCA
+      ? 'Partial'
+      : hasCA && !hasAAR
+        ? 'Partial'
+        : hasAAR && !hasCA
+          ? 'Partial'
+          : domainSet.has('approvals')
+            ? 'Partial'
+            : 'Not extracted';
+  const approvalNotes =
+    hasAAR && hasCA
+      ? 'Approval rules, conditions, chains, custom actions extracted. Approval-to-quote usage linkage not surfaced.'
+      : hasCA && !hasAAR
+        ? 'Approval action buttons detected; sbaa approval rules and chains not yet extracted.'
+        : hasAAR && !hasCA
+          ? 'Approval rules extracted; custom action buttons not extracted.'
+          : 'Approvals collector did not produce findings.';
 
   const simpleCoverage = (
     domain: string,
@@ -2027,7 +2328,11 @@ function buildDynamicCoverage(findings: AssessmentFindingInput[], counts: Report
     notes: string
   ): { category: string; coverage: string; notes: string } => {
     if (!domainSet.has(domain))
-      return { category: label, coverage: 'Not extracted', notes: `${label} collector did not produce findings.` };
+      return {
+        category: label,
+        coverage: 'Not extracted',
+        notes: `${label} collector did not produce findings.`,
+      };
     return { category: label, coverage: 'Full', notes };
   };
 
@@ -2046,13 +2351,15 @@ function buildDynamicCoverage(findings: AssessmentFindingInput[], counts: Report
     {
       category: 'User Behavior',
       coverage: hasUserBehavior ? 'Partial' : 'Not extracted',
-      notes: 'Derived from audit trail sampling. Full user session analysis and adoption scoring not extracted.',
+      notes:
+        'Derived from audit trail sampling. Full user session analysis and adoption scoring not extracted.',
     },
     // V5-16: honestly document product rule complexity as not extracted
     {
       category: 'Product Rule Complexity',
       coverage: 'Not extracted',
-      notes: 'Product rule structural complexity: Not extracted — requires condition/action scope analysis beyond current metadata extraction.',
+      notes:
+        'Product rule structural complexity: Not extracted — requires condition/action scope analysis beyond current metadata extraction.',
     },
   ];
 }
@@ -2113,7 +2420,10 @@ const REPORT_SKIP_TYPES = new Set([
   'AdvancedApprovals',
 ]);
 
-function buildObjectInventoryInline(findings: AssessmentFindingInput[], counts: ReportCounts): ReportData['appendixA'] {
+function buildObjectInventoryInline(
+  findings: AssessmentFindingInput[],
+  counts: ReportCounts
+): ReportData['appendixA'] {
   const objectMap = new Map<string, { count: number; complexity: string }>();
 
   for (const f of findings) {
@@ -2142,7 +2452,9 @@ function buildObjectInventoryInline(findings: AssessmentFindingInput[], counts: 
   }
 
   // V5-15: override approval rule count with canonical approvalRuleCount from ReportCounts
-  const aarKey = objectMap.has('sbaa__ApprovalRule__c') ? 'sbaa__ApprovalRule__c' : 'AdvancedApprovalRule';
+  const aarKey = objectMap.has('sbaa__ApprovalRule__c')
+    ? 'sbaa__ApprovalRule__c'
+    : 'AdvancedApprovalRule';
   if (objectMap.has(aarKey) && counts.approvalRuleCount > 0) {
     const aarEntry = objectMap.get(aarKey)!;
     aarEntry.count = counts.approvalRuleCount;
@@ -2347,9 +2659,7 @@ function buildQuotingActivityMetrics(
 // Field Completeness (S8.1 — from Discovery's field completeness sampling)
 // ============================================================================
 
-function buildFieldCompleteness(
-  findings: AssessmentFindingInput[]
-): Array<{
+function buildFieldCompleteness(findings: AssessmentFindingInput[]): Array<{
   object: string;
   totalFields: number;
   above50pct: number;
@@ -2369,7 +2679,9 @@ function buildFieldCompleteness(
     }));
     // If all entries have zero population data (no above50pct, no below5pct, all N/A scores),
     // suppress the section — field completeness analysis was not actually performed (P0-5)
-    const hasPopulationData = mapped.some((f) => f.above50pct > 0 || f.below5pct > 0 || (f.score !== 'N/A' && f.score !== ''));
+    const hasPopulationData = mapped.some(
+      (f) => f.above50pct > 0 || f.below5pct > 0 || (f.score !== 'N/A' && f.score !== '')
+    );
     return hasPopulationData ? mapped : [];
   }
 
