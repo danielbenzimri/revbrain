@@ -257,6 +257,105 @@ export class CatalogCollector extends BaseCollector {
     if (await this.checkCancellation()) return this.emptyResult('success');
 
     // ================================================================
+    // 5.1a: Per-field population rate (C-02)
+    // Row-scan approach — single query already loaded in `products` array
+    // ================================================================
+    this.ctx.progress.updateSubstep('catalog', 'field-utilization');
+    if (activeProducts > 0) {
+      const activeProductRows = products.filter((p) => p.IsActive === true);
+      const fieldsToScan = PRODUCT_WISHLIST.filter(
+        (f) =>
+          f !== 'Id' &&
+          f !== 'Name' &&
+          f !== 'IsActive' &&
+          f !== 'CreatedDate' &&
+          f !== 'LastModifiedDate'
+      );
+
+      // Type-aware population check
+      const isFieldPopulated = (value: unknown): boolean => {
+        if (value === null || value === undefined) return false;
+        if (typeof value === 'string') {
+          const trimmed = value.trim();
+          return trimmed !== '' && trimmed !== '--None--';
+        }
+        if (typeof value === 'boolean') return true;
+        if (typeof value === 'number') return true;
+        return true;
+      };
+
+      let fieldsScanned = 0;
+      let fieldsBlocked = 0;
+
+      for (const field of fieldsToScan) {
+        // Check if field was accessible (present in query results)
+        const firstRow = activeProductRows[0];
+        if (!firstRow || !(field in firstRow)) {
+          // FLS-blocked or not in query results
+          fieldsBlocked++;
+          findings.push(
+            createFinding({
+              domain: 'catalog',
+              collector: 'catalog',
+              artifactType: 'ProductFieldUtilization',
+              artifactName: field,
+              sourceType: 'object',
+              textValue: field,
+              notes: 'Field not accessible (FLS)',
+              evidenceRefs: [
+                { type: 'count', value: String(activeProducts), label: 'TotalActive' },
+              ],
+            })
+          );
+          continue;
+        }
+
+        fieldsScanned++;
+        const populatedCount = activeProductRows.filter((row) =>
+          isFieldPopulated(row[field])
+        ).length;
+
+        // For picklist fields, capture top 5 value distribution
+        let topValues = '';
+        if (typeof activeProductRows[0]?.[field] === 'string') {
+          const valueCounts: Record<string, number> = {};
+          for (const row of activeProductRows) {
+            const v = String(row[field] ?? '').trim();
+            if (v && v !== '--None--') {
+              valueCounts[v] = (valueCounts[v] ?? 0) + 1;
+            }
+          }
+          const sorted = Object.entries(valueCounts)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 5);
+          if (sorted.length > 0) {
+            topValues = ` Top values: ${sorted.map(([v, c]) => `${v} (${c})`).join(', ')}`;
+          }
+        }
+
+        findings.push(
+          createFinding({
+            domain: 'catalog',
+            collector: 'catalog',
+            artifactType: 'ProductFieldUtilization',
+            artifactName: field,
+            sourceType: 'object',
+            countValue: populatedCount,
+            textValue: field,
+            notes: `${populatedCount} of ${activeProducts} active products have ${field} populated (${Math.round((populatedCount / activeProducts) * 100)}%).${topValues}`,
+            evidenceRefs: [{ type: 'count', value: String(activeProducts), label: 'TotalActive' }],
+          })
+        );
+      }
+
+      this.log.info({ fieldsScanned, fieldsBlocked, activeProducts }, 'field_utilization_computed');
+      metrics.fieldUtilizationFieldsScanned = fieldsScanned;
+      metrics.fieldUtilizationFieldsBlocked = fieldsBlocked;
+    }
+
+    if (await this.checkCancellation()) return this.emptyResult('success');
+
+    // ================================================================
     // 5.2: Features
     // ================================================================
     this.ctx.progress.updateSubstep('catalog', 'features');
