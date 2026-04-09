@@ -52,4 +52,24 @@ export const reportStyles = `
   .glance-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
   .glance-section { border: 1px solid #ddd; border-radius: 4px; padding: 10px; }
   .glance-section h4 { background: #2e86c1; color: white; margin: -10px -10px 8px; padding: 6px 10px; border-radius: 4px 4px 0 0; font-size: 9pt; }
+
+  /* V2.1 Checkbox tables (R-01, R-02) */
+  .cb-table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 12px 0; }
+  .cb-table th { background: #2c5282; color: #fff; padding: 6px 8px; text-align: center; font-size: 11px; }
+  .cb-table th:first-child { text-align: left; }
+  .cb-table td { padding: 5px 8px; border-bottom: 1px solid #e2e8f0; }
+  .cb-table tr:nth-child(even) { background: #f7fafc; }
+  .cb-table .cb-cell { text-align: center; width: 70px; }
+  .cb-table .cb-count { text-align: right; width: 90px; font-variant-numeric: tabular-nums; }
+  .cb-table .cb-notes { color: #718096; font-size: 11px; }
+  .cb-table .cb-nested { padding-left: 24px; }
+  .cb-check { display: inline-block; width: 16px; height: 16px; border: 2px solid #cbd5e0; border-radius: 3px; position: relative; }
+  .cb-check.checked { background: #2c5282; border-color: #2c5282; }
+  .cb-check.checked::after { content: ''; position: absolute; left: 4px; top: 1px; width: 5px; height: 9px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+
+  /* V2.1 Numeric column alignment */
+  .numeric { text-align: right; font-variant-numeric: tabular-nums; }
+
+  /* V2.1 Page rules for PDF */
+  @page { size: A4 portrait; margin: 1in; }
 `;
