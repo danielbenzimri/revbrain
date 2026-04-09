@@ -1443,6 +1443,83 @@ export function isPopulated(value: unknown): boolean {
   return true; // objects, arrays, etc. — populated
 }
 
+// ============================================================================
+// Section Rendering Tier Registry (A-04)
+// ============================================================================
+
+/** Section keys are fixed constants — numbering never shifts when T2 sections are absent */
+export type SectionKey =
+  | '1'
+  | '2'
+  | '3'
+  | '4'
+  | '5'
+  | '6.1'
+  | '6.2'
+  | '6.3'
+  | '6.4'
+  | '6.5'
+  | '6.6'
+  | '6.7'
+  | '7'
+  | '8'
+  | '9'
+  | '10'
+  | '11'
+  | 'appendixA'
+  | 'appendixB'
+  | 'appendixC'
+  | 'appendixD'
+  | 'appendixE';
+
+type RenderTier = 'T1' | 'T2' | 'T3';
+
+interface SectionConfig {
+  tier: RenderTier;
+  predicate: (data: ReportData) => boolean;
+}
+
+/**
+ * Section render rules registry. T1 = always render. T2 = conditional.
+ * T3 = never render (internal only).
+ * Add a new conditional section = one entry here, no template logic changes.
+ */
+export const SECTION_RENDER_RULES: Record<SectionKey, SectionConfig> = {
+  '1': { tier: 'T1', predicate: () => true },
+  '2': { tier: 'T1', predicate: () => true },
+  '3': { tier: 'T1', predicate: () => true },
+  '4': { tier: 'T1', predicate: () => true },
+  '5': { tier: 'T1', predicate: () => true },
+  '6.1': { tier: 'T1', predicate: () => true },
+  '6.2': { tier: 'T2', predicate: (data) => data.productDeepDive != null },
+  '6.3': { tier: 'T1', predicate: () => true },
+  '6.4': { tier: 'T1', predicate: () => true },
+  '6.5': { tier: 'T1', predicate: () => true },
+  '6.6': { tier: 'T2', predicate: (data) => data.bundlesDeepDive != null },
+  '6.7': { tier: 'T1', predicate: () => true },
+  '7': { tier: 'T1', predicate: () => true },
+  '8': { tier: 'T1', predicate: () => true },
+  '9': { tier: 'T1', predicate: () => true },
+  '10': { tier: 'T2', predicate: () => false }, // TODO: enable when relatedFunctionality is added
+  '11': { tier: 'T1', predicate: () => true },
+  appendixA: { tier: 'T1', predicate: () => true },
+  appendixB: { tier: 'T1', predicate: () => true },
+  appendixC: { tier: 'T1', predicate: () => true },
+  appendixD: { tier: 'T1', predicate: () => true },
+  appendixE: { tier: 'T2', predicate: () => false }, // TODO: enable when objectConfiguration is added
+};
+
+/**
+ * Check if a section should be rendered.
+ * Pure, deterministic — always returns the same result for the same data.
+ */
+export function isSectionEnabled(section: SectionKey, data: ReportData): boolean {
+  const config = SECTION_RENDER_RULES[section];
+  if (!config) return false;
+  if (config.tier === 'T3') return false;
+  return config.predicate(data);
+}
+
 /** A single row in a checkbox utilization table */
 export interface CheckboxRow {
   label: string;
