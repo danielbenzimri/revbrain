@@ -688,7 +688,7 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
   // Compute featureUtilization now that reportCounts is available
   featureUtilization = buildFeatureUtilization(findings, reportCounts);
 
-  const isLowVolume = totalQuotes < 50 || reportCounts.activeUsers < 5;
+  const isLowVolume = totalQuotes < 50 || reportCounts.activeUsers < 3;
   const lowVolumeWarning = isLowVolume
     ? `Low activity detected in assessment window (${totalQuotes} quote${totalQuotes === 1 ? '' : 's'}, ${reportCounts.activeUsers} active user${reportCounts.activeUsers === 1 ? '' : 's'}). Some metrics may not be statistically meaningful.`
     : null;
@@ -1962,7 +1962,7 @@ function buildDefaultKeyFindings(
       kf.push({
         title: 'Multi-currency enabled',
         detail:
-          'The org uses multi-currency pricing. This increases field mapping complexity during migration — currency fields, exchange rate handling, and multi-currency price book structures require verification.',
+          'The org uses multi-currency pricing — adding complexity to field mapping, exchange rate handling, and multi-currency price book structures.',
         confidence: 'Confirmed',
       });
     }
