@@ -2002,11 +2002,11 @@ function buildDefaultKeyFindings(
     const configuredQcpClass = qcpSettingFinding?.evidenceRefs?.[0]?.label
       ? String(qcpSettingFinding.evidenceRefs[0].label)
       : null;
-    // Use configured class name; fall back to ALL script names (not just the first)
+    // A-06: Use configured class name from settings. Fall back to SINGLE script name (never concatenate).
     const scriptName =
       configuredQcpClass ??
       (qcpScripts.length > 0
-        ? qcpScripts.map((s) => s.artifactName).join(', ')
+        ? `${qcpScripts[0].artifactName} (from CustomScript)`
         : (qcpPlugin?.notes?.match(/class:\s*(\S+)/)?.[1] ?? ''));
     const allScriptNames = qcpScripts.map((s) => s.artifactName).join(', ');
     kf.push({
