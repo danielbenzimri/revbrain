@@ -231,7 +231,7 @@ function checkV0_DegradationWarnings(
   if (isActiveDrop) {
     warnings.push(
       `[V0-FLS] Product2.IsActive field was dropped (likely FLS restriction) in ${isActiveDrop.collector}. ` +
-      `Active product count will use usageLevel proxy instead of explicit IsActive field.`
+        `Active product count will use usageLevel proxy instead of explicit IsActive field.`
     );
   }
 
@@ -241,17 +241,15 @@ function checkV0_DegradationWarnings(
     const refs = Array.isArray(f.evidenceRefs) ? f.evidenceRefs : [];
     return refs.some((r) => String(r.label) === 'Namespace' && String(r.value) === 'sbaa');
   });
-  const sbaaDetectedInOrg = sbaaPackage || findings.some(
-    (f) => f.artifactType === 'OrgFingerprint' && f.notes?.includes('sbaa')
-  );
-  const hasApprovalFindings = findings.some(
-    (f) => f.artifactType === 'AdvancedApprovalRule'
-  );
+  const sbaaDetectedInOrg =
+    sbaaPackage ||
+    findings.some((f) => f.artifactType === 'OrgFingerprint' && f.notes?.includes('sbaa'));
+  const hasApprovalFindings = findings.some((f) => f.artifactType === 'AdvancedApprovalRule');
 
   if (sbaaDetectedInOrg && !hasApprovalFindings) {
     warnings.push(
       `[V0-DEP] sbaa package detected but no AdvancedApprovalRule findings extracted. ` +
-      `Approvals collector may have failed or sbaa objects may not be accessible.`
+        `Approvals collector may have failed or sbaa objects may not be accessible.`
     );
   }
 
@@ -267,7 +265,7 @@ function checkV0_DegradationWarnings(
   if (packageNamespaces.has('SBQQ') && !findings.some((f) => f.domain === 'catalog')) {
     warnings.push(
       `[V0-DEP] SBQQ package installed but no catalog domain findings. ` +
-      `Catalog collector may have failed to extract Product2 data.`
+        `Catalog collector may have failed to extract Product2 data.`
     );
   }
 
@@ -280,7 +278,7 @@ function checkV0_DegradationWarnings(
       // Domain has no findings and collector didn't fail — it may have been skipped
       warnings.push(
         `[V0-SKIP] Domain "${domain}" has no findings and no collector failure recorded. ` +
-        `Extraction may have been skipped.`
+          `Extraction may have been skipped.`
       );
     }
   }
@@ -872,20 +870,31 @@ function validateTemplateParity(data: ReportData): ValidationRule[] {
   const rules: ValidationRule[] = [];
 
   // V13: Cover page required fields
-  const coverFields = ['clientName', 'orgId', 'environment', 'assessmentDate', 'assessmentPeriod', 'cpqVersion', 'documentVersion', 'generatedBy'] as const;
-  const missingCover = coverFields.filter((f) => !data.metadata[f] || data.metadata[f] === 'Unknown');
+  const coverFields = [
+    'clientName',
+    'orgId',
+    'environment',
+    'assessmentDate',
+    'assessmentPeriod',
+    'cpqVersion',
+    'documentVersion',
+    'generatedBy',
+  ] as const;
+  const missingCover = coverFields.filter(
+    (f) => !data.metadata[f] || data.metadata[f] === 'Unknown'
+  );
   rules.push({
     id: 'V13',
     name: 'Cover page has all required fields',
     severity: 'warning',
     passed: missingCover.length === 0,
-    message: missingCover.length > 0
-      ? `Cover page missing fields: ${missingCover.join(', ')}.`
-      : 'OK',
+    message:
+      missingCover.length > 0 ? `Cover page missing fields: ${missingCover.join(', ')}.` : 'OK',
   });
 
   // V14: Executive Summary has findings with title + detail + confidence
-  const findingsOk = data.executiveSummary.keyFindings.length >= 3 &&
+  const findingsOk =
+    data.executiveSummary.keyFindings.length >= 3 &&
     data.executiveSummary.keyFindings.every((f) => f.title && f.detail && f.confidence);
   rules.push({
     id: 'V14',
@@ -899,16 +908,21 @@ function validateTemplateParity(data: ReportData): ValidationRule[] {
 
   // V15: At-a-Glance panels check
   const glancePanels = Object.keys(data.cpqAtAGlance);
-  const expectedPanels = ['Product Catalog', 'Pricing & Rules', 'Quoting (90 Days)', 'Users & Licenses', 'Automation & Code'];
+  const expectedPanels = [
+    'Product Catalog',
+    'Pricing & Rules',
+    'Quoting (90 Days)',
+    'Users & Licenses',
+    'Automation & Code',
+  ];
   const missingPanels = expectedPanels.filter((p) => !glancePanels.includes(p));
   rules.push({
     id: 'V15',
     name: 'At-a-Glance has required panels',
     severity: 'warning',
     passed: missingPanels.length === 0,
-    message: missingPanels.length > 0
-      ? `At-a-Glance missing panels: ${missingPanels.join(', ')}.`
-      : 'OK',
+    message:
+      missingPanels.length > 0 ? `At-a-Glance missing panels: ${missingPanels.join(', ')}.` : 'OK',
   });
 
   // V16: Appendix D has >=10 category rows
@@ -917,9 +931,10 @@ function validateTemplateParity(data: ReportData): ValidationRule[] {
     name: 'Appendix D has sufficient category rows',
     severity: 'warning',
     passed: data.appendixD.length >= 10,
-    message: data.appendixD.length >= 10
-      ? 'OK'
-      : `Appendix D has only ${data.appendixD.length} categories (expected >= 10).`,
+    message:
+      data.appendixD.length >= 10
+        ? 'OK'
+        : `Appendix D has only ${data.appendixD.length} categories (expected >= 10).`,
   });
 
   return rules;
@@ -998,6 +1013,10 @@ export function validateReportConsistency(data: ReportData): ReportValidationRes
   rules.push(checkV26_BrandConsistency(data));
   rules.push(checkV28_PercentageDenominatorContext(data));
   rules.push(checkV29_LabelRequirement(data));
+  rules.push(checkV30_QcpSingleName(data));
+  rules.push(checkV31_BundleCapableWording(data));
+  rules.push(checkV32_DenominatorFootnotes(data));
+  rules.push(checkV33_FindingImplicationPattern(data));
 
   for (const rule of rules) {
     if (!rule.passed) {
@@ -1036,9 +1055,12 @@ function checkV17_PercentageOver100(data: ReportData): ValidationRule {
 
   // Check conversion segments
   for (const s of data.usageAdoption.conversionBySize) {
-    if (s.percentQuotes > 100) issues.push(`Conversion segment "${s.segment}" %Quotes = ${s.percentQuotes}%`);
-    if (s.percentRevenue > 100) issues.push(`Conversion segment "${s.segment}" %Revenue = ${s.percentRevenue}%`);
-    if (s.conversionRate > 100) issues.push(`Conversion segment "${s.segment}" conversion = ${s.conversionRate}%`);
+    if (s.percentQuotes > 100)
+      issues.push(`Conversion segment "${s.segment}" %Quotes = ${s.percentQuotes}%`);
+    if (s.percentRevenue > 100)
+      issues.push(`Conversion segment "${s.segment}" %Revenue = ${s.percentRevenue}%`);
+    if (s.conversionRate > 100)
+      issues.push(`Conversion segment "${s.segment}" conversion = ${s.conversionRate}%`);
   }
 
   // Check product catalog percentQuoted
@@ -1059,7 +1081,13 @@ function checkV17_PercentageOver100(data: ReportData): ValidationRule {
     };
   }
 
-  return { id: 'V17', name: 'No percentage metric exceeds 100%', severity: 'error', passed: true, message: 'OK' };
+  return {
+    id: 'V17',
+    name: 'No percentage metric exceeds 100%',
+    severity: 'error',
+    passed: true,
+    message: 'OK',
+  };
 }
 
 /**
@@ -1067,7 +1095,13 @@ function checkV17_PercentageOver100(data: ReportData): ValidationRule {
  */
 function checkV18_ActiveUserMismatch(data: ReportData): ValidationRule {
   if (!data.metadata.lowVolumeWarning) {
-    return { id: 'V18', name: 'Active user count consistent across sections', severity: 'error', passed: true, message: 'OK — no low-volume warning.' };
+    return {
+      id: 'V18',
+      name: 'Active user count consistent across sections',
+      severity: 'error',
+      passed: true,
+      message: 'OK — no low-volume warning.',
+    };
   }
 
   const warningMatch = data.metadata.lowVolumeWarning.match(/(\d+)\s*active users/);
@@ -1078,7 +1112,12 @@ function checkV18_ActiveUserMismatch(data: ReportData): ValidationRule {
   );
   const glanceCount = glanceUsers ? Number(glanceUsers.value) : null;
 
-  if (warningCount !== null && glanceCount !== null && !isNaN(glanceCount) && warningCount !== glanceCount) {
+  if (
+    warningCount !== null &&
+    glanceCount !== null &&
+    !isNaN(glanceCount) &&
+    warningCount !== glanceCount
+  ) {
     return {
       id: 'V18',
       name: 'Active user count consistent across sections',
@@ -1088,7 +1127,13 @@ function checkV18_ActiveUserMismatch(data: ReportData): ValidationRule {
     };
   }
 
-  return { id: 'V18', name: 'Active user count consistent across sections', severity: 'error', passed: true, message: 'OK' };
+  return {
+    id: 'V18',
+    name: 'Active user count consistent across sections',
+    severity: 'error',
+    passed: true,
+    message: 'OK',
+  };
 }
 
 /**
@@ -1097,15 +1142,21 @@ function checkV18_ActiveUserMismatch(data: ReportData): ValidationRule {
  */
 function checkV19_ProductCountMismatch(data: ReportData): ValidationRule {
   if (!data.counts) {
-    return { id: 'V19', name: 'Product counts consistent', severity: 'error', passed: true, message: 'OK — no counts available.' };
+    return {
+      id: 'V19',
+      name: 'Product counts consistent',
+      severity: 'error',
+      passed: true,
+      message: 'OK — no counts available.',
+    };
   }
 
   const issues: string[] = [];
   const glanceCatalog = data.cpqAtAGlance['Product Catalog'] ?? [];
 
   // Check active products in glance
-  const activeEntry = glanceCatalog.find((m) =>
-    m.label === 'Active Products' || m.label === 'Products Extracted'
+  const activeEntry = glanceCatalog.find(
+    (m) => m.label === 'Active Products' || m.label === 'Products Extracted'
   );
   if (activeEntry && activeEntry.value !== 'Not extracted') {
     const glanceVal = Number(activeEntry.value);
@@ -1133,7 +1184,13 @@ function checkV19_ProductCountMismatch(data: ReportData): ValidationRule {
     };
   }
 
-  return { id: 'V19', name: 'Product counts consistent', severity: 'error', passed: true, message: 'OK' };
+  return {
+    id: 'V19',
+    name: 'Product counts consistent',
+    severity: 'error',
+    passed: true,
+    message: 'OK',
+  };
 }
 
 /**
@@ -1141,7 +1198,13 @@ function checkV19_ProductCountMismatch(data: ReportData): ValidationRule {
  */
 function checkV20_OptionsTextContradiction(data: ReportData): ValidationRule {
   if (!data.counts || data.counts.productOptions === 0) {
-    return { id: 'V20', name: 'No "no product options" when options exist', severity: 'error', passed: true, message: 'OK' };
+    return {
+      id: 'V20',
+      name: 'No "no product options" when options exist',
+      severity: 'error',
+      passed: true,
+      message: 'OK',
+    };
   }
 
   for (const m of data.executiveSummary.scoringMethodology) {
@@ -1156,7 +1219,13 @@ function checkV20_OptionsTextContradiction(data: ReportData): ValidationRule {
     }
   }
 
-  return { id: 'V20', name: 'No "no product options" when options exist', severity: 'error', passed: true, message: 'OK' };
+  return {
+    id: 'V20',
+    name: 'No "no product options" when options exist',
+    severity: 'error',
+    passed: true,
+    message: 'OK',
+  };
 }
 
 /**
@@ -1164,7 +1233,13 @@ function checkV20_OptionsTextContradiction(data: ReportData): ValidationRule {
  */
 function checkV21_SbaaVersionContradiction(data: ReportData): ValidationRule {
   if (!data.counts || !data.counts.sbaaInstalled) {
-    return { id: 'V21', name: 'sbaa version not contradicted', severity: 'error', passed: true, message: 'OK' };
+    return {
+      id: 'V21',
+      name: 'sbaa version not contradicted',
+      severity: 'error',
+      passed: true,
+      message: 'OK',
+    };
   }
 
   if (!data.metadata.sbaaVersion || data.metadata.sbaaVersion === 'Not installed') {
@@ -1177,7 +1252,13 @@ function checkV21_SbaaVersionContradiction(data: ReportData): ValidationRule {
     };
   }
 
-  return { id: 'V21', name: 'sbaa version not contradicted', severity: 'error', passed: true, message: 'OK' };
+  return {
+    id: 'V21',
+    name: 'sbaa version not contradicted',
+    severity: 'error',
+    passed: true,
+    message: 'OK',
+  };
 }
 
 /**
@@ -1185,7 +1266,13 @@ function checkV21_SbaaVersionContradiction(data: ReportData): ValidationRule {
  */
 function checkV22_ApprovalSectionContradiction(data: ReportData): ValidationRule {
   if (!data.counts || data.counts.approvalRuleCount === 0) {
-    return { id: 'V22', name: 'Approval rules section consistent', severity: 'error', passed: true, message: 'OK' };
+    return {
+      id: 'V22',
+      name: 'Approval rules section consistent',
+      severity: 'error',
+      passed: true,
+      message: 'OK',
+    };
   }
 
   if (data.approvalsAndDocs.advancedApprovalRules.length === 0) {
@@ -1198,7 +1285,13 @@ function checkV22_ApprovalSectionContradiction(data: ReportData): ValidationRule
     };
   }
 
-  return { id: 'V22', name: 'Approval rules section consistent', severity: 'error', passed: true, message: 'OK' };
+  return {
+    id: 'V22',
+    name: 'Approval rules section consistent',
+    severity: 'error',
+    passed: true,
+    message: 'OK',
+  };
 }
 
 /**
@@ -1224,7 +1317,13 @@ function checkV23_TopProductPercentage(data: ReportData): ValidationRule {
     };
   }
 
-  return { id: 'V23', name: 'Top product percentages <= 100%', severity: 'error', passed: true, message: 'OK' };
+  return {
+    id: 'V23',
+    name: 'Top product percentages <= 100%',
+    severity: 'error',
+    passed: true,
+    message: 'OK',
+  };
 }
 
 /**
@@ -1232,7 +1331,13 @@ function checkV23_TopProductPercentage(data: ReportData): ValidationRule {
  */
 function checkV24_CoverageContradiction(data: ReportData): ValidationRule {
   if (!data.counts || data.counts.productOptions === 0) {
-    return { id: 'V24', name: 'Coverage claims match data', severity: 'error', passed: true, message: 'OK' };
+    return {
+      id: 'V24',
+      name: 'Coverage claims match data',
+      severity: 'error',
+      passed: true,
+      message: 'OK',
+    };
   }
 
   const catalogCoverage = data.appendixD.find((d) => d.category === 'Product Catalog');
@@ -1246,7 +1351,13 @@ function checkV24_CoverageContradiction(data: ReportData): ValidationRule {
     };
   }
 
-  return { id: 'V24', name: 'Coverage claims match data', severity: 'error', passed: true, message: 'OK' };
+  return {
+    id: 'V24',
+    name: 'Coverage claims match data',
+    severity: 'error',
+    passed: true,
+    message: 'OK',
+  };
 }
 
 /**
@@ -1262,7 +1373,13 @@ function checkV25_ApprovalCountCrossCheck(data: ReportData): ValidationRule {
 
   if (!approvalFeature) {
     // No feature utilization entry — nothing to cross-check
-    return { id: 'V25', name: 'Approval rule count cross-section check', severity: 'error', passed: true, message: 'OK — no approval feature utilization entry.' };
+    return {
+      id: 'V25',
+      name: 'Approval rule count cross-section check',
+      severity: 'error',
+      passed: true,
+      message: 'OK — no approval feature utilization entry.',
+    };
   }
 
   // Extract count from feature detail (e.g., "5 advanced approval rules detected.")
@@ -1279,7 +1396,13 @@ function checkV25_ApprovalCountCrossCheck(data: ReportData): ValidationRule {
     };
   }
 
-  return { id: 'V25', name: 'Approval rule count cross-section check', severity: 'error', passed: true, message: 'OK' };
+  return {
+    id: 'V25',
+    name: 'Approval rule count cross-section check',
+    severity: 'error',
+    passed: true,
+    message: 'OK',
+  };
 }
 
 /**
@@ -1302,7 +1425,13 @@ function checkV26_BrandConsistency(data: ReportData): ValidationRule {
     };
   }
 
-  return { id: 'V26', name: 'Brand consistency check', severity: 'warning', passed: true, message: 'OK' };
+  return {
+    id: 'V26',
+    name: 'Brand consistency check',
+    severity: 'warning',
+    passed: true,
+    message: 'OK',
+  };
 }
 
 /**
@@ -1350,7 +1479,13 @@ function checkV28_PercentageDenominatorContext(data: ReportData): ValidationRule
     };
   }
 
-  return { id: 'V28', name: 'Percentage tables have denominator context', severity: 'warning', passed: true, message: 'OK' };
+  return {
+    id: 'V28',
+    name: 'Percentage tables have denominator context',
+    severity: 'warning',
+    passed: true,
+    message: 'OK',
+  };
 }
 
 /**
@@ -1366,11 +1501,18 @@ function checkV29_LabelRequirement(data: ReportData): ValidationRule {
   // Check product count labels in At-a-Glance
   const glanceCatalog = data.cpqAtAGlance['Product Catalog'] ?? [];
   for (const m of glanceCatalog) {
-    if (m.value !== '0' && m.value !== 'Not extracted' && m.value !== 'N/A' && m.value !== 'Detected') {
+    if (
+      m.value !== '0' &&
+      m.value !== 'Not extracted' &&
+      m.value !== 'N/A' &&
+      m.value !== 'Detected'
+    ) {
       // Check that labels disambiguate: "Active Products", "Products Extracted", "Bundle-capable Products"
       // are acceptable. Raw "Products" without qualifier is not.
       if (m.label === 'Products') {
-        issues.push(`Product count "${m.value}" labeled as generic "Products" — should specify Active/Total/Extracted`);
+        issues.push(
+          `Product count "${m.value}" labeled as generic "Products" — should specify Active/Total/Extracted`
+        );
       }
     }
   }
@@ -1379,7 +1521,9 @@ function checkV29_LabelRequirement(data: ReportData): ValidationRule {
   const glancePricing = data.cpqAtAGlance['Pricing & Rules'] ?? [];
   for (const m of glancePricing) {
     if (m.label === 'Price Rules' || m.label === 'Product Rules') {
-      issues.push(`Rule count "${m.value}" labeled as "${m.label}" — should specify (Active) or (Total)`);
+      issues.push(
+        `Rule count "${m.value}" labeled as "${m.label}" — should specify (Active) or (Total)`
+      );
     }
   }
 
@@ -1390,7 +1534,9 @@ function checkV29_LabelRequirement(data: ReportData): ValidationRule {
     // The template already renders both, so this is OK. But warn if usableTemplateCount is 0
     // when templateCount > 0, as it might indicate a labelling gap.
     if (docGen.usableTemplateCount === 0 && docGen.templateCount > 0) {
-      issues.push(`Template count shows ${docGen.templateCount} configured but 0 usable — verify template count labels`);
+      issues.push(
+        `Template count shows ${docGen.templateCount} configured but 0 usable — verify template count labels`
+      );
     }
   }
 
@@ -1404,5 +1550,172 @@ function checkV29_LabelRequirement(data: ReportData): ValidationRule {
     };
   }
 
-  return { id: 'V29', name: 'Multi-definition counts have basis labels', severity: 'warning', passed: true, message: 'OK' };
+  return {
+    id: 'V29',
+    name: 'Multi-definition counts have basis labels',
+    severity: 'warning',
+    passed: true,
+    message: 'OK',
+  };
+}
+
+// ============================================================================
+// V2.1 Validators (V30-V33) — structured data checks, NOT HTML grep
+// ============================================================================
+
+/**
+ * V30: QCP shows exactly 1 configured name (not concatenated list).
+ * Check: name must not contain comma or semicolon (concatenation indicator).
+ */
+function checkV30_QcpSingleName(data: ReportData): ValidationRule {
+  // Find QCP name in At-a-Glance
+  const pricingSection =
+    data.cpqAtAGlance['Pricing & Rules'] ?? data.cpqAtAGlance['PRICING & RULES'] ?? [];
+  const qcpEntry = pricingSection.find(
+    (item) => item.label?.includes('QCP') || item.label?.includes('Calculator')
+  );
+
+  if (!qcpEntry || qcpEntry.value === 'Not Configured' || qcpEntry.value === 'Not configured') {
+    return {
+      id: 'V30',
+      name: 'QCP shows single name',
+      severity: 'warning',
+      passed: true,
+      message: 'OK',
+    };
+  }
+
+  // Check for concatenation indicators (comma, semicolon)
+  if (qcpEntry.value.includes(',') || qcpEntry.value.includes(';')) {
+    return {
+      id: 'V30',
+      name: 'QCP shows single name',
+      severity: 'warning',
+      passed: false,
+      message: `QCP name appears to be concatenated: "${qcpEntry.value}". Should show exactly 1 configured plugin name.`,
+    };
+  }
+
+  return {
+    id: 'V30',
+    name: 'QCP shows single name',
+    severity: 'warning',
+    passed: true,
+    message: 'OK',
+  };
+}
+
+/**
+ * V31: No bare "bundle" without "bundle-capable" qualifier.
+ * Scans curated string fields for pattern: /\bbundle(s)?\b(?!-capable)/
+ */
+function checkV31_BundleCapableWording(data: ReportData): ValidationRule {
+  const bareBundlePattern = /\bbundle(s)?\b(?!-capable|d\b)/i;
+  const issues: string[] = [];
+
+  // Check key findings
+  for (const finding of data.executiveSummary.keyFindings) {
+    if (
+      bareBundlePattern.test(finding.title) &&
+      !finding.title.toLowerCase().includes('bundle-capable') &&
+      !finding.title.toLowerCase().includes('configured bundle')
+    ) {
+      issues.push(`Key finding title: "${finding.title}"`);
+    }
+  }
+
+  // Check complexity hotspots
+  for (const hotspot of data.complexityHotspots) {
+    if (
+      bareBundlePattern.test(hotspot.analysis) &&
+      !hotspot.analysis.toLowerCase().includes('bundle-capable') &&
+      !hotspot.analysis.toLowerCase().includes('configured bundle')
+    ) {
+      issues.push(`Hotspot analysis: "${hotspot.name}"`);
+    }
+  }
+
+  if (issues.length > 0) {
+    return {
+      id: 'V31',
+      name: 'Bundle-capable wording consistency',
+      severity: 'warning',
+      passed: false,
+      message: `Found bare "bundle" without "-capable" qualifier in: ${issues.join('; ')}`,
+    };
+  }
+
+  return {
+    id: 'V31',
+    name: 'Bundle-capable wording consistency',
+    severity: 'warning',
+    passed: true,
+    message: 'OK',
+  };
+}
+
+/**
+ * V32: All percentage tables have denominator footnotes.
+ * Checks hasDenominatorFootnote field on T2 section data (structural, not HTML).
+ */
+function checkV32_DenominatorFootnotes(data: ReportData): ValidationRule {
+  const issues: string[] = [];
+
+  if (data.productDeepDive && !data.productDeepDive.hasDenominatorFootnote) {
+    issues.push('Section 6.2 (Product Deep Dive)');
+  }
+  if (data.bundlesDeepDive && !data.bundlesDeepDive.hasDenominatorFootnote) {
+    issues.push('Section 6.6 (Bundles Deep Dive)');
+  }
+
+  if (issues.length > 0) {
+    return {
+      id: 'V32',
+      name: 'Percentage tables have denominator footnotes',
+      severity: 'warning',
+      passed: false,
+      message: `Missing hasDenominatorFootnote in: ${issues.join('; ')}`,
+    };
+  }
+
+  return {
+    id: 'V32',
+    name: 'Percentage tables have denominator footnotes',
+    severity: 'warning',
+    passed: true,
+    message: 'OK',
+  };
+}
+
+/**
+ * V33: Every key finding follows Fact + Implication pattern.
+ * Check: detail must contain ' — ' followed by an implication word.
+ */
+function checkV33_FindingImplicationPattern(data: ReportData): ValidationRule {
+  const implicationPattern = /\s—\s+(indicating|which means|adding|suggesting|requiring)/i;
+  const issues: string[] = [];
+
+  for (const finding of data.executiveSummary.keyFindings) {
+    if (!implicationPattern.test(finding.detail)) {
+      issues.push(`Finding "${finding.title}": detail missing Fact + Implication pattern`);
+    }
+  }
+
+  if (issues.length > 0) {
+    return {
+      id: 'V33',
+      name: 'Key findings follow Fact + Implication pattern',
+      severity: 'warning',
+      passed: false,
+      message: issues.join('; '),
+    };
+  }
+
+  return {
+    id: 'V33',
+    name: 'Key findings follow Fact + Implication pattern',
+    severity: 'warning',
+    passed: true,
+    message: 'OK',
+  };
 }
