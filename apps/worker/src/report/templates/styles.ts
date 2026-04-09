@@ -7,8 +7,8 @@ export const reportStyles = `
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 10pt; color: #333; line-height: 1.5; }
 
-  /* Page breaks */
-  .page-break { page-break-before: always; }
+  /* Page breaks — both modern + legacy for browser compat */
+  .page-break { break-before: page; page-break-before: always; }
 
   /* Headers */
   h1 { font-size: 22pt; color: #1a5276; margin-bottom: 8px; font-weight: 700; }
