@@ -189,6 +189,18 @@ export class SettingsCollector extends BaseCollector {
             return ownerId && ownerId.startsWith('00D');
           });
 
+          // C-01: Detect override existence (profile + user level)
+          const profileOverrides = records.filter((r) => {
+            const oid = r.SetupOwnerId as string;
+            return oid && oid.startsWith('00e');
+          });
+          const userOverrides = records.filter((r) => {
+            const oid = r.SetupOwnerId as string;
+            return oid && oid.startsWith('005');
+          });
+          const hasProfileOverrides = profileOverrides.length > 0;
+          const hasUserOverrides = userOverrides.length > 0;
+
           // Produce the generic CPQSetting finding (backward compat)
           findings.push(
             createFinding({
@@ -202,7 +214,7 @@ export class SettingsCollector extends BaseCollector {
               migrationRelevance: 'should-migrate',
               rcaTargetConcept: 'Revenue Settings',
               rcaMappingComplexity: 'transform',
-              notes: `${records.length} records (org-level + overrides). ${setting.description}`,
+              notes: `${records.length} records (org-level + overrides). ${setting.description}${hasProfileOverrides ? ` Profile overrides: ${profileOverrides.length}.` : ''}${hasUserOverrides ? ` User overrides: ${userOverrides.length}.` : ''}`,
             })
           );
 
@@ -224,7 +236,7 @@ export class SettingsCollector extends BaseCollector {
               const match = KNOWN_SETTINGS.find((ks) => ks.pattern.test(field.name));
               if (match) {
                 const value = orgRecord[field.name];
-                const displayValue = formatSettingValue(value);
+                const displayValue = formatSettingValue(value, field.name);
 
                 findings.push(
                   createFinding({
@@ -676,11 +688,28 @@ export class SettingsCollector extends BaseCollector {
   }
 }
 
-/** Format a setting value for display */
-function formatSettingValue(value: unknown): string {
+/** Credential-like field name patterns — C-01 redaction policy */
+const REDACT_FIELD_PATTERNS = /password|token|secret|key|credential|apikey/i;
+
+/** Credential-like value patterns — heuristic redaction */
+const REDACT_VALUE_PATTERNS = /^(sk-|xox-|AKIA|Bearer\s|eyJ)/;
+
+/** Check if a field name + value should be redacted */
+function shouldRedact(fieldName: string, value: unknown): boolean {
+  if (REDACT_FIELD_PATTERNS.test(fieldName)) return true;
+  if (typeof value === 'string' && REDACT_VALUE_PATTERNS.test(value)) return true;
+  return false;
+}
+
+/** Format a setting value for display, with redaction for sensitive fields */
+function formatSettingValue(value: unknown, fieldName?: string): string {
+  if (fieldName && shouldRedact(fieldName, value)) return '[REDACTED]';
   if (value === true) return 'Enabled';
   if (value === false) return 'Disabled';
   if (value === null || value === undefined) return 'Not Set';
   if (typeof value === 'number') return String(value);
-  return String(value) || 'Empty';
+  const strValue = String(value) || 'Empty';
+  // Heuristic: if value looks like a credential even without field name match
+  if (REDACT_VALUE_PATTERNS.test(strValue)) return '[REDACTED]';
+  return strValue;
 }
