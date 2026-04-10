@@ -58,10 +58,22 @@ describe('PH3.11 — normalize() entry point', () => {
     expect(stageNames.has('assemble')).toBe(true);
   });
 
-  it('unknown artifactType routes to the fallback quarantine', async () => {
-    const result = await normalize([validFinding({ artifactType: 'Unknown__c' })]);
+  it('unknown artifactType routes to the UnknownArtifact fallback node', async () => {
+    // Per PH6.16, unregistered artifactTypes emit an UnknownArtifactIR
+    // node (a first-class fallback node), not a quarantine entry.
+    const result = await normalize([validFinding({ artifactType: 'TotallyMadeUpType' })]);
+    const unknownNodes = result.graph.nodes.filter((n) => n.nodeType === 'UnknownArtifact');
+    expect(unknownNodes.length).toBe(1);
+    expect(unknownNodes[0]?.warnings).toContain('unknown-artifact-type');
+  });
+
+  it('not-modeled-v1 artifactType routes to quarantine', async () => {
+    // Per PH6.17, artifactTypes on the NOT_MODELED_V1_TYPES list
+    // route to quarantine with reason 'not-modeled-v1' instead of
+    // becoming UnknownArtifactIR nodes.
+    const result = await normalize([validFinding({ artifactType: 'SharingRule' })]);
     expect(result.quarantine.length).toBe(1);
-    expect(result.quarantine[0]?.reason).toBe('unknown-artifact');
+    expect(result.quarantine[0]?.reason).toBe('not-modeled-v1');
   });
 
   it('malformed finding quarantines, pipeline continues', async () => {

@@ -29,6 +29,7 @@ import { inputGate, DEFAULT_INPUT_GATE_OPTIONS } from './stages/s1-input-gate.ts
 import { buildFindingIndex } from './stages/s2-group-index.ts';
 import { prepareCatalog } from './stages/s2-5-schema-catalog.ts';
 import { normalizeAll } from './normalizers/registry.ts';
+import { registerAllNormalizers } from './normalizers/register-all.ts';
 import { resolveReferences } from './stages/s4-resolve-refs.ts';
 import { detectCycles } from './stages/s6-detect-cycles.ts';
 import { buildIndex } from './stages/s7-build-index.ts';
@@ -105,6 +106,11 @@ export async function normalize(
   findings: unknown,
   options: NormalizeOptions = {}
 ): Promise<NormalizeResult> {
+  // Populate the normalizer registry idempotently. First call does
+  // the work; subsequent calls re-initialize via resetRegistry, which
+  // is cheap and keeps tests from drifting on shared module state.
+  registerAllNormalizers();
+
   const pipelineStart = now();
   const stageDurations: StageDuration[] = [];
   const diagnostics: Diagnostic[] = [];
