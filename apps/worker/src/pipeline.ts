@@ -37,6 +37,7 @@ import { logger } from './lib/logger.ts';
 import { writeCollectorData } from './db/writes.ts';
 import type { BaseCollector } from './collectors/base.ts';
 import { runBB3 } from './pipeline/run-bb3.ts';
+import { writeIRGraph } from './db/write-ir-graph.ts';
 import type { NormalizeResult } from '@revbrain/bb3-normalizer';
 import type { AssessmentFindingInput } from '@revbrain/contract';
 
@@ -338,11 +339,22 @@ export async function runPipeline(ctx: CollectorContext): Promise<PipelineResult
     log.warn({ error: msg }, 'phase_5_6_warning: bb3_normalize failed (non-fatal)');
     errors.push(`BB-3 normalization warning: ${msg}`);
   }
-  // PH9.10 + PH9.11 will consume `bb3Result` here. For PH9.9 we
-  // just produce + log it; persistence and metrics sink wiring
-  // lands in the next two cards. Reference the result explicitly
-  // so TS knows it is intentionally held.
-  void bb3Result;
+  // PH9.10 — Persist the IRGraph onto assessment_runs.ir_graph
+  // (added by migration 0044). Persistence failures are logged
+  // inside writeIRGraph() and swallowed; they do not fail the
+  // extraction run. PH9.11 adds the metrics sink next.
+  if (bb3Result) {
+    const persisted = await writeIRGraph({
+      sql: ctx.sql,
+      runId: ctx.runId,
+      graph: bb3Result.graph,
+    });
+    if (persisted) {
+      log.info({ nodesOut: bb3Result.runtimeStats.totalNodesOut }, 'bb3_ir_graph_persisted');
+    } else {
+      log.warn('bb3_ir_graph_persist_failed');
+    }
+  }
 
   const finalStatus = errors.length > 0 ? 'completed_warnings' : 'completed';
   log.info(
