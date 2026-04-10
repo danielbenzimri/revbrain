@@ -37,13 +37,22 @@ import { validateGraph } from './stages/s8-validate.ts';
 import { BB3InputError } from '@revbrain/migration-ir-contract';
 import { assembleEnvelope } from './stages/s9-assemble.ts';
 import type { NodeRefFieldDescriptor } from './graph/edge-projection.ts';
+import { DEFAULT_NODE_REF_DESCRIPTORS } from './stages/default-descriptors.ts';
 import { BB3_VERSION } from './version.ts';
 
 export interface NormalizeOptions {
   catalog?: SchemaCatalog;
   maxInvalidRate?: number;
   strict?: boolean;
-  /** Descriptor list for projected-edge emission. Default: empty. */
+  /**
+   * Descriptor list for projected-edge emission.
+   *
+   * Default: {@link DEFAULT_NODE_REF_DESCRIPTORS} — a comprehensive
+   * table covering every inline `NodeRef` / `NodeRef[]` field in the
+   * v1.2 IR catalog. Callers that want to project only a subset
+   * (e.g. tests) can pass their own list; passing `[]` explicitly
+   * disables projection entirely.
+   */
   projectedDescriptors?: NodeRefFieldDescriptor[];
   /** Unresolved-ref threshold for V8. Default 0.2. */
   unresolvedRatioThreshold?: number;
@@ -187,7 +196,7 @@ export async function normalize(
   const idx = buildIndex({
     nodes: cycleResult.nodes,
     syntheticEdges: cycleResult.syntheticEdges,
-    projectedDescriptors: options.projectedDescriptors ?? [],
+    projectedDescriptors: options.projectedDescriptors ?? DEFAULT_NODE_REF_DESCRIPTORS,
   });
   diagnostics.push(...idx.diagnostics);
   endStage(s7, stageDurations);

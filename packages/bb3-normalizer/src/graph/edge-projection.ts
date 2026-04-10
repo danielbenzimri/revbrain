@@ -47,19 +47,28 @@ export interface NodeWithRefs {
   [key: string]: unknown;
 }
 
+/** Duck-typed NodeRef check — used for both array and singleton fields. */
+function isNodeRef(v: unknown): v is NodeRef {
+  return typeof v === 'object' && v !== null && typeof (v as NodeRef).resolved === 'boolean';
+}
+
 /**
- * Extract a NodeRef[] from a node field. Returns an empty array if
- * the field is missing or not an array.
+ * Extract `NodeRef[]` from a node field. Handles three shapes:
+ *   - `NodeRef[]`       → returned filtered for NodeRef shape
+ *   - `NodeRef | null`  → returned as a single-element array (or empty if null)
+ *   - missing / other   → returned as `[]`
+ *
+ * The singleton case lets the descriptor table cover fields like
+ * `Product.bundleStructure: NodeRef | null` and
+ * `ContractedPrice.discountSchedule: NodeRef | null` without a
+ * separate code path.
  */
 function extractRefs(node: NodeWithRefs, fieldName: string): NodeRef[] {
   const v = node[fieldName];
-  if (!Array.isArray(v)) return [];
-  // Filter only values that look like a NodeRef. We can't do a true
-  // instanceof check, so duck-type: must have `resolved: boolean`.
-  return v.filter(
-    (x): x is NodeRef =>
-      typeof x === 'object' && x !== null && typeof (x as NodeRef).resolved === 'boolean'
-  );
+  if (v === null || v === undefined) return [];
+  if (Array.isArray(v)) return v.filter(isNodeRef);
+  if (isNodeRef(v)) return [v];
+  return [];
 }
 
 /**
