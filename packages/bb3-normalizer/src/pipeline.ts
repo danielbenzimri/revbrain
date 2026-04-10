@@ -37,6 +37,7 @@ import { validateGraph } from './stages/s8-validate.ts';
 import { BB3InputError } from '@revbrain/migration-ir-contract';
 import { assembleEnvelope } from './stages/s9-assemble.ts';
 import type { NodeRefFieldDescriptor } from './graph/edge-projection.ts';
+import { projectEdges, type NodeWithRefs } from './graph/edge-projection.ts';
 import { DEFAULT_NODE_REF_DESCRIPTORS } from './stages/default-descriptors.ts';
 import { BB3_VERSION } from './version.ts';
 
@@ -176,11 +177,33 @@ export async function normalize(
   const s5 = startStage('parse-code');
   endStage(s5, stageDurations);
 
-  // Stage 6 — Cycle detection.
+  // PH9.4 — Project inline NodeRef[] fields into IREdge[] BEFORE
+  // Stage 6 so cycle detection sees real dependency edges (not an
+  // empty outEdges map, as in the pre-PH9.4 pipeline). The same
+  // projected edges are fed to Stage 7 for the final merge with
+  // synthetic cycle-contains edges. `projectEdges` is pure and
+  // deterministic so computing it once up front is safe.
+  const descriptors = options.projectedDescriptors ?? DEFAULT_NODE_REF_DESCRIPTORS;
+  const projection = projectEdges(resolved.nodes as unknown as NodeWithRefs[], descriptors);
+
+  // Build a Tarjan-ready out-edges map from the projected edges.
+  // Any projected edge counts as a "dependency" for cycle purposes —
+  // composition edges (parent-of) form a forest so they can't
+  // create false positives, and real cycles only arise from
+  // depends-on / calls / triggers which are also projected.
+  const outEdgesMap = new Map<string, string[]>();
+  for (const edge of projection.edges) {
+    const list = outEdgesMap.get(edge.sourceId);
+    if (list) list.push(edge.targetId);
+    else outEdgesMap.set(edge.sourceId, [edge.targetId]);
+  }
+
+  // Stage 6 — Cycle detection. Now receives real out-edges so
+  // cycles in the input graph are actually detected (G5 close).
   const s6 = startStage('detect-cycles');
   const cycleResult = detectCycles({
     nodes: resolved.nodes,
-    outEdges: new Map(), // empty for PH3.11 — PH3.8 descriptors wire real edges in later tasks
+    outEdges: outEdgesMap as Map<string, readonly string[]>,
     bb3Version: BB3_VERSION,
   });
   // Attach self-loop warnings.
@@ -193,11 +216,19 @@ export async function normalize(
   endStage(s6, stageDurations);
 
   // Stage 7 — Reference index + projected edges.
+  // PH9.4: projection already ran above. We still call buildIndex
+  // so the reference index + synthetic-edge merge happens over the
+  // post-cycle node list; buildIndex will re-project here over the
+  // same (now larger) node list — the newly added CyclicDependency
+  // groups have no projected NodeRef fields so the result is
+  // identical for projected edges, plus the synthetic cycle-contains
+  // edges from Stage 6. The double projection is a few microseconds
+  // and keeps Stage 7's contract stable for PH3.8 tests.
   const s7 = startStage('build-index');
   const idx = buildIndex({
     nodes: cycleResult.nodes,
     syntheticEdges: cycleResult.syntheticEdges,
-    projectedDescriptors: options.projectedDescriptors ?? DEFAULT_NODE_REF_DESCRIPTORS,
+    projectedDescriptors: descriptors,
   });
   diagnostics.push(...idx.diagnostics);
   endStage(s7, stageDurations);
