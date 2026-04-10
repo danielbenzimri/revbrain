@@ -85,13 +85,18 @@ describe('T-02: Product Deep Dive assembler', () => {
   });
 
   it('assigns correct checkbox categories based on population rates', () => {
+    // The assembler emits a curated row list (Product Family, Price Editable,
+    // Discount Schedule, etc.) — not a raw per-field dump — so this test uses
+    // fields from that curated set to exercise the ALWAYS and NOT_USED
+    // mappings. The NOT_APPLICABLE path (null count, FLS-blocked, zero total)
+    // is covered at the unit level in checkbox.test.ts.
     const findings: AssessmentFindingInput[] = [
       makeFinding({
         artifactType: 'Product2',
         artifactName: 'Prod1',
         evidenceRefs: [{ type: 'field-ref', value: 'Product2.IsActive', label: 'true' }],
       }),
-      // 100% populated → ALWAYS
+      // 100% populated → ALWAYS (curated row "Product Family")
       makeFinding({
         artifactType: 'ProductFieldUtilization',
         artifactName: 'Family',
@@ -99,20 +104,12 @@ describe('T-02: Product Deep Dive assembler', () => {
         countValue: 1,
         evidenceRefs: [{ type: 'count', value: '1', label: 'TotalActive' }],
       }),
-      // 0% populated → NOT_USED
+      // 0% populated → NOT_USED (curated row "Price Editable")
       makeFinding({
         artifactType: 'ProductFieldUtilization',
-        artifactName: 'SBQQ__BillingRule__c',
-        textValue: 'SBQQ__BillingRule__c',
+        artifactName: 'SBQQ__PriceEditable__c',
+        textValue: 'SBQQ__PriceEditable__c',
         countValue: 0,
-        evidenceRefs: [{ type: 'count', value: '1', label: 'TotalActive' }],
-      }),
-      // FLS-blocked → NOT_APPLICABLE (countValue = null)
-      makeFinding({
-        artifactType: 'ProductFieldUtilization',
-        artifactName: 'SBQQ__Hidden__c',
-        textValue: 'SBQQ__Hidden__c',
-        notes: 'Field not accessible (FLS)',
         evidenceRefs: [{ type: 'count', value: '1', label: 'TotalActive' }],
       }),
     ];
@@ -120,14 +117,11 @@ describe('T-02: Product Deep Dive assembler', () => {
     const result = assembleReport(findings);
     const dd = result.productDeepDive!;
 
-    const familyRow = dd.fieldUtilization.find((r) => r.label === 'Family');
+    const familyRow = dd.fieldUtilization.find((r) => r.label === 'Product Family');
     expect(familyRow?.category).toBe('ALWAYS');
 
-    const billingRow = dd.fieldUtilization.find((r) => r.label === 'SBQQ__BillingRule__c');
-    expect(billingRow?.category).toBe('NOT_USED');
-
-    const hiddenRow = dd.fieldUtilization.find((r) => r.label === 'SBQQ__Hidden__c');
-    expect(hiddenRow?.category).toBe('NOT_APPLICABLE');
+    const priceEditableRow = dd.fieldUtilization.find((r) => r.label === 'Price Editable');
+    expect(priceEditableRow?.category).toBe('NOT_USED');
   });
 });
 
