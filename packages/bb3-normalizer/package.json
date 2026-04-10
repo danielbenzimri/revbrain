@@ -1,0 +1,30 @@
+{
+  "name": "@revbrain/bb3-normalizer",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "BB-3 Migration IR Normalizer. Consumes extraction findings and produces a deterministic IRGraph.",
+  "exports": {
+    ".": {
+      "import": "./src/index.ts",
+      "types": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "lint": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@revbrain/contract": "workspace:*",
+    "@revbrain/migration-ir-contract": "workspace:*",
+    "tree-sitter": "^0.22.4",
+    "tree-sitter-sfapex": "^2.4.1",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.6",
+    "typescript": "^5.3.3",
+    "vitest": "^1.1.0"
+  }
+}

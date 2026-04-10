@@ -357,6 +357,34 @@ importers:
         specifier: ^1.1.0
         version: 1.6.1(@types/node@20.19.33)
 
+  packages/bb3-normalizer:
+    dependencies:
+      '@revbrain/contract':
+        specifier: workspace:*
+        version: link:../contract
+      '@revbrain/migration-ir-contract':
+        specifier: workspace:*
+        version: link:../migration-ir-contract
+      tree-sitter:
+        specifier: ^0.22.4
+        version: 0.22.4
+      tree-sitter-sfapex:
+        specifier: ^2.4.1
+        version: 2.4.1(tree-sitter@0.22.4)
+      zod:
+        specifier: ^4.3.6
+        version: 4.3.6
+    devDependencies:
+      '@types/node':
+        specifier: ^20.10.6
+        version: 20.19.33
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.3
+      vitest:
+        specifier: ^1.1.0
+        version: 1.6.1(@types/node@20.19.33)
+
   packages/contract:
     dependencies:
       zod:
@@ -6190,6 +6218,20 @@ packages:
     resolution: {integrity: sha512-CXdUiJembsNjuToQvxayPZF9Vqht7hewsvy2sOWafLvi2awflj9mOC6bHIg50orX8IJvWKY9wYQ/zB2kogPslQ==}
     dev: true
 
+  /node-addon-api@7.1.1:
+    resolution: {integrity: sha512-5m3bsyrjFWE1xf7nz7YXdN4udnVtXK6/Yfgn5qnahL6bCkf2yKt4k3nuTKAtT4r3IG8JNR2ncsIMdZuAzJjHQQ==}
+    dev: false
+
+  /node-addon-api@8.7.0:
+    resolution: {integrity: sha512-9MdFxmkKaOYVTV+XVRG8ArDwwQ77XIgIPyKASB1k3JPq3M8fGQQQE3YpMOrKm6g//Ktx8ivZr8xo1Qmtqub+GA==}
+    engines: {node: ^18 || ^20 || >= 21}
+    dev: false
+
+  /node-gyp-build@4.8.4:
+    resolution: {integrity: sha512-LA4ZjwlnUblHVgq0oBF3Jl/6h/Nvs5fzBLwdEF4nuxnFdsfajde4WfxtJr3CaiH+F6ewcIB/q4jQ4UzPyid+CQ==}
+    hasBin: true
+    dev: false
+
   /node-releases@2.0.27:
     resolution: {integrity: sha512-nmh3lCkYZ3grZvqcCH+fjmQ7X+H0OeZgP40OierEaAptX4XofMh5kwNbWh7lBduUzCcV/8kZ+NDLCwm2iorIlA==}
     dev: true
@@ -7197,6 +7239,29 @@ packages:
     dependencies:
       punycode: 2.3.1
     dev: true
+
+  /tree-sitter-sfapex@2.4.1(tree-sitter@0.22.4):
+    resolution: {integrity: sha512-QcL2VYbv0RX5vjKt5T8xHNPaXML2lwL/bKlZPDEDjEhe+2sbfQuA8LeovWALF+6jteMq8mqG0CzT/BJ0zLk/kg==}
+    requiresBuild: true
+    peerDependencies:
+      tree-sitter: ^0.22.4
+      tree_sitter: '*'
+    peerDependenciesMeta:
+      tree_sitter:
+        optional: true
+    dependencies:
+      node-addon-api: 7.1.1
+      node-gyp-build: 4.8.4
+      tree-sitter: 0.22.4
+    dev: false
+
+  /tree-sitter@0.22.4:
+    resolution: {integrity: sha512-usbHZP9/oxNsUY65MQUsduGRqDHQOou1cagUSwjhoSYAmSahjQDAVsh9s+SlZkn8X8+O1FULRGwHu7AFP3kjzg==}
+    requiresBuild: true
+    dependencies:
+      node-addon-api: 8.7.0
+      node-gyp-build: 4.8.4
+    dev: false
 
   /ts-api-utils@2.4.0(typescript@5.9.3):
     resolution: {integrity: sha512-3TaVTaAv2gTiMB35i3FiGJaRfwb3Pyn/j3m/bfAvGe8FB7CF6u+LMYqYlDh7reQf7UNvoTvdfAqHGmPGOSsPmA==}
