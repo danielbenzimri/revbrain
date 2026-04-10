@@ -20,7 +20,8 @@
     "test": "vitest run",
     "test:unit": "vitest run tests/unit/",
     "test:integration": "vitest run tests/integration/",
-    "seed:findings": "tsx scripts/seed-findings-to-db.ts"
+    "seed:findings": "tsx scripts/seed-findings-to-db.ts",
+    "smoke:bb3": "tsx scripts/run-bb3-smoke.ts"
   },
   "dependencies": {
     "@revbrain/bb3-normalizer": "workspace:*",
