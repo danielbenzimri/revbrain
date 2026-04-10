@@ -13,6 +13,7 @@ import type { AssessmentFindingInput } from '@revbrain/contract';
 import type { ApexTriggerAutomationIR, FieldRefIR, NodeRef } from '@revbrain/migration-ir-contract';
 import type { NormalizerFn } from '../registry.ts';
 import { buildBaseNode } from '../base.ts';
+import { createGlobalBudgetState, parseApexClass } from '../../parsers/apex.ts';
 
 type DmlEvent = 'insert' | 'update' | 'delete' | 'undelete';
 
@@ -80,3 +81,27 @@ export const normalizeApexTrigger: NormalizerFn = (finding: AssessmentFindingInp
   };
   return { nodes: [node] };
 };
+
+/**
+ * PH9.5 — Async enrichment helper for Stage 5. Mirrors
+ * {@link enrichApexClass}: runs the shared Apex parser against the
+ * trigger's raw source, rewrites the parse metrics, and returns a
+ * new node. The normalizer dispatcher stays sync; Stage 5 opts in.
+ */
+export async function enrichApexTrigger(
+  draft: ApexTriggerAutomationIR,
+  source: string,
+  globalState = createGlobalBudgetState()
+): Promise<ApexTriggerAutomationIR> {
+  const result = await parseApexClass(source, { globalState });
+  return {
+    ...draft,
+    lineCount: result.lineCount,
+    hasTriggerControl: result.hasTriggerControl,
+    hasDynamicFieldRef: result.hasDynamicFieldRef,
+    parseStatus: result.parseStatus,
+    parseErrors: result.parseErrors,
+    sbqqFieldRefs: result.fieldRefs,
+    writtenFields: result.writtenFields,
+  };
+}

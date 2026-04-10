@@ -182,6 +182,33 @@ describe('PH9.1 + PH9.3 + PH9.4 — end-to-end edge projection and cycles', () =
     expect(result.graph.quarantine.some((q) => q.reason === 'orphaned-reference')).toBe(true);
   });
 
+  it('Apex class is enriched by Stage 5: parseStatus flips from partial to parsed (G4)', async () => {
+    const findings: AssessmentFindingInput[] = [
+      validFinding({
+        domain: 'dependency',
+        collectorName: 'dependency',
+        artifactType: 'ApexClass',
+        artifactName: 'MyHandler',
+        findingKey: 'apex-1',
+        sourceType: 'metadata',
+        textValue: 'public class MyHandler { public Decimal compute() { return 1; } }',
+      }),
+    ];
+    const result = await normalize(findings, { extractedAt: '2026-04-10T00:00:00Z' });
+    const apex = result.graph.nodes.find((n) => n.nodeType === 'Automation') as
+      | (import('@revbrain/migration-ir-contract').IRNodeBase & {
+          sourceType: string;
+          parseStatus: string;
+        })
+      | undefined;
+    expect(apex).toBeDefined();
+    expect(apex!.sourceType).toBe('ApexClass');
+    // Pre-PH9.5 this was always 'partial' because Stage 5 was a
+    // zero-duration no-op. Now the pipeline runs enrichApexClass
+    // and the parser sets parseStatus per its outcome.
+    expect(['parsed', 'budget-skipped', 'size-limit-skipped']).toContain(apex!.parseStatus);
+  });
+
   it('pipeline-level cycle detection fires via projected edges (G5)', async () => {
     // Craft a deterministic input that causes resolve-refs to wire
     // PricingRule.dependencies into an A → B → A cycle. Since the

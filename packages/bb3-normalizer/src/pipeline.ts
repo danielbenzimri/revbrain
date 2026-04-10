@@ -39,6 +39,13 @@ import { assembleEnvelope } from './stages/s9-assemble.ts';
 import type { NodeRefFieldDescriptor } from './graph/edge-projection.ts';
 import { projectEdges, type NodeWithRefs } from './graph/edge-projection.ts';
 import { DEFAULT_NODE_REF_DESCRIPTORS } from './stages/default-descriptors.ts';
+import { enrichApexClass } from './normalizers/automation/apex-class.ts';
+import { enrichApexTrigger } from './normalizers/automation/apex-trigger.ts';
+import { createGlobalBudgetState } from './parsers/apex.ts';
+import type {
+  ApexClassAutomationIR,
+  ApexTriggerAutomationIR,
+} from '@revbrain/migration-ir-contract';
 import { BB3_VERSION } from './version.ts';
 
 export interface NormalizeOptions {
@@ -169,12 +176,47 @@ export async function normalize(
   quarantine.push(...resolved.quarantine);
   endStage(s4, stageDurations);
 
-  // Stage 5 — Code parsing.
-  // PH3.11 wires the pipeline skeleton; per-normalizer code parsing
-  // is driven by individual normalizers that land in PH4/PH5/PH6.
-  // The pipeline records a zero-duration stage entry so the shape
-  // of `runtimeStats.stageDurations` matches the contract.
+  // Stage 5 — Code parsing (PH9.5).
+  // Walks every ApexClass and ApexTrigger draft in developerName
+  // order, runs the tree-sitter Apex parser via the shared global
+  // byte budget, and swaps the enriched result back into the
+  // resolved node list. Formula + SOQL parsing is already done
+  // inline by the per-normalizer implementations (validation-rule,
+  // formula-field, lookup-query) so Stage 5 only owns Apex.
+  // QCP (CustomComputation) stays at parseStatus 'deferred-to-bb3b'.
   const s5 = startStage('parse-code');
+  const apexBudget = createGlobalBudgetState();
+  // Process in id order so budget-skip decisions are deterministic.
+  const apexIndices = resolved.nodes
+    .map((n, i) => ({ n, i }))
+    .filter(({ n }) => {
+      if (n.nodeType !== 'Automation') return false;
+      const sourceType = (n as unknown as { sourceType?: string }).sourceType;
+      return sourceType === 'ApexClass' || sourceType === 'ApexTrigger';
+    })
+    .sort((a, b) => (a.n.id < b.n.id ? -1 : a.n.id > b.n.id ? 1 : 0));
+
+  for (const { n, i } of apexIndices) {
+    const findingKey = n.evidence.sourceFindingKeys[0];
+    if (!findingKey) continue;
+    const finding = findingIndex.byFindingKey.get(findingKey);
+    if (!finding || finding.textValue === undefined) continue;
+
+    const sourceType = (n as unknown as { sourceType: string }).sourceType;
+    if (sourceType === 'ApexClass') {
+      resolved.nodes[i] = await enrichApexClass(
+        n as ApexClassAutomationIR,
+        finding.textValue,
+        apexBudget
+      );
+    } else if (sourceType === 'ApexTrigger') {
+      resolved.nodes[i] = await enrichApexTrigger(
+        n as ApexTriggerAutomationIR,
+        finding.textValue,
+        apexBudget
+      );
+    }
+  }
   endStage(s5, stageDurations);
 
   // PH9.4 — Project inline NodeRef[] fields into IREdge[] BEFORE
