@@ -23,6 +23,7 @@
 import type { Diagnostic, IRNodeBase, QuarantineEntry } from '@revbrain/migration-ir-contract';
 import { mergeDrafts, type MergeWarning } from '../merge/cross-collector.ts';
 import type { FindingIndex } from './s2-group-index.ts';
+import { wireParentChildRefs, type OrphanedChild } from './parent-lookup.ts';
 
 export interface ResolveReferencesInput {
   drafts: IRNodeBase[];
@@ -91,17 +92,50 @@ export function resolveReferences(input: ResolveReferencesInput): ResolveReferen
 
   // Emit the merged list in id order so downstream stages see a
   // deterministic sequence regardless of input order.
-  const nodes = [...byId.values()].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  const mergedNodes = [...byId.values()].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 
-  // Orphan detection: Stage 4 in the current spec relies on
-  // per-normalizer parent wiring (which lands in PH4/PH5 as
-  // individual normalizers flip child-to-parent NodeRefs). For
-  // PH3.5 we return an empty quarantine list — orphans surface in
-  // the validator (PH3.9, V5) and in per-normalizer tests.
+  // PH9.3 — Parent-child wiring. Walks PARENT_WIRING_RULES,
+  // rewrites child back-pointer ids to the parent's real
+  // identity-hash id, and appends resolved children into the
+  // parent's children array (e.g. PricingRule.conditions).
+  // Children whose parent is missing become orphaned-reference
+  // quarantine entries.
+  const { nodes: wiredNodes, orphans } = wireParentChildRefs(mergedNodes);
+
+  const orphanQuarantine: QuarantineEntry[] = orphans.map((o) => orphanToQuarantine(o));
+  for (const orphan of orphans) {
+    diagnostics.push({
+      severity: 'warning',
+      stage: 'resolve-refs',
+      code: 'BB3_R003',
+      message: `orphaned reference: ${orphan.childNodeType}.${orphan.backPointerField}=${orphan.lookupKey} (${orphan.reason})`,
+      nodeId: orphan.childId,
+    });
+  }
+
+  // Spec §6.1 Stage 4: orphaned children are preserved in the
+  // graph (not deleted) — the wiring pass already flipped their
+  // back-pointer to `resolved: false`. The quarantine entry is
+  // a sidecar record for traceability, not a deletion.
   return {
-    nodes,
-    quarantine: [],
+    nodes: wiredNodes,
+    quarantine: orphanQuarantine,
     diagnostics,
     mergeWarnings,
+  };
+}
+
+/** Convert a parent-lookup orphan into a pipeline QuarantineEntry. */
+function orphanToQuarantine(orphan: OrphanedChild): QuarantineEntry {
+  return {
+    findingKey: orphan.childFindingKey,
+    artifactType: orphan.childNodeType,
+    reason: 'orphaned-reference',
+    detail: orphan.reason,
+    raw: {
+      childId: orphan.childId,
+      backPointerField: orphan.backPointerField,
+      lookupKey: orphan.lookupKey,
+    },
   };
 }

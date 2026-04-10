@@ -119,3 +119,239 @@ describe('PH3.5 — resolveReferences', () => {
     expect(result.quarantine).toEqual([]);
   });
 });
+
+describe('PH9.3 — parent-child wiring', () => {
+  it('PriceCondition with matching parent → appears in PricingRule.conditions + back-pointer rewritten', () => {
+    const rule = draft({
+      id: 'rule:hash:abc',
+      nodeType: 'PricingRule',
+      evidence: {
+        sourceFindingKeys: ['f-rule-1'],
+        classificationReasons: [],
+        cpqFieldsRead: [],
+        cpqFieldsWritten: [],
+        sourceSalesforceRecordIds: ['a001000000000001'],
+        sourceCollectors: ['pricing'],
+      },
+    }) as IRNodeBase & { conditions: unknown };
+    rule.conditions = [];
+
+    const cond = draft({
+      id: 'cond:hash:def',
+      nodeType: 'PriceCondition',
+      evidence: {
+        sourceFindingKeys: ['f-cond-1'],
+        classificationReasons: [],
+        cpqFieldsRead: [],
+        cpqFieldsWritten: [],
+        sourceSalesforceRecordIds: ['a002000000000001'],
+        sourceCollectors: ['pricing'],
+      },
+    }) as IRNodeBase & { ownerRule: unknown };
+    cond.ownerRule = { id: 'a001000000000001', resolved: true };
+
+    const result = resolveReferences({ drafts: [rule, cond] });
+    expect(result.quarantine).toHaveLength(0);
+
+    const mergedRule = result.nodes.find((n) => n.nodeType === 'PricingRule') as IRNodeBase & {
+      conditions: { id: string; resolved: boolean }[];
+    };
+    expect(mergedRule.conditions).toEqual([{ id: 'cond:hash:def', resolved: true }]);
+
+    const mergedCond = result.nodes.find((n) => n.nodeType === 'PriceCondition') as IRNodeBase & {
+      ownerRule: { id: string; resolved: boolean };
+    };
+    expect(mergedCond.ownerRule).toEqual({ id: 'rule:hash:abc', resolved: true });
+  });
+
+  it('PriceCondition with missing parent → orphaned quarantine + back-pointer flipped to unresolved, node preserved', () => {
+    const cond = draft({
+      id: 'cond:orphan',
+      nodeType: 'PriceCondition',
+      evidence: {
+        sourceFindingKeys: ['f-orphan'],
+        classificationReasons: [],
+        cpqFieldsRead: [],
+        cpqFieldsWritten: [],
+        sourceSalesforceRecordIds: ['a002000000000001'],
+        sourceCollectors: ['pricing'],
+      },
+    }) as IRNodeBase & { ownerRule: unknown };
+    cond.ownerRule = { id: 'a001999999999999', resolved: true };
+
+    const result = resolveReferences({ drafts: [cond] });
+    expect(result.quarantine).toHaveLength(1);
+    expect(result.quarantine[0]?.reason).toBe('orphaned-reference');
+    expect(result.quarantine[0]?.findingKey).toBe('f-orphan');
+    // The orphaned child is PRESERVED in the final node list (spec §6.1
+    // Stage 4 explicitly says "preserve the draft's evidence, not deletion").
+    const survivor = result.nodes.find((n) => n.id === 'cond:orphan') as
+      | (IRNodeBase & { ownerRule: { id: string | null; resolved: boolean; reason?: string } })
+      | undefined;
+    expect(survivor).toBeDefined();
+    // Back-pointer flipped to a full UnresolvedNodeRef so downstream
+    // stages carry the orphaned reason + hint.
+    expect(survivor?.ownerRule.resolved).toBe(false);
+    expect(survivor?.ownerRule.id).toBeNull();
+    expect(survivor?.ownerRule.reason).toBe('orphaned');
+  });
+
+  it('BundleOption with synthetic parentBundle → resolved into BundleStructure.options', () => {
+    const structure = draft({
+      id: 'bundle:hash:A',
+      nodeType: 'BundleStructure',
+    }) as IRNodeBase & { parentProductCode: string; options: unknown };
+    structure.parentProductCode = 'SBQQ__Bundle__c.PROD-1';
+    structure.options = [];
+
+    const option = draft({
+      id: 'opt:hash:B',
+      nodeType: 'BundleOption',
+    }) as IRNodeBase & { parentBundle: unknown };
+    option.parentBundle = { id: 'bundle:SBQQ__Bundle__c.PROD-1', resolved: true };
+
+    const result = resolveReferences({ drafts: [structure, option] });
+    expect(result.quarantine).toHaveLength(0);
+
+    const mergedStruct = result.nodes.find(
+      (n) => n.nodeType === 'BundleStructure'
+    ) as IRNodeBase & {
+      options: { id: string; resolved: boolean }[];
+    };
+    expect(mergedStruct.options).toEqual([{ id: 'opt:hash:B', resolved: true }]);
+
+    const mergedOption = result.nodes.find((n) => n.nodeType === 'BundleOption') as IRNodeBase & {
+      parentBundle: { id: string; resolved: boolean };
+    };
+    expect(mergedOption.parentBundle).toEqual({ id: 'bundle:hash:A', resolved: true });
+  });
+
+  it('multiple children are sorted by id in the parent array (determinism)', () => {
+    const rule = draft({
+      id: 'rule:hash:abc',
+      nodeType: 'PricingRule',
+      evidence: {
+        sourceFindingKeys: ['f-r'],
+        classificationReasons: [],
+        cpqFieldsRead: [],
+        cpqFieldsWritten: [],
+        sourceSalesforceRecordIds: ['a001'],
+        sourceCollectors: ['pricing'],
+      },
+    }) as IRNodeBase & { conditions: unknown };
+    rule.conditions = [];
+
+    const makeCond = (id: string) => {
+      const c = draft({
+        id,
+        nodeType: 'PriceCondition',
+        evidence: {
+          sourceFindingKeys: ['f-' + id],
+          classificationReasons: [],
+          cpqFieldsRead: [],
+          cpqFieldsWritten: [],
+          sourceSalesforceRecordIds: [`x-${id}`],
+          sourceCollectors: ['pricing'],
+        },
+      }) as IRNodeBase & { ownerRule: unknown };
+      c.ownerRule = { id: 'a001', resolved: true };
+      return c;
+    };
+
+    // Insert in reverse order; result should still be sorted
+    const result = resolveReferences({
+      drafts: [makeCond('cond:z'), makeCond('cond:a'), makeCond('cond:m'), rule],
+    });
+
+    const mergedRule = result.nodes.find((n) => n.nodeType === 'PricingRule') as IRNodeBase & {
+      conditions: { id: string }[];
+    };
+    expect(mergedRule.conditions.map((c) => c.id)).toEqual(['cond:a', 'cond:m', 'cond:z']);
+  });
+
+  it('PriceAction is wired into PricingRule.actions (not conditions)', () => {
+    const rule = draft({
+      id: 'rule:hash:r1',
+      nodeType: 'PricingRule',
+      evidence: {
+        sourceFindingKeys: ['f-r'],
+        classificationReasons: [],
+        cpqFieldsRead: [],
+        cpqFieldsWritten: [],
+        sourceSalesforceRecordIds: ['a001'],
+        sourceCollectors: ['pricing'],
+      },
+    }) as IRNodeBase & { conditions: unknown; actions: unknown };
+    rule.conditions = [];
+    rule.actions = [];
+
+    const action = draft({
+      id: 'act:hash:1',
+      nodeType: 'PriceAction',
+    }) as IRNodeBase & { ownerRule: unknown };
+    action.ownerRule = { id: 'a001', resolved: true };
+
+    const result = resolveReferences({ drafts: [rule, action] });
+    const mergedRule = result.nodes.find((n) => n.nodeType === 'PricingRule') as IRNodeBase & {
+      conditions: unknown[];
+      actions: { id: string }[];
+    };
+    expect(mergedRule.conditions).toEqual([]);
+    expect(mergedRule.actions.map((a) => a.id)).toEqual(['act:hash:1']);
+  });
+
+  it('identity merge and parent wiring compose (merge happens first)', () => {
+    // Two drafts of the same PricingRule from different collectors,
+    // plus a PriceCondition pointing at them. The merged rule should
+    // pick up the condition in its `conditions` array.
+    const ruleA = draft({
+      id: 'rule:merged',
+      nodeType: 'PricingRule',
+      evidence: {
+        sourceFindingKeys: ['f-ra'],
+        classificationReasons: [],
+        cpqFieldsRead: [],
+        cpqFieldsWritten: [],
+        sourceSalesforceRecordIds: ['a001'],
+        sourceCollectors: ['pricing'],
+      },
+    }) as IRNodeBase & { conditions: unknown };
+    ruleA.conditions = [];
+
+    const ruleB = draft({
+      id: 'rule:merged',
+      nodeType: 'PricingRule',
+      evidence: {
+        sourceFindingKeys: ['f-rb'],
+        classificationReasons: [],
+        cpqFieldsRead: [],
+        cpqFieldsWritten: [],
+        sourceSalesforceRecordIds: ['a001'],
+        sourceCollectors: ['dependency'],
+      },
+    }) as IRNodeBase & { conditions: unknown };
+    ruleB.conditions = [];
+
+    const cond = draft({
+      id: 'cond:1',
+      nodeType: 'PriceCondition',
+      evidence: {
+        sourceFindingKeys: ['f-c1'],
+        classificationReasons: [],
+        cpqFieldsRead: [],
+        cpqFieldsWritten: [],
+        sourceSalesforceRecordIds: ['a002'],
+        sourceCollectors: ['pricing'],
+      },
+    }) as IRNodeBase & { ownerRule: unknown };
+    cond.ownerRule = { id: 'a001', resolved: true };
+
+    const result = resolveReferences({ drafts: [ruleA, ruleB, cond] });
+    // One merged rule + one condition = 2 nodes.
+    expect(result.nodes.length).toBe(2);
+    const mergedRule = result.nodes.find((n) => n.nodeType === 'PricingRule') as IRNodeBase & {
+      conditions: { id: string }[];
+    };
+    expect(mergedRule.conditions.map((c) => c.id)).toEqual(['cond:1']);
+  });
+});
