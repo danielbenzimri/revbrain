@@ -22,9 +22,16 @@
 
 import type { Diagnostic, IRNodeBase, QuarantineEntry } from '@revbrain/migration-ir-contract';
 import { mergeDrafts, type MergeWarning } from '../merge/cross-collector.ts';
+import type { FindingIndex } from './s2-group-index.ts';
 
 export interface ResolveReferencesInput {
   drafts: IRNodeBase[];
+  /**
+   * PH9.2 — Finding index from Stage 2. Optional so existing
+   * tests that only exercise identity merging can omit it. PH9.3
+   * uses it for parent-child wiring.
+   */
+  findingIndex?: FindingIndex;
 }
 
 export interface ResolveReferencesResult {

@@ -20,6 +20,7 @@ import type { AssessmentFindingInput } from '@revbrain/contract';
 import type { Diagnostic, IRNodeBase, QuarantineEntry } from '@revbrain/migration-ir-contract';
 import { BB3InternalError } from '@revbrain/migration-ir-contract';
 import type { CatalogContext } from '../stages/s2-5-schema-catalog.ts';
+import type { FindingIndex } from '../stages/s2-group-index.ts';
 
 /**
  * Context passed to every normalizer. Stage 3 composes this from
@@ -29,6 +30,13 @@ export interface NormalizerContext {
   catalog: CatalogContext;
   /** Diagnostics sink — normalizers may append informational entries. */
   diagnostics: Diagnostic[];
+  /**
+   * PH9.2 — Read-only access to the Stage 2 finding index.
+   * Optional so per-normalizer tests that construct a minimal
+   * context don't have to fake the whole index. Stage 4 (PH9.3)
+   * uses it for parent resolution; most normalizers won't need it.
+   */
+  findingIndex?: FindingIndex;
 }
 
 /**

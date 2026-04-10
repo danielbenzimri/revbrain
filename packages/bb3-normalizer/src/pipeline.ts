@@ -139,7 +139,7 @@ export async function normalize(
 
   // Stage 2 — Group & index.
   const s2 = startStage('group-index');
-  buildFindingIndex(validFindings); // builds the lookup maps; used by normalizers at registration time
+  const findingIndex = buildFindingIndex(validFindings);
   endStage(s2, stageDurations);
 
   // Stage 2.5 — Schema catalog.
@@ -151,6 +151,7 @@ export async function normalize(
   const dispatchResults = normalizeAll(validFindings, {
     catalog: catalogCtx,
     diagnostics: dispatchDiagnostics,
+    findingIndex,
   });
   diagnostics.push(...dispatchDiagnostics);
   const draftNodes: IRNodeBase[] = [];
@@ -162,7 +163,7 @@ export async function normalize(
 
   // Stage 4 — Reference resolution + cross-collector merge.
   const s4 = startStage('resolve-refs');
-  const resolved = resolveReferences({ drafts: draftNodes });
+  const resolved = resolveReferences({ drafts: draftNodes, findingIndex });
   diagnostics.push(...resolved.diagnostics);
   quarantine.push(...resolved.quarantine);
   endStage(s4, stageDurations);

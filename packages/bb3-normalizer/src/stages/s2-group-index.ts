@@ -16,21 +16,41 @@ import { BB3InputError } from '@revbrain/migration-ir-contract';
 
 export interface FindingIndex {
   /** Lookup by the finding's globally-unique key. */
-  byFindingKey: Map<string, AssessmentFindingInput>;
+  byFindingKey: ReadonlyMap<string, AssessmentFindingInput>;
   /** Lookup by `artifactType` — many findings per type. */
-  byArtifactType: Map<string, AssessmentFindingInput[]>;
+  byArtifactType: ReadonlyMap<string, readonly AssessmentFindingInput[]>;
   /** Lookup by `collectorName` — many findings per collector. */
-  byCollector: Map<string, AssessmentFindingInput[]>;
+  byCollector: ReadonlyMap<string, readonly AssessmentFindingInput[]>;
+  /**
+   * PH9.2 — Lookup by Salesforce record id (`artifactId`).
+   * Child nodes carry raw Salesforce record-ids in their evidenceRefs
+   * (e.g. `PriceCondition.ownerRule.id` starts as a raw record-id);
+   * Stage 4 uses this index to resolve them to the parent finding
+   * that became a real normalized node. Omitted findings (no
+   * `artifactId`) do not appear in this map.
+   */
+  byArtifactId: ReadonlyMap<string, AssessmentFindingInput>;
+  /**
+   * PH9.2 — Lookup by `artifactName`. Multiple findings may share
+   * the same name across collectors (e.g. a `PriceRule` seen by
+   * both the `pricing` and `dependency` collectors); the value is
+   * the first-seen finding, sufficient for the synthetic-id
+   * resolution pattern used by Stage 4 (e.g. `bundle:${code}` →
+   * look up the BundleStructure finding by its productCode).
+   */
+  byArtifactName: ReadonlyMap<string, AssessmentFindingInput>;
 }
 
 /**
- * Build the three finding indices. Duplicate `findingKey` values
+ * Build the finding indices. Duplicate `findingKey` values
  * hard-fail with `BB3InputError` — see §4.5 invariant I2.
  */
 export function buildFindingIndex(findings: AssessmentFindingInput[]): FindingIndex {
   const byFindingKey = new Map<string, AssessmentFindingInput>();
   const byArtifactType = new Map<string, AssessmentFindingInput[]>();
   const byCollector = new Map<string, AssessmentFindingInput[]>();
+  const byArtifactId = new Map<string, AssessmentFindingInput>();
+  const byArtifactName = new Map<string, AssessmentFindingInput>();
 
   for (const finding of findings) {
     if (byFindingKey.has(finding.findingKey)) {
@@ -48,7 +68,22 @@ export function buildFindingIndex(findings: AssessmentFindingInput[]): FindingIn
     const collectorList = byCollector.get(finding.collectorName);
     if (collectorList) collectorList.push(finding);
     else byCollector.set(finding.collectorName, [finding]);
+
+    if (finding.artifactId !== undefined && !byArtifactId.has(finding.artifactId)) {
+      byArtifactId.set(finding.artifactId, finding);
+    }
+    // First-seen wins — duplicates are a normal cross-collector artifact
+    // and Stage 4's merge handles them at the node level.
+    if (!byArtifactName.has(finding.artifactName)) {
+      byArtifactName.set(finding.artifactName, finding);
+    }
   }
 
-  return { byFindingKey, byArtifactType, byCollector };
+  return {
+    byFindingKey,
+    byArtifactType,
+    byCollector,
+    byArtifactId,
+    byArtifactName,
+  };
 }
