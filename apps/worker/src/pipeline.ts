@@ -37,6 +37,7 @@ import { logger } from './lib/logger.ts';
 import { writeCollectorData } from './db/writes.ts';
 import type { BaseCollector } from './collectors/base.ts';
 import { runBB3 } from './pipeline/run-bb3.ts';
+import { emitBB3Metrics, type Logger as BB3Logger } from './pipeline/bb3-metrics.ts';
 import { writeIRGraph } from './db/write-ir-graph.ts';
 import type { NormalizeResult } from '@revbrain/bb3-normalizer';
 import type { AssessmentFindingInput } from '@revbrain/contract';
@@ -342,7 +343,10 @@ export async function runPipeline(ctx: CollectorContext): Promise<PipelineResult
   // PH9.10 — Persist the IRGraph onto assessment_runs.ir_graph
   // (added by migration 0044). Persistence failures are logged
   // inside writeIRGraph() and swallowed; they do not fail the
-  // extraction run. PH9.11 adds the metrics sink next.
+  // extraction run.
+  // PH9.11 — Emit bb3_normalize_complete metrics event via the
+  // existing worker pino logger. Lives here (not inside runBB3)
+  // so the sink is an explicit worker concern, not a library one.
   if (bb3Result) {
     const persisted = await writeIRGraph({
       sql: ctx.sql,
@@ -353,6 +357,13 @@ export async function runPipeline(ctx: CollectorContext): Promise<PipelineResult
       log.info({ nodesOut: bb3Result.runtimeStats.totalNodesOut }, 'bb3_ir_graph_persisted');
     } else {
       log.warn('bb3_ir_graph_persist_failed');
+    }
+
+    try {
+      emitBB3Metrics(bb3Result, log as unknown as BB3Logger);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      log.warn({ error: msg }, 'bb3_metrics_emit_failed');
     }
   }
 
