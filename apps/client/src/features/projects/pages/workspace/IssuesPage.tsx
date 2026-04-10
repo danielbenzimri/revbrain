@@ -62,11 +62,8 @@ export default function IssuesPage() {
   // Mock data provides page skeleton; real API data overlaid via hooks
   const data = useMemo(() => {
     if (!id) return null;
-    if (true) { // skeleton data always loaded
-      return getMockProjectWorkspaceData(id);
-    }
-    return null;
-  }, [id, ]);
+    return getMockProjectWorkspaceData(id);
+  }, [id]);
 
   if (!id) return null;
 
