@@ -7,6 +7,11 @@
  * Type definitions land in PH0.3 – PH0.10. Identity helpers land in PH1.
  */
 
+// Phase 1 — identity (canonicalJson, identityHash, structuralSignature)
+export * from './identity/canonical-json.ts';
+export * from './identity/identity-hash.ts';
+export * from './identity/structural-signature.ts';
+
 // Phase 0 — node / edge / envelope types
 export * from './types/nodes.ts';
 export * from './types/automation.ts';
