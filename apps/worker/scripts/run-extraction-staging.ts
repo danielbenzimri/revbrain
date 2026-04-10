@@ -36,7 +36,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const SUPABASE_URL = 'https://qutuivleheybnkbhpdbn.supabase.co';
 const SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1dHVpdmxlaGV5Ym5rYmhwZGJuIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDA5NDEzOCwiZXhwIjoyMDg5NjcwMTM4fQ.rkAxpHrCIY2112oHB26bEvGXjxsrmofa8lAQhnXkeNU';
-const CONNECTION_ID = '2de76415-e986-4dea-b330-fdff063f65f3';
+const CONNECTION_ID = '1a2bab20-a442-4a68-973f-cf2b18b56b38';
 const INSTANCE_URL = 'https://rdolce-23march23-385-demo.my.salesforce.com';
 
 function printResult(name: string, result: CollectorResult) {

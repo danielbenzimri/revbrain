@@ -385,6 +385,36 @@ export class CatalogCollector extends BaseCollector {
       );
       totalFeatures = features.length;
       metrics.totalFeatures = totalFeatures;
+
+      // Emit a DataCount so the assembler's 6.6.1 table can use a real denominator.
+      // Without this, assembleBundlesDeepDive was counting `ProductFeature` findings
+      // (which is 0, since we don't emit a per-feature finding) and producing a
+      // Features/Feature Orphans inconsistency (e.g. Features=0 but Orphans=39).
+      if (totalFeatures > 0) {
+        // Count distinct bundle-capable parents that have features
+        const configuredSkusWithFeatures = new Set(
+          features.map((f) => String(f.SBQQ__ConfiguredSKU__c ?? ''))
+        );
+        configuredSkusWithFeatures.delete('');
+        findings.push(
+          createFinding({
+            domain: 'catalog',
+            collector: 'catalog',
+            artifactType: 'DataCount',
+            artifactName: 'Features',
+            sourceType: 'object',
+            countValue: totalFeatures,
+            notes: `${totalFeatures} SBQQ__ProductFeature__c records across ${configuredSkusWithFeatures.size} bundle-capable product(s)`,
+            evidenceRefs: [
+              {
+                type: 'count',
+                value: String(configuredSkusWithFeatures.size),
+                label: 'ProductsWithFeatures',
+              },
+            ],
+          })
+        );
+      }
     }
 
     // ================================================================

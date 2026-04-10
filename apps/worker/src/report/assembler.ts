@@ -796,7 +796,7 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
                 ? 'Active'
                 : 'Not Configured',
           notes: qcpOverride
-            ? `Active — ${customScripts.length} custom script(s) detected via SBQQ__CustomScript__c: ${customScripts.map((s) => s.artifactName).join(', ')}`
+            ? `Active — ${customScripts.length} custom script(s) detected via SBQQ__CustomScript__c (see Section 9 for inventory)`
             : recOverride
               ? `Active — Apex implementation detected: ${recProductsApex.artifactName}`
               : (p.notes ?? ''),
@@ -1182,32 +1182,167 @@ function assembleProductDeepDive(
   const totalActive = counts.activeProducts;
   if (totalActive === 0) return null;
 
-  // Build field utilization rows in field wishlist order (fixed template order, not dynamic)
-  const fieldUtilization: CheckboxRow[] = utilFindings.map((f) => {
-    const count = getCountOrNull(f);
-    const percentage =
-      count !== null && totalActive > 0 ? `${Math.round((count / totalActive) * 100)}%` : null;
+  // Helper: find a utilization finding by field API name
+  const findByField = (fieldName: string): AssessmentFindingInput | undefined =>
+    utilFindings.find((f) => f.artifactName === fieldName || f.textValue === fieldName);
+
+  // Helper: extract an enum value count from the "Top values" suffix in notes.
+  // e.g. "... Top values: Renewable (59), One-time (22), Evergreen (1)" → Renewable=59
+  const enumValueCount = (fieldName: string, enumValue: string): number => {
+    const f = findByField(fieldName);
+    if (!f?.notes) return 0;
+    // Match "<enumValue> (<digits>)" with word boundaries, case-insensitive.
+    // Escape regex special chars in enumValue.
+    const escaped = enumValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const re = new RegExp(`(?:^|[,\\s:])${escaped}\\s*\\((\\d+)\\)`, 'i');
+    const m = f.notes.match(re);
+    return m ? Number(m[1]) : 0;
+  };
+
+  // Helper: build a CheckboxRow from a raw populated count
+  const buildRow = (
+    label: string,
+    count: number,
+    notesSuffix: string,
+    isNested = false
+  ): CheckboxRow => {
+    const percentage = totalActive > 0 ? `${Math.round((count / totalActive) * 100)}%` : null;
     return {
-      label: f.artifactName ?? f.textValue ?? 'Unknown',
+      label,
       category: getCheckboxCategory(count, totalActive),
       count,
       percentage,
-      notes: f.notes ?? '',
+      notes: notesSuffix,
+      isNested,
     };
-  });
+  };
 
-  // Pricing method distribution
-  const pricingMethods = ['List', 'Cost', 'Block', 'Percent of Total'];
-  const pricingDistribution = pricingMethods.map((method) => {
-    const methodFinding = utilFindings.find(
-      (f) => f.textValue === 'SBQQ__PricingMethod__c' && (f.notes ?? '').includes(method)
+  // Helper: field-level row using the whole-field population count
+  const fieldRow = (label: string, fieldName: string, notesSuffix: string): CheckboxRow => {
+    const f = findByField(fieldName);
+    const count = getCountOrNull(f ?? ({} as AssessmentFindingInput)) ?? 0;
+    return buildRow(label, count, notesSuffix);
+  };
+
+  // Dev Spec §5.6.2.1 + Template V2.1: curated observation list — not a raw field dump.
+  const fieldUtilization: CheckboxRow[] = [];
+
+  // Product Family (Family field)
+  fieldUtilization.push(fieldRow('Product Family', 'Family', 'Categorization field'));
+
+  // Product Images (DisplayUrl)
+  const imageField = findByField('DisplayUrl') ?? findByField('ProductImage__c');
+  if (imageField) {
+    fieldUtilization.push(
+      buildRow(
+        'Product Images',
+        getCountOrNull(imageField) ?? 0,
+        'DisplayUrl / image field populated'
+      )
     );
-    // Extract count from notes if available
-    const count = methodFinding
-      ? methodFinding.notes?.match(new RegExp(`${method}\\s*\\((\\d+)\\)`))?.[1]
-        ? Number(methodFinding.notes.match(new RegExp(`${method}\\s*\\((\\d+)\\)`))?.[1])
-        : 0
-      : 0;
+  }
+
+  // Pricing Method — header row + 4 nested enum breakdowns
+  const pmField = findByField('SBQQ__PricingMethod__c');
+  if (pmField) {
+    fieldUtilization.push(
+      buildRow(
+        'Pricing Method',
+        getCountOrNull(pmField) ?? 0,
+        'Field populated (see breakdown below)'
+      )
+    );
+    for (const method of ['List', 'Cost', 'Block', 'Percent of Total']) {
+      const cnt = enumValueCount('SBQQ__PricingMethod__c', method);
+      fieldUtilization.push(
+        buildRow(
+          `→ ${method}`,
+          cnt,
+          method === 'List'
+            ? 'Standard'
+            : method === 'Cost'
+              ? 'Margin calculations'
+              : method === 'Block'
+                ? 'Tiered pricing'
+                : 'Line dependencies',
+          true
+        )
+      );
+    }
+  }
+
+  // Price Editable
+  fieldUtilization.push(
+    fieldRow('Price Editable', 'SBQQ__PriceEditable__c', 'Can bypass approvals')
+  );
+
+  // Discount Schedule
+  fieldUtilization.push(
+    fieldRow('Discount Schedule', 'SBQQ__DiscountSchedule__c', 'Volume / term discounts')
+  );
+
+  // Subscription Type — header row + 3 nested enum breakdowns
+  const stField = findByField('SBQQ__SubscriptionType__c');
+  if (stField) {
+    fieldUtilization.push(
+      buildRow(
+        'Subscription Type',
+        getCountOrNull(stField) ?? 0,
+        'Field populated (see breakdown below)'
+      )
+    );
+    for (const sub of ['One-time', 'Renewable', 'Evergreen']) {
+      const cnt = enumValueCount('SBQQ__SubscriptionType__c', sub);
+      fieldUtilization.push(
+        buildRow(
+          `→ ${sub}`,
+          cnt,
+          sub === 'Evergreen' ? '⚠ High complexity' : sub === 'Renewable' ? 'Renewable term' : '',
+          true
+        )
+      );
+    }
+  }
+
+  // Billing Rule (Salesforce Billing integration)
+  const billingField = findByField('blng__BillingRule__c');
+  if (billingField) {
+    fieldUtilization.push(
+      buildRow(
+        'Billing Rule',
+        getCountOrNull(billingField) ?? 0,
+        'Salesforce Billing integration'
+      )
+    );
+  }
+
+  // Exclude From Opportunity
+  const excludeField = findByField('SBQQ__ExcludeFromOpportunity__c');
+  if (excludeField) {
+    fieldUtilization.push(
+      buildRow(
+        'Exclude From Opp',
+        getCountOrNull(excludeField) ?? 0,
+        'Quote value ≠ Opportunity value'
+      )
+    );
+  }
+
+  // Renewal Product (product swap on renewal)
+  const renewalField = findByField('SBQQ__RenewalProduct__c');
+  if (renewalField) {
+    fieldUtilization.push(
+      buildRow(
+        'Renewal Product',
+        getCountOrNull(renewalField) ?? 0,
+        'Product swap on renewal'
+      )
+    );
+  }
+
+  // Pricing method distribution (used by 6.2.2 table) — reuse the enum breakdown
+  const pricingDistribution = ['List', 'Cost', 'Block', 'Percent of Total'].map((method) => {
+    const count = enumValueCount('SBQQ__PricingMethod__c', method);
     return {
       method,
       count,
@@ -1216,22 +1351,14 @@ function assembleProductDeepDive(
     };
   });
 
-  // Subscription profile
-  const subTypes = ['One-time', 'Renewable', 'Evergreen'];
-  const subscriptionProfile = subTypes.map((type) => {
-    const subFinding = utilFindings.find(
-      (f) => f.textValue === 'SBQQ__SubscriptionType__c' && (f.notes ?? '').includes(type)
-    );
-    const count = subFinding
-      ? subFinding.notes?.match(new RegExp(`${type}\\s*\\((\\d+)\\)`))?.[1]
-        ? Number(subFinding.notes.match(new RegExp(`${type}\\s*\\((\\d+)\\)`))?.[1])
-        : 0
-      : 0;
+  // Subscription profile (used by 6.2.3 table)
+  const subscriptionProfile = ['One-time', 'Renewable', 'Evergreen'].map((type) => {
+    const count = enumValueCount('SBQQ__SubscriptionType__c', type);
     return {
       type,
       count,
       percentOfActive: totalActive > 0 ? `${Math.round((count / totalActive) * 100)}%` : '0%',
-      notes: type === 'Evergreen' ? 'High complexity' : '',
+      notes: type === 'Evergreen' ? '⚠ High complexity' : '',
     };
   });
 
@@ -1239,19 +1366,23 @@ function assembleProductDeepDive(
   const dormantPercent =
     counts.totalProducts > 0 ? `${Math.round((dormantCount / counts.totalProducts) * 100)}%` : '0%';
 
+  // Price Books: look for a Pricebook2 DataCount or dedicated PriceBook finding
+  const priceBookFinding = findings.find(
+    (f) =>
+      (f.artifactType === 'DataCount' && /pricebook|price[_\s-]?book/i.test(f.artifactName ?? '')) ||
+      f.artifactType === 'Pricebook2'
+  );
+  const priceBookCount =
+    priceBookFinding?.countValue ??
+    findings.filter((f) => f.artifactType === 'Pricebook2').length ??
+    0;
+
   return {
     summary: {
       activeProducts: counts.activeProducts,
       inactiveProducts: counts.totalProducts - counts.activeProducts,
       bundleCapableProducts: counts.bundleProducts,
-      priceBooks:
-        findings.filter(
-          (f) => f.artifactType === 'DataCount' && f.artifactName?.includes('PriceBook')
-        ).length > 0
-          ? (findings.find(
-              (f) => f.artifactType === 'DataCount' && f.artifactName?.includes('PriceBook')
-            )?.countValue ?? 0)
-          : 0,
+      priceBooks: priceBookCount,
       dormantPercent,
     },
     fieldUtilization,
@@ -1273,20 +1404,30 @@ function assembleBundlesDeepDive(
   if (counts.productOptions === 0) return null;
 
   const totalActive = counts.activeProducts;
-  const totalFeatures = findings.filter(
-    (f) => f.artifactType === 'ProductFeature' || f.artifactType === 'SBQQ__ProductFeature__c'
-  ).length;
 
-  // Helper to find DataCount by name
+  // Helper to find DataCount by name (anchored match — must start with the needle)
   const dataCount = (name: string) => {
     const needle = name.toLowerCase().replace(/[\s_]/g, '');
     const f = findings.find(
       (f) =>
         f.artifactType === 'DataCount' &&
-        f.artifactName?.toLowerCase().replace(/[\s_]/g, '').includes(needle)
+        f.artifactName?.toLowerCase().replace(/[\s_]/g, '').startsWith(needle)
     );
     return f?.countValue ?? 0;
   };
+
+  // Features: prefer the DataCount "Features" finding from the catalog collector
+  // (falls back to counting per-feature findings for older extraction data).
+  const featuresDataCount = findings.find(
+    (f) => f.artifactType === 'DataCount' && f.artifactName === 'Features'
+  );
+  const perFeatureFindings = findings.filter(
+    (f) => f.artifactType === 'ProductFeature' || f.artifactType === 'SBQQ__ProductFeature__c'
+  ).length;
+  const totalFeatures = featuresDataCount?.countValue ?? perFeatureFindings;
+  const productsWithFeatures = Number(
+    featuresDataCount?.evidenceRefs?.find((r) => r.label === 'ProductsWithFeatures')?.value ?? 0
+  );
 
   const featureOrphans = dataCount('FeatureOrphan');
   const optionConstraints = dataCount('OptionConstraint');
@@ -1304,14 +1445,25 @@ function assembleBundlesDeepDive(
   const avgOptions =
     configuredBundles > 0 ? (counts.productOptions / configuredBundles).toFixed(1) : '0';
 
-  // Build related object utilization rows
+  // Build related object utilization rows.
+  // "Features" row uses productsWithFeatures/totalActive as the rate (products that have
+  // at least one feature), and the count cell shows the total feature record count so
+  // the Feature Orphans denominator is meaningful.
+  const featuresMetric =
+    productsWithFeatures > 0 ? productsWithFeatures : totalFeatures > 0 ? 1 : 0;
   const relatedObjectUtilization: CheckboxRow[] = [
     {
       label: 'Features',
-      category: getCheckboxCategory(totalFeatures > 0 ? totalFeatures : 0, totalActive),
+      category: getCheckboxCategory(featuresMetric, totalActive),
       count: totalFeatures,
-      percentage: totalActive > 0 ? `${Math.round((totalFeatures / totalActive) * 100)}%` : null,
-      notes: 'Products with features',
+      percentage:
+        totalActive > 0 && productsWithFeatures > 0
+          ? `${Math.round((productsWithFeatures / totalActive) * 100)}%`
+          : null,
+      notes:
+        totalFeatures > 0
+          ? `${totalFeatures} features across ${productsWithFeatures} bundle-capable product(s)`
+          : 'No features detected',
     },
     {
       label: 'Feature Orphans',
@@ -1319,7 +1471,10 @@ function assembleBundlesDeepDive(
       count: featureOrphans,
       percentage:
         totalFeatures > 0 ? `${Math.round((featureOrphans / totalFeatures) * 100)}%` : null,
-      notes: 'Tech debt indicator',
+      notes:
+        totalFeatures > 0
+          ? `${featureOrphans} of ${totalFeatures} features not referenced by any option — tech debt`
+          : 'Tech debt indicator',
     },
     {
       label: 'Bundle-capable Products',
@@ -1403,13 +1558,28 @@ function assembleRelatedFunctionality(
   const items: RelatedFunctionalityItem[] = [];
   const observations: string[] = [];
 
+  // Dev Spec §8 Error Handling: surface a clean "Not detected" when a detection
+  // query failed or the underlying object wasn't accessible — never leak
+  // technical failure prose ("query failed", "not accessible") into the
+  // customer-facing report.
+  const cleanFailureProse = (notes: string | undefined, fallback: string): string => {
+    if (!notes) return fallback;
+    const failurePatterns = [
+      /not accessible/i,
+      /query failed/i,
+      /may not be (enabled|queryable)/i,
+      /detection failed/i,
+    ];
+    return failurePatterns.some((p) => p.test(notes)) ? fallback : notes;
+  };
+
   // Experience Cloud
   const expCloud = findings.find((f) => f.artifactType === 'ExperienceCloud');
   const expCloudDetected = expCloud?.detected === true && (expCloud?.countValue ?? 0) > 0;
   items.push({
     label: 'Experience Cloud',
     used: expCloudDetected,
-    notes: expCloud?.notes ?? '',
+    notes: cleanFailureProse(expCloud?.notes, 'Not detected'),
   });
 
   // Experience Cloud sites (nested)
@@ -1487,7 +1657,7 @@ function assembleRelatedFunctionality(
   items.push({
     label: 'Tax Calculator',
     used: taxCalc?.detected === true,
-    notes: taxCalc?.notes ?? '',
+    notes: cleanFailureProse(taxCalc?.notes, 'Not detected'),
   });
 
   // Check if ANY item is used
@@ -2403,23 +2573,29 @@ function buildDefaultKeyFindings(
 
   // First finding: analytical observation, not extraction status
   if (hasQcp) {
-    // V6-1: Prefer the configured QCP class name from CPQSettingValue finding over alphabetical CustomScript order
+    // Dev Spec §5.4.3 / V30: Show exactly ONE configured QCP name — never concatenate all CustomScript records.
+    // Prefer the configured QCP class name from CPQSettingValue finding. Only fall back to a single
+    // CustomScript record if settings don't provide it. The count of all custom scripts is reported
+    // separately (not concatenated into the QCP name).
     const qcpSettingFinding = settings.find(
       (s) => s.artifactName === 'Quote Calculator Plugin' || s.artifactName?.includes('QCP')
     );
     const configuredQcpClass = qcpSettingFinding?.evidenceRefs?.[0]?.label
       ? String(qcpSettingFinding.evidenceRefs[0].label)
       : null;
-    // A-06: Use configured class name from settings. Fall back to SINGLE script name (never concatenate).
     const scriptName =
       configuredQcpClass ??
       (qcpScripts.length > 0
-        ? `${qcpScripts[0].artifactName} (from CustomScript)`
+        ? qcpScripts[0].artifactName
         : (qcpPlugin?.notes?.match(/class:\s*(\S+)/)?.[1] ?? ''));
-    const allScriptNames = qcpScripts.map((s) => s.artifactName).join(', ');
+    const totalScripts = qcpScripts.length;
+    const otherScriptsNote =
+      totalScripts > 1
+        ? ` ${totalScripts - 1} additional custom script(s) detected — see Section 9 for full inventory.`
+        : '';
     kf.push({
       title: `Custom Quote Calculator Plugin (QCP) active${scriptName ? `: ${scriptName}` : ''}`,
-      detail: `${qcpScripts.length} custom script(s) with JavaScript-based pricing logic injected into every calculation${allScriptNames ? ` (${allScriptNames})` : ''} — indicating a fundamentally different complexity profile than standard CPQ configuration.`,
+      detail: `Configured QCP injects JavaScript-based pricing logic into every calculation — indicating a fundamentally different complexity profile than standard CPQ configuration.${otherScriptsNote}`,
       confidence: 'Confirmed',
     });
   }
@@ -2444,8 +2620,18 @@ function buildDefaultKeyFindings(
   if (settings.length > 0) {
     const multiCurrency = settings.find((s) => s.artifactName?.includes('Multi-Currency'));
     if (multiCurrency?.notes?.includes('Enabled')) {
+      // Extract currency ISO codes from notes (e.g. "Enabled (AUD, GBP, EUR, NZD, USD)")
+      // or from evidenceRefs labels.
+      const currencyMatch = multiCurrency.notes.match(/\(([^)]+)\)/);
+      const currencyRefs = multiCurrency.evidenceRefs
+        ?.filter((r) => /^[A-Z]{3}$/.test(String(r.value ?? r.label ?? '')))
+        .map((r) => String(r.value ?? r.label))
+        .join(', ');
+      const currencyList = currencyRefs || currencyMatch?.[1] || '';
       kf.push({
-        title: 'Multi-currency enabled',
+        title: currencyList
+          ? `Multi-currency enabled (${currencyList})`
+          : 'Multi-currency enabled',
         detail:
           'The org uses multi-currency pricing — adding complexity to field mapping, exchange rate handling, and multi-currency price book structures.',
         confidence: 'Confirmed',

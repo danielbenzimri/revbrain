@@ -34,8 +34,12 @@ export function renderReport(data: ReportData): string {
   ${renderGlance(data)}
   ${renderSettings(data)}
   ${renderLifecycle(data)}
-  ${renderConfigDomain(data)}
+  ${renderSection6Header(data)}
+  ${renderProductCatalog(data)}
   ${isSectionEnabled('6.2', data) ? renderProductDeepDive(data) : ''}
+  ${renderPriceRules(data)}
+  ${renderProductRules(data)}
+  ${renderDiscountSchedules(data)}
   ${isSectionEnabled('6.6', data) ? renderBundlesDeepDive(data) : ''}
   ${renderApprovalsAndDocs(data)}
   ${renderUsage(data)}
@@ -282,18 +286,22 @@ function renderLifecycle(data: ReportData): string {
 }
 
 // ============================================================================
-// Section 7: Configuration Domain
+// Section 6: Configuration Domain — split into numbered sub-sections so that
+// the conditional T2 Deep Dives (6.2, 6.6) can be interleaved at the correct
+// positions per template V2.1. Spec order:
+//   6.1 Product Catalog · 6.2 Product Deep Dive (T2) · 6.3 Price Rules ·
+//   6.4 Product Rules · 6.5 Discount Schedules · 6.6 Bundles Deep Dive (T2) ·
+//   6.7 Approvals & Document Generation
 // ============================================================================
 
-function renderConfigDomain(data: ReportData): string {
-  const prs = data.configurationDomain.priceRuleSummary;
-  const prodrs = data.configurationDomain.productRuleSummary;
+function renderSection6Header(_data: ReportData): string {
+  return `<div class="page-break"><h2>6. Configuration Domain Analysis</h2></div>`;
+}
+
+function renderProductCatalog(data: ReportData): string {
   const dormant = data.configurationDomain.dormantFamilies;
-
   return `
-  <div class="page-break">
-    <h2>6. Configuration Domain Analysis</h2>
-
+  <div>
     <h3>6.1 Product Catalog</h3>
     ${
       data.configurationDomain.productCatalog.length > 0
@@ -321,8 +329,14 @@ function renderConfigDomain(data: ReportData): string {
             )}${dormant.length > 3 ? ', and others' : ''}. This may indicate dormant catalog segments, seasonal patterns, or a narrow active use-case.</em></p>`
         : ''
     }
+  </div>`;
+}
 
-    <h3>6.2 Price Rules</h3>
+function renderPriceRules(data: ReportData): string {
+  const prs = data.configurationDomain.priceRuleSummary;
+  return `
+  <div>
+    <h3>6.3 Price Rules</h3>
     <p><em>${escapeHtml(data.configurationDomain.activePriceRuleSummary)}</em></p>
     <p>${prs.active} of ${prs.total} rules active. ${prs.highComplexity} high-complexity (4+ eval events). ${prs.inactive} inactive rules${prs.stale > 0 ? `, ${prs.stale} stale/test flagged as technical debt` : ''}.</p>
     ${table(
@@ -335,8 +349,14 @@ function renderConfigDomain(data: ReportData): string {
         badge(r.confidence),
       ])
     )}
+  </div>`;
+}
 
-    <h3>6.3 Product Rules</h3>
+function renderProductRules(data: ReportData): string {
+  const prodrs = data.configurationDomain.productRuleSummary;
+  return `
+  <div>
+    <h3>6.4 Product Rules</h3>
     <p><em>${escapeHtml(data.configurationDomain.activeProductRuleSummary)}</em></p>
     <p>${prodrs.selection} Selection, ${prodrs.alert} Alert, ${prodrs.validation} Validation, ${prodrs.filter} Filter rules active. ${prodrs.inactive} inactive${prodrs.stale > 0 ? `, ${prodrs.stale} stale/test flagged` : ''}.</p>
     ${table(
@@ -355,11 +375,14 @@ function renderConfigDomain(data: ReportData): string {
         ? `<p style="font-size:0.85em;color:#666;margin-top:4px;"><em>"—" in Complexity column = structural complexity not extracted. Requires condition/action scope analysis beyond current metadata extraction.</em></p>`
         : ''
     }
+  </div>`;
+}
 
-    ${
-      data.configurationDomain.discountScheduleAnalysis.length > 0
-        ? `
-    <h3>6.4 Discount Schedules</h3>
+function renderDiscountSchedules(data: ReportData): string {
+  if (data.configurationDomain.discountScheduleAnalysis.length === 0) return '';
+  return `
+  <div>
+    <h3>6.5 Discount Schedules</h3>
     <p><em>${data.configurationDomain.discountScheduleTotalCount} total schedules: ${data.configurationDomain.discountScheduleUniqueCount} unique names. ${data.configurationDomain.discountScheduleDuplicateDetail || 'No duplicates detected.'}</em></p>
     ${table(
       ['Schedule Name', 'Status'],
@@ -367,28 +390,7 @@ function renderConfigDomain(data: ReportData): string {
         escapeHtml(d.name),
         d.isDuplicate ? '<strong>⚠ Duplicate</strong>' : 'Unique',
       ])
-    )}`
-        : ''
-    }
-
-    <h3>6.5 Product Option Attachment</h3>
-    ${
-      data.configurationDomain.optionAttachmentSummary
-        ? `<p>${escapeHtml(data.configurationDomain.optionAttachmentSummary)}</p>
-    ${table(
-      ['Metric', 'Status'],
-      [['Attachment Rate Analysis', 'Not extracted — requires quote line cross-reference data.']]
-    )}`
-        : `${table(
-            ['Metric', 'Status'],
-            [
-              [
-                'Attachment Rate Analysis',
-                'Not extracted — requires quote line cross-reference data.',
-              ],
-            ]
-          )}`
-    }
+    )}
   </div>`;
 }
 
@@ -680,9 +682,9 @@ function renderApprovalsAndDocs(data: ReportData): string {
 
   return `
   <div class="page-break">
-    <h2>6.6 Approvals & Document Generation</h2>
+    <h2>6.7 Approvals & Document Generation</h2>
 
-    <h3>6.6.1 Advanced Approval Rules (sbaa)</h3>
+    <h3>6.7.1 Advanced Approval Rules (sbaa)</h3>
     ${
       hasAdvanced
         ? table(
@@ -702,7 +704,7 @@ function renderApprovalsAndDocs(data: ReportData): string {
         : ''
     }
 
-    <h3>6.6.2 CPQ Custom Action Buttons</h3>
+    <h3>6.7.2 CPQ Custom Action Buttons</h3>
     ${
       hasCustomActions
         ? table(
@@ -717,7 +719,7 @@ function renderApprovalsAndDocs(data: ReportData): string {
         : '<p><em>No custom action buttons detected.</em></p>'
     }
 
-    <h3>6.6.3 Standard Approval Processes</h3>
+    <h3>6.7.3 Standard Approval Processes</h3>
     ${
       approvalRules.length > 0
         ? table(
@@ -731,7 +733,7 @@ function renderApprovalsAndDocs(data: ReportData): string {
         : '<p><em>No standard approval processes detected on CPQ objects.</em></p>'
     }
 
-    <h3>6.6.4 Quote Templates</h3>
+    <h3>6.7.4 Quote Templates</h3>
     ${
       quoteTemplates.length > 0
         ? table(
@@ -745,7 +747,7 @@ function renderApprovalsAndDocs(data: ReportData): string {
         : '<p><em>No quote templates detected.</em></p>'
     }
 
-    <h3>6.6.5 Document Generation</h3>
+    <h3>6.7.5 Document Generation</h3>
     <p>${documentGeneration.usableTemplateCount} usable quote template(s)${documentGeneration.totalTemplateRecords !== documentGeneration.usableTemplateCount ? ` (${documentGeneration.totalTemplateRecords} total SBQQ__QuoteTemplate__c records, ${documentGeneration.usableTemplateCount} usable after excluding test/synthetic)` : ''}. DocuSign integration: <strong>${documentGeneration.docuSignActive ? 'Active' : 'Not detected'}</strong>.</p>
     ${!hasContent ? '<p><em>Approvals and document generation data requires Tier 2 collectors (templates, approvals) to complete successfully.</em></p>' : ''}
   </div>`;
@@ -759,7 +761,7 @@ function renderHotspots(data: ReportData): string {
   if (data.complexityHotspots.length === 0) return '';
   return `
   <div class="page-break">
-    <h2>10. Configuration Complexity Hotspots</h2>
+    <h2>11. Complexity Hotspots</h2>
     ${table(
       ['Hotspot', 'Severity', 'Analysis'],
       data.complexityHotspots.map((h) => [
@@ -954,10 +956,16 @@ function renderBundlesDeepDive(data: ReportData): string {
     }
   );
 
+  const bundleFootnote =
+    dd.summary.bundleCapable !== dd.summary.configuredBundles
+      ? `<p style="font-size:11px;color:#718096;margin-top:4px;"><em>Bundle-capable = products with SBQQ__ConfigurationType__c set (Required or Allowed). Configured Bundles = bundle-capable products that have at least one active SBQQ__ProductOption__c child record. The difference (${dd.summary.bundleCapable - dd.summary.configuredBundles}) reflects bundle-capable products with no options currently attached.</em></p>`
+      : '';
+
   return `
   <div class="page-break">
     <h2>6.6 Bundles &amp; Options Deep Dive</h2>
     ${summaryBoxes}
+    ${bundleFootnote}
 
     ${renderCheckboxTable(
       dd.relatedObjectUtilization,
