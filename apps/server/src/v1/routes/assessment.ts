@@ -181,7 +181,7 @@ assessmentRouter.post('/:projectId/assessment/run', async (c) => {
   // 2. Check active Salesforce connection (source)
   const connections = await repos.salesforceConnections.findByProject(projectId);
   const sourceConnection = connections.find(
-    (conn) => conn.connectionRole === 'source' && conn.status === 'connected'
+    (conn) => conn.connectionRole === 'source' && conn.status === 'active'
   );
   if (!sourceConnection) {
     return c.json(
