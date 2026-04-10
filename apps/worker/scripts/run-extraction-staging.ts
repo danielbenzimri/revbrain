@@ -171,7 +171,6 @@ async function main() {
   const bulkApi = new SalesforceBulkApi(sfClient, 'v62.0');
   const metadataApi = new SalesforceMetadataApi(auth, '62.0');
 
-   
   const mockSql = ((strings: TemplateStringsArray) => {
     const q = strings.join('');
     if (q.includes('SELECT status')) return Promise.resolve([{ status: 'running' }]);
