@@ -1,0 +1,79 @@
+/**
+ * Stage 2.5 — Schema catalog resolution.
+ *
+ * Spec: §4.4a, §6.1 Stage 2.5.
+ *
+ * Prepares the `SchemaCatalog` for downstream stages. When no
+ * catalog is provided, runs in degraded mode — every lookup returns
+ * `null`, V4 downgrades, and a warning is recorded. Missing catalog
+ * is NEVER a hard failure.
+ *
+ * Lookups are case-insensitive: `sbqq__quote__c` finds the entry
+ * canonically cased as `SBQQ__Quote__c`.
+ */
+
+import type { FieldSchema, ObjectSchema, SchemaCatalog } from '@revbrain/migration-ir-contract';
+
+export interface CatalogContext {
+  /** The catalog itself, or `null` if none was provided. */
+  catalog: SchemaCatalog | null;
+  /**
+   * Case-insensitive lookup. Returns the `FieldSchema` for the
+   * requested `(object, field)` pair, or `null` if not found OR if
+   * no catalog was provided.
+   */
+  lookup: (object: string, field: string) => FieldSchema | null;
+  /**
+   * Case-insensitive object lookup. Useful for path resolution.
+   */
+  lookupObject: (object: string) => ObjectSchema | null;
+  /** Degraded-mode warnings. Recorded on `GraphMetadataIR.degradedInputs`. */
+  warnings: string[];
+}
+
+/**
+ * Build a `CatalogContext` from an optional `SchemaCatalog`.
+ */
+export function prepareCatalog(catalog?: SchemaCatalog): CatalogContext {
+  if (!catalog) {
+    return {
+      catalog: null,
+      lookup: () => null,
+      lookupObject: () => null,
+      warnings: [
+        'No SchemaCatalog provided — V4 field-ref validation will run in degraded (syntactic-only) mode',
+      ],
+    };
+  }
+
+  // Build case-folded indexes once for O(1) lookups.
+  const objectsLowerIndex = new Map<string, string>();
+  const fieldsLowerIndex = new Map<string, Map<string, string>>();
+
+  for (const [objKey, objSchema] of Object.entries(catalog.objects)) {
+    objectsLowerIndex.set(objKey.toLowerCase(), objKey);
+    const fieldIdx = new Map<string, string>();
+    for (const fieldKey of Object.keys(objSchema.fields)) {
+      fieldIdx.set(fieldKey.toLowerCase(), fieldKey);
+    }
+    fieldsLowerIndex.set(objKey, fieldIdx);
+  }
+
+  const lookupObject = (object: string): ObjectSchema | null => {
+    const canonicalObj = objectsLowerIndex.get(object.toLowerCase());
+    if (!canonicalObj) return null;
+    return catalog.objects[canonicalObj] ?? null;
+  };
+
+  const lookup = (object: string, field: string): FieldSchema | null => {
+    const canonicalObj = objectsLowerIndex.get(object.toLowerCase());
+    if (!canonicalObj) return null;
+    const fieldIdx = fieldsLowerIndex.get(canonicalObj);
+    if (!fieldIdx) return null;
+    const canonicalField = fieldIdx.get(field.toLowerCase());
+    if (!canonicalField) return null;
+    return catalog.objects[canonicalObj]?.fields[canonicalField] ?? null;
+  };
+
+  return { catalog, lookup, lookupObject, warnings: [] };
+}
