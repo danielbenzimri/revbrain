@@ -10,6 +10,13 @@
 FROM node:20-slim AS builder
 WORKDIR /app
 
+# Native-build toolchain for tree-sitter-sfapex (PH5.1 Apex parser):
+# node-gyp needs python3 + make + g++ to compile the addon. Only
+# installed in the builder stage; the runtime image stays slim.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends python3 make g++ \
+    && rm -rf /var/lib/apt/lists/*
+
 # Install pnpm
 RUN corepack enable && corepack prepare pnpm@8.15.0 --activate
 
