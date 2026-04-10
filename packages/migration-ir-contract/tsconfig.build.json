@@ -7,7 +7,7 @@
     "sourceMap": true,
     "outDir": "dist",
     "rootDir": "src",
-    "allowImportingTsExtensions": false
+    "rewriteRelativeImportExtensions": true
   },
-  "exclude": ["node_modules", "dist", "**/*.test.ts"]
+  "exclude": ["node_modules", "dist", "**/*.test.ts", "vitest.config.ts"]
 }
