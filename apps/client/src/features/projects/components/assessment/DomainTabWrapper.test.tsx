@@ -24,7 +24,7 @@ function renderDomain(domainId: DomainId) {
   return render(
     <MemoryRouter>
       <DomainTabWrapper domainId={domainId} assessment={assessment} t={mockT} />
-    </MemoryRouter>,
+    </MemoryRouter>
   );
 }
 
@@ -32,8 +32,15 @@ describe('DomainTabWrapper', () => {
   afterEach(() => cleanup());
 
   const domainIds: DomainId[] = [
-    'products', 'pricing', 'rules', 'code', 'integrations',
-    'amendments', 'approvals', 'documents', 'dataReporting',
+    'products',
+    'pricing',
+    'rules',
+    'code',
+    'integrations',
+    'amendments',
+    'approvals',
+    'documents',
+    'dataReporting',
   ];
 
   it.each(domainIds)('renders %s domain without errors', (domainId) => {

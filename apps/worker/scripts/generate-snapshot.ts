@@ -35,7 +35,9 @@ const snapshot = {
   findingsCount: findings.length,
   validationPassed: validation.valid,
   validationErrors: validation.rules.filter((r) => !r.passed).map((r) => `${r.id}: ${r.message}`),
-  validationWarnings: validation.rules.filter((r) => !r.passed && r.severity === 'warning').map((r) => `${r.id}: ${r.message}`),
+  validationWarnings: validation.rules
+    .filter((r) => !r.passed && r.severity === 'warning')
+    .map((r) => `${r.id}: ${r.message}`),
   metrics: {
     sbaaVersion: reportData.metadata.sbaaVersion,
     sbaaInstalled: c.sbaaInstalled,

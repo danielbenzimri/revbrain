@@ -32,7 +32,10 @@ interface GraphEdge {
 // Graph builder
 // ---------------------------------------------------------------------------
 
-function buildGraph(item: AssessmentItem, assessment: AssessmentData): { nodes: GraphNode[]; edges: GraphEdge[] } {
+function buildGraph(
+  item: AssessmentItem,
+  assessment: AssessmentData
+): { nodes: GraphNode[]; edges: GraphEdge[] } {
   const nodes: GraphNode[] = [];
   const edges: GraphEdge[] = [];
   const seen = new Set<string>();
@@ -68,7 +71,9 @@ function buildGraph(item: AssessmentItem, assessment: AssessmentData): { nodes: 
     // Try to find the dependency in assessment data to determine its domain
     let depDomain: DomainId | 'field' | 'external' = 'external';
     for (const domain of assessment.domains) {
-      const found = domain.items.find((it) => it.name === depName || it.apiName.includes(depName.replace('.cls', '')));
+      const found = domain.items.find(
+        (it) => it.name === depName || it.apiName.includes(depName.replace('.cls', ''))
+      );
       if (found) {
         depDomain = domain.id;
         break;
@@ -101,7 +106,7 @@ function buildGraph(item: AssessmentItem, assessment: AssessmentData): { nodes: 
       if (otherItem.dependencies.some((d) => d === item.name || item.name.includes(d))) {
         if (!seen.has(otherItem.id)) {
           const idx = nodes.length;
-          const angle = Math.PI + (idx * 0.8);
+          const angle = Math.PI + idx * 0.8;
           const radius = 38;
           nodes.push({
             id: otherItem.id,
@@ -133,24 +138,22 @@ interface DependencyGraphProps {
   t: (key: string) => string;
 }
 
-export default function DependencyGraph({ item, assessment, compact = false, t }: DependencyGraphProps) {
+export default function DependencyGraph({
+  item,
+  assessment,
+  compact = false,
+  t,
+}: DependencyGraphProps) {
   const { nodes, edges } = useMemo(() => buildGraph(item, assessment), [item, assessment]);
 
   if (nodes.length <= 1) {
-    return (
-      <div className="text-center py-4 text-sm text-slate-400">
-        No dependencies detected
-      </div>
-    );
+    return <div className="text-center py-4 text-sm text-slate-400">No dependencies detected</div>;
   }
 
   const size = compact ? 280 : 440;
 
   return (
-    <div
-      className="bg-white rounded-2xl p-4"
-      data-testid="dependency-graph"
-    >
+    <div className="bg-white rounded-2xl p-4" data-testid="dependency-graph">
       {!compact && (
         <h3 className="text-sm font-semibold text-slate-900 mb-3">
           {t('assessment.itemDetail.dependencies')}
@@ -187,16 +190,25 @@ export default function DependencyGraph({ item, assessment, compact = false, t }
         {/* Nodes */}
         {nodes.map((node) => {
           const r = node.isCentral ? 8 : 5.5;
-          const fillColor = node.isCentral ? '#8b5cf6' : // violet for central
-            node.domainId === 'pricing' ? '#f59e0b' :
-            node.domainId === 'code' ? '#ef4444' :
-            node.domainId === 'products' ? '#3b82f6' :
-            node.domainId === 'rules' ? '#8b5cf6' :
-            node.domainId === 'integrations' ? '#06b6d4' :
-            node.domainId === 'amendments' ? '#f97316' :
-            node.domainId === 'approvals' ? '#ec4899' :
-            node.domainId === 'documents' ? '#10b981' :
-            '#94a3b8';
+          const fillColor = node.isCentral
+            ? '#8b5cf6' // violet for central
+            : node.domainId === 'pricing'
+              ? '#f59e0b'
+              : node.domainId === 'code'
+                ? '#ef4444'
+                : node.domainId === 'products'
+                  ? '#3b82f6'
+                  : node.domainId === 'rules'
+                    ? '#8b5cf6'
+                    : node.domainId === 'integrations'
+                      ? '#06b6d4'
+                      : node.domainId === 'amendments'
+                        ? '#f97316'
+                        : node.domainId === 'approvals'
+                          ? '#ec4899'
+                          : node.domainId === 'documents'
+                            ? '#10b981'
+                            : '#94a3b8';
 
           return (
             <g key={node.id}>
@@ -242,7 +254,11 @@ export default function DependencyGraph({ item, assessment, compact = false, t }
             <span className="w-3 h-0.5 bg-slate-300 inline-block" /> Direct dependency
           </span>
           <span className="flex items-center gap-1">
-            <span className="w-3 h-0.5 bg-slate-300 inline-block border-dashed border-t border-slate-400" style={{ borderStyle: 'dashed' }} /> Referenced by
+            <span
+              className="w-3 h-0.5 bg-slate-300 inline-block border-dashed border-t border-slate-400"
+              style={{ borderStyle: 'dashed' }}
+            />{' '}
+            Referenced by
           </span>
         </div>
       )}

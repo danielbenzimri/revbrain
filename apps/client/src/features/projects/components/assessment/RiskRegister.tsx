@@ -52,7 +52,9 @@ function RiskHeatMap({ risks, t }: HeatMapProps) {
 
   return (
     <div data-testid="risk-heat-map" className="bg-white rounded-2xl p-5">
-      <h3 className="text-sm font-semibold text-slate-900 mb-3">{t('assessment.riskRegister.heatMap')}</h3>
+      <h3 className="text-sm font-semibold text-slate-900 mb-3">
+        {t('assessment.riskRegister.heatMap')}
+      </h3>
       <div className="flex items-end gap-2">
         <div className="text-xs text-slate-400 -rotate-90 mb-10 whitespace-nowrap">
           {t('assessment.riskRegister.impact')} →
@@ -67,7 +69,7 @@ function RiskHeatMap({ risks, t }: HeatMapProps) {
                 >
                   {count > 0 ? count : ''}
                 </div>
-              )),
+              ))
             )}
           </div>
           <p className="text-xs text-slate-400 text-center mt-1">
@@ -111,7 +113,11 @@ export default function RiskRegister({ risks, onClose, t }: RiskRegisterProps) {
           {t('assessment.riskRegister.title')}
         </h2>
         {onClose && (
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100" aria-label="Close">
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg hover:bg-slate-100"
+            aria-label="Close"
+          >
             <X size={18} className="text-slate-400" />
           </button>
         )}
@@ -140,7 +146,9 @@ export default function RiskRegister({ risks, onClose, t }: RiskRegisterProps) {
           <option value="technical">{t('assessment.riskRegister.categories.technical')}</option>
           <option value="business">{t('assessment.riskRegister.categories.business')}</option>
           <option value="timeline">{t('assessment.riskRegister.categories.timeline')}</option>
-          <option value="organizational">{t('assessment.riskRegister.categories.organizational')}</option>
+          <option value="organizational">
+            {t('assessment.riskRegister.categories.organizational')}
+          </option>
         </select>
         <select
           value={severityFilter}
@@ -180,12 +188,16 @@ export default function RiskRegister({ risks, onClose, t }: RiskRegisterProps) {
                   )}
                 </td>
                 <td className="px-4 py-3">
-                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${CATEGORY_STYLES[risk.category]}`}>
+                  <span
+                    className={`text-xs font-medium px-2 py-0.5 rounded-full ${CATEGORY_STYLES[risk.category]}`}
+                  >
                     {t(`assessment.riskRegister.categories.${risk.category}`)}
                   </span>
                 </td>
                 <td className="px-4 py-3">
-                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${SEVERITY_STYLES[risk.severity]}`}>
+                  <span
+                    className={`text-xs font-medium px-2 py-0.5 rounded-full ${SEVERITY_STYLES[risk.severity]}`}
+                  >
                     {t(`assessment.riskRegister.severities.${risk.severity}`)}
                   </span>
                 </td>

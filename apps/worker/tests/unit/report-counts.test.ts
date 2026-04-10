@@ -97,9 +97,7 @@ describe('ReportCounts — T1 comprehensive tests', () => {
     });
 
     it('reports not_extracted when no Product2 findings exist', () => {
-      const findings = [
-        makeFinding({ artifactType: 'OrgFingerprint', artifactName: 'Test Org' }),
-      ];
+      const findings = [makeFinding({ artifactType: 'OrgFingerprint', artifactName: 'Test Org' })];
 
       const report = assembleReport(findings);
       expect(report.counts.activeProducts).toBe(0);
@@ -156,9 +154,7 @@ describe('ReportCounts — T1 comprehensive tests', () => {
     });
 
     it('reports unknown when neither UserAdoption nor UserBehavior exist', () => {
-      const findings = [
-        makeFinding({ artifactType: 'OrgFingerprint', artifactName: 'Test Org' }),
-      ];
+      const findings = [makeFinding({ artifactType: 'OrgFingerprint', artifactName: 'Test Org' })];
 
       const report = assembleReport(findings);
       expect(report.counts.activeUsers).toBe(0);
@@ -435,8 +431,16 @@ describe('ReportCounts — T1 comprehensive tests', () => {
   describe('code and automation counts', () => {
     it('counts validation rules', () => {
       const findings = [
-        makeFinding({ artifactType: 'ValidationRule', artifactName: 'VR1', domain: 'customization' }),
-        makeFinding({ artifactType: 'ValidationRule', artifactName: 'VR2', domain: 'customization' }),
+        makeFinding({
+          artifactType: 'ValidationRule',
+          artifactName: 'VR1',
+          domain: 'customization',
+        }),
+        makeFinding({
+          artifactType: 'ValidationRule',
+          artifactName: 'VR2',
+          domain: 'customization',
+        }),
       ];
 
       const report = assembleReport(findings);
@@ -456,7 +460,11 @@ describe('ReportCounts — T1 comprehensive tests', () => {
 
     it('counts triggers', () => {
       const findings = [
-        makeFinding({ artifactType: 'ApexTrigger', artifactName: 'Trigger1', domain: 'dependency' }),
+        makeFinding({
+          artifactType: 'ApexTrigger',
+          artifactName: 'Trigger1',
+          domain: 'dependency',
+        }),
       ];
 
       const report = assembleReport(findings);
@@ -485,9 +493,7 @@ describe('ReportCounts — T1 comprehensive tests', () => {
     });
 
     it('approval count is zero when no AdvancedApprovalRule findings', () => {
-      const findings = [
-        makeFinding({ artifactType: 'OrgFingerprint', artifactName: 'Test Org' }),
-      ];
+      const findings = [makeFinding({ artifactType: 'OrgFingerprint', artifactName: 'Test Org' })];
 
       const report = assembleReport(findings);
       expect(report.counts.approvalRuleCount).toBe(0);

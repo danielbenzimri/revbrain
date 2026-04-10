@@ -33,7 +33,8 @@ describe('ReportCounts lint guard', () => {
       metric: 'totalProducts / activeProducts (use counts.totalProducts or counts.activeProducts)',
     },
     {
-      pattern: /findings\.filter\([^)]*artifactType\s*===\s*['"]UserAdoption['"][^)]*\)\??\.\w+Value/g,
+      pattern:
+        /findings\.filter\([^)]*artifactType\s*===\s*['"]UserAdoption['"][^)]*\)\??\.\w+Value/g,
       metric: 'activeUsers (use counts.activeUsers)',
     },
   ];
@@ -44,8 +45,8 @@ describe('ReportCounts lint guard', () => {
       expect(
         matches,
         `Found forbidden pattern for ${metric} in assembler.ts consumer code. ` +
-        `Use counts.X instead of independently counting findings.\n` +
-        `Matches: ${matches?.join('\n') ?? 'none'}`
+          `Use counts.X instead of independently counting findings.\n` +
+          `Matches: ${matches?.join('\n') ?? 'none'}`
       ).toBeNull();
     });
   }

@@ -58,17 +58,17 @@ Triggered by operational needs, not scheduled.
 
 **Proper fix (Option A — deferred):** Refactor services to receive their database dependency through the request context (repos) instead of importing it globally. This is a significant effort (~100+ `getDb()` calls across 9 services) but would make the services runtime-agnostic and eliminate the dual-engine overhead on Edge.
 
-| Service | `getDb()` calls | User-facing routes | Priority |
-|---------|----------------|--------------------|----------|
-| `billing.service.ts` | ~50 | `/billing/*` | Medium (guarded by `isStripeConfigured()`) |
-| `coupon.service.ts` | ~20 | `/billing/validate-coupon` | Low |
-| `ticket.service.ts` | ~15 | `/support/tickets/*` | Medium |
-| `lead.service.ts` | ~12 | `/leads/contact-sales` (public) | Medium |
-| `limits.service.ts` | ~1 | `/billing/usage` | Low |
-| `job-queue.service.ts` | ~15 | `/admin/jobs/*` (admin only) | Low |
-| `cron.service.ts` | ~10 | Background only | Low |
-| `webhook-retry.service.ts` | ~12 | Webhook handler only | Low |
-| `auth.service.ts` | ~1 | Registration flow | Low |
+| Service                    | `getDb()` calls | User-facing routes              | Priority                                   |
+| -------------------------- | --------------- | ------------------------------- | ------------------------------------------ |
+| `billing.service.ts`       | ~50             | `/billing/*`                    | Medium (guarded by `isStripeConfigured()`) |
+| `coupon.service.ts`        | ~20             | `/billing/validate-coupon`      | Low                                        |
+| `ticket.service.ts`        | ~15             | `/support/tickets/*`            | Medium                                     |
+| `lead.service.ts`          | ~12             | `/leads/contact-sales` (public) | Medium                                     |
+| `limits.service.ts`        | ~1              | `/billing/usage`                | Low                                        |
+| `job-queue.service.ts`     | ~15             | `/admin/jobs/*` (admin only)    | Low                                        |
+| `cron.service.ts`          | ~10             | Background only                 | Low                                        |
+| `webhook-retry.service.ts` | ~12             | Webhook handler only            | Low                                        |
+| `auth.service.ts`          | ~1              | Registration flow               | Low                                        |
 
 Also: `routes/admin/notifications.ts`, `routes/health.ts`, `routes/project-files.ts` use `getDb()` directly in route handlers.
 
@@ -103,18 +103,18 @@ Also: `routes/admin/notifications.ts`, `routes/health.ts`, `routes/project-files
 
 ## Resolved Items (for reference)
 
-| Item                                   | Resolution                                                                | Date       |
-| -------------------------------------- | ------------------------------------------------------------------------- | ---------- |
-| Phase 0: 11 bug fixes + security fixes | All shipped                                                               | 2026-03-19 |
-| Phase 1: MVP (14 tasks)                | All shipped including MFA, isolation audit, live dashboard                | 2026-03-20 |
-| Phase 2: Launch (23 tasks)             | All shipped including impersonation, permissions, audit viewer, overrides | 2026-03-21 |
-| Database seeder (17 tasks)             | Full implementation with auth reconciliation and RLS verification         | 2026-03-21 |
-| Supabase setup (STG + PRD)             | Schema, RLS, storage, edge functions, auth config                         | 2026-03-22 |
-| Vercel setup (STG + PRD)               | Domains live, env vars, auto-deploy disabled                              | 2026-03-22 |
-| Resend setup                           | API key, domain verified, test email sent                                 | 2026-03-22 |
-| GitHub CI/CD                           | CI gates CD, all green                                                    | 2026-03-22 |
-| Domain rename (.com → .ai)             | All references updated                                                    | 2026-03-22 |
-| Env file restructure                   | .env.local / .env.stg / .env.prod                                         | 2026-03-22 |
+| Item                                   | Resolution                                                                                              | Date       |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------- | ---------- |
+| Phase 0: 11 bug fixes + security fixes | All shipped                                                                                             | 2026-03-19 |
+| Phase 1: MVP (14 tasks)                | All shipped including MFA, isolation audit, live dashboard                                              | 2026-03-20 |
+| Phase 2: Launch (23 tasks)             | All shipped including impersonation, permissions, audit viewer, overrides                               | 2026-03-21 |
+| Database seeder (17 tasks)             | Full implementation with auth reconciliation and RLS verification                                       | 2026-03-21 |
+| Supabase setup (STG + PRD)             | Schema, RLS, storage, edge functions, auth config                                                       | 2026-03-22 |
+| Vercel setup (STG + PRD)               | Domains live, env vars, auto-deploy disabled                                                            | 2026-03-22 |
+| Resend setup                           | API key, domain verified, test email sent                                                               | 2026-03-22 |
+| GitHub CI/CD                           | CI gates CD, all green                                                                                  | 2026-03-22 |
+| Domain rename (.com → .ai)             | All references updated                                                                                  | 2026-03-22 |
+| Env file restructure                   | .env.local / .env.stg / .env.prod                                                                       | 2026-03-22 |
 | PostgREST repository stubs             | Replaced all 5 stubs with real implementations (SF connections, secrets, OAuth flows, logs, assessment) | 2026-04-01 |
-| Edge Function 500s on staging          | Fixed: PostgREST stubs, billing guard, `initDB()` warmup in middleware    | 2026-04-01 |
-| Staging E2E test suite                 | Comprehensive Playwright tests for all roles against real staging          | 2026-04-01 |
+| Edge Function 500s on staging          | Fixed: PostgREST stubs, billing guard, `initDB()` warmup in middleware                                  | 2026-04-01 |
+| Staging E2E test suite                 | Comprehensive Playwright tests for all roles against real staging                                       | 2026-04-01 |

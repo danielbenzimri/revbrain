@@ -44,7 +44,9 @@ function buildFlowData(assessment: AssessmentData) {
   }
 
   // Use domain stats for source sizes
-  const sortedDomains = [...assessment.domains].sort((a, b) => b.stats.total - a.stats.total).slice(0, 6);
+  const sortedDomains = [...assessment.domains]
+    .sort((a, b) => b.stats.total - a.stats.total)
+    .slice(0, 6);
   const totalSourceItems = sortedDomains.reduce((s, d) => s + d.stats.total, 0);
 
   let sourceY = 5;
@@ -53,7 +55,12 @@ function buildFlowData(assessment: AssessmentData) {
     sources.push({
       label: domain.id,
       count: domain.stats.total,
-      color: domain.complexity === 'high' ? '#ef4444' : domain.complexity === 'moderate' ? '#f59e0b' : '#10b981',
+      color:
+        domain.complexity === 'high'
+          ? '#ef4444'
+          : domain.complexity === 'moderate'
+            ? '#f59e0b'
+            : '#10b981',
       y: sourceY,
       height: Math.max(height, 4),
     });
@@ -92,8 +99,12 @@ function buildFlowData(assessment: AssessmentData) {
     const target = targets[Math.min(i, targets.length - 1)];
     const domain = sortedDomains[i];
 
-    const statusColor = domain.complexity === 'high' ? statusColors.manual :
-      domain.complexity === 'moderate' ? statusColors.guided : statusColors.auto;
+    const statusColor =
+      domain.complexity === 'high'
+        ? statusColors.manual
+        : domain.complexity === 'moderate'
+          ? statusColors.guided
+          : statusColors.auto;
 
     links.push({
       sourceY: source.y,
@@ -156,7 +167,13 @@ export default function TransformationFlow({ assessment, t }: TransformationFlow
         <span className="text-xs font-semibold text-slate-500 uppercase">RCA Target</span>
       </div>
 
-      <svg viewBox="0 0 100 95" className="w-full" style={{ minHeight: 300 }} role="img" aria-label="CPQ to RCA transformation flow">
+      <svg
+        viewBox="0 0 100 95"
+        className="w-full"
+        style={{ minHeight: 300 }}
+        role="img"
+        aria-label="CPQ to RCA transformation flow"
+      >
         {/* Flow paths */}
         {links.map((link, i) => (
           <path
@@ -173,7 +190,15 @@ export default function TransformationFlow({ assessment, t }: TransformationFlow
         {/* Source bars */}
         {sources.map((s, i) => (
           <g key={`src-${i}`}>
-            <rect x={2} y={s.y} width={8} height={s.height} rx={1.5} fill={s.color} fillOpacity={0.8} />
+            <rect
+              x={2}
+              y={s.y}
+              width={8}
+              height={s.height}
+              rx={1.5}
+              fill={s.color}
+              fillOpacity={0.8}
+            />
             <text x={11} y={s.y + s.height / 2 + 1} fontSize={2.2} fill="#475569" fontWeight={500}>
               {t(`assessment.tabs.${s.label}`)}
             </text>
@@ -186,15 +211,38 @@ export default function TransformationFlow({ assessment, t }: TransformationFlow
         {/* Target bars */}
         {targets.map((tgt, i) => (
           <g key={`tgt-${i}`}>
-            <rect x={90} y={tgt.y} width={8} height={tgt.height} rx={1.5} fill={tgt.color} fillOpacity={0.8} />
-            <text x={89} y={tgt.y + tgt.height / 2 + 1} fontSize={2} fill="#475569" fontWeight={500} textAnchor="end">
+            <rect
+              x={90}
+              y={tgt.y}
+              width={8}
+              height={tgt.height}
+              rx={1.5}
+              fill={tgt.color}
+              fillOpacity={0.8}
+            />
+            <text
+              x={89}
+              y={tgt.y + tgt.height / 2 + 1}
+              fontSize={2}
+              fill="#475569"
+              fontWeight={500}
+              textAnchor="end"
+            >
               {tgt.label.length > 22 ? tgt.label.slice(0, 20) + '...' : tgt.label}
             </text>
           </g>
         ))}
 
         {/* Center dot for transformation */}
-        <circle cx={50} cy={47} r={2} fill="#8b5cf6" fillOpacity={0.15} stroke="#8b5cf6" strokeWidth={0.3} />
+        <circle
+          cx={50}
+          cy={47}
+          r={2}
+          fill="#8b5cf6"
+          fillOpacity={0.15}
+          stroke="#8b5cf6"
+          strokeWidth={0.3}
+        />
         <circle cx={50} cy={47} r={0.8} fill="#8b5cf6" />
       </svg>
     </div>

@@ -44,10 +44,7 @@ export default function ItemDetailPanel({ item, assessment, onClose, t }: ItemDe
   if (!item) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-50"
-      data-testid="item-detail-panel"
-    >
+    <div className="fixed inset-0 z-50" data-testid="item-detail-panel">
       {/* Overlay */}
       <div
         className="absolute inset-0 bg-black/40 backdrop-blur-sm"
@@ -60,7 +57,9 @@ export default function ItemDetailPanel({ item, assessment, onClose, t }: ItemDe
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex items-start justify-between z-10">
           <div>
-            <h2 className="text-lg font-semibold text-slate-900" data-testid="item-name">{item.name}</h2>
+            <h2 className="text-lg font-semibold text-slate-900" data-testid="item-name">
+              {item.name}
+            </h2>
             <p className="text-xs text-slate-400 mt-0.5 font-mono">{item.apiName}</p>
           </div>
           <button
@@ -77,25 +76,37 @@ export default function ItemDetailPanel({ item, assessment, onClose, t }: ItemDe
           <section data-testid="status-block">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <p className="text-xs text-slate-500 mb-1">{t('assessment.itemDetail.complexity')}</p>
-                <span className={`text-xs font-medium px-2 py-1 rounded-full ${COMPLEXITY_COLORS[item.complexity] || ''}`}>
+                <p className="text-xs text-slate-500 mb-1">
+                  {t('assessment.itemDetail.complexity')}
+                </p>
+                <span
+                  className={`text-xs font-medium px-2 py-1 rounded-full ${COMPLEXITY_COLORS[item.complexity] || ''}`}
+                >
                   {t(`assessment.complexity.${item.complexity}`)}
                 </span>
               </div>
               <div>
-                <p className="text-xs text-slate-500 mb-1">{t('assessment.itemDetail.migrationStatus')}</p>
-                <span className={`text-xs font-medium px-2 py-1 rounded-full ${STATUS_COLORS[item.migrationStatus] || ''}`}>
+                <p className="text-xs text-slate-500 mb-1">
+                  {t('assessment.itemDetail.migrationStatus')}
+                </p>
+                <span
+                  className={`text-xs font-medium px-2 py-1 rounded-full ${STATUS_COLORS[item.migrationStatus] || ''}`}
+                >
                   {t(`assessment.migrationStatus.${item.migrationStatus}`)}
                 </span>
               </div>
               <div>
                 <p className="text-xs text-slate-500 mb-1">{t('assessment.itemDetail.active')}</p>
                 <span className="text-sm text-slate-700">
-                  {item.isActive ? t('assessment.itemDetail.active') : t('assessment.itemDetail.inactive')}
+                  {item.isActive
+                    ? t('assessment.itemDetail.active')
+                    : t('assessment.itemDetail.inactive')}
                 </span>
               </div>
               <div>
-                <p className="text-xs text-slate-500 mb-1">{t('assessment.itemDetail.lastModified')}</p>
+                <p className="text-xs text-slate-500 mb-1">
+                  {t('assessment.itemDetail.lastModified')}
+                </p>
                 <span className="text-sm text-slate-700">
                   {new Date(item.lastModified).toLocaleDateString()}
                 </span>
@@ -104,7 +115,10 @@ export default function ItemDetailPanel({ item, assessment, onClose, t }: ItemDe
           </section>
 
           {/* AI Description */}
-          <section className="bg-violet-50/50 rounded-xl p-4 border border-violet-100" data-testid="ai-description">
+          <section
+            className="bg-violet-50/50 rounded-xl p-4 border border-violet-100"
+            data-testid="ai-description"
+          >
             <div className="flex items-center gap-1.5 mb-2">
               <Sparkles size={14} className="text-violet-500" />
               <span className="text-xs font-medium text-violet-600">
@@ -120,7 +134,9 @@ export default function ItemDetailPanel({ item, assessment, onClose, t }: ItemDe
                 {t('assessment.itemDetail.verify')}
               </button>
               <span className="text-xs text-slate-400">·</span>
-              <span className="text-xs text-slate-400">{t('assessment.itemDetail.aiDisclaimer')}</span>
+              <span className="text-xs text-slate-400">
+                {t('assessment.itemDetail.aiDisclaimer')}
+              </span>
             </div>
           </section>
 
@@ -132,17 +148,23 @@ export default function ItemDetailPanel({ item, assessment, onClose, t }: ItemDe
             <div className="space-y-3">
               {/* CPQ Current */}
               <div className="bg-slate-50 rounded-xl p-4">
-                <p className="text-xs font-medium text-slate-500 mb-1">{t('assessment.itemDetail.cpqCurrent')}</p>
+                <p className="text-xs font-medium text-slate-500 mb-1">
+                  {t('assessment.itemDetail.cpqCurrent')}
+                </p>
                 <p className="text-sm text-slate-900 font-mono">{item.apiName}</p>
                 {item.linesOfCode && (
-                  <p className="text-xs text-slate-400 mt-1">{item.linesOfCode} {t('assessment.table.linesOfCode')}</p>
+                  <p className="text-xs text-slate-400 mt-1">
+                    {item.linesOfCode} {t('assessment.table.linesOfCode')}
+                  </p>
                 )}
               </div>
               {/* Arrow */}
               <div className="text-center text-slate-300 text-lg">↓</div>
               {/* RCA Target */}
               <div className={`rounded-xl p-4 ${item.rcaTarget ? 'bg-violet-50' : 'bg-red-50'}`}>
-                <p className="text-xs font-medium text-slate-500 mb-1">{t('assessment.itemDetail.rcaTargetState')}</p>
+                <p className="text-xs font-medium text-slate-500 mb-1">
+                  {t('assessment.itemDetail.rcaTargetState')}
+                </p>
                 <p className="text-sm text-slate-900">{item.rcaTarget || '—'}</p>
                 {item.whyStatus && (
                   <p className="text-xs text-slate-500 mt-1 italic">{item.whyStatus}</p>
@@ -154,9 +176,7 @@ export default function ItemDetailPanel({ item, assessment, onClose, t }: ItemDe
           {/* Dependencies — Graph + List */}
           {item.dependencies.length > 0 && (
             <section data-testid="dependencies">
-              {assessment && (
-                <DependencyGraph item={item} assessment={assessment} compact t={t} />
-              )}
+              {assessment && <DependencyGraph item={item} assessment={assessment} compact t={t} />}
               <h3 className="text-sm font-semibold text-slate-900 mb-2 mt-3">
                 {t('assessment.itemDetail.dependencies')}
               </h3>
@@ -176,9 +196,7 @@ export default function ItemDetailPanel({ item, assessment, onClose, t }: ItemDe
             <h3 className="text-sm font-semibold text-slate-900 mb-2">
               {t('assessment.itemDetail.recommendation')}
             </h3>
-            <p className="text-sm text-slate-700 leading-relaxed">
-              {item.whyStatus}
-            </p>
+            <p className="text-sm text-slate-700 leading-relaxed">{item.whyStatus}</p>
             {item.estimatedHours && (
               <p className="text-sm text-slate-500 mt-2">
                 {t('assessment.itemDetail.estimatedHours')}: {item.estimatedHours}h

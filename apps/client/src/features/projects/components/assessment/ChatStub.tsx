@@ -26,23 +26,28 @@ interface ChatMessage {
 const MOCK_RESPONSES: Array<{ keywords: string[]; response: string }> = [
   {
     keywords: ['risk', 'blocker', 'critical'],
-    response: 'Based on the assessment, there are 3 critical blockers:\n\n1. **QCP Calculator Plugins** — 3 plugins totaling ~4,200 LOC require full rewrite. These use external callouts that cannot be mapped to declarative Pricing Procedures.\n\n2. **MDQ (Multi-Dimensional Quoting)** — Used by 23 products with only partial RCA parity. This may require custom development or scope reduction.\n\n3. **RCA Licenses** — Not detected in your org. Deployment cannot begin until licenses are procured.\n\nI recommend addressing license procurement immediately as it has the longest lead time.',
+    response:
+      'Based on the assessment, there are 3 critical blockers:\n\n1. **QCP Calculator Plugins** — 3 plugins totaling ~4,200 LOC require full rewrite. These use external callouts that cannot be mapped to declarative Pricing Procedures.\n\n2. **MDQ (Multi-Dimensional Quoting)** — Used by 23 products with only partial RCA parity. This may require custom development or scope reduction.\n\n3. **RCA Licenses** — Not detected in your org. Deployment cannot begin until licenses are procured.\n\nI recommend addressing license procurement immediately as it has the longest lead time.',
   },
   {
     keywords: ['pricing', 'price rule', 'discount'],
-    response: 'The Pricing domain has **243 rules** — the largest domain by item count. Here\'s the breakdown:\n\n- **82 rules (34%)** can be auto-migrated to Pricing Procedures\n- **100 rules (41%)** need guided setup with manual configuration\n- **58 rules (24%)** require custom development\n- **3 rules** are blocked\n\nThe 47 high-complexity rules drive 78% of the estimated pricing migration effort. I\'d recommend starting with the 82 auto-mappable rules to build momentum.',
+    response:
+      "The Pricing domain has **243 rules** — the largest domain by item count. Here's the breakdown:\n\n- **82 rules (34%)** can be auto-migrated to Pricing Procedures\n- **100 rules (41%)** need guided setup with manual configuration\n- **58 rules (24%)** require custom development\n- **3 rules** are blocked\n\nThe 47 high-complexity rules drive 78% of the estimated pricing migration effort. I'd recommend starting with the 82 auto-mappable rules to build momentum.",
   },
   {
     keywords: ['timeline', 'effort', 'how long', 'estimate'],
-    response: 'Based on the complexity analysis, I recommend a **3-phase approach**:\n\n- **Phase 1** (8-12 weeks): Core — Products + Pricing migration\n- **Phase 2** (6-10 weeks): Extensions — Rules + Custom Code rewrite\n- **Phase 3** (4-6 weeks): Integrations + Cutover\n\nTotal estimated timeline: **18-28 weeks**. The primary risk to timeline is the QCP rewrite (4,200 LOC) and the 12 integrations that reference CPQ objects directly.',
+    response:
+      'Based on the complexity analysis, I recommend a **3-phase approach**:\n\n- **Phase 1** (8-12 weeks): Core — Products + Pricing migration\n- **Phase 2** (6-10 weeks): Extensions — Rules + Custom Code rewrite\n- **Phase 3** (4-6 weeks): Integrations + Cutover\n\nTotal estimated timeline: **18-28 weeks**. The primary risk to timeline is the QCP rewrite (4,200 LOC) and the 12 integrations that reference CPQ objects directly.',
   },
   {
     keywords: ['product', 'bundle', 'catalog'],
-    response: 'The Products domain contains **187 items** with moderate complexity:\n\n- **120 (64%)** auto-mappable to Product Selling Models\n- **45 (24%)** need guided setup\n- **18 (10%)** require custom development\n- **4 items** are blocked\n\nNotable findings: 4 bundles have nesting depth > 3 levels (needs restructuring), 12 QLE customizations all require manual rebuild, and 18 twin field pairs need Flow-based recreation.',
+    response:
+      'The Products domain contains **187 items** with moderate complexity:\n\n- **120 (64%)** auto-mappable to Product Selling Models\n- **45 (24%)** need guided setup\n- **18 (10%)** require custom development\n- **4 items** are blocked\n\nNotable findings: 4 bundles have nesting depth > 3 levels (needs restructuring), 12 QLE customizations all require manual rebuild, and 18 twin field pairs need Flow-based recreation.',
   },
   {
     keywords: ['report', 'dashboard', 'data'],
-    response: 'There are **85 reports and 12 dashboards** that reference CPQ objects — all will break post-migration. However:\n\n- **10 reports** are actively used (last run < 7 days)\n- **2 reports** are moderately used (8-30 days)\n- **15 reports** are stale (30+ days, including QLE Usage Metrics at 60 days)\n\nI recommend rebuilding only the actively-used reports first and deferring stale ones. This reduces the report migration effort by ~80%.',
+    response:
+      'There are **85 reports and 12 dashboards** that reference CPQ objects — all will break post-migration. However:\n\n- **10 reports** are actively used (last run < 7 days)\n- **2 reports** are moderately used (8-30 days)\n- **15 reports** are stale (30+ days, including QLE Usage Metrics at 60 days)\n\nI recommend rebuilding only the actively-used reports first and deferring stale ones. This reduces the report migration effort by ~80%.',
   },
 ];
 
@@ -66,7 +71,8 @@ export default function ChatStub() {
     {
       id: 'welcome',
       role: 'assistant',
-      content: 'Hi! I\'m your assessment assistant. I can answer questions about this CPQ migration analysis — risks, complexity, timeline, or any domain. What would you like to know?',
+      content:
+        "Hi! I'm your assessment assistant. I can answer questions about this CPQ migration analysis — risks, complexity, timeline, or any domain. What would you like to know?",
       timestamp: new Date(),
     },
   ]);
@@ -101,16 +107,19 @@ export default function ChatStub() {
     setIsTyping(true);
 
     // Simulate AI response delay
-    setTimeout(() => {
-      const aiMsg: ChatMessage = {
-        id: `ai-${Date.now()}`,
-        role: 'assistant',
-        content: getAIResponse(trimmed),
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, aiMsg]);
-      setIsTyping(false);
-    }, 800 + Math.random() * 600);
+    setTimeout(
+      () => {
+        const aiMsg: ChatMessage = {
+          id: `ai-${Date.now()}`,
+          role: 'assistant',
+          content: getAIResponse(trimmed),
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, aiMsg]);
+        setIsTyping(false);
+      },
+      800 + Math.random() * 600
+    );
   };
 
   return (
@@ -162,10 +171,12 @@ export default function ChatStub() {
                       <p key={i} className={i > 0 ? 'mt-1.5' : ''}>
                         {parts.map((part, j) =>
                           part.startsWith('**') && part.endsWith('**') ? (
-                            <strong key={j} className="font-semibold">{part.slice(2, -2)}</strong>
+                            <strong key={j} className="font-semibold">
+                              {part.slice(2, -2)}
+                            </strong>
                           ) : (
                             <span key={j}>{part}</span>
-                          ),
+                          )
                         )}
                       </p>
                     );
@@ -179,9 +190,18 @@ export default function ChatStub() {
               <div className="flex justify-start">
                 <div className="bg-slate-100 rounded-2xl rounded-bl-md px-4 py-3">
                   <div className="flex gap-1">
-                    <span className="w-2 h-2 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <span className="w-2 h-2 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <span className="w-2 h-2 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+                    <span
+                      className="w-2 h-2 rounded-full bg-slate-400 animate-bounce"
+                      style={{ animationDelay: '0ms' }}
+                    />
+                    <span
+                      className="w-2 h-2 rounded-full bg-slate-400 animate-bounce"
+                      style={{ animationDelay: '150ms' }}
+                    />
+                    <span
+                      className="w-2 h-2 rounded-full bg-slate-400 animate-bounce"
+                      style={{ animationDelay: '300ms' }}
+                    />
                   </div>
                 </div>
               </div>
@@ -198,7 +218,9 @@ export default function ChatStub() {
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') handleSend(); }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSend();
+                }}
                 placeholder="Ask about the assessment..."
                 className="flex-1 px-3 py-2 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-violet-200 focus:bg-white"
                 aria-label="Chat message"

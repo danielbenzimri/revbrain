@@ -108,8 +108,15 @@ test.describe('Assessment Flow', () => {
 
   test('all domain tabs render without errors', async ({ page }) => {
     const tabs = [
-      'products', 'pricing', 'rules', 'code',
-      'integrations', 'amendments', 'approvals', 'documents', 'dataReporting',
+      'products',
+      'pricing',
+      'rules',
+      'code',
+      'integrations',
+      'amendments',
+      'approvals',
+      'documents',
+      'dataReporting',
     ];
 
     for (const tab of tabs) {

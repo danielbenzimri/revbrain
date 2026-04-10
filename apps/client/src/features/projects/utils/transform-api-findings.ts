@@ -215,7 +215,12 @@ export function transformFindingsToAssessmentData(
 
   // ── Key Findings ──
   const hotspots = findings.filter((f) => f.artifactType === 'ComplexityHotspot');
-  const keyFindings: Array<{ id: string; text: string; severity: 'success' | 'warning' | 'error'; domain: DomainId | null }> = [
+  const keyFindings: Array<{
+    id: string;
+    text: string;
+    severity: 'success' | 'warning' | 'error';
+    domain: DomainId | null;
+  }> = [
     ...(qcpScripts.length > 0
       ? [
           {
@@ -466,17 +471,19 @@ export function transformFindingsToAssessmentData(
   featureUtilization.push({
     feature: 'Guided Selling',
     status: guidedSellingFlows.length > 0 ? 'Active' : 'Not Used',
-    detail: guidedSellingFlows.length > 0
-      ? `${guidedSellingFlows.length} process(es) detected`
-      : 'No guided selling processes found',
+    detail:
+      guidedSellingFlows.length > 0
+        ? `${guidedSellingFlows.length} process(es) detected`
+        : 'No guided selling processes found',
   });
   // QCP (custom scripts)
   featureUtilization.push({
     feature: 'Custom Quote Calculator (QCP)',
     status: qcpScripts.length > 0 ? 'Active' : 'Not Used',
-    detail: qcpScripts.length > 0
-      ? `${qcpScripts.length} script(s) inject JS into pricing`
-      : 'No QCP scripts detected',
+    detail:
+      qcpScripts.length > 0
+        ? `${qcpScripts.length} script(s) inject JS into pricing`
+        : 'No QCP scripts detected',
   });
   // Advanced Approvals
   const advancedApprovalRules = findings.filter(
@@ -485,9 +492,10 @@ export function transformFindingsToAssessmentData(
   featureUtilization.push({
     feature: 'Advanced Approvals (sbaa)',
     status: advancedApprovalRules.length > 0 ? 'Active' : 'Not Used',
-    detail: advancedApprovalRules.length > 0
-      ? `${advancedApprovalRules.length} rule(s) configured`
-      : 'sbaa package not detected or no rules configured',
+    detail:
+      advancedApprovalRules.length > 0
+        ? `${advancedApprovalRules.length} rule(s) configured`
+        : 'sbaa package not detected or no rules configured',
   });
   // Multi-Dimensional Quoting
   const mdqProducts = findings.filter(
@@ -496,9 +504,10 @@ export function transformFindingsToAssessmentData(
   featureUtilization.push({
     feature: 'Multi-Dimensional Quoting (MDQ)',
     status: mdqProducts.length > 0 ? 'Active' : 'Not Used',
-    detail: mdqProducts.length > 0
-      ? `${mdqProducts.length} MDQ-related item(s) detected`
-      : 'No MDQ configuration detected',
+    detail:
+      mdqProducts.length > 0
+        ? `${mdqProducts.length} MDQ-related item(s) detected`
+        : 'No MDQ configuration detected',
   });
   // Contracted Pricing
   const contractedPricing = findings.filter(
@@ -507,9 +516,10 @@ export function transformFindingsToAssessmentData(
   featureUtilization.push({
     feature: 'Contracted Pricing',
     status: contractedPricing.length > 0 ? 'Active' : 'Not Used',
-    detail: contractedPricing.length > 0
-      ? `${contractedPricing.length} contracted price record(s)`
-      : 'No contracted pricing data found',
+    detail:
+      contractedPricing.length > 0
+        ? `${contractedPricing.length} contracted price record(s)`
+        : 'No contracted pricing data found',
   });
 
   // Dormant Product Families — families with 0 quoting in 90 days
@@ -538,45 +548,75 @@ export function transformFindingsToAssessmentData(
   const discountScheduleDedup = {
     totalCount: scheduleNames.length,
     uniqueCount: uniqueScheduleNames.size,
-    duplicateDetail: duplicateCount > 0
-      ? `${duplicateCount} duplicate schedule name(s) detected — may indicate copy/paste or version drift`
-      : 'No duplicates detected.',
+    duplicateDetail:
+      duplicateCount > 0
+        ? `${duplicateCount} duplicate schedule name(s) detected — may indicate copy/paste or version drift`
+        : 'No duplicates detected.',
   };
 
   // Low-volume warning
-  const lowVolumeWarning = totalQuotes < 50
-    ? `Low volume: only ${totalQuotes} quotes in the 90-day assessment window. Statistical breakdowns may not be representative.`
-    : null;
+  const lowVolumeWarning =
+    totalQuotes < 50
+      ? `Low volume: only ${totalQuotes} quotes in the 90-day assessment window. Statistical breakdowns may not be representative.`
+      : null;
 
   // Complexity Scores (computed from findings density)
-  const configDepth = Math.min(100, Math.round(
-    (priceRuleFindings.length * 3 +
-      findings.filter((f) => f.artifactType === 'ProductRule' || f.artifactType === 'SBQQ__ProductRule__c').length * 2 +
-      discountSchedules.length * 2 +
-      productFindings.length * 0.2) * 0.8
-  ));
-  const pricingLogic = Math.min(100, Math.round(
-    (qcpScripts.length * 25 +
-      priceRuleFindings.length * 4 +
-      discountSchedules.length * 2) * 0.9
-  ));
-  const customLevel = Math.min(100, Math.round(
-    (findings.filter((f) => f.artifactType === 'ApexClass').length * 3 +
-      findings.filter((f) => f.artifactType === 'ApexTrigger').length * 5 +
-      findings.filter((f) => f.artifactType === 'Flow').length * 2 +
-      qcpScripts.length * 15)
-  ));
-  const dataVolUsage = Math.min(100, Math.round(
-    totalQuotes * 0.15 +
-    (findings.find((f) => f.artifactType === 'DataCount' && f.artifactName?.includes('QuoteLine'))?.countValue ?? 0) * 0.01
-  ));
-  const techDebt = Math.min(100, Math.round(
-    dormantFamilies.length * 5 +
-    duplicateCount * 10 +
-    findings.filter((f) => f.notes?.toLowerCase().includes('inactive') || f.notes?.toLowerCase().includes('stale')).length * 3
-  ));
+  const configDepth = Math.min(
+    100,
+    Math.round(
+      (priceRuleFindings.length * 3 +
+        findings.filter(
+          (f) => f.artifactType === 'ProductRule' || f.artifactType === 'SBQQ__ProductRule__c'
+        ).length *
+          2 +
+        discountSchedules.length * 2 +
+        productFindings.length * 0.2) *
+        0.8
+    )
+  );
+  const pricingLogic = Math.min(
+    100,
+    Math.round(
+      (qcpScripts.length * 25 + priceRuleFindings.length * 4 + discountSchedules.length * 2) * 0.9
+    )
+  );
+  const customLevel = Math.min(
+    100,
+    Math.round(
+      findings.filter((f) => f.artifactType === 'ApexClass').length * 3 +
+        findings.filter((f) => f.artifactType === 'ApexTrigger').length * 5 +
+        findings.filter((f) => f.artifactType === 'Flow').length * 2 +
+        qcpScripts.length * 15
+    )
+  );
+  const dataVolUsage = Math.min(
+    100,
+    Math.round(
+      totalQuotes * 0.15 +
+        (findings.find(
+          (f) => f.artifactType === 'DataCount' && f.artifactName?.includes('QuoteLine')
+        )?.countValue ?? 0) *
+          0.01
+    )
+  );
+  const techDebt = Math.min(
+    100,
+    Math.round(
+      dormantFamilies.length * 5 +
+        duplicateCount * 10 +
+        findings.filter(
+          (f) =>
+            f.notes?.toLowerCase().includes('inactive') || f.notes?.toLowerCase().includes('stale')
+        ).length *
+          3
+    )
+  );
   const overall = Math.round(
-    configDepth * 0.25 + pricingLogic * 0.25 + customLevel * 0.20 + dataVolUsage * 0.15 + techDebt * 0.15
+    configDepth * 0.25 +
+      pricingLogic * 0.25 +
+      customLevel * 0.2 +
+      dataVolUsage * 0.15 +
+      techDebt * 0.15
   );
 
   const complexityScores = {
@@ -589,11 +629,44 @@ export function transformFindingsToAssessmentData(
   };
 
   const scoringMethodology = [
-    { dimension: 'Configuration Depth', weight: 25, score: configDepth, drivers: 'Price rules, product rules, discount schedules, product catalog size', rationale: `${priceRuleFindings.length} price rules, ${discountSchedules.length} discount schedules, ${productFindings.length} products` },
-    { dimension: 'Pricing Logic', weight: 25, score: pricingLogic, drivers: 'QCP scripts, price rule complexity, discount structures', rationale: qcpScripts.length > 0 ? `QCP active with ${qcpScripts.length} script(s) — highest pricing complexity factor` : `${activePriceRules} active price rules drive pricing complexity` },
-    { dimension: 'Customization Level', weight: 20, score: customLevel, drivers: 'Apex classes, triggers, flows referencing CPQ objects', rationale: `${findings.filter((f) => f.artifactType === 'ApexClass').length} Apex classes, ${findings.filter((f) => f.artifactType === 'ApexTrigger').length} triggers` },
-    { dimension: 'Data Volume & Usage', weight: 15, score: dataVolUsage, drivers: '90-day quoting volume, quote line density', rationale: `${totalQuotes} quotes in assessment window` },
-    { dimension: 'Technical Debt', weight: 15, score: techDebt, drivers: 'Dormant configs, duplicate rules, inactive items', rationale: `${dormantFamilies.length} dormant families, ${duplicateCount} duplicate schedules` },
+    {
+      dimension: 'Configuration Depth',
+      weight: 25,
+      score: configDepth,
+      drivers: 'Price rules, product rules, discount schedules, product catalog size',
+      rationale: `${priceRuleFindings.length} price rules, ${discountSchedules.length} discount schedules, ${productFindings.length} products`,
+    },
+    {
+      dimension: 'Pricing Logic',
+      weight: 25,
+      score: pricingLogic,
+      drivers: 'QCP scripts, price rule complexity, discount structures',
+      rationale:
+        qcpScripts.length > 0
+          ? `QCP active with ${qcpScripts.length} script(s) — highest pricing complexity factor`
+          : `${activePriceRules} active price rules drive pricing complexity`,
+    },
+    {
+      dimension: 'Customization Level',
+      weight: 20,
+      score: customLevel,
+      drivers: 'Apex classes, triggers, flows referencing CPQ objects',
+      rationale: `${findings.filter((f) => f.artifactType === 'ApexClass').length} Apex classes, ${findings.filter((f) => f.artifactType === 'ApexTrigger').length} triggers`,
+    },
+    {
+      dimension: 'Data Volume & Usage',
+      weight: 15,
+      score: dataVolUsage,
+      drivers: '90-day quoting volume, quote line density',
+      rationale: `${totalQuotes} quotes in assessment window`,
+    },
+    {
+      dimension: 'Technical Debt',
+      weight: 15,
+      score: techDebt,
+      drivers: 'Dormant configs, duplicate rules, inactive items',
+      rationale: `${dormantFamilies.length} dormant families, ${duplicateCount} duplicate schedules`,
+    },
   ];
 
   return {

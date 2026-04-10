@@ -15,9 +15,7 @@ const mockT = (key: string) => key;
 function renderOverview(onDomainClick = vi.fn()) {
   return {
     onDomainClick,
-    ...render(
-      <OverviewTab assessment={assessment} onDomainClick={onDomainClick} t={mockT} />,
-    ),
+    ...render(<OverviewTab assessment={assessment} onDomainClick={onDomainClick} t={mockT} />),
   };
 }
 

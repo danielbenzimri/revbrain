@@ -25,8 +25,7 @@ const USER_EMAIL = process.env.E2E_NONADMIN_EMAIL!; // david@acme.com (org_owner
 const USER_PASSWORD = process.env.E2E_NONADMIN_PASSWORD!;
 const BASE_URL = process.env.E2E_BASE_URL ?? 'https://stg.revbrain.ai';
 const API_URL =
-  process.env.E2E_API_URL ??
-  'https://qutuivleheybnkbhpdbn.supabase.co/functions/v1/api';
+  process.env.E2E_API_URL ?? 'https://qutuivleheybnkbhpdbn.supabase.co/functions/v1/api';
 const ANON_KEY =
   process.env.E2E_ANON_KEY ??
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1dHVpdmxlaGV5Ym5rYmhwZGJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTQxMzgsImV4cCI6MjA4OTY3MDEzOH0.Arjxw1r7DhD1LLGQBiNkPkqo1ycsQVBQqXPEjugPsPA';
@@ -61,7 +60,7 @@ async function getToken(email: string, password: string): Promise<string> {
 async function api(
   token: string,
   apiPath: string,
-  options?: RequestInit,
+  options?: RequestInit
 ): Promise<{ status: number; body: Record<string, unknown> }> {
   const res = await fetch(`${API_URL}${apiPath}`, {
     ...options,
@@ -99,8 +98,8 @@ const IGNORED_CONSOLE_PATTERNS = [
   'Failed to load resource: net::ERR',
   'Refused to apply style',
   'AuthRetryableFetchError',
-  'status of 403',  // expected: org_owner prefetch hits admin endpoints
-  'status of 401',  // expected: token refresh race conditions
+  'status of 403', // expected: org_owner prefetch hits admin endpoints
+  'status of 401', // expected: token refresh race conditions
   'supabase',
   'MOCK',
   '[LocalAPI]',
@@ -164,15 +163,11 @@ test.describe('System Admin Flows', () => {
     await page.goto(`${BASE_URL}/admin`);
     await page.waitForTimeout(3_000);
 
-    await expect(
-      page.locator('text=/Total Tenants|סה"כ ארגונים/i').first(),
-    ).toBeVisible({ timeout: 10_000 });
-    await expect(
-      page.locator('text=/Active Users|משתמשים פעילים/i').first(),
-    ).toBeVisible();
-    await expect(
-      page.locator('text=/Recent Activity|פעילות אחרונה/i').first(),
-    ).toBeVisible();
+    await expect(page.locator('text=/Total Tenants|סה"כ ארגונים/i').first()).toBeVisible({
+      timeout: 10_000,
+    });
+    await expect(page.locator('text=/Active Users|משתמשים פעילים/i').first()).toBeVisible();
+    await expect(page.locator('text=/Recent Activity|פעילות אחרונה/i').first()).toBeVisible();
 
     m.assertClean('Admin Dashboard');
   });
@@ -189,13 +184,15 @@ test.describe('System Admin Flows', () => {
     await expect(page.locator('text=Acme Corp')).toBeVisible({ timeout: 10_000 });
 
     // Click first tenant row to open detail
-    await page.locator('tr').filter({ hasText: /Acme Corp/ }).first().click();
+    await page
+      .locator('tr')
+      .filter({ hasText: /Acme Corp/ })
+      .first()
+      .click();
     await page.waitForTimeout(2_000);
 
     // Detail panel or page should show tenant info
-    await expect(
-      page.locator('text=/Acme Corp/').first(),
-    ).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('text=/Acme Corp/').first()).toBeVisible({ timeout: 10_000 });
 
     m.assertClean('Admin Tenants');
   });
@@ -208,9 +205,7 @@ test.describe('System Admin Flows', () => {
     await page.goto(`${BASE_URL}/admin/users`);
     await page.waitForTimeout(3_000);
 
-    await expect(
-      page.locator('text=daniel@revbrain.ai'),
-    ).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('text=daniel@revbrain.ai')).toBeVisible({ timeout: 10_000 });
 
     // Verify multiple users present
     const rows = page.locator('tbody tr');
@@ -302,9 +297,9 @@ test.describe('Org Owner Flows', () => {
 
     // Sidebar should have user-facing nav, not admin nav
     const sidebar = page.locator('nav, aside');
-    await expect(
-      sidebar.locator('text=/Projects|פרויקטים/i').first(),
-    ).toBeVisible({ timeout: 10_000 });
+    await expect(sidebar.locator('text=/Projects|פרויקטים/i').first()).toBeVisible({
+      timeout: 10_000,
+    });
 
     // Should NOT see admin-only nav items
     const adminNav = sidebar.locator('text=/Tenants|ארגונים/i');
@@ -322,9 +317,9 @@ test.describe('Org Owner Flows', () => {
     await page.goto(`${BASE_URL}/projects`);
     await page.waitForTimeout(3_000);
 
-    await expect(
-      page.locator('text=/Projects|פרויקטים/i').first(),
-    ).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('text=/Projects|פרויקטים/i').first()).toBeVisible({
+      timeout: 10_000,
+    });
 
     m.assertClean('Org Owner Projects');
   });
@@ -343,7 +338,7 @@ test.describe('Org Owner Flows', () => {
     });
     expect(status).toBe(201);
     expect((body as { success: boolean }).success).toBe(true);
-    testProjectId = ((body as { data: { id: string } }).data).id;
+    testProjectId = (body as { data: { id: string } }).data.id;
     expect(testProjectId).toBeTruthy();
 
     // Navigate to projects page and verify it appears
@@ -351,9 +346,7 @@ test.describe('Org Owner Flows', () => {
     await page.goto(`${BASE_URL}/projects`);
     await page.waitForTimeout(3_000);
 
-    await expect(
-      page.locator(`text=${projectName}`).first(),
-    ).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator(`text=${projectName}`).first()).toBeVisible({ timeout: 10_000 });
 
     m.assertClean('Create Project');
   });
@@ -631,7 +624,7 @@ test.describe('No 500 Errors — Full Page Sweep', () => {
 
       expect(
         m.serverErrors,
-        `${pg.name}: 500 responses found: ${m.serverErrors.join(', ')}`,
+        `${pg.name}: 500 responses found: ${m.serverErrors.join(', ')}`
       ).toEqual([]);
     });
   }
@@ -645,7 +638,7 @@ test.describe('No 500 Errors — Full Page Sweep', () => {
 
       expect(
         m.serverErrors,
-        `${pg.name}: 500 responses found: ${m.serverErrors.join(', ')}`,
+        `${pg.name}: 500 responses found: ${m.serverErrors.join(', ')}`
       ).toEqual([]);
     });
   }

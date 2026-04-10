@@ -169,8 +169,16 @@ test.describe('Assessment Dashboard', () => {
     await loginAndGoToAssessment(page);
 
     const tabs = [
-      'overview', 'products', 'pricing', 'rules', 'code',
-      'integrations', 'amendments', 'approvals', 'documents', 'dataReporting',
+      'overview',
+      'products',
+      'pricing',
+      'rules',
+      'code',
+      'integrations',
+      'amendments',
+      'approvals',
+      'documents',
+      'dataReporting',
     ];
 
     for (const tab of tabs) {

@@ -6,8 +6,8 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 10pt; color: #333; line-height: 1.5; }
 
-  /* Page breaks */
-  .page-break { page-break-before: always; }
+  /* Page breaks — both modern + legacy for browser compat */
+  .page-break { break-before: page; page-break-before: always; }
 
   /* Headers */
   h1 { font-size: 22pt; color: #1a5276; margin-bottom: 8px; font-weight: 700; }
@@ -51,6 +51,26 @@
   .glance-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
   .glance-section { border: 1px solid #ddd; border-radius: 4px; padding: 10px; }
   .glance-section h4 { background: #2e86c1; color: white; margin: -10px -10px 8px; padding: 6px 10px; border-radius: 4px 4px 0 0; font-size: 9pt; }
+
+  /* V2.1 Checkbox tables (R-01, R-02) */
+  .cb-table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 12px 0; }
+  .cb-table th { background: #2c5282; color: #fff; padding: 6px 8px; text-align: center; font-size: 11px; }
+  .cb-table th:first-child { text-align: left; }
+  .cb-table td { padding: 5px 8px; border-bottom: 1px solid #e2e8f0; }
+  .cb-table tr:nth-child(even) { background: #f7fafc; }
+  .cb-table .cb-cell { text-align: center; width: 70px; }
+  .cb-table .cb-count { text-align: right; width: 90px; font-variant-numeric: tabular-nums; }
+  .cb-table .cb-notes { color: #718096; font-size: 11px; }
+  .cb-table .cb-nested { padding-left: 24px; }
+  .cb-check { display: inline-block; width: 16px; height: 16px; border: 2px solid #cbd5e0; border-radius: 3px; position: relative; }
+  .cb-check.checked { background: #2c5282; border-color: #2c5282; }
+  .cb-check.checked::after { content: ''; position: absolute; left: 4px; top: 1px; width: 5px; height: 9px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+
+  /* V2.1 Numeric column alignment */
+  .numeric { text-align: right; font-variant-numeric: tabular-nums; }
+
+  /* V2.1 Page rules for PDF */
+  @page { size: A4 portrait; margin: 1in; }
 </style>
 </head>
 <body>
@@ -61,8 +81,8 @@
     <table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Client Name</td><td>Assessment Client</td></tr>
 <tr><td>Salesforce Org ID</td><td>00D3x000001AjYCEA0</td></tr>
 <tr><td>Environment</td><td>Production</td></tr>
-<tr><td>Assessment Date</td><td>2026-04-01</td></tr>
-<tr><td>Assessment Period</td><td>Jan 1, 2026 – Apr 1, 2026 (90 Days)</td></tr>
+<tr><td>Assessment Date</td><td>2026-04-09</td></tr>
+<tr><td>Assessment Period</td><td>Jan 9, 2026 – Apr 9, 2026 (90 Days)</td></tr>
 <tr><td>CPQ Package Version</td><td>232.2.0</td></tr>
 <tr><td>Adv. Approvals Version</td><td>sbaa v232.2.0 (Active)</td></tr>
 <tr><td>Document Version</td><td>1.0</td></tr>
@@ -115,10 +135,10 @@
   <div class="page-break">
     <h2>2. Executive Summary</h2>
     <h3>2.1 Key Findings</h3>
-    <table><thead><tr><th>#</th><th>Finding</th><th>Detail</th><th>Confidence</th></tr></thead><tbody><tr><td>1</td><td><strong>Custom Quote Calculator Plugin (QCP) active: q2cJSQCP, q2cJSPSP, Q2CBundleSpecific, qtc_Debugger, q2cJSPSP5ALEX</strong></td><td>5 custom script(s) with JavaScript-based pricing logic injected into every calculation (q2cJSQCP, q2cJSPSP, Q2CBundleSpecific, qtc_Debugger, q2cJSPSP5ALEX). This fundamentally changes the complexity profile.</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>2</td><td><strong>20 active price rules and 37 active product rules detected</strong></td><td>Heavy rule density indicates significant business logic encoded in CPQ configuration. Pricing logic concentrated in business-specific rules.</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>3</td><td><strong>Multi-currency enabled</strong></td><td>The org uses multi-currency pricing. This increases field mapping complexity during migration — currency fields, exchange rate handling, and multi-currency price book structures require verification.</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>4</td><td><strong>67 Apex classes reference CPQ objects</strong></td><td>Substantial custom code dependency suggests significant customization beyond standard CPQ configuration.</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+    <table><thead><tr><th>#</th><th>Finding</th><th>Detail</th><th>Confidence</th></tr></thead><tbody><tr><td>1</td><td><strong>Custom Quote Calculator Plugin (QCP) active: q2cJSQCP (from CustomScript)</strong></td><td>5 custom script(s) with JavaScript-based pricing logic injected into every calculation (q2cJSQCP, q2cJSPSP, Q2CBundleSpecific, qtc_Debugger, q2cJSPSP5ALEX) — indicating a fundamentally different complexity profile than standard CPQ configuration.</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>2</td><td><strong>20 active price rules and 37 active product rules detected</strong></td><td>20 price rules and 37 product rules actively configured — indicating significant business logic encoded in CPQ rule configuration.</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>3</td><td><strong>Multi-currency enabled</strong></td><td>The org uses multi-currency pricing — adding complexity to field mapping, exchange rate handling, and multi-currency price book structures.</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>4</td><td><strong>67 Apex classes reference CPQ objects</strong></td><td>67 Apex classes reference CPQ objects — indicating substantial custom code dependency beyond standard CPQ configuration.</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
 <tr><td>5</td><td><strong>176 active products across 21 families</strong></td><td>Product catalog spans 21 families with active products. 16 families show zero quoting activity in the assessment window — indicating potential catalog dormancy or narrow active use-case.</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr></tbody></table>
 
     <h3>2.2 Complexity Scores</h3>
@@ -415,6 +435,143 @@
     <h3>6.5 Product Option Attachment</h3>
     <p>475 product options across 19 bundle-capable products (18 with active nested options). 19 products have bundle configuration enabled (SBQQ__ConfigurationType__c); 18 are actively configured as bundles with child product options.</p>
     <table><thead><tr><th>Metric</th><th>Status</th></tr></thead><tbody><tr><td>Attachment Rate Analysis</td><td>Not extracted — requires quote line cross-reference data.</td></tr></tbody></table>
+  </div>
+  
+  
+  <div class="page-break">
+    <h2>6.6 Bundles &amp; Options Deep Dive</h2>
+    
+    <div style="display: flex; gap: 4%; margin: 16px 0;">
+      
+    <div style="flex: 0 0 48%; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px; padding: 12px 16px;">
+      <div style="font-weight: 700; font-size: 13px; color: #2c5282; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; border-bottom: 2px solid #2c5282; padding-bottom: 4px;">
+        Bundle Configuration
+      </div>
+      
+      <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #f0f0f0;">
+        <span>Bundle-capable</span>
+        <span style="font-weight: 600;">19</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #f0f0f0;">
+        <span>Configured Bundles</span>
+        <span style="font-weight: 600;">18</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #f0f0f0;">
+        <span>Nested Bundles</span>
+        <span style="font-weight: 600;">0</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #f0f0f0;">
+        <span>Avg Options/Bundle</span>
+        <span style="font-weight: 600;">26.4</span>
+      </div>
+    </div>
+      
+    <div style="flex: 0 0 48%; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px; padding: 12px 16px;">
+      <div style="font-weight: 700; font-size: 13px; color: #2c5282; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; border-bottom: 2px solid #2c5282; padding-bottom: 4px;">
+        Option Complexity
+      </div>
+      
+      <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #f0f0f0;">
+        <span>Total Options</span>
+        <span style="font-weight: 600;">475</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #f0f0f0;">
+        <span>Options w/Constraints</span>
+        <span style="font-weight: 600;">0%</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #f0f0f0;">
+        <span>Config Attributes</span>
+        <span style="font-weight: 600;">0%</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #f0f0f0;">
+        <span>Config Rules</span>
+        <span style="font-weight: 600;">21%</span>
+      </div>
+    </div>
+    </div>
+
+    
+    <h4>6.6.1 Related Object Utilization</h4>
+    <table class="cb-table">
+      <thead>
+    <tr>
+      <th style="text-align: left; min-width: 180px;">Observation</th>
+      <th class="cb-cell">Not Used</th>
+      <th class="cb-cell">Sometimes</th>
+      <th class="cb-cell">Most Times</th>
+      <th class="cb-cell">Always</th>
+      <th style="text-align: right; width: 90px;">Count / %</th>
+      <th style="text-align: left;">Notes</th>
+    </tr></thead>
+      <tbody>
+      <tr>
+        <td><strong>Features</strong></td>
+        <td class="cb-cell"><span class="cb-check checked"></span></td>
+        <td class="cb-cell"><span class="cb-check"></span></td>
+        <td class="cb-cell"><span class="cb-check"></span></td>
+        <td class="cb-cell"><span class="cb-check"></span></td>
+        <td class="cb-count">0 / 0%</td>
+        <td class="cb-notes">Products with features</td>
+      </tr>
+      <tr>
+        <td><strong>Feature Orphans</strong></td>
+        <td class="cb-cell"><span class="cb-check checked"></span></td>
+        <td class="cb-cell"><span class="cb-check"></span></td>
+        <td class="cb-cell"><span class="cb-check"></span></td>
+        <td class="cb-cell"><span class="cb-check"></span></td>
+        <td class="cb-count">0</td>
+        <td class="cb-notes">Tech debt indicator</td>
+      </tr>
+      <tr>
+        <td><strong>Bundle-capable Products</strong></td>
+        <td class="cb-cell"><span class="cb-check"></span></td>
+        <td class="cb-cell"><span class="cb-check checked"></span></td>
+        <td class="cb-cell"><span class="cb-check"></span></td>
+        <td class="cb-cell"><span class="cb-check"></span></td>
+        <td class="cb-count">19 / 11%</td>
+        <td class="cb-notes">18 configured bundles</td>
+      </tr>
+      <tr>
+        <td><strong>Nested Bundles</strong></td>
+        <td class="cb-cell"><span class="cb-check checked"></span></td>
+        <td class="cb-cell"><span class="cb-check"></span></td>
+        <td class="cb-cell"><span class="cb-check"></span></td>
+        <td class="cb-cell"><span class="cb-check"></span></td>
+        <td class="cb-count">0</td>
+        <td class="cb-notes">Options that are also bundles</td>
+      </tr>
+      <tr>
+        <td><strong>Options</strong></td>
+        <td class="cb-cell"><span class="cb-check"></span></td>
+        <td class="cb-cell"><span class="cb-check"></span></td>
+        <td class="cb-cell"><span class="cb-check"></span></td>
+        <td class="cb-cell"><span class="cb-check checked"></span></td>
+        <td class="cb-count">475</td>
+        <td class="cb-notes">Total option records</td>
+      </tr>
+      <tr>
+        <td><strong>Optional For</strong></td>
+        <td class="cb-cell"><span class="cb-check checked"></span></td>
+        <td class="cb-cell"><span class="cb-check"></span></td>
+        <td class="cb-cell"><span class="cb-check"></span></td>
+        <td class="cb-cell"><span class="cb-check"></span></td>
+        <td class="cb-count">0 / 0%</td>
+        <td class="cb-notes">Products as options (API only)</td>
+      </tr>
+      <tr>
+        <td><strong>Option Constraints</strong></td>
+        <td class="cb-cell"><span class="cb-check checked"></span></td>
+        <td class="cb-cell"><span class="cb-check"></span></td>
+        <td class="cb-cell"><span class="cb-check"></span></td>
+        <td class="cb-cell"><span class="cb-check"></span></td>
+        <td class="cb-count">0</td>
+        <td class="cb-notes">(API only)</td>
+      </tr></tbody>
+    </table>
+    <p style="font-size: 11px; color: #718096; margin-top: 4px;">
+      <em>Checkbox thresholds: Not Used = 0%, Sometimes = 1-50%, Most Times = 51-95%, Always = &gt;95%</em>
+    </p>
+    <p style="font-size: 11px; color: #718096;">% = count / Active Products (176)</p>
   </div>
   
   <div class="page-break">
@@ -735,6 +892,59 @@
   </div>
   
   <div class="page-break">
+    <h2>10. Related Functionality Analysis</h2>
+    
+    <h4>10.1 Related Functionality Detection</h4>
+    <table class="cb-table">
+      <thead>
+    <tr>
+      <th style="text-align: left; min-width: 200px;">Functionality</th>
+      <th class="cb-cell">Not Used</th>
+      <th class="cb-cell">Used</th>
+      <th style="text-align: left;">Notes</th>
+    </tr></thead>
+      <tbody>
+      <tr>
+        <td><strong>Experience Cloud</strong></td>
+        <td class="cb-cell"><span class="cb-check checked"></span></td>
+        <td class="cb-cell"><span class="cb-check"></span></td>
+        <td class="cb-notes"></td>
+      </tr>
+      <tr>
+        <td><strong>Salesforce Billing</strong></td>
+        <td class="cb-cell"><span class="cb-check checked"></span></td>
+        <td class="cb-cell"><span class="cb-check"></span></td>
+        <td class="cb-notes"></td>
+      </tr>
+      <tr>
+        <td><strong>Named Credentials</strong></td>
+        <td class="cb-cell"><span class="cb-check"></span></td>
+        <td class="cb-cell"><span class="cb-check checked"></span></td>
+        <td class="cb-notes">1 detected</td>
+      </tr>
+      <tr>
+        <td><strong>Platform Events</strong></td>
+        <td class="cb-cell"><span class="cb-check"></span></td>
+        <td class="cb-cell"><span class="cb-check checked"></span></td>
+        <td class="cb-notes">47 CPQ-related</td>
+      </tr>
+      <tr>
+        <td><strong>Apex Callouts</strong></td>
+        <td class="cb-cell"><span class="cb-check checked"></span></td>
+        <td class="cb-cell"><span class="cb-check"></span></td>
+        <td class="cb-notes"></td>
+      </tr>
+      <tr>
+        <td><strong>Tax Calculator</strong></td>
+        <td class="cb-cell"><span class="cb-check checked"></span></td>
+        <td class="cb-cell"><span class="cb-check"></span></td>
+        <td class="cb-notes"></td>
+      </tr></tbody>
+    </table>
+    <h4>Observations</h4><ul><li>External dependencies detected — integration points require assessment</li></ul>
+  </div>
+  
+  <div class="page-break">
     <h2>10. Configuration Complexity Hotspots</h2>
     <table><thead><tr><th>Hotspot</th><th>Severity</th><th>Analysis</th></tr></thead><tbody><tr><td><strong>Quote Pricing Engine</strong></td><td><span class="severity-critical">Critical</span></td><td>20 active Price Rules + 37 active Product Rules + 22 Discount Schedules + 5 Custom Scripts (QCP) form a multi-layered calculation chain.</td></tr>
 <tr><td><strong>DocuSign Document Chain</strong></td><td><span class="severity-high">High</span></td><td>Quote PDF generation → DocuSign envelope → signing → Order creation spans CPQ, document generation, and e-signature.</td></tr>
@@ -882,5 +1092,6 @@
 <tr><td>User Behavior</td><td><span class="badge badge-partial">Partial</span></td><td>Derived from audit trail sampling. Full user session analysis and adoption scoring not extracted.</td></tr>
 <tr><td>Product Rule Complexity</td><td><span class="badge badge-partial">Not extracted</span></td><td>Product rule structural complexity: Not extracted — requires condition/action scope analysis beyond current metadata extraction.</td></tr></tbody></table>
   </div>
+  
 </body>
 </html>

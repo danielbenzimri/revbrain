@@ -8,7 +8,13 @@ import { useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import DomainTab from './DomainTab';
 import type { DomainData, DomainId, AssessmentData } from '../../mocks/assessment-mock-data';
-import { CodeWaterfall, ReportFreshness, SubscriptionCard, TwinFieldMatrix, GuidedSellingCards } from './visualizations';
+import {
+  CodeWaterfall,
+  ReportFreshness,
+  SubscriptionCard,
+  TwinFieldMatrix,
+  GuidedSellingCards,
+} from './visualizations';
 
 // ---------------------------------------------------------------------------
 // Stat card config per domain
@@ -22,15 +28,24 @@ function getStatCards(domain: DomainData, t: (key: string) => string) {
       return [
         { label: t('assessment.table.items'), value: s.total },
         { label: t('assessment.complexity.high'), value: s.highComplexity },
-        { label: t('assessment.subTabs.guidedSelling'), value: domain.guidedSellingFlows?.length ?? 0 },
-        { label: t('assessment.subTabs.qleCustomizations'), value: domain.qleCustomizations?.length ?? 0 },
+        {
+          label: t('assessment.subTabs.guidedSelling'),
+          value: domain.guidedSellingFlows?.length ?? 0,
+        },
+        {
+          label: t('assessment.subTabs.qleCustomizations'),
+          value: domain.qleCustomizations?.length ?? 0,
+        },
       ];
     case 'pricing':
       return [
         { label: t('assessment.table.items'), value: s.total },
         { label: t('assessment.complexity.high'), value: s.highComplexity },
         { label: 'With Apex', value: domain.items.filter((i) => i.linesOfCode).length },
-        { label: 'Calc Plugins', value: domain.items.filter((i) => i.apiName.includes('CustomScript')).length },
+        {
+          label: 'Calc Plugins',
+          value: domain.items.filter((i) => i.apiName.includes('CustomScript')).length,
+        },
       ];
     case 'rules':
       return [
@@ -44,13 +59,19 @@ function getStatCards(domain: DomainData, t: (key: string) => string) {
         { label: t('assessment.table.items'), value: s.total },
         { label: t('assessment.table.linesOfCode'), value: '4,200+' },
         { label: t('assessment.complexity.high'), value: s.highComplexity },
-        { label: t('assessment.subTabs.securityPermissions'), value: domain.permissionSets?.length ?? 0 },
+        {
+          label: t('assessment.subTabs.securityPermissions'),
+          value: domain.permissionSets?.length ?? 0,
+        },
       ];
     case 'integrations':
       return [
         { label: t('assessment.table.items'), value: s.total },
         { label: t('assessment.complexity.high'), value: s.highComplexity },
-        { label: t('assessment.subTabs.packageDependencies'), value: domain.packageDependencies?.length ?? 0 },
+        {
+          label: t('assessment.subTabs.packageDependencies'),
+          value: domain.packageDependencies?.length ?? 0,
+        },
         { label: t('assessment.migrationStatus.manual'), value: s.manual },
       ];
     case 'amendments':
@@ -77,8 +98,14 @@ function getStatCards(domain: DomainData, t: (key: string) => string) {
     case 'dataReporting':
       return [
         { label: 'Reports', value: domain.reports?.filter((r) => r.type === 'report').length ?? 0 },
-        { label: 'Dashboards', value: domain.reports?.filter((r) => r.type === 'dashboard').length ?? 0 },
-        { label: 'CPQ-Referencing', value: domain.reports?.filter((r) => r.referencesCpq).length ?? 0 },
+        {
+          label: 'Dashboards',
+          value: domain.reports?.filter((r) => r.type === 'dashboard').length ?? 0,
+        },
+        {
+          label: 'CPQ-Referencing',
+          value: domain.reports?.filter((r) => r.referencesCpq).length ?? 0,
+        },
         { label: t('assessment.complexity.high'), value: s.highComplexity },
       ];
     default:
@@ -102,7 +129,12 @@ interface DomainTabWrapperProps {
   t: (key: string, opts?: Record<string, unknown>) => string;
 }
 
-export default function DomainTabWrapper({ domainId, assessment, onItemClick, t }: DomainTabWrapperProps) {
+export default function DomainTabWrapper({
+  domainId,
+  assessment,
+  onItemClick,
+  t,
+}: DomainTabWrapperProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const domain = assessment.domains.find((d) => d.id === domainId);
 
@@ -112,7 +144,7 @@ export default function DomainTabWrapper({ domainId, assessment, onItemClick, t 
     (subTabId: string) => {
       setSearchParams({ tab: domainId, sub: subTabId });
     },
-    [domainId, setSearchParams],
+    [domainId, setSearchParams]
   );
 
   if (!domain) return null;
@@ -131,7 +163,11 @@ export default function DomainTabWrapper({ domainId, assessment, onItemClick, t 
     }
 
     // Amendments sub-tab visualizations
-    if (domainId === 'amendments' && currentSub === 'subscription-management' && domain.subscriptionManagement) {
+    if (
+      domainId === 'amendments' &&
+      currentSub === 'subscription-management' &&
+      domain.subscriptionManagement
+    ) {
       return <SubscriptionCard data={domain.subscriptionManagement} t={t} />;
     }
 
@@ -145,7 +181,8 @@ export default function DomainTabWrapper({ domainId, assessment, onItemClick, t 
 
   // Extra visualizations rendered above the domain tab (not replacing inventory)
   const showCodeWaterfall = domainId === 'code' && (!currentSub || currentSub === 'code-inventory');
-  const showReportFreshness = domainId === 'dataReporting' && currentSub === 'reports-dashboards' && domain.reports;
+  const showReportFreshness =
+    domainId === 'dataReporting' && currentSub === 'reports-dashboards' && domain.reports;
 
   return (
     <div className="space-y-4">

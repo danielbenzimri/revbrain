@@ -47,7 +47,7 @@ export default function RiskBlockerCards({
   // Top 3 risks by severity
   const severityOrder = ['critical', 'high', 'medium', 'low'];
   const sortedRisks = [...risks].sort(
-    (a, b) => severityOrder.indexOf(a.severity) - severityOrder.indexOf(b.severity),
+    (a, b) => severityOrder.indexOf(a.severity) - severityOrder.indexOf(b.severity)
   );
   const topRisks = sortedRisks.slice(0, 3);
 
@@ -93,7 +93,9 @@ export default function RiskBlockerCards({
           data-testid="blockers-card"
         >
           <div className="flex items-center gap-2 mb-3">
-            <span className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center text-red-600 text-xs font-bold">!</span>
+            <span className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center text-red-600 text-xs font-bold">
+              !
+            </span>
             <h3 className="text-sm font-semibold text-red-800">
               {t('assessment.overview.blockers')}
             </h3>
@@ -110,7 +112,8 @@ export default function RiskBlockerCards({
               ))}
             {blockedCount > 0 && (
               <p className="text-sm text-slate-500">
-                {blockedCount} {t('assessment.migrationStatus.blocked').toLowerCase()} items across domains
+                {blockedCount} {t('assessment.migrationStatus.blocked').toLowerCase()} items across
+                domains
               </p>
             )}
           </div>

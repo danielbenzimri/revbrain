@@ -520,9 +520,7 @@ export class ApprovalsCollector extends BaseCollector {
     const installedPackages = this.ctx.describeCache.get('_installedPackages') as
       | Array<{ namespace: string; name: string; version: string }>
       | undefined;
-    const sbaaPackage = installedPackages?.find(
-      (pkg) => pkg.namespace.toLowerCase() === 'sbaa'
-    );
+    const sbaaPackage = installedPackages?.find((pkg) => pkg.namespace.toLowerCase() === 'sbaa');
 
     if (!sbaaPackage) {
       return { installed: false, accessible: false };

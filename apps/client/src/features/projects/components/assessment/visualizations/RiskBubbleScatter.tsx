@@ -40,7 +40,7 @@ export default function RiskBubbleScatter({ risks, t }: RiskBubbleScatterProps) 
   const sorted = [...risks].sort((a, b) => {
     const sevDiff = SEVERITY_ORDER.indexOf(a.severity) - SEVERITY_ORDER.indexOf(b.severity);
     if (sevDiff !== 0) return sevDiff;
-    return (b.likelihood * b.impact) - (a.likelihood * a.impact);
+    return b.likelihood * b.impact - a.likelihood * a.impact;
   });
 
   // Show top 10 risks to keep it readable
@@ -50,9 +50,7 @@ export default function RiskBubbleScatter({ risks, t }: RiskBubbleScatterProps) 
   return (
     <div className="bg-white rounded-2xl p-5" data-testid="risk-bubble-scatter">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-slate-900">
-          Top Risks by Severity
-        </h3>
+        <h3 className="text-sm font-semibold text-slate-900">Top Risks by Severity</h3>
         <div className="flex items-center gap-3 text-xs">
           {Object.entries(CATEGORY_STYLES).map(([key, { bg }]) => (
             <span key={key} className="flex items-center gap-1.5">
@@ -83,9 +81,7 @@ export default function RiskBubbleScatter({ risks, t }: RiskBubbleScatterProps) 
                 <p className="text-xs text-slate-700 truncate flex-1" title={risk.description}>
                   {shortDesc}
                 </p>
-                <span className="text-[10px] text-slate-400 tabular-nums shrink-0">
-                  {score}/25
-                </span>
+                <span className="text-[10px] text-slate-400 tabular-nums shrink-0">{score}/25</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="flex-1 h-5 rounded bg-slate-50 overflow-hidden">

@@ -53,7 +53,10 @@ export function RunSelector({ runs, currentIndex, onRunChange, t }: RunSelectorP
         aria-label="Select run"
       >
         <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-        {t('assessment.header.runInfo', { number: current.number, timeAgo: formatTimeAgo(current.completedAt) })}
+        {t('assessment.header.runInfo', {
+          number: current.number,
+          timeAgo: formatTimeAgo(current.completedAt),
+        })}
         <ChevronDown size={14} />
       </button>
 
@@ -62,7 +65,10 @@ export function RunSelector({ runs, currentIndex, onRunChange, t }: RunSelectorP
           {runs.map((run, i) => (
             <button
               key={run.id}
-              onClick={() => { onRunChange(i); setOpen(false); }}
+              onClick={() => {
+                onRunChange(i);
+                setOpen(false);
+              }}
               className={`w-full text-start px-3 py-2 text-sm hover:bg-slate-50 ${i === currentIndex ? 'text-violet-600 font-medium' : 'text-slate-700'}`}
             >
               Run #{run.number} · {formatTimeAgo(run.completedAt)} · {run.itemsScanned} items
@@ -103,7 +109,9 @@ export function DeltaSummary({ delta, t }: DeltaSummaryProps) {
           const { icon, color } = DELTA_ICONS[detail.type] || DELTA_ICONS.unchanged;
           return (
             <div key={i} className="flex items-start gap-2.5">
-              <span className={`w-5 h-5 rounded-full ${color} flex items-center justify-center text-xs font-bold shrink-0 mt-0.5`}>
+              <span
+                className={`w-5 h-5 rounded-full ${color} flex items-center justify-center text-xs font-bold shrink-0 mt-0.5`}
+              >
                 {icon}
               </span>
               <p className="text-sm text-slate-700">{t(detail.text)}</p>

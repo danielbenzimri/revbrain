@@ -38,7 +38,8 @@ export default function EffortEstimation({ assessment, t }: EffortEstimationProp
     return Object.values(domainHours).reduce((s, v) => s + (parseFloat(v) || 0), 0);
   }, [domainHours]);
 
-  const additionalHoursSum = (parseFloat(testingHours) || 0) + (parseFloat(pmHours) || 0) + (parseFloat(trainingHours) || 0);
+  const additionalHoursSum =
+    (parseFloat(testingHours) || 0) + (parseFloat(pmHours) || 0) + (parseFloat(trainingHours) || 0);
   const grandTotal = domainHoursSum + additionalHoursSum;
 
   return (
@@ -63,15 +64,25 @@ export default function EffortEstimation({ assessment, t }: EffortEstimationProp
             {domainRows.map((row) => (
               <tr key={row.id} role="row">
                 <td className="px-4 py-3 text-sm font-medium text-slate-900">{row.label}</td>
-                <td className="px-4 py-3 text-sm text-slate-600 text-end tabular-nums">{row.total}</td>
-                <td className="px-4 py-3 text-sm text-emerald-600 text-end tabular-nums">{row.auto}</td>
-                <td className="px-4 py-3 text-sm text-amber-600 text-end tabular-nums">{row.guided}</td>
-                <td className="px-4 py-3 text-sm text-red-600 text-end tabular-nums">{row.manual}</td>
+                <td className="px-4 py-3 text-sm text-slate-600 text-end tabular-nums">
+                  {row.total}
+                </td>
+                <td className="px-4 py-3 text-sm text-emerald-600 text-end tabular-nums">
+                  {row.auto}
+                </td>
+                <td className="px-4 py-3 text-sm text-amber-600 text-end tabular-nums">
+                  {row.guided}
+                </td>
+                <td className="px-4 py-3 text-sm text-red-600 text-end tabular-nums">
+                  {row.manual}
+                </td>
                 <td className="px-4 py-3 text-end">
                   <input
                     type="number"
                     value={domainHours[row.id] || ''}
-                    onChange={(e) => setDomainHours((prev) => ({ ...prev, [row.id]: e.target.value }))}
+                    onChange={(e) =>
+                      setDomainHours((prev) => ({ ...prev, [row.id]: e.target.value }))
+                    }
                     className="w-20 px-2 py-1 text-sm text-end border border-slate-200 rounded bg-white focus:outline-none focus:ring-2 focus:ring-violet-200 tabular-nums"
                     placeholder="—"
                     aria-label={`${row.label} hours`}
@@ -82,19 +93,34 @@ export default function EffortEstimation({ assessment, t }: EffortEstimationProp
 
             {/* Subtotal */}
             <tr className="bg-slate-50 font-semibold" role="row">
-              <td className="px-4 py-3 text-sm text-slate-900">{t('assessment.effortEstimation.subtotal')}</td>
-              <td className="px-4 py-3 text-sm text-slate-900 text-end tabular-nums">{subtotalItems}</td>
-              <td className="px-4 py-3 text-sm text-emerald-700 text-end tabular-nums">{subtotalAuto}</td>
-              <td className="px-4 py-3 text-sm text-amber-700 text-end tabular-nums">{subtotalGuided}</td>
-              <td className="px-4 py-3 text-sm text-red-700 text-end tabular-nums">{subtotalManual}</td>
-              <td className="px-4 py-3 text-sm text-slate-900 text-end tabular-nums" data-testid="subtotal-hours">
+              <td className="px-4 py-3 text-sm text-slate-900">
+                {t('assessment.effortEstimation.subtotal')}
+              </td>
+              <td className="px-4 py-3 text-sm text-slate-900 text-end tabular-nums">
+                {subtotalItems}
+              </td>
+              <td className="px-4 py-3 text-sm text-emerald-700 text-end tabular-nums">
+                {subtotalAuto}
+              </td>
+              <td className="px-4 py-3 text-sm text-amber-700 text-end tabular-nums">
+                {subtotalGuided}
+              </td>
+              <td className="px-4 py-3 text-sm text-red-700 text-end tabular-nums">
+                {subtotalManual}
+              </td>
+              <td
+                className="px-4 py-3 text-sm text-slate-900 text-end tabular-nums"
+                data-testid="subtotal-hours"
+              >
                 {domainHoursSum > 0 ? domainHoursSum : '—'}
               </td>
             </tr>
 
             {/* Additional rows */}
             <tr role="row">
-              <td className="px-4 py-3 text-sm text-slate-700">{t('assessment.effortEstimation.testingQa')}</td>
+              <td className="px-4 py-3 text-sm text-slate-700">
+                {t('assessment.effortEstimation.testingQa')}
+              </td>
               <td colSpan={4}></td>
               <td className="px-4 py-3 text-end">
                 <input
@@ -108,7 +134,9 @@ export default function EffortEstimation({ assessment, t }: EffortEstimationProp
               </td>
             </tr>
             <tr role="row">
-              <td className="px-4 py-3 text-sm text-slate-700">{t('assessment.effortEstimation.projectMgmt')}</td>
+              <td className="px-4 py-3 text-sm text-slate-700">
+                {t('assessment.effortEstimation.projectMgmt')}
+              </td>
               <td colSpan={4}></td>
               <td className="px-4 py-3 text-end">
                 <input
@@ -122,7 +150,9 @@ export default function EffortEstimation({ assessment, t }: EffortEstimationProp
               </td>
             </tr>
             <tr role="row">
-              <td className="px-4 py-3 text-sm text-slate-700">{t('assessment.effortEstimation.trainingCm')}</td>
+              <td className="px-4 py-3 text-sm text-slate-700">
+                {t('assessment.effortEstimation.trainingCm')}
+              </td>
               <td colSpan={4}></td>
               <td className="px-4 py-3 text-end">
                 <input
@@ -138,9 +168,14 @@ export default function EffortEstimation({ assessment, t }: EffortEstimationProp
 
             {/* Grand Total */}
             <tr className="bg-violet-50 font-bold" role="row">
-              <td className="px-4 py-3 text-sm text-violet-900">{t('assessment.effortEstimation.grandTotal')}</td>
+              <td className="px-4 py-3 text-sm text-violet-900">
+                {t('assessment.effortEstimation.grandTotal')}
+              </td>
               <td colSpan={4}></td>
-              <td className="px-4 py-3 text-sm text-violet-900 text-end tabular-nums" data-testid="grand-total">
+              <td
+                className="px-4 py-3 text-sm text-violet-900 text-end tabular-nums"
+                data-testid="grand-total"
+              >
                 {grandTotal > 0 ? grandTotal : '—'}
               </td>
             </tr>

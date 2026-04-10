@@ -16,7 +16,12 @@ import type {
 import { fetchOne, insertOne } from './base.ts';
 import { toCamelCase, toSnakeCase } from './case-map.ts';
 
-const ACTIVE_STATUSES: AssessmentRunStatus[] = ['queued', 'dispatched', 'running', 'cancel_requested'];
+const ACTIVE_STATUSES: AssessmentRunStatus[] = [
+  'queued',
+  'dispatched',
+  'running',
+  'cancel_requested',
+];
 
 export class PostgRESTAssessmentRepository implements AssessmentRepository {
   constructor(private supabase: SupabaseClient) {}
@@ -105,7 +110,8 @@ export class PostgRESTAssessmentRepository implements AssessmentRepository {
     const updateData: Record<string, unknown> = { status };
 
     if (extra?.statusReason !== undefined) updateData.statusReason = extra.statusReason;
-    if (extra?.cancelRequestedAt !== undefined) updateData.cancelRequestedAt = extra.cancelRequestedAt;
+    if (extra?.cancelRequestedAt !== undefined)
+      updateData.cancelRequestedAt = extra.cancelRequestedAt;
     if (extra?.completedAt !== undefined) updateData.completedAt = extra.completedAt;
     if (extra?.failedAt !== undefined) updateData.failedAt = extra.failedAt;
     if (extra?.error !== undefined) updateData.error = extra.error;
@@ -132,7 +138,8 @@ export class PostgRESTAssessmentRepository implements AssessmentRepository {
       .select()
       .maybeSingle();
 
-    if (error) throw new Error(`PostgREST casDispatch assessment_runs/${id} failed: ${error.message}`);
+    if (error)
+      throw new Error(`PostgREST casDispatch assessment_runs/${id} failed: ${error.message}`);
     return data ? toCamelCase<AssessmentRunEntity>(data) : null;
   }
 
@@ -148,18 +155,13 @@ export class PostgRESTAssessmentRepository implements AssessmentRepository {
     const limit = options?.limit ?? 500;
     const offset = options?.offset ?? 0;
 
-    let query = this.supabase
-      .from('assessment_findings')
-      .select('*')
-      .eq('run_id', runId);
+    let query = this.supabase.from('assessment_findings').select('*').eq('run_id', runId);
 
     if (options?.domain) {
       query = query.eq('domain', options.domain);
     }
 
-    query = query
-      .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1);
+    query = query.order('created_at', { ascending: false }).range(offset, offset + limit - 1);
 
     const { data, error } = await query;
     if (error || !data) return [];

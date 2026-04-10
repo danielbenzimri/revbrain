@@ -17,16 +17,22 @@ dotenv.config({ path: path.resolve(__dirname, '.env.e2e') });
 const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL!;
 const ADMIN_PASSWORD = process.env.E2E_ADMIN_PASSWORD!;
 const BASE_URL = process.env.E2E_BASE_URL ?? 'https://stg.revbrain.ai';
-const API_URL = process.env.E2E_API_URL ?? 'https://qutuivleheybnkbhpdbn.supabase.co/functions/v1/api';
-const ANON_KEY = process.env.E2E_ANON_KEY ?? 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1dHVpdmxlaGV5Ym5rYmhwZGJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTQxMzgsImV4cCI6MjA4OTY3MDEzOH0.Arjxw1r7DhD1LLGQBiNkPkqo1ycsQVBQqXPEjugPsPA';
+const API_URL =
+  process.env.E2E_API_URL ?? 'https://qutuivleheybnkbhpdbn.supabase.co/functions/v1/api';
+const ANON_KEY =
+  process.env.E2E_ANON_KEY ??
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1dHVpdmxlaGV5Ym5rYmhwZGJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTQxMzgsImV4cCI6MjA4OTY3MDEzOH0.Arjxw1r7DhD1LLGQBiNkPkqo1ycsQVBQqXPEjugPsPA';
 
 // Helper: get auth token
 async function getToken(): Promise<string> {
-  const res = await fetch(`https://qutuivleheybnkbhpdbn.supabase.co/auth/v1/token?grant_type=password`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', apikey: ANON_KEY },
-    body: JSON.stringify({ email: ADMIN_EMAIL, password: ADMIN_PASSWORD }),
-  });
+  const res = await fetch(
+    `https://qutuivleheybnkbhpdbn.supabase.co/auth/v1/token?grant_type=password`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: ANON_KEY },
+      body: JSON.stringify({ email: ADMIN_EMAIL, password: ADMIN_PASSWORD }),
+    }
+  );
   const { access_token } = await res.json();
   return access_token;
 }
@@ -75,7 +81,9 @@ test.describe('Flow 1: Admin Dashboard', () => {
     await page.waitForTimeout(3_000);
 
     // Stats cards visible
-    await expect(page.locator('text=/Total Tenants|סה"כ ארגונים/i').first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('text=/Total Tenants|סה"כ ארגונים/i').first()).toBeVisible({
+      timeout: 10_000,
+    });
     await expect(page.locator('text=/Active Users|משתמשים פעילים/i').first()).toBeVisible();
 
     // Recent activity section
@@ -215,8 +223,8 @@ test.describe('Flow 5: Plans', () => {
     await page.waitForTimeout(3_000);
 
     // Check the page loaded — either shows plan cards or an error boundary
-    const hasPlans = await page.locator('text=Starter').count() > 0;
-    const hasError = await page.locator('text=/Something went wrong/i').count() > 0;
+    const hasPlans = (await page.locator('text=Starter').count()) > 0;
+    const hasError = (await page.locator('text=/Something went wrong/i').count()) > 0;
     expect(hasPlans || hasError).toBe(true);
 
     if (hasPlans) {
@@ -255,7 +263,9 @@ test.describe('Flow 6: Profile Settings', () => {
     await page.waitForTimeout(3_000);
 
     // Should show profile form with our name
-    await expect(page.locator('input[value="Daniel Aviram"]').first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('input[value="Daniel Aviram"]').first()).toBeVisible({
+      timeout: 10_000,
+    });
   });
 });
 
@@ -284,7 +294,7 @@ test.describe('Flow 7: Language Switching', () => {
 
     // Select Hebrew
     const hebrewOption = page.locator('text=/עברית|Hebrew/i').first();
-    if (await hebrewOption.count() > 0) {
+    if ((await hebrewOption.count()) > 0) {
       await hebrewOption.click();
       await page.waitForTimeout(2_000);
 
@@ -293,7 +303,9 @@ test.describe('Flow 7: Language Switching', () => {
       expect(dir).toBe('rtl');
 
       // Verify Hebrew text appears
-      await expect(page.locator('text=/סקירה|ארגונים|משתמשים/i').first()).toBeVisible({ timeout: 5_000 });
+      await expect(page.locator('text=/סקירה|ארגונים|משתמשים/i').first()).toBeVisible({
+        timeout: 5_000,
+      });
     }
   });
 });
@@ -305,11 +317,17 @@ test.describe('Flow 7: Language Switching', () => {
 test.describe('Flow 8: Error Handling', () => {
   test('API: non-admin gets 403 on admin endpoints', async () => {
     // Login as a regular user (david@acme.com) and try admin endpoint
-    const loginRes = await fetch('https://qutuivleheybnkbhpdbn.supabase.co/auth/v1/token?grant_type=password', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', apikey: ANON_KEY },
-      body: JSON.stringify({ email: process.env.E2E_NONADMIN_EMAIL ?? 'david@acme.com', password: process.env.E2E_NONADMIN_PASSWORD ?? '' }),
-    });
+    const loginRes = await fetch(
+      'https://qutuivleheybnkbhpdbn.supabase.co/auth/v1/token?grant_type=password',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', apikey: ANON_KEY },
+        body: JSON.stringify({
+          email: process.env.E2E_NONADMIN_EMAIL ?? 'david@acme.com',
+          password: process.env.E2E_NONADMIN_PASSWORD ?? '',
+        }),
+      }
+    );
 
     if (!loginRes.ok) {
       test.skip(true, 'Could not login as david@acme.com');

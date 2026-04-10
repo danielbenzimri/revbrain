@@ -59,12 +59,10 @@ describe('AuthService', () => {
       auth: {
         admin: {
           createUser: vi.fn(),
-          generateLink: vi
-            .fn()
-            .mockResolvedValue({
-              data: { properties: { action_link: 'https://example.com/set-password' } },
-              error: null,
-            }),
+          generateLink: vi.fn().mockResolvedValue({
+            data: { properties: { action_link: 'https://example.com/set-password' } },
+            error: null,
+          }),
           deleteUser: vi.fn(),
           updateUserById: vi.fn(),
           listUsers: vi.fn(),

@@ -33,9 +33,7 @@ export default function CodeWaterfall({ items, t }: CodeWaterfallProps) {
   return (
     <div className="bg-white rounded-2xl p-5" data-testid="code-waterfall">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-slate-900">
-          Code Complexity Breakdown
-        </h3>
+        <h3 className="text-sm font-semibold text-slate-900">Code Complexity Breakdown</h3>
         <span className="text-xs text-slate-400 tabular-nums">
           {totalLoc.toLocaleString()} total {t('assessment.table.linesOfCode')}
         </span>

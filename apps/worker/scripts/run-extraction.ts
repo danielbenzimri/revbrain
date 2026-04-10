@@ -214,6 +214,17 @@ async function main() {
   console.log(`Total findings: ${totalFindings}`);
   console.log(`API calls: ${sfClient.getApiCallCount()}`);
   console.log(`Describe cache: ${ctx.describeCache.size} objects`);
+
+  // Save findings to JSON for report generator
+  const { writeFileSync } = await import('node:fs');
+  const { resolve, dirname } = await import('node:path');
+  const { fileURLToPath } = await import('node:url');
+  const __dirname = dirname(fileURLToPath(import.meta.url));
+  const allFindings = allResults.flatMap((r) => r.findings);
+  const outputPath = resolve(__dirname, '../output/assessment-results.json');
+  writeFileSync(outputPath, JSON.stringify({ findings: allFindings }, null, 2));
+  console.log(`\nFindings saved to: ${outputPath} (${allFindings.length} findings)`);
+  console.log('Run: npx tsx apps/worker/scripts/generate-report.ts');
 }
 
 main().catch((err) => {

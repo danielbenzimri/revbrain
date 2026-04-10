@@ -65,7 +65,9 @@ async function main() {
   console.log(`\n=== Canonical Counts (ReportCounts) ===`);
   const c = reportData.counts;
   console.log(`  totalProducts: ${c.totalProducts}`);
-  console.log(`  activeProducts: ${c.activeProducts} (source: ${c.activeProductSource}, status: ${c.activeProductStatus})`);
+  console.log(
+    `  activeProducts: ${c.activeProducts} (source: ${c.activeProductSource}, status: ${c.activeProductStatus})`
+  );
   console.log(`  bundleProducts: ${c.bundleProducts}`);
   console.log(`  productOptions: ${c.productOptions}`);
   console.log(`  productFamilies: ${c.productFamilies}`);
@@ -73,7 +75,9 @@ async function main() {
   console.log(`  activeProductRules: ${c.activeProductRules} of ${c.totalProductRules}`);
   console.log(`  totalQuotes: ${c.totalQuotes}`);
   console.log(`  totalQuoteLines: ${c.totalQuoteLines}`);
-  console.log(`  activeUsers: ${c.activeUsers} (source: ${c.activeUsersSource}, status: ${c.activeUserStatus})`);
+  console.log(
+    `  activeUsers: ${c.activeUsers} (source: ${c.activeUsersSource}, status: ${c.activeUserStatus})`
+  );
   console.log(`  sbaaInstalled: ${c.sbaaInstalled}`);
   console.log(`  sbaaVersionDisplay: ${c.sbaaVersionDisplay}`);
   console.log(`  approvalRuleCount: ${c.approvalRuleCount}`);
