@@ -20,6 +20,8 @@ COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY packages/contract/package.json packages/contract/
 COPY packages/database/package.json packages/database/
 COPY packages/seed-data/package.json packages/seed-data/
+COPY packages/migration-ir-contract/package.json packages/migration-ir-contract/
+COPY packages/bb3-normalizer/package.json packages/bb3-normalizer/
 COPY apps/worker/package.json apps/worker/
 
 # Install all dependencies (frozen lockfile for reproducibility)
@@ -29,6 +31,8 @@ RUN pnpm install --frozen-lockfile
 COPY packages/contract/ packages/contract/
 COPY packages/database/ packages/database/
 COPY packages/seed-data/ packages/seed-data/
+COPY packages/migration-ir-contract/ packages/migration-ir-contract/
+COPY packages/bb3-normalizer/ packages/bb3-normalizer/
 COPY apps/worker/ apps/worker/
 
 # Type-check (catches errors at build time, not runtime)
