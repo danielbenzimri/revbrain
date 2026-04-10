@@ -142,3 +142,81 @@ describe('PH8.1 — runBB3 end-to-end', () => {
     expect(result.graph).toBeDefined();
   });
 });
+
+describe('PH9.7 — default projected descriptors + catalog hash cascade', () => {
+  it('runBB3 with no descriptors produces non-empty edges[] (default cascades)', async () => {
+    const findings: AssessmentFindingInput[] = [
+      finding({
+        domain: 'pricing',
+        collectorName: 'pricing',
+        artifactType: 'SBQQ__PriceRule__c',
+        artifactName: 'Rule A',
+        findingKey: 'rule-a',
+        sourceType: 'object',
+        evidenceRefs: [{ type: 'field-ref', value: 'On Calculate' }],
+      }),
+      finding({
+        domain: 'pricing',
+        collectorName: 'pricing',
+        artifactType: 'SBQQ__PriceCondition__c',
+        artifactName: 'Cond 1',
+        findingKey: 'cond-1',
+        sourceType: 'object',
+        countValue: 1,
+        textValue: '100',
+        notes: 'greater than',
+        evidenceRefs: [{ type: 'record-id', value: 'rule-a' }],
+      }),
+    ];
+    const result = await runBB3(findings, { extractedAt: '2026-04-10T00:00:00Z' });
+    const parentOfEdges = result.graph.edges.filter((e) => e.edgeType === 'parent-of');
+    expect(parentOfEdges.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('runBB3 with explicit projectedDescriptors: [] disables projection', async () => {
+    const findings: AssessmentFindingInput[] = [
+      finding({
+        domain: 'pricing',
+        collectorName: 'pricing',
+        artifactType: 'SBQQ__PriceRule__c',
+        artifactName: 'Rule A',
+        findingKey: 'rule-a',
+        sourceType: 'object',
+        evidenceRefs: [{ type: 'field-ref', value: 'On Calculate' }],
+      }),
+      finding({
+        domain: 'pricing',
+        collectorName: 'pricing',
+        artifactType: 'SBQQ__PriceCondition__c',
+        artifactName: 'Cond 1',
+        findingKey: 'cond-1',
+        sourceType: 'object',
+        countValue: 1,
+        textValue: '100',
+        notes: 'greater than',
+        evidenceRefs: [{ type: 'record-id', value: 'rule-a' }],
+      }),
+    ];
+    const result = await runBB3(findings, {
+      normalizeOptions: { projectedDescriptors: [] },
+      extractedAt: '2026-04-10T00:00:00Z',
+    });
+    // Explicit empty list: no projected edges (cycles/synthetic edges
+    // may still exist, but parent-of should not).
+    expect(result.graph.edges.filter((e) => e.edgeType === 'parent-of')).toEqual([]);
+  });
+
+  it('runBB3 with a catalog populates schemaCatalogHash (G3 end-to-end)', async () => {
+    const findings: AssessmentFindingInput[] = [
+      finding({
+        artifactType: 'ObjectConfiguration',
+        artifactName: 'SBQQ__Quote__c',
+        textValue: 'Id, Name',
+        findingKey: 'oc-1',
+      }),
+    ];
+    const result = await runBB3(findings, { extractedAt: '2026-04-10T00:00:00Z' });
+    expect(result.graph.metadata.schemaCatalogHash).not.toBeNull();
+    expect(result.graph.metadata.schemaCatalogHash).toMatch(/^[A-Za-z0-9_-]{22}$/);
+  });
+});
