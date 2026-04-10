@@ -48,8 +48,12 @@ export interface BaselineSuiteFixtures {
   /**
    * Mutation producing a semantic edit — should PRESERVE id but
    * CHANGE contentHash. The default sets `detected: !detected`.
+   * Pass `null` to skip the content-change test for node types
+   * whose semantic payload equals the stable identity (e.g.
+   * `UnknownArtifactIR`, `CyclicDependencyIR` — id and contentHash
+   * are identical by construction).
    */
-  contentChangeMutation?: (finding: AssessmentFindingInput) => AssessmentFindingInput;
+  contentChangeMutation?: ((finding: AssessmentFindingInput) => AssessmentFindingInput) | null;
 }
 
 function defaultContext(): NormalizerContext {
@@ -75,7 +79,10 @@ function defaultContentChange(f: AssessmentFindingInput): AssessmentFindingInput
  */
 export function runBaselineSuite(fixtures: BaselineSuiteFixtures): void {
   const rename = fixtures.renameMutation ?? defaultRename;
-  const contentChange = fixtures.contentChangeMutation ?? defaultContentChange;
+  const contentChange =
+    fixtures.contentChangeMutation === undefined
+      ? defaultContentChange
+      : fixtures.contentChangeMutation;
 
   describe(`${fixtures.taskId} — ${fixtures.nodeType} baseline`, () => {
     it('happy path: valid finding produces exactly one node', () => {
@@ -118,13 +125,16 @@ export function runBaselineSuite(fixtures: BaselineSuiteFixtures): void {
       expect(ra.nodes[0]!.contentHash).toBe(rb.nodes[0]!.contentHash);
     });
 
-    it('semantic edit: same id, different contentHash', () => {
-      const a = fixtures.validFinding();
-      const b = contentChange(a);
-      const ra = fixtures.fn(a, defaultContext());
-      const rb = fixtures.fn(b, defaultContext());
-      expect(ra.nodes[0]!.id).toBe(rb.nodes[0]!.id);
-      expect(ra.nodes[0]!.contentHash).not.toBe(rb.nodes[0]!.contentHash);
-    });
+    if (contentChange !== null) {
+      const cc = contentChange;
+      it('semantic edit: same id, different contentHash', () => {
+        const a = fixtures.validFinding();
+        const b = cc(a);
+        const ra = fixtures.fn(a, defaultContext());
+        const rb = fixtures.fn(b, defaultContext());
+        expect(ra.nodes[0]!.id).toBe(rb.nodes[0]!.id);
+        expect(ra.nodes[0]!.contentHash).not.toBe(rb.nodes[0]!.contentHash);
+      });
+    }
   });
 }
