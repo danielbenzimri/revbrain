@@ -36,7 +36,9 @@ describe('RunSelector', () => {
 
   it('calls onRunChange when selecting a different run', () => {
     const onRunChange = vi.fn();
-    render(<RunSelector runs={assessment.runs} currentIndex={0} onRunChange={onRunChange} t={mockT} />);
+    render(
+      <RunSelector runs={assessment.runs} currentIndex={0} onRunChange={onRunChange} t={mockT} />
+    );
     const button = screen.getByLabelText('Select run');
     fireEvent.click(button);
     const runButtons = screen.getAllByText(/Run #/);

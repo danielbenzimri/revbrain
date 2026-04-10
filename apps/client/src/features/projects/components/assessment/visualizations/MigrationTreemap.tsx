@@ -10,16 +10,49 @@ import type { DomainData, DomainId } from '../../../mocks/assessment-mock-data';
 // Color logic
 // ---------------------------------------------------------------------------
 
-function getDominantColor(stats: DomainData['stats']): { bg: string; text: string; badge: string; badgeText: string; label: string } {
+function getDominantColor(stats: DomainData['stats']): {
+  bg: string;
+  text: string;
+  badge: string;
+  badgeText: string;
+  label: string;
+} {
   const { auto, manual, blocked, total } = stats;
-  if (total === 0) return { bg: 'bg-slate-50', text: 'text-slate-600', badge: 'bg-slate-200', badgeText: 'text-slate-600', label: '—' };
+  if (total === 0)
+    return {
+      bg: 'bg-slate-50',
+      text: 'text-slate-600',
+      badge: 'bg-slate-200',
+      badgeText: 'text-slate-600',
+      label: '—',
+    };
 
   const autoPercent = auto / total;
   const manualPercent = (manual + blocked) / total;
 
-  if (manualPercent > 0.5) return { bg: 'bg-red-50', text: 'text-red-900', badge: 'bg-red-200', badgeText: 'text-red-800', label: 'Manual' };
-  if (autoPercent > 0.5) return { bg: 'bg-emerald-50', text: 'text-emerald-900', badge: 'bg-emerald-200', badgeText: 'text-emerald-800', label: 'Auto' };
-  return { bg: 'bg-amber-50', text: 'text-amber-900', badge: 'bg-amber-200', badgeText: 'text-amber-800', label: 'Guided' };
+  if (manualPercent > 0.5)
+    return {
+      bg: 'bg-red-50',
+      text: 'text-red-900',
+      badge: 'bg-red-200',
+      badgeText: 'text-red-800',
+      label: 'Manual',
+    };
+  if (autoPercent > 0.5)
+    return {
+      bg: 'bg-emerald-50',
+      text: 'text-emerald-900',
+      badge: 'bg-emerald-200',
+      badgeText: 'text-emerald-800',
+      label: 'Auto',
+    };
+  return {
+    bg: 'bg-amber-50',
+    text: 'text-amber-900',
+    badge: 'bg-amber-200',
+    badgeText: 'text-amber-800',
+    label: 'Guided',
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -81,7 +114,9 @@ export default function MigrationTreemap({ domains, onDomainClick, t }: Migratio
                 className={`${bg} p-4 flex flex-col justify-between transition-all hover:brightness-95 overflow-hidden ${i > 0 ? 'border-s border-slate-200' : ''}`}
                 style={{ width: `${width}%`, minHeight: 160 }}
               >
-                <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded self-end ${badge} ${badgeText}`}>
+                <span
+                  className={`text-[10px] font-semibold px-1.5 py-0.5 rounded self-end ${badge} ${badgeText}`}
+                >
                   {label}
                 </span>
                 <div className="mt-auto">

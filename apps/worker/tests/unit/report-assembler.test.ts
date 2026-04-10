@@ -424,7 +424,11 @@ describe('assembleReport', () => {
     const report = assembleReport(findings);
     for (const finding of report.executiveSummary.keyFindings) {
       expect(finding.detail).not.toContain('RCA');
-      expect(finding.detail).not.toContain('migration');
+      // V6-4: "migration" is allowed in multi-currency context (complexity implication)
+      // but "post-migration" and standalone migration planning language are still blocked
+      if (!finding.title.includes('Multi-currency')) {
+        expect(finding.detail).not.toContain('migration');
+      }
       expect(finding.detail).not.toContain('post-migration');
     }
   });

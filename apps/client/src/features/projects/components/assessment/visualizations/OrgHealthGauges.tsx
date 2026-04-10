@@ -56,18 +56,20 @@ interface LicenseCardProps {
 
 function LicenseCard({ label, count, status }: LicenseCardProps) {
   return (
-    <div className={`rounded-xl px-4 py-3 text-center ${
-      status === 'missing' ? 'bg-red-50 ring-1 ring-red-200' : 'bg-emerald-50'
-    }`}>
-      <p className={`text-2xl font-bold tabular-nums ${
-        status === 'missing' ? 'text-red-600' : 'text-emerald-600'
-      }`}>
+    <div
+      className={`rounded-xl px-4 py-3 text-center ${
+        status === 'missing' ? 'bg-red-50 ring-1 ring-red-200' : 'bg-emerald-50'
+      }`}
+    >
+      <p
+        className={`text-2xl font-bold tabular-nums ${
+          status === 'missing' ? 'text-red-600' : 'text-emerald-600'
+        }`}
+      >
         {count}
       </p>
       <p className="text-xs text-slate-600 mt-0.5">{label}</p>
-      {status === 'missing' && (
-        <p className="text-xs text-red-500 font-medium mt-1">Required</p>
-      )}
+      {status === 'missing' && <p className="text-xs text-red-500 font-medium mt-1">Required</p>}
     </div>
   );
 }
@@ -94,9 +96,7 @@ export default function OrgHealthGauges({ orgHealth, t }: OrgHealthGaugesProps) 
         <h3 className="text-sm font-semibold text-slate-900">
           {t('assessment.subTabs.orgHealth')}
         </h3>
-        <span className="text-xs text-slate-400">
-          {orgHealth.edition} Edition
-        </span>
+        <span className="text-xs text-slate-400">{orgHealth.edition} Edition</span>
       </div>
 
       <div className="flex items-start justify-around mb-6">
@@ -121,11 +121,7 @@ export default function OrgHealthGauges({ orgHealth, t }: OrgHealthGaugesProps) 
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <LicenseCard
-          label="CPQ Licenses"
-          count={orgHealth.cpqLicenseCount}
-          status="ok"
-        />
+        <LicenseCard label="CPQ Licenses" count={orgHealth.cpqLicenseCount} status="ok" />
         <LicenseCard
           label="RCA Licenses"
           count={orgHealth.rcaLicenseCount}

@@ -23,7 +23,7 @@ function renderComponent(overrides = {}) {
       onViewAllBlockers={onViewAllBlockers}
       t={mockT}
       {...overrides}
-    />,
+    />
   );
   return { ...result, onViewAllRisks, onViewAllBlockers };
 }

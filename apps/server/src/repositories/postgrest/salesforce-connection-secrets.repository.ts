@@ -51,9 +51,7 @@ function hexToBuffer(hex: string): Buffer {
 // Repository
 // ---------------------------------------------------------------------------
 
-export class PostgRESTSalesforceConnectionSecretsRepository
-  implements SalesforceConnectionSecretsRepository
-{
+export class PostgRESTSalesforceConnectionSecretsRepository implements SalesforceConnectionSecretsRepository {
   private _masterKey: Buffer | null = null;
 
   constructor(private supabase: SupabaseClient) {}
@@ -163,10 +161,7 @@ export class PostgRESTSalesforceConnectionSecretsRepository
   }
 
   async deleteByConnectionId(connectionId: string): Promise<boolean> {
-    const { error } = await this.supabase
-      .from(TABLE)
-      .delete()
-      .eq('connection_id', connectionId);
+    const { error } = await this.supabase.from(TABLE).delete().eq('connection_id', connectionId);
 
     return !error;
   }
@@ -195,9 +190,7 @@ export class PostgRESTSalesforceConnectionSecretsRepository
     );
 
     // Use toCamelCase for the non-encrypted fields, then override tokens
-    const base = toCamelCase<Record<string, unknown>>(
-      row as unknown as Record<string, unknown>
-    );
+    const base = toCamelCase<Record<string, unknown>>(row as unknown as Record<string, unknown>);
 
     return {
       ...base,

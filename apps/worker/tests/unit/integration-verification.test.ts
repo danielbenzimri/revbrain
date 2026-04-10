@@ -96,9 +96,13 @@ describe('T7: Validation rule count SOQL verification', () => {
     // Status: Pending SOQL execution against live org
     const extractedCount = 25;
     const objectsCovered = [
-      'OrderItem', 'Order', 'Opportunity',
-      'SBQQ__QuoteLineGroup__c', 'SBQQ__QuoteLine__c',
-      'SBQQ__Quote__c', 'Product2',
+      'OrderItem',
+      'Order',
+      'Opportunity',
+      'SBQQ__QuoteLineGroup__c',
+      'SBQQ__QuoteLine__c',
+      'SBQQ__Quote__c',
+      'Product2',
     ];
     expect(extractedCount).toBe(25);
     expect(objectsCovered.length).toBe(7);

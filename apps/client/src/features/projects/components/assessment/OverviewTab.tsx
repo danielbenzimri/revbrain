@@ -19,6 +19,7 @@ import {
 } from './visualizations';
 import ExecutiveSummary from './ExecutiveSummary';
 import CPQIntelligence from './CPQIntelligence';
+import PdfParitySections, { AtAGlanceSection } from './PdfParitySections';
 
 // ---------------------------------------------------------------------------
 // Migration Readiness Cards
@@ -73,6 +74,9 @@ export default function OverviewTab({ assessment, onDomainClick, t }: OverviewTa
 
       {/* Executive Summary — the first thing a VP sees */}
       <ExecutiveSummary assessment={assessment} t={t} />
+
+      {/* Section 3: CPQ At A Glance — 4-panel dashboard mirroring the PDF */}
+      <AtAGlanceSection assessment={assessment} />
 
       {/* Migration Readiness breakdown + Risks side by side */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -265,6 +269,12 @@ export default function OverviewTab({ assessment, onDomainClick, t }: OverviewTa
           Data extracted from the org that enriches the assessment.
           ═══════════════════════════════════════════════════════════ */}
       <CPQIntelligence assessment={assessment} t={t} />
+
+      {/* ═══════════════════════════════════════════════════════════
+          ZONE 2.6: PDF V2.1 PARITY — Product/Bundles Deep Dive,
+          Related Functionality, Quoting Activity, Installed Packages
+          ═══════════════════════════════════════════════════════════ */}
+      <PdfParitySections assessment={assessment} />
 
       {/* ═══════════════════════════════════════════════════════════
           ZONE 3: OPERATIONAL STATUS — "Where are we in the process?"

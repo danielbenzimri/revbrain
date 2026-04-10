@@ -5,7 +5,14 @@
  * → inventory table → insights panel → business context area
  */
 import { useState, useMemo } from 'react';
-import type { DomainData, AssessmentItem, SubTab, Complexity, MigrationStatus, TriageState } from '../../mocks/assessment-mock-data';
+import type {
+  DomainData,
+  AssessmentItem,
+  SubTab,
+  Complexity,
+  MigrationStatus,
+  TriageState,
+} from '../../mocks/assessment-mock-data';
 
 // ---------------------------------------------------------------------------
 // Stat Card
@@ -59,7 +66,7 @@ function MigrationStatusBar({ stats, t }: StatusBarProps) {
               className={`${color} h-full transition-all`}
               style={{ width: `${(count / total) * 100}%` }}
             />
-          ) : null,
+          ) : null
         )}
       </div>
       <div className="flex items-center gap-4 text-xs">
@@ -219,13 +226,19 @@ function InventoryTable({ items, onItemClick, t }: InventoryTableProps) {
                       {TRIAGE_INDICATOR[item.triageState].icon}
                     </span>
                     <div>
-                      <p className={`text-sm font-medium ${item.triageState === 'excluded' ? 'text-slate-400 line-through' : 'text-slate-900'}`}>{item.name}</p>
+                      <p
+                        className={`text-sm font-medium ${item.triageState === 'excluded' ? 'text-slate-400 line-through' : 'text-slate-900'}`}
+                      >
+                        {item.name}
+                      </p>
                       <p className="text-xs text-slate-400">{item.apiName}</p>
                     </div>
                   </div>
                 </td>
                 <td className="px-4 py-3">
-                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${COMPLEXITY_BADGE[item.complexity]}`}>
+                  <span
+                    className={`text-xs font-medium px-2 py-0.5 rounded-full ${COMPLEXITY_BADGE[item.complexity]}`}
+                  >
                     {t(`assessment.complexity.${item.complexity}`)}
                   </span>
                 </td>
@@ -375,9 +388,7 @@ export default function DomainTab({
             t={t}
           />
           <div className="flex-1 space-y-4">
-            {children || (
-              <InventoryTable items={domain.items} onItemClick={onItemClick} t={t} />
-            )}
+            {children || <InventoryTable items={domain.items} onItemClick={onItemClick} t={t} />}
           </div>
         </div>
       ) : (

@@ -22,9 +22,18 @@ interface SubscriptionCardProps {
 export function SubscriptionCard({ data, t }: SubscriptionCardProps) {
   const features = [
     { label: 'Co-termination', enabled: data.hasCoTermination, detail: data.coTerminationBasis },
-    { label: 'MDQ Products', enabled: data.hasMdq, detail: `${data.mdqProductCount} products`, isBlocker: true },
+    {
+      label: 'MDQ Products',
+      enabled: data.hasMdq,
+      detail: `${data.mdqProductCount} products`,
+      isBlocker: true,
+    },
     { label: 'Evergreen Subscriptions', enabled: data.hasEvergreen },
-    { label: 'Annual Uplift', enabled: data.hasUplift, detail: data.upliftDefaultPercent ? `${data.upliftDefaultPercent}% default` : undefined },
+    {
+      label: 'Annual Uplift',
+      enabled: data.hasUplift,
+      detail: data.upliftDefaultPercent ? `${data.upliftDefaultPercent}% default` : undefined,
+    },
     { label: 'Proration', enabled: true, detail: data.prorationMethod },
   ];
 
@@ -36,16 +45,18 @@ export function SubscriptionCard({ data, t }: SubscriptionCardProps) {
       <div className="space-y-2.5">
         {features.map((f, i) => (
           <div key={i} className="flex items-start gap-3">
-            <span className={`mt-0.5 text-sm ${f.enabled ? f.isBlocker ? 'text-red-500' : 'text-emerald-500' : 'text-slate-300'}`}>
-              {f.enabled ? f.isBlocker ? '⚠' : '✓' : '○'}
+            <span
+              className={`mt-0.5 text-sm ${f.enabled ? (f.isBlocker ? 'text-red-500' : 'text-emerald-500') : 'text-slate-300'}`}
+            >
+              {f.enabled ? (f.isBlocker ? '⚠' : '✓') : '○'}
             </span>
             <div>
-              <p className={`text-sm ${f.enabled ? 'text-slate-900 font-medium' : 'text-slate-400'}`}>
+              <p
+                className={`text-sm ${f.enabled ? 'text-slate-900 font-medium' : 'text-slate-400'}`}
+              >
                 {f.label}
               </p>
-              {f.detail && (
-                <p className="text-xs text-slate-500 mt-0.5">{f.detail}</p>
-              )}
+              {f.detail && <p className="text-xs text-slate-500 mt-0.5">{f.detail}</p>}
             </div>
           </div>
         ))}
@@ -76,7 +87,9 @@ export function TwinFieldMatrix({ pairs, t }: TwinFieldMatrixProps) {
               <p className="text-xs font-mono text-slate-700">{pair.sourceField}</p>
               <p className="text-[10px] text-slate-400">{pair.sourceObject}</p>
             </div>
-            <span className={`text-sm shrink-0 ${pair.syncDirection === 'bidirectional' ? 'text-violet-500' : 'text-slate-400'}`}>
+            <span
+              className={`text-sm shrink-0 ${pair.syncDirection === 'bidirectional' ? 'text-violet-500' : 'text-slate-400'}`}
+            >
               {pair.syncDirection === 'bidirectional' ? '↔' : '→'}
             </span>
             <div className="flex-1">
@@ -120,9 +133,7 @@ export function GuidedSellingCards({ flows, t }: GuidedSellingCardsProps) {
                   <div className="w-5 h-5 rounded-full bg-violet-100 flex items-center justify-center text-[10px] font-bold text-violet-600">
                     {i + 1}
                   </div>
-                  {i < flow.stepCount - 1 && (
-                    <div className="w-3 h-0.5 bg-violet-200" />
-                  )}
+                  {i < flow.stepCount - 1 && <div className="w-3 h-0.5 bg-violet-200" />}
                 </div>
               ))}
               {flow.hasBranching && (

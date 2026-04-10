@@ -17,7 +17,7 @@ function renderComponent() {
       orgHealth={assessment.orgHealth}
       completeness={assessment.completeness}
       t={mockT}
-    />,
+    />
   );
 }
 

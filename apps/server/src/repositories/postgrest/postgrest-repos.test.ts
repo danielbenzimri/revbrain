@@ -11,14 +11,31 @@ import type { SupabaseClient } from '@supabase/supabase-js';
  * and the terminal methods (maybeSingle, single, then) resolve to whatever
  * `terminalResult` is configured before the call.
  */
-function createMockSupabase(terminalResult: { data: unknown; error: unknown; count?: number | null }) {
+function createMockSupabase(terminalResult: {
+  data: unknown;
+  error: unknown;
+  count?: number | null;
+}) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const builder: Record<string, any> = {};
 
   const chainMethods = [
-    'select', 'insert', 'update', 'delete', 'upsert',
-    'eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'in',
-    'order', 'limit', 'range', 'filter',
+    'select',
+    'insert',
+    'update',
+    'delete',
+    'upsert',
+    'eq',
+    'neq',
+    'gt',
+    'gte',
+    'lt',
+    'lte',
+    'in',
+    'order',
+    'limit',
+    'range',
+    'filter',
   ];
 
   for (const method of chainMethods) {
@@ -30,9 +47,7 @@ function createMockSupabase(terminalResult: { data: unknown; error: unknown; cou
   builder.single = vi.fn().mockResolvedValue(terminalResult);
 
   // When the query is awaited directly (findFindingsByRun, fetchMany, etc.)
-  builder.then = vi.fn((resolve: (v: unknown) => void) =>
-    resolve(terminalResult)
-  );
+  builder.then = vi.fn((resolve: (v: unknown) => void) => resolve(terminalResult));
 
   const supabase = {
     from: vi.fn().mockReturnValue(builder),
@@ -330,7 +345,8 @@ describe('PostgRESTSalesforceConnectionRepository', () => {
 
   it('findById returns null when not found', async () => {
     supabase = createMockSupabase({ data: null, error: null });
-    const { PostgRESTSalesforceConnectionRepository } = await import('./salesforce-connection.repository.ts');
+    const { PostgRESTSalesforceConnectionRepository } =
+      await import('./salesforce-connection.repository.ts');
     const repo = new PostgRESTSalesforceConnectionRepository(supabase);
 
     const result = await repo.findById('nonexistent');
@@ -340,7 +356,8 @@ describe('PostgRESTSalesforceConnectionRepository', () => {
   it('findById returns camelCase entity', async () => {
     const row = makeConnectionRow();
     supabase = createMockSupabase({ data: row, error: null });
-    const { PostgRESTSalesforceConnectionRepository } = await import('./salesforce-connection.repository.ts');
+    const { PostgRESTSalesforceConnectionRepository } =
+      await import('./salesforce-connection.repository.ts');
     const repo = new PostgRESTSalesforceConnectionRepository(supabase);
 
     const result = await repo.findById('conn-1');
@@ -354,7 +371,8 @@ describe('PostgRESTSalesforceConnectionRepository', () => {
 
   it('findByProject returns empty array when no connections', async () => {
     supabase = createMockSupabase({ data: [], error: null });
-    const { PostgRESTSalesforceConnectionRepository } = await import('./salesforce-connection.repository.ts');
+    const { PostgRESTSalesforceConnectionRepository } =
+      await import('./salesforce-connection.repository.ts');
     const repo = new PostgRESTSalesforceConnectionRepository(supabase);
 
     const result = await repo.findByProject('proj-empty');
@@ -364,7 +382,8 @@ describe('PostgRESTSalesforceConnectionRepository', () => {
   it('create returns camelCase entity', async () => {
     const row = makeConnectionRow();
     supabase = createMockSupabase({ data: row, error: null });
-    const { PostgRESTSalesforceConnectionRepository } = await import('./salesforce-connection.repository.ts');
+    const { PostgRESTSalesforceConnectionRepository } =
+      await import('./salesforce-connection.repository.ts');
     const repo = new PostgRESTSalesforceConnectionRepository(supabase);
 
     const result = await repo.create({
@@ -386,7 +405,8 @@ describe('PostgRESTSalesforceConnectionRepository', () => {
   it('updateStatus returns updated entity', async () => {
     const row = makeConnectionRow({ status: 'error', last_error: 'token expired' });
     supabase = createMockSupabase({ data: row, error: null });
-    const { PostgRESTSalesforceConnectionRepository } = await import('./salesforce-connection.repository.ts');
+    const { PostgRESTSalesforceConnectionRepository } =
+      await import('./salesforce-connection.repository.ts');
     const repo = new PostgRESTSalesforceConnectionRepository(supabase);
 
     const result = await repo.updateStatus('conn-1', 'error', 'token expired');
@@ -397,7 +417,8 @@ describe('PostgRESTSalesforceConnectionRepository', () => {
 
   it('updateStatus returns null on DB error', async () => {
     supabase = createMockSupabase({ data: null, error: { message: 'fail' } });
-    const { PostgRESTSalesforceConnectionRepository } = await import('./salesforce-connection.repository.ts');
+    const { PostgRESTSalesforceConnectionRepository } =
+      await import('./salesforce-connection.repository.ts');
     const repo = new PostgRESTSalesforceConnectionRepository(supabase);
 
     const result = await repo.updateStatus('conn-1', 'error');
@@ -407,7 +428,8 @@ describe('PostgRESTSalesforceConnectionRepository', () => {
   it('disconnect returns true on success', async () => {
     const row = makeConnectionRow({ status: 'disconnected' });
     supabase = createMockSupabase({ data: row, error: null });
-    const { PostgRESTSalesforceConnectionRepository } = await import('./salesforce-connection.repository.ts');
+    const { PostgRESTSalesforceConnectionRepository } =
+      await import('./salesforce-connection.repository.ts');
     const repo = new PostgRESTSalesforceConnectionRepository(supabase);
 
     const result = await repo.disconnect('conn-1', 'user-1');
@@ -416,7 +438,8 @@ describe('PostgRESTSalesforceConnectionRepository', () => {
 
   it('disconnect returns false on error', async () => {
     supabase = createMockSupabase({ data: null, error: { message: 'fail' } });
-    const { PostgRESTSalesforceConnectionRepository } = await import('./salesforce-connection.repository.ts');
+    const { PostgRESTSalesforceConnectionRepository } =
+      await import('./salesforce-connection.repository.ts');
     const repo = new PostgRESTSalesforceConnectionRepository(supabase);
 
     const result = await repo.disconnect('conn-1', 'user-1');
@@ -437,7 +460,8 @@ describe('PostgRESTOauthPendingFlowRepository', () => {
 
   it('findByNonce returns null when not found', async () => {
     supabase = createMockSupabase({ data: null, error: null });
-    const { PostgRESTOauthPendingFlowRepository } = await import('./oauth-pending-flow.repository.ts');
+    const { PostgRESTOauthPendingFlowRepository } =
+      await import('./oauth-pending-flow.repository.ts');
     const repo = new PostgRESTOauthPendingFlowRepository(supabase);
 
     const result = await repo.findByNonce('nonexistent');
@@ -447,7 +471,8 @@ describe('PostgRESTOauthPendingFlowRepository', () => {
   it('findByNonce returns camelCase entity', async () => {
     const row = makePendingFlowRow();
     supabase = createMockSupabase({ data: row, error: null });
-    const { PostgRESTOauthPendingFlowRepository } = await import('./oauth-pending-flow.repository.ts');
+    const { PostgRESTOauthPendingFlowRepository } =
+      await import('./oauth-pending-flow.repository.ts');
     const repo = new PostgRESTOauthPendingFlowRepository(supabase);
 
     const result = await repo.findByNonce('nonce-abc');
@@ -460,7 +485,8 @@ describe('PostgRESTOauthPendingFlowRepository', () => {
 
   it('findLiveByProjectAndRole returns null when no flow exists', async () => {
     supabase = createMockSupabase({ data: null, error: null });
-    const { PostgRESTOauthPendingFlowRepository } = await import('./oauth-pending-flow.repository.ts');
+    const { PostgRESTOauthPendingFlowRepository } =
+      await import('./oauth-pending-flow.repository.ts');
     const repo = new PostgRESTOauthPendingFlowRepository(supabase);
 
     const result = await repo.findLiveByProjectAndRole('proj-1', 'source');
@@ -472,7 +498,8 @@ describe('PostgRESTOauthPendingFlowRepository', () => {
       expires_at: '2020-01-01T00:00:00Z', // well in the past
     });
     supabase = createMockSupabase({ data: expiredRow, error: null });
-    const { PostgRESTOauthPendingFlowRepository } = await import('./oauth-pending-flow.repository.ts');
+    const { PostgRESTOauthPendingFlowRepository } =
+      await import('./oauth-pending-flow.repository.ts');
     const repo = new PostgRESTOauthPendingFlowRepository(supabase);
 
     const result = await repo.findLiveByProjectAndRole('proj-1', 'source');
@@ -483,7 +510,8 @@ describe('PostgRESTOauthPendingFlowRepository', () => {
     const futureDate = new Date(Date.now() + 600_000).toISOString();
     const liveRow = makePendingFlowRow({ expires_at: futureDate });
     supabase = createMockSupabase({ data: liveRow, error: null });
-    const { PostgRESTOauthPendingFlowRepository } = await import('./oauth-pending-flow.repository.ts');
+    const { PostgRESTOauthPendingFlowRepository } =
+      await import('./oauth-pending-flow.repository.ts');
     const repo = new PostgRESTOauthPendingFlowRepository(supabase);
 
     const result = await repo.findLiveByProjectAndRole('proj-1', 'source');
@@ -493,7 +521,8 @@ describe('PostgRESTOauthPendingFlowRepository', () => {
 
   it('cleanupExpired returns 0 when no expired flows', async () => {
     supabase = createMockSupabase({ data: [], error: null });
-    const { PostgRESTOauthPendingFlowRepository } = await import('./oauth-pending-flow.repository.ts');
+    const { PostgRESTOauthPendingFlowRepository } =
+      await import('./oauth-pending-flow.repository.ts');
     const repo = new PostgRESTOauthPendingFlowRepository(supabase);
 
     const result = await repo.cleanupExpired();
@@ -503,7 +532,8 @@ describe('PostgRESTOauthPendingFlowRepository', () => {
   it('cleanupExpired returns count of deleted rows', async () => {
     const deleted = [{ nonce: 'a' }, { nonce: 'b' }, { nonce: 'c' }];
     supabase = createMockSupabase({ data: deleted, error: null });
-    const { PostgRESTOauthPendingFlowRepository } = await import('./oauth-pending-flow.repository.ts');
+    const { PostgRESTOauthPendingFlowRepository } =
+      await import('./oauth-pending-flow.repository.ts');
     const repo = new PostgRESTOauthPendingFlowRepository(supabase);
 
     const result = await repo.cleanupExpired();
@@ -515,7 +545,8 @@ describe('PostgRESTOauthPendingFlowRepository', () => {
     const futureDate = new Date(Date.now() + 600_000).toISOString();
     const liveRow = makePendingFlowRow({ expires_at: futureDate });
     supabase = createMockSupabase({ data: liveRow, error: null });
-    const { PostgRESTOauthPendingFlowRepository } = await import('./oauth-pending-flow.repository.ts');
+    const { PostgRESTOauthPendingFlowRepository } =
+      await import('./oauth-pending-flow.repository.ts');
     const repo = new PostgRESTOauthPendingFlowRepository(supabase);
 
     await expect(
@@ -539,7 +570,8 @@ describe('PostgRESTOauthPendingFlowRepository', () => {
     // Build a mock where maybeSingle returns null first (no existing),
     // then single returns the inserted row
     supabase = createMockSupabase({ data: null, error: null });
-    const { PostgRESTOauthPendingFlowRepository } = await import('./oauth-pending-flow.repository.ts');
+    const { PostgRESTOauthPendingFlowRepository } =
+      await import('./oauth-pending-flow.repository.ts');
     const repo = new PostgRESTOauthPendingFlowRepository(supabase);
 
     // Override single for the insert path
@@ -574,7 +606,8 @@ describe('PostgRESTSalesforceConnectionLogRepository', () => {
   it('create returns camelCase entity', async () => {
     const row = makeLogRow();
     supabase = createMockSupabase({ data: row, error: null });
-    const { PostgRESTSalesforceConnectionLogRepository } = await import('./salesforce-connection-log.repository.ts');
+    const { PostgRESTSalesforceConnectionLogRepository } =
+      await import('./salesforce-connection-log.repository.ts');
     const repo = new PostgRESTSalesforceConnectionLogRepository(supabase);
 
     const result = await repo.create({
@@ -592,7 +625,8 @@ describe('PostgRESTSalesforceConnectionLogRepository', () => {
 
   it('findByConnection returns empty array when no logs', async () => {
     supabase = createMockSupabase({ data: [], error: null });
-    const { PostgRESTSalesforceConnectionLogRepository } = await import('./salesforce-connection-log.repository.ts');
+    const { PostgRESTSalesforceConnectionLogRepository } =
+      await import('./salesforce-connection-log.repository.ts');
     const repo = new PostgRESTSalesforceConnectionLogRepository(supabase);
 
     const result = await repo.findByConnection('conn-empty');
@@ -605,7 +639,8 @@ describe('PostgRESTSalesforceConnectionLogRepository', () => {
       makeLogRow({ id: 'log-2', event: 'refreshed' }),
     ];
     supabase = createMockSupabase({ data: rows, error: null });
-    const { PostgRESTSalesforceConnectionLogRepository } = await import('./salesforce-connection-log.repository.ts');
+    const { PostgRESTSalesforceConnectionLogRepository } =
+      await import('./salesforce-connection-log.repository.ts');
     const repo = new PostgRESTSalesforceConnectionLogRepository(supabase);
 
     const result = await repo.findByConnection('conn-1');
@@ -617,7 +652,8 @@ describe('PostgRESTSalesforceConnectionLogRepository', () => {
 
   it('findByConnection returns empty on DB error', async () => {
     supabase = createMockSupabase({ data: null, error: { message: 'fail' } });
-    const { PostgRESTSalesforceConnectionLogRepository } = await import('./salesforce-connection-log.repository.ts');
+    const { PostgRESTSalesforceConnectionLogRepository } =
+      await import('./salesforce-connection-log.repository.ts');
     const repo = new PostgRESTSalesforceConnectionLogRepository(supabase);
 
     const result = await repo.findByConnection('conn-1');
@@ -636,9 +672,8 @@ describe('PostgRESTSalesforceConnectionSecretsRepository', () => {
 
   it('can be instantiated without encryption key (lazy init)', async () => {
     const supabase = createMockSupabase({ data: null, error: null });
-    const { PostgRESTSalesforceConnectionSecretsRepository } = await import(
-      './salesforce-connection-secrets.repository.ts'
-    );
+    const { PostgRESTSalesforceConnectionSecretsRepository } =
+      await import('./salesforce-connection-secrets.repository.ts');
 
     // Should NOT throw — key is only required when encrypt/decrypt methods are called
     const repo = new PostgRESTSalesforceConnectionSecretsRepository(supabase);

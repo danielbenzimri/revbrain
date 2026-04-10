@@ -31,14 +31,15 @@ let _assembleReport: ((findings: unknown[]) => unknown) | null = null;
 let _renderReport: ((data: unknown) => string) | null = null;
 
 async function getReportModules() {
-  if (_assembleReport && _renderReport) return { assembleReport: _assembleReport, renderReport: _renderReport };
+  if (_assembleReport && _renderReport)
+    return { assembleReport: _assembleReport, renderReport: _renderReport };
   try {
     const workerReportPath = resolve(
       dirname(fileURLToPath(import.meta.url)),
       '../../../../worker/src/report/index.ts'
     );
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const mod = await import(workerReportPath) as any;
+    const mod = (await import(workerReportPath)) as any;
     _assembleReport = mod.assembleReport;
     _renderReport = mod.renderReport;
     return { assembleReport: _assembleReport!, renderReport: _renderReport! };
@@ -180,7 +181,7 @@ assessmentRouter.post('/:projectId/assessment/run', async (c) => {
   // 2. Check active Salesforce connection (source)
   const connections = await repos.salesforceConnections.findByProject(projectId);
   const sourceConnection = connections.find(
-    (conn) => conn.connectionRole === 'source' && conn.status === 'connected'
+    (conn) => conn.connectionRole === 'source' && conn.status === 'active'
   );
   if (!sourceConnection) {
     return c.json(
@@ -565,7 +566,8 @@ assessmentRouter.post('/:projectId/assessment/runs/:runId/report', async (c) => 
           success: false,
           error: {
             code: 'REPORT_GENERATION_FAILED',
-            message: 'Report generation modules not available. Ensure the worker package is accessible.',
+            message:
+              'Report generation modules not available. Ensure the worker package is accessible.',
           },
         },
         500

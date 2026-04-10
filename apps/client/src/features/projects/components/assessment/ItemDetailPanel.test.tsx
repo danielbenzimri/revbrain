@@ -91,7 +91,9 @@ describe('ItemDetailPanel', () => {
 
   it('notes textarea is editable', () => {
     renderPanel();
-    const textarea = screen.getByPlaceholderText('assessment.itemDetail.addNote') as HTMLTextAreaElement;
+    const textarea = screen.getByPlaceholderText(
+      'assessment.itemDetail.addNote'
+    ) as HTMLTextAreaElement;
     fireEvent.change(textarea, { target: { value: 'Test note' } });
     expect(textarea.value).toBe('Test note');
   });

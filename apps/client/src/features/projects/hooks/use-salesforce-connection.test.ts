@@ -81,10 +81,9 @@ describe('Salesforce connection hooks', () => {
         json: () => Promise.resolve(mockData),
       });
 
-      const { result } = renderHook(
-        () => useSalesforceConnections(PROJECT_ID),
-        { wrapper: createWrapper() },
-      );
+      const { result } = renderHook(() => useSalesforceConnections(PROJECT_ID), {
+        wrapper: createWrapper(),
+      });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
       expect(result.current.data?.source?.salesforceOrgId).toBe('00D123');
@@ -98,10 +97,9 @@ describe('Salesforce connection hooks', () => {
         json: () => Promise.resolve({}),
       });
 
-      const { result } = renderHook(
-        () => useSalesforceConnections(PROJECT_ID),
-        { wrapper: createWrapper() },
-      );
+      const { result } = renderHook(() => useSalesforceConnections(PROJECT_ID), {
+        wrapper: createWrapper(),
+      });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
       expect(result.current.data?.source).toBeNull();
@@ -109,10 +107,7 @@ describe('Salesforce connection hooks', () => {
     });
 
     it('does not fetch when projectId is undefined', () => {
-      renderHook(
-        () => useSalesforceConnections(undefined),
-        { wrapper: createWrapper() },
-      );
+      renderHook(() => useSalesforceConnections(undefined), { wrapper: createWrapper() });
 
       expect(mockFetch).not.toHaveBeenCalled();
     });
@@ -125,10 +120,9 @@ describe('Salesforce connection hooks', () => {
         json: () => Promise.resolve({ success: true }),
       });
 
-      const { result } = renderHook(
-        () => useDisconnectSalesforce(PROJECT_ID),
-        { wrapper: createWrapper() },
-      );
+      const { result } = renderHook(() => useDisconnectSalesforce(PROJECT_ID), {
+        wrapper: createWrapper(),
+      });
 
       await act(async () => {
         result.current.mutate('source');
@@ -137,7 +131,7 @@ describe('Salesforce connection hooks', () => {
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining('/salesforce/disconnect'),
-        expect.objectContaining({ method: 'POST' }),
+        expect.objectContaining({ method: 'POST' })
       );
     });
   });
@@ -149,10 +143,9 @@ describe('Salesforce connection hooks', () => {
         json: () => Promise.resolve({ data: { healthy: true } }),
       });
 
-      const { result } = renderHook(
-        () => useTestConnection(PROJECT_ID),
-        { wrapper: createWrapper() },
-      );
+      const { result } = renderHook(() => useTestConnection(PROJECT_ID), {
+        wrapper: createWrapper(),
+      });
 
       await act(async () => {
         result.current.mutate('source');
@@ -171,10 +164,9 @@ describe('Salesforce connection hooks', () => {
           }),
       });
 
-      const { result } = renderHook(
-        () => useTestConnection(PROJECT_ID),
-        { wrapper: createWrapper() },
-      );
+      const { result } = renderHook(() => useTestConnection(PROJECT_ID), {
+        wrapper: createWrapper(),
+      });
 
       await act(async () => {
         result.current.mutate('source');

@@ -1,5 +1,11 @@
 import { test, expect } from '@playwright/test';
-import { loginAsAdmin, navigateAdmin, apiFetch, mockToken, MOCK_IDS } from './fixtures/admin-helpers';
+import {
+  loginAsAdmin,
+  navigateAdmin,
+  apiFetch,
+  mockToken,
+  MOCK_IDS,
+} from './fixtures/admin-helpers';
 import path from 'node:path';
 import fs from 'node:fs';
 
@@ -75,11 +81,7 @@ test.describe('Avatar Upload', () => {
     const token = mockToken(MOCK_IDS.USER_ACME_OWNER);
 
     const formData = new FormData();
-    formData.append(
-      'file',
-      new Blob(['not an image'], { type: 'text/plain' }),
-      'test.txt'
-    );
+    formData.append('file', new Blob(['not an image'], { type: 'text/plain' }), 'test.txt');
 
     const res = await fetch(`http://localhost:3000/api/v1/users/me/avatar`, {
       method: 'POST',
@@ -129,7 +131,10 @@ test.describe('Avatar Upload', () => {
     await page.waitForTimeout(1_500);
 
     // Click "Edit Details" button
-    const editButton = page.locator('button').filter({ hasText: /edit|עריכה/i }).first();
+    const editButton = page
+      .locator('button')
+      .filter({ hasText: /edit|עריכה/i })
+      .first();
     if ((await editButton.count()) === 0) {
       test.skip(true, 'No Edit button found in drawer');
       return;

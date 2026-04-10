@@ -3,10 +3,7 @@
  * @vitest-environment node
  */
 import { describe, it, expect } from 'vitest';
-import {
-  getMockAssessmentData,
-  DOMAIN_TAB_ORDER,
-} from './assessment-mock-data';
+import { getMockAssessmentData, DOMAIN_TAB_ORDER } from './assessment-mock-data';
 
 // Use the same constant as the source
 const Q1_PROJECT_ID = '00000000-0000-4000-a000-000000000401';
@@ -37,7 +34,9 @@ describe('getMockAssessmentData', () => {
 
   it('total items equals sum of domain stats', () => {
     const data = getMockAssessmentData(Q1_PROJECT_ID)!;
-    expect(data.totalItems).toBe(data.totalAuto + data.totalGuided + data.totalManual + data.totalBlocked);
+    expect(data.totalItems).toBe(
+      data.totalAuto + data.totalGuided + data.totalManual + data.totalBlocked
+    );
     // totalItems should equal sum of auto+guided+manual+blocked across domains
     const autoSum = data.domains.reduce((s, d) => s + d.stats.auto, 0);
     const guidedSum = data.domains.reduce((s, d) => s + d.stats.guided, 0);
@@ -49,7 +48,8 @@ describe('getMockAssessmentData', () => {
     expect(data.totalBlocked).toBe(blockedSum);
     // Each domain's total should equal its auto+guided+manual+blocked
     for (const domain of data.domains) {
-      const domainSum = domain.stats.auto + domain.stats.guided + domain.stats.manual + domain.stats.blocked;
+      const domainSum =
+        domain.stats.auto + domain.stats.guided + domain.stats.manual + domain.stats.blocked;
       expect(domainSum).toBe(domain.stats.total);
     }
   });
@@ -63,7 +63,9 @@ describe('getMockAssessmentData', () => {
         expect(item.apiName).toBeTruthy();
         expect(['low', 'moderate', 'high']).toContain(item.complexity);
         expect(['auto', 'guided', 'manual', 'blocked']).toContain(item.migrationStatus);
-        expect(['untriaged', 'in_scope', 'excluded', 'needs_discussion']).toContain(item.triageState);
+        expect(['untriaged', 'in_scope', 'excluded', 'needs_discussion']).toContain(
+          item.triageState
+        );
         expect(item.whyStatus).toBeTruthy();
         expect(item.aiDescription).toBeTruthy();
         expect(typeof item.isActive).toBe('boolean');

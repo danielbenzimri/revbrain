@@ -18,7 +18,8 @@ const NEW_ORG = {
   name: 'All Cloud Test',
   phone: '+1-555-0199',
   address: '42 Innovation Drive, San Francisco, CA 94105',
-  description: 'Cloud migration consulting firm specializing in Salesforce CPQ to Revenue Cloud transitions.',
+  description:
+    'Cloud migration consulting firm specializing in Salesforce CPQ to Revenue Cloud transitions.',
 };
 
 const NEW_ADMIN = {
@@ -58,8 +59,10 @@ test.describe('Tenant Onboarding — Staging', () => {
 
     // Step 4: Fill in organization details
     // Organization name
-    const orgNameInput = page.locator('input[placeholder*="organization"], input[placeholder*="ארגון"]').first();
-    if (await orgNameInput.count() === 0) {
+    const orgNameInput = page
+      .locator('input[placeholder*="organization"], input[placeholder*="ארגון"]')
+      .first();
+    if ((await orgNameInput.count()) === 0) {
       // Fallback: first text input in the form
       const inputs = page.locator('input[type="text"]');
       await inputs.first().fill(NEW_ORG.name);
@@ -69,7 +72,7 @@ test.describe('Tenant Onboarding — Staging', () => {
 
     // Phone
     const phoneInput = page.locator('input[type="tel"]').first();
-    if (await phoneInput.count() > 0) {
+    if ((await phoneInput.count()) > 0) {
       await phoneInput.fill(NEW_ORG.phone);
     }
 
@@ -86,13 +89,13 @@ test.describe('Tenant Onboarding — Staging', () => {
 
     // Description
     const descTextarea = page.locator('textarea').first();
-    if (await descTextarea.count() > 0) {
+    if ((await descTextarea.count()) > 0) {
       await descTextarea.fill(NEW_ORG.description);
     }
 
     // Step 5: Select a plan (Pro should be pre-selected, but click it to be sure)
     const proPlan = page.locator('text=Pro').first();
-    if (await proPlan.count() > 0) {
+    if ((await proPlan.count()) > 0) {
       await proPlan.click();
     }
 
@@ -152,14 +155,18 @@ test.describe('Tenant Onboarding — Staging', () => {
 
   test('API: onboard tenant directly', async () => {
     // Login to get token
-    const loginRes = await fetch(`${BASE_URL.replace('stg.revbrain.ai', 'qutuivleheybnkbhpdbn.supabase.co')}/auth/v1/token?grant_type=password`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1dHVpdmxlaGV5Ym5rYmhwZGJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTQxMzgsImV4cCI6MjA4OTY3MDEzOH0.Arjxw1r7DhD1LLGQBiNkPkqo1ycsQVBQqXPEjugPsPA',
-      },
-      body: JSON.stringify({ email: ADMIN_EMAIL, password: ADMIN_PASSWORD }),
-    });
+    const loginRes = await fetch(
+      `${BASE_URL.replace('stg.revbrain.ai', 'qutuivleheybnkbhpdbn.supabase.co')}/auth/v1/token?grant_type=password`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey:
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1dHVpdmxlaGV5Ym5rYmhwZGJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTQxMzgsImV4cCI6MjA4OTY3MDEzOH0.Arjxw1r7DhD1LLGQBiNkPkqo1ycsQVBQqXPEjugPsPA',
+        },
+        body: JSON.stringify({ email: ADMIN_EMAIL, password: ADMIN_PASSWORD }),
+      }
+    );
 
     if (!loginRes.ok) {
       console.log('Login failed:', await loginRes.text());
@@ -170,23 +177,26 @@ test.describe('Tenant Onboarding — Staging', () => {
     const { access_token } = await loginRes.json();
 
     // Call onboard API
-    const res = await fetch('https://qutuivleheybnkbhpdbn.supabase.co/functions/v1/api/v1/admin/onboard', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${access_token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        organization: {
-          name: 'All Cloud Test',
-          seatLimit: 10,
+    const res = await fetch(
+      'https://qutuivleheybnkbhpdbn.supabase.co/functions/v1/api/v1/admin/onboard',
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${access_token}`,
+          'Content-Type': 'application/json',
         },
-        admin: {
-          email: 'daniel@gaialabs.ai',
-          fullName: 'Daniel Aviram',
-        },
-      }),
-    });
+        body: JSON.stringify({
+          organization: {
+            name: 'All Cloud Test',
+            seatLimit: 10,
+          },
+          admin: {
+            email: 'daniel@gaialabs.ai',
+            fullName: 'Daniel Aviram',
+          },
+        }),
+      }
+    );
 
     const body = await res.json();
     console.log('Onboard API response:', res.status, JSON.stringify(body, null, 2));

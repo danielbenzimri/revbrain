@@ -15,9 +15,15 @@ function formatNumber(n: number): string {
   return n.toLocaleString();
 }
 
-function getReadinessLevel(autoPercent: number): { label: string; color: string; textColor: string } {
-  if (autoPercent >= 60) return { label: 'High', color: 'bg-emerald-100', textColor: 'text-emerald-800' };
-  if (autoPercent >= 35) return { label: 'Moderate', color: 'bg-amber-100', textColor: 'text-amber-800' };
+function getReadinessLevel(autoPercent: number): {
+  label: string;
+  color: string;
+  textColor: string;
+} {
+  if (autoPercent >= 60)
+    return { label: 'High', color: 'bg-emerald-100', textColor: 'text-emerald-800' };
+  if (autoPercent >= 35)
+    return { label: 'Moderate', color: 'bg-amber-100', textColor: 'text-amber-800' };
   return { label: 'Low', color: 'bg-red-100', textColor: 'text-red-800' };
 }
 
@@ -63,7 +69,9 @@ export default function ExecutiveSummary({ assessment, t }: ExecutiveSummaryProp
             })}
           </p>
         </div>
-        <div className={`${readiness.color} ${readiness.textColor} px-3 py-1 rounded-full text-xs font-semibold`}>
+        <div
+          className={`${readiness.color} ${readiness.textColor} px-3 py-1 rounded-full text-xs font-semibold`}
+        >
           Migration Readiness: {readiness.label}
         </div>
       </div>
@@ -71,28 +79,38 @@ export default function ExecutiveSummary({ assessment, t }: ExecutiveSummaryProp
       {/* Narrative paragraph */}
       <div className="space-y-3 mb-5" data-testid="executive-narrative">
         <p className="text-[15px] text-slate-200 leading-relaxed">
-          Your Salesforce CPQ org contains <span className="text-white font-semibold">{formatNumber(totalItems)} configuration items</span> across {domainCount} domains.{' '}
-          <span className="text-emerald-400 font-semibold">{autoPercent}%</span> can be auto-migrated,{' '}
-          <span className="text-amber-400 font-semibold">{guidedPercent}%</span> need guided setup,{' '}
-          <span className="text-red-400 font-semibold">{manualPercent}%</span> require custom development,{' '}
-          and <span className="text-red-300 font-semibold">{totalBlocked}</span> items are blocked with no RCA equivalent.
+          Your Salesforce CPQ org contains{' '}
+          <span className="text-white font-semibold">
+            {formatNumber(totalItems)} configuration items
+          </span>{' '}
+          across {domainCount} domains.{' '}
+          <span className="text-emerald-400 font-semibold">{autoPercent}%</span> can be
+          auto-migrated, <span className="text-amber-400 font-semibold">{guidedPercent}%</span> need
+          guided setup, <span className="text-red-400 font-semibold">{manualPercent}%</span> require
+          custom development, and <span className="text-red-300 font-semibold">{totalBlocked}</span>{' '}
+          items are blocked with no RCA equivalent.
         </p>
 
         {criticalRisks.length > 0 && (
           <p className="text-sm text-slate-200 leading-relaxed">
-            <span className="text-red-400 font-semibold">{criticalRisks.length} critical blocker{criticalRisks.length > 1 ? 's' : ''}</span> must be resolved before migration can proceed:{' '}
+            <span className="text-red-400 font-semibold">
+              {criticalRisks.length} critical blocker{criticalRisks.length > 1 ? 's' : ''}
+            </span>{' '}
+            must be resolved before migration can proceed:{' '}
             {criticalSummaries.map((summary, i) => (
               <span key={i}>
                 {i > 0 && (i === criticalSummaries.length - 1 ? ', and ' : ', ')}
                 <span className="text-white">{summary}</span>
               </span>
-            ))}.
+            ))}
+            .
           </p>
         )}
 
         {assessment.orgHealth.rcaLicenseCount === 0 && (
           <p className="text-sm text-red-300 leading-relaxed">
-            ⚠ RCA licenses are not detected in your org — deployment cannot begin until licenses are procured and assigned.
+            ⚠ RCA licenses are not detected in your org — deployment cannot begin until licenses are
+            procured and assigned.
           </p>
         )}
       </div>
@@ -113,9 +131,11 @@ export default function ExecutiveSummary({ assessment, t }: ExecutiveSummaryProp
         </div>
         <div className="bg-white/5 rounded-xl px-4 py-3 text-center border border-white/10">
           <p className="text-xl font-bold tabular-nums">
-            {assessment.orgHealth.rcaLicenseCount > 0
-              ? <span className="text-emerald-400">Ready</span>
-              : <span className="text-red-400">Blocked</span>}
+            {assessment.orgHealth.rcaLicenseCount > 0 ? (
+              <span className="text-emerald-400">Ready</span>
+            ) : (
+              <span className="text-red-400">Blocked</span>
+            )}
           </p>
           <p className="text-[11px] text-slate-400 mt-0.5">RCA License Status</p>
         </div>

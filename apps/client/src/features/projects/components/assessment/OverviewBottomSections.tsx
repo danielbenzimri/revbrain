@@ -23,9 +23,10 @@ function Prerequisites({ orgHealth, t }: PrerequisitesProps) {
     },
     {
       ok: orgHealth.rcaLicenseCount > 0,
-      text: orgHealth.rcaLicenseCount > 0
-        ? t('assessment.prerequisites.rcaDetected', { count: orgHealth.rcaLicenseCount })
-        : t('assessment.prerequisites.rcaNotDetected'),
+      text:
+        orgHealth.rcaLicenseCount > 0
+          ? t('assessment.prerequisites.rcaDetected', { count: orgHealth.rcaLicenseCount })
+          : t('assessment.prerequisites.rcaNotDetected'),
     },
     {
       ok: orgHealth.apiUsagePercent < 80 && orgHealth.storageUsagePercent < 80,
@@ -43,9 +44,10 @@ function Prerequisites({ orgHealth, t }: PrerequisitesProps) {
     },
     {
       ok: orgHealth.apexGovernorPercent < 70,
-      text: orgHealth.apexGovernorPercent < 70
-        ? t('assessment.prerequisites.governorLimits')
-        : t('assessment.prerequisites.governorLimitsWarning'),
+      text:
+        orgHealth.apexGovernorPercent < 70
+          ? t('assessment.prerequisites.governorLimits')
+          : t('assessment.prerequisites.governorLimitsWarning'),
     },
   ];
 
@@ -84,7 +86,10 @@ function MigrationStrategy({ t }: StrategyProps) {
   ];
 
   return (
-    <section aria-label={t('assessment.overview.migrationStrategy')} data-testid="migration-strategy">
+    <section
+      aria-label={t('assessment.overview.migrationStrategy')}
+      data-testid="migration-strategy"
+    >
       <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">
         {t('assessment.overview.migrationStrategy')}
       </h2>
@@ -157,7 +162,10 @@ function AssessmentCompleteness({ items, t }: CompletenessProps) {
               aria-valuemax={100}
             />
           </div>
-          <span className="text-sm font-semibold text-slate-900 tabular-nums" data-testid="completeness-percent">
+          <span
+            className="text-sm font-semibold text-slate-900 tabular-nums"
+            data-testid="completeness-percent"
+          >
             {percent}%
           </span>
         </div>
@@ -190,7 +198,11 @@ interface OverviewBottomSectionsProps {
   t: (key: string, opts?: Record<string, unknown>) => string;
 }
 
-export default function OverviewBottomSections({ orgHealth, completeness, t }: OverviewBottomSectionsProps) {
+export default function OverviewBottomSections({
+  orgHealth,
+  completeness,
+  t,
+}: OverviewBottomSectionsProps) {
   return (
     <div className="space-y-6">
       <Prerequisites orgHealth={orgHealth} t={t} />

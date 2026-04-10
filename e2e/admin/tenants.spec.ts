@@ -23,7 +23,10 @@ test.describe('Tenant Management', () => {
   }
 
   // Helper: open the actions dropdown for a row and click an item
-  async function openRowActions(page: import('@playwright/test').Page, row: import('@playwright/test').Locator) {
+  async function openRowActions(
+    page: import('@playwright/test').Page,
+    row: import('@playwright/test').Locator
+  ) {
     // The actions button is the MoreHorizontal icon button (last cell, ghost variant)
     const actionsBtn = row.getByRole('button');
     await actionsBtn.click();

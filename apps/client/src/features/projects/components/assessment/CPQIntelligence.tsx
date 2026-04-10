@@ -221,11 +221,17 @@ export default function CPQIntelligence({ assessment }: CPQIntelligenceProps) {
                 const seg = s as unknown as Record<string, unknown>;
                 const pctQuotes = String(
                   seg.percentQuotes ??
-                  ((s.evidenceRefs as Array<{ label?: string; value?: string }> | undefined)?.find(r => r.label === '% of quotes')?.value ?? '0')
+                    (s.evidenceRefs as Array<{ label?: string; value?: string }> | undefined)?.find(
+                      (r) => r.label === '% of quotes'
+                    )?.value ??
+                    '0'
                 );
                 const conversion = String(
                   seg.conversionRate ??
-                  ((s.evidenceRefs as Array<{ label?: string; value?: string }> | undefined)?.find(r => r.label === 'conversion %')?.value ?? '0')
+                    (s.evidenceRefs as Array<{ label?: string; value?: string }> | undefined)?.find(
+                      (r) => r.label === 'conversion %'
+                    )?.value ??
+                    '0'
                 );
                 return (
                   <div key={i}>
@@ -378,8 +384,16 @@ export default function CPQIntelligence({ assessment }: CPQIntelligenceProps) {
               ].map((s, i) => (
                 <div key={i}>
                   <div className="flex justify-between text-xs mb-1">
-                    <span className={`font-medium ${i === 0 ? 'text-slate-900' : 'text-slate-600'}`}>{s.label}</span>
-                    <span className={`font-semibold ${s.value >= 70 ? 'text-red-600' : s.value >= 40 ? 'text-amber-600' : 'text-emerald-600'}`}>{s.value}/100</span>
+                    <span
+                      className={`font-medium ${i === 0 ? 'text-slate-900' : 'text-slate-600'}`}
+                    >
+                      {s.label}
+                    </span>
+                    <span
+                      className={`font-semibold ${s.value >= 70 ? 'text-red-600' : s.value >= 40 ? 'text-amber-600' : 'text-emerald-600'}`}
+                    >
+                      {s.value}/100
+                    </span>
                   </div>
                   <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
                     <div
@@ -389,7 +403,9 @@ export default function CPQIntelligence({ assessment }: CPQIntelligenceProps) {
                   </div>
                 </div>
               ))}
-              <p className="text-[10px] text-slate-400 italic mt-1">Scores are directional indicators, not absolute measures.</p>
+              <p className="text-[10px] text-slate-400 italic mt-1">
+                Scores are directional indicators, not absolute measures.
+              </p>
             </div>
           </Card>
 
@@ -478,9 +494,15 @@ export default function CPQIntelligence({ assessment }: CPQIntelligenceProps) {
                   className="flex items-center justify-between py-1.5 border-b border-slate-50 last:border-0"
                 >
                   <span className="text-xs text-slate-700">{ps.name}</span>
-                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                    ps.type === 'Custom' ? 'bg-violet-50 text-violet-700' : 'bg-slate-100 text-slate-500'
-                  }`}>{ps.type}</span>
+                  <span
+                    className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                      ps.type === 'Custom'
+                        ? 'bg-violet-50 text-violet-700'
+                        : 'bg-slate-100 text-slate-500'
+                    }`}
+                  >
+                    {ps.type}
+                  </span>
                 </div>
               ))}
             </div>
@@ -524,15 +546,21 @@ export default function CPQIntelligence({ assessment }: CPQIntelligenceProps) {
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-slate-50 rounded-lg p-2.5 text-center">
-                  <p className="text-lg font-bold text-slate-900">{assessment.discountScheduleDedup.totalCount}</p>
+                  <p className="text-lg font-bold text-slate-900">
+                    {assessment.discountScheduleDedup.totalCount}
+                  </p>
                   <p className="text-[10px] text-slate-500">Total</p>
                 </div>
                 <div className="bg-slate-50 rounded-lg p-2.5 text-center">
-                  <p className="text-lg font-bold text-slate-900">{assessment.discountScheduleDedup.uniqueCount}</p>
+                  <p className="text-lg font-bold text-slate-900">
+                    {assessment.discountScheduleDedup.uniqueCount}
+                  </p>
                   <p className="text-[10px] text-slate-500">Unique</p>
                 </div>
               </div>
-              <p className="text-[11px] text-slate-600">{assessment.discountScheduleDedup.duplicateDetail}</p>
+              <p className="text-[11px] text-slate-600">
+                {assessment.discountScheduleDedup.duplicateDetail}
+              </p>
             </div>
           </Card>
         )}

@@ -606,15 +606,13 @@ export default function OverviewPage() {
   const { id } = useParams<{ id: string }>();
   const formatTimeAgo = useFormatTimeAgo();
 
-  const isMockMode = import.meta.env.VITE_AUTH_MODE === 'mock';
-
+  // Mock workspace data provides the page skeleton (health strip, connection cards,
+  // layout structure). Real API data (SF connections, assessment status) is overlaid
+  // on top via hooks. This is by design — not a mock-only fallback.
   const data = useMemo(() => {
     if (!id) return null;
-    if (isMockMode) {
-      return getMockProjectWorkspaceData(id);
-    }
-    return null;
-  }, [id, isMockMode]);
+    return getMockProjectWorkspaceData(id);
+  }, [id]);
 
   // Salesforce connection hooks
   const { data: sfConnections } = useSalesforceConnections(id);

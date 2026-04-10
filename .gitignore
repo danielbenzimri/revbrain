@@ -45,3 +45,6 @@ npm-debug.log*
 pnpm-debug.log*
 .vercel
 apps/worker/output/
+
+# Local-only scripts with hardcoded credentials
+apps/worker/scripts/connect-sf.ts

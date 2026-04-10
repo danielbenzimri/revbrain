@@ -436,6 +436,228 @@ export class IntegrationsCollector extends BaseCollector {
       metrics.cpqReportCount = -1;
     }
 
+    // ================================================================
+    // C-06: Experience Cloud detection
+    // ================================================================
+    this.ctx.progress.updateSubstep('integrations', 'experience_cloud');
+    try {
+      const networkDescribe = this.ctx.describeCache.get('Network') as DescribeResult | undefined;
+      if (networkDescribe) {
+        const networks = await this.ctx.restApi.queryAll<Record<string, unknown>>(
+          'SELECT Id, Name, Status, UrlPathPrefix FROM Network',
+          this.signal
+        );
+        const hasExperienceCloud = networks.length > 0;
+        findings.push(
+          createFinding({
+            domain: 'integration',
+            collector: 'integrations',
+            artifactType: 'ExperienceCloud',
+            artifactName: 'Experience Cloud',
+            sourceType: 'object',
+            detected: hasExperienceCloud,
+            countValue: networks.length,
+            notes: hasExperienceCloud
+              ? `${networks.length} Experience Cloud site(s) detected: ${networks.map((n) => n.Name).join(', ')}`
+              : 'No Experience Cloud sites detected',
+          })
+        );
+        // Check for Partner/Customer community types
+        for (const net of networks) {
+          const siteName = String(net.Name ?? 'Unknown');
+          findings.push(
+            createFinding({
+              domain: 'integration',
+              collector: 'integrations',
+              artifactType: 'ExperienceCloudSite',
+              artifactName: siteName,
+              sourceType: 'object',
+              detected: true,
+              notes: `Site: ${siteName}, Status: ${net.Status ?? 'Unknown'}, URL: ${net.UrlPathPrefix ?? 'N/A'}`,
+            })
+          );
+        }
+        metrics.experienceCloudSites = networks.length;
+      } else {
+        findings.push(
+          createFinding({
+            domain: 'integration',
+            collector: 'integrations',
+            artifactType: 'ExperienceCloud',
+            artifactName: 'Experience Cloud',
+            sourceType: 'object',
+            detected: false,
+            notes: 'Network object not accessible — Experience Cloud may not be enabled',
+          })
+        );
+      }
+    } catch {
+      findings.push(
+        createFinding({
+          domain: 'integration',
+          collector: 'integrations',
+          artifactType: 'ExperienceCloud',
+          artifactName: 'Experience Cloud',
+          sourceType: 'object',
+          detected: false,
+          notes: 'Experience Cloud detection failed — object may not be queryable',
+        })
+      );
+    }
+
+    // ================================================================
+    // C-07: Salesforce Billing detection
+    // ================================================================
+    this.ctx.progress.updateSubstep('integrations', 'billing');
+    try {
+      // Check for blng package via Tooling API
+      const blngResult = await this.ctx.restApi.toolingQuery<Record<string, unknown>>(
+        "SELECT Id, SubscriberPackage.Name, SubscriberPackageVersion.MajorVersion, SubscriberPackageVersion.MinorVersion FROM InstalledSubscriberPackage WHERE SubscriberPackage.NamespacePrefix = 'blng'",
+        this.signal
+      );
+      const blngInstalled = blngResult.totalSize > 0;
+
+      findings.push(
+        createFinding({
+          domain: 'integration',
+          collector: 'integrations',
+          artifactType: 'BillingDetection',
+          artifactName: 'Salesforce Billing Package',
+          sourceType: 'tooling',
+          detected: blngInstalled,
+          notes: blngInstalled
+            ? `Salesforce Billing (blng) package installed`
+            : 'Salesforce Billing (blng) package not installed',
+        })
+      );
+      metrics.billingPackageInstalled = blngInstalled;
+
+      // Check billing/tax rule usage on products (only if blng is installed)
+      if (blngInstalled) {
+        const productDescribe = this.ctx.describeCache.get('Product2') as
+          | DescribeResult
+          | undefined;
+        const hasBillingRule = productDescribe?.fields.some(
+          (f) => f.name === 'blng__BillingRule__c'
+        );
+        const hasTaxRule = productDescribe?.fields.some((f) => f.name === 'blng__TaxRule__c');
+
+        if (hasBillingRule) {
+          const billingRuleResult = await this.ctx.restApi.queryAll<Record<string, unknown>>(
+            'SELECT COUNT(Id) cnt FROM Product2 WHERE blng__BillingRule__c != null',
+            this.signal
+          );
+          const billingRuleCount = Number(billingRuleResult[0]?.cnt ?? 0);
+          findings.push(
+            createFinding({
+              domain: 'integration',
+              collector: 'integrations',
+              artifactType: 'BillingDetection',
+              artifactName: 'Billing Rules on Products',
+              sourceType: 'object',
+              detected: billingRuleCount > 0,
+              countValue: billingRuleCount,
+              notes: `${billingRuleCount} products have billing rules configured`,
+            })
+          );
+          metrics.productsWithBillingRules = billingRuleCount;
+        }
+
+        if (hasTaxRule) {
+          const taxRuleResult = await this.ctx.restApi.queryAll<Record<string, unknown>>(
+            'SELECT COUNT(Id) cnt FROM Product2 WHERE blng__TaxRule__c != null',
+            this.signal
+          );
+          const taxRuleCount = Number(taxRuleResult[0]?.cnt ?? 0);
+          findings.push(
+            createFinding({
+              domain: 'integration',
+              collector: 'integrations',
+              artifactType: 'BillingDetection',
+              artifactName: 'Tax Rules on Products',
+              sourceType: 'object',
+              detected: taxRuleCount > 0,
+              countValue: taxRuleCount,
+              notes: `${taxRuleCount} products have tax rules configured`,
+            })
+          );
+          metrics.productsWithTaxRules = taxRuleCount;
+        }
+      }
+    } catch {
+      warnings.push('Salesforce Billing detection failed');
+    }
+
+    // ================================================================
+    // C-08: Tax calculator detection (Avalara / Vertex)
+    // ================================================================
+    this.ctx.progress.updateSubstep('integrations', 'tax_calculator');
+    try {
+      const taxPkgResult = await this.ctx.restApi.toolingQuery<Record<string, unknown>>(
+        "SELECT Id, SubscriberPackage.Name, SubscriberPackage.NamespacePrefix FROM InstalledSubscriberPackage WHERE SubscriberPackage.NamespacePrefix IN ('AVA_MAPPER', 'avalara', 'vertex', 'VTX')",
+        this.signal
+      );
+      const firstRecord = taxPkgResult.records[0] as Record<string, unknown> | undefined;
+      const subscriberPkg = firstRecord?.SubscriberPackage as Record<string, unknown> | undefined;
+      const taxProvider =
+        taxPkgResult.totalSize > 0 ? String(subscriberPkg?.Name ?? 'Unknown') : null;
+
+      findings.push(
+        createFinding({
+          domain: 'integration',
+          collector: 'integrations',
+          artifactType: 'TaxCalculator',
+          artifactName: 'Tax Calculator',
+          sourceType: 'tooling',
+          detected: taxProvider !== null,
+          notes: taxProvider
+            ? `Tax calculator detected: ${taxProvider}`
+            : 'No Avalara or Vertex tax calculator package detected',
+        })
+      );
+      metrics.taxCalculatorProvider = taxProvider ?? 'None';
+    } catch {
+      findings.push(
+        createFinding({
+          domain: 'integration',
+          collector: 'integrations',
+          artifactType: 'TaxCalculator',
+          artifactName: 'Tax Calculator',
+          sourceType: 'tooling',
+          detected: false,
+          notes: 'Tax calculator detection query failed',
+        })
+      );
+    }
+
+    // ================================================================
+    // C-09: Apex callout pattern scan
+    // ================================================================
+    this.ctx.progress.updateSubstep('integrations', 'apex_callouts');
+    const apexFindings = findings.filter(
+      (f) => f.artifactType === 'ApexClass' || f.domain === 'dependency'
+    );
+    // Scan for callout patterns in Apex source (textValue contains source code)
+    const calloutPattern = /new\s+Http(?:Request)?\s*\(|HttpCallout|WebServiceCallout|Callable/;
+    let calloutClassCount = 0;
+    for (const f of apexFindings) {
+      if (f.textValue && calloutPattern.test(f.textValue)) {
+        calloutClassCount++;
+        findings.push(
+          createFinding({
+            domain: 'integration',
+            collector: 'integrations',
+            artifactType: 'ApexCallout',
+            artifactName: f.artifactName,
+            sourceType: 'inferred',
+            detected: true,
+            notes: `Apex class "${f.artifactName}" contains HTTP callout patterns`,
+          })
+        );
+      }
+    }
+    metrics.apexCalloutClasses = calloutClassCount;
+
     this.log.info(
       {
         namedCredentials: metrics.totalNamedCredentials,
@@ -446,6 +668,10 @@ export class IntegrationsCollector extends BaseCollector {
         externalIdFields: externalIdFieldCount,
         eSignature: eSignatureDetected,
         cpqReports: metrics.cpqReportCount,
+        experienceCloud: metrics.experienceCloudSites,
+        billing: metrics.billingPackageInstalled,
+        taxCalculator: metrics.taxCalculatorProvider,
+        apexCallouts: metrics.apexCalloutClasses,
         findings: findings.length,
       },
       'integrations_complete'

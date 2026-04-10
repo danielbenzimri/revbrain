@@ -12,7 +12,10 @@ const assessment = getMockAssessmentData(Q1_ID)!;
 const mockT = (key: string) => key;
 
 function renderComponent(onClose = vi.fn()) {
-  return { onClose, ...render(<RiskRegister risks={assessment.risks} onClose={onClose} t={mockT} />) };
+  return {
+    onClose,
+    ...render(<RiskRegister risks={assessment.risks} onClose={onClose} t={mockT} />),
+  };
 }
 
 describe('RiskRegister', () => {
@@ -73,7 +76,8 @@ describe('RiskRegister', () => {
   it('severity badges use correct colors', () => {
     renderComponent();
     // Critical risks should have red badge (span elements, not option elements)
-    const criticalBadges = screen.getAllByText('assessment.riskRegister.severities.critical')
+    const criticalBadges = screen
+      .getAllByText('assessment.riskRegister.severities.critical')
       .filter((el) => el.tagName === 'SPAN');
     expect(criticalBadges.length).toBeGreaterThan(0);
     for (const badge of criticalBadges) {

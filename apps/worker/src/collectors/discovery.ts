@@ -114,6 +114,7 @@ const COUNT_OBJECTS = [
     label: 'Localizations',
     soql: 'SELECT COUNT() FROM SBQQ__Localization__c',
   },
+  { name: 'Pricebook2', label: 'Pricebooks', soql: 'SELECT COUNT() FROM Pricebook2' },
 ];
 
 export class DiscoveryCollector extends BaseCollector {
@@ -461,11 +462,14 @@ export class DiscoveryCollector extends BaseCollector {
     const dataCounts: Record<string, number> = {};
     const bulkApiObjects: string[] = [];
 
+    // Standard Salesforce objects that always exist and are not in REQUIRED_CPQ_OBJECTS.
+    const STANDARD_OBJECTS = new Set(['Product2', 'Pricebook2']);
     for (const countObj of COUNT_OBJECTS) {
-      // Only count objects that exist
+      // Only count objects that exist (CPQ objects checked via presentObjects;
+      // standard objects are always countable)
       if (
         !presentObjects.includes(countObj.name.replace('_90d', '')) &&
-        !countObj.name.includes('Product2')
+        !STANDARD_OBJECTS.has(countObj.name)
       ) {
         continue;
       }

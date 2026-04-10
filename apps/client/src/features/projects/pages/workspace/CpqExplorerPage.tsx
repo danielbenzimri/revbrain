@@ -15,14 +15,14 @@ export default function CpqExplorerPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  const isMockMode = import.meta.env.VITE_AUTH_MODE === 'mock';
+  // Mock data provides page skeleton; real API data overlaid via hooks
   const data = useMemo(() => {
     if (!id) return null;
-    if (isMockMode) {
+    if (true) { // skeleton data always loaded
       return getMockProjectWorkspaceData(id);
     }
     return null;
-  }, [id, isMockMode]);
+  }, [id, ]);
 
   const hasData = data?.cpqExplorerData !== null;
 

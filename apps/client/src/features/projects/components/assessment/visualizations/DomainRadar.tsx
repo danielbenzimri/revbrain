@@ -16,7 +16,13 @@ function polarToCartesian(cx: number, cy: number, r: number, angle: number): [nu
   return [cx + r * Math.cos(angle), cy + r * Math.sin(angle)];
 }
 
-function polygonPoints(cx: number, cy: number, values: number[], maxValue: number, maxRadius: number): string {
+function polygonPoints(
+  cx: number,
+  cy: number,
+  values: number[],
+  maxValue: number,
+  maxRadius: number
+): string {
   return values
     .map((v, i) => {
       const angle = (2 * Math.PI * i) / values.length - Math.PI / 2;
@@ -52,11 +58,15 @@ export default function DomainRadar({ domains, t }: DomainRadarProps) {
 
   return (
     <div className="bg-white rounded-2xl p-5" data-testid="domain-radar">
-      <h3 className="text-sm font-semibold text-slate-900 mb-3">
-        Migration Complexity Shape
-      </h3>
+      <h3 className="text-sm font-semibold text-slate-900 mb-3">Migration Complexity Shape</h3>
 
-      <svg viewBox="0 0 100 100" className="w-full" style={{ maxWidth: 360, margin: '0 auto' }} role="img" aria-label="Domain complexity radar chart">
+      <svg
+        viewBox="0 0 100 100"
+        className="w-full"
+        style={{ maxWidth: 360, margin: '0 auto' }}
+        role="img"
+        aria-label="Domain complexity radar chart"
+      >
         {/* Background rings */}
         {rings.map((ring) => (
           <polygon
@@ -111,8 +121,12 @@ export default function DomainRadar({ domains, t }: DomainRadarProps) {
           const [x, y] = polarToCartesian(cx, cy, complexityR, angle);
           const [labelX, labelY] = polarToCartesian(cx, cy, maxRadius + 6, angle);
 
-          const dotColor = domain.complexity === 'high' ? '#ef4444' :
-            domain.complexity === 'moderate' ? '#f59e0b' : '#10b981';
+          const dotColor =
+            domain.complexity === 'high'
+              ? '#ef4444'
+              : domain.complexity === 'moderate'
+                ? '#f59e0b'
+                : '#10b981';
 
           return (
             <g key={domain.id}>
@@ -128,13 +142,7 @@ export default function DomainRadar({ domains, t }: DomainRadarProps) {
               >
                 {t(`assessment.tabs.${domain.id}`)}
               </text>
-              <text
-                x={labelX}
-                y={labelY + 3}
-                textAnchor="middle"
-                fontSize={1.8}
-                fill="#94a3b8"
-              >
+              <text x={labelX} y={labelY + 3} textAnchor="middle" fontSize={1.8} fill="#94a3b8">
                 {domain.stats.total}
               </text>
             </g>
@@ -149,7 +157,10 @@ export default function DomainRadar({ domains, t }: DomainRadarProps) {
           Complexity
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-4 h-0.5 bg-blue-400 inline-block" style={{ borderTop: '1px dashed #3b82f6' }} />
+          <span
+            className="w-4 h-0.5 bg-blue-400 inline-block"
+            style={{ borderTop: '1px dashed #3b82f6' }}
+          />
           Item Count
         </span>
       </div>

@@ -62,13 +62,15 @@ const server = createServer(async (req, res) => {
         },
         body: JSON.stringify({
           overrides: {
-            containerOverrides: [{
-              env: [
-                { name: 'JOB_ID', value: body.jobId ?? `job-${Date.now()}` },
-                { name: 'RUN_ID', value: body.runId },
-                { name: 'CONNECTION_ID', value: body.connectionId },
-              ],
-            }],
+            containerOverrides: [
+              {
+                env: [
+                  { name: 'JOB_ID', value: body.jobId ?? `job-${Date.now()}` },
+                  { name: 'RUN_ID', value: body.runId },
+                  { name: 'CONNECTION_ID', value: body.connectionId },
+                ],
+              },
+            ],
           },
         }),
       });

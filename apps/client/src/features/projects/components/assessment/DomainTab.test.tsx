@@ -102,7 +102,14 @@ describe('DomainTab', () => {
 
     it('row click calls onItemClick', () => {
       const onItemClick = vi.fn();
-      render(<DomainTab domain={pricingDomain} statCards={defaultStatCards} onItemClick={onItemClick} t={mockT} />);
+      render(
+        <DomainTab
+          domain={pricingDomain}
+          statCards={defaultStatCards}
+          onItemClick={onItemClick}
+          t={mockT}
+        />
+      );
       const rows = screen.getAllByRole('row');
       // Click first data row (skip header)
       fireEvent.click(rows[1]);
@@ -118,7 +125,9 @@ describe('DomainTab', () => {
     it('shows migration status badges with why tooltip', () => {
       render(<DomainTab domain={pricingDomain} statCards={defaultStatCards} t={mockT} />);
       // Status badges should have title attribute with whyStatus
-      const statusBadges = screen.getAllByText(/assessment\.migrationStatus\.(auto|guided|manual|blocked)/);
+      const statusBadges = screen.getAllByText(
+        /assessment\.migrationStatus\.(auto|guided|manual|blocked)/
+      );
       const withTitle = statusBadges.filter((el) => el.getAttribute('title'));
       expect(withTitle.length).toBeGreaterThan(0);
     });
@@ -164,7 +173,9 @@ describe('DomainTab', () => {
 
     it('starts collapsed', () => {
       render(<DomainTab domain={pricingDomain} statCards={defaultStatCards} t={mockT} />);
-      expect(screen.queryByPlaceholderText('assessment.domain.businessContextPlaceholder')).toBeNull();
+      expect(
+        screen.queryByPlaceholderText('assessment.domain.businessContextPlaceholder')
+      ).toBeNull();
     });
 
     it('expands on click to show textarea', () => {
@@ -172,7 +183,9 @@ describe('DomainTab', () => {
       const section = screen.getByTestId('business-context');
       const expandBtn = within(section).getByText('assessment.domain.expand');
       fireEvent.click(expandBtn);
-      expect(screen.getByPlaceholderText('assessment.domain.businessContextPlaceholder')).toBeTruthy();
+      expect(
+        screen.getByPlaceholderText('assessment.domain.businessContextPlaceholder')
+      ).toBeTruthy();
     });
   });
 });

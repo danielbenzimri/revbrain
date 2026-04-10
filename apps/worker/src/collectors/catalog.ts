@@ -205,10 +205,18 @@ export class CatalogCollector extends BaseCollector {
           artifactId: p.Id as string,
           findingType: 'product',
           sourceType: 'object',
-          complexityLevel: p.SBQQ__ConfigurationType__c ? 'medium' : 'low',
+          complexityLevel:
+            p.SBQQ__ConfigurationType__c === 'Required' ||
+            p.SBQQ__ConfigurationType__c === 'Allowed'
+              ? 'medium'
+              : 'low',
           migrationRelevance: p.IsActive ? 'must-migrate' : 'optional',
           rcaTargetConcept: 'ProductSellingModel',
-          rcaMappingComplexity: p.SBQQ__ConfigurationType__c ? 'transform' : 'direct',
+          rcaMappingComplexity:
+            p.SBQQ__ConfigurationType__c === 'Required' ||
+            p.SBQQ__ConfigurationType__c === 'Allowed'
+              ? 'transform'
+              : 'direct',
           usageLevel: p.IsActive ? undefined : 'dormant',
           evidenceRefs: productEvidenceRefs,
         })
@@ -249,6 +257,105 @@ export class CatalogCollector extends BaseCollector {
     if (await this.checkCancellation()) return this.emptyResult('success');
 
     // ================================================================
+    // 5.1a: Per-field population rate (C-02)
+    // Row-scan approach — single query already loaded in `products` array
+    // ================================================================
+    this.ctx.progress.updateSubstep('catalog', 'field-utilization');
+    if (activeProducts > 0) {
+      const activeProductRows = products.filter((p) => p.IsActive === true);
+      const fieldsToScan = PRODUCT_WISHLIST.filter(
+        (f) =>
+          f !== 'Id' &&
+          f !== 'Name' &&
+          f !== 'IsActive' &&
+          f !== 'CreatedDate' &&
+          f !== 'LastModifiedDate'
+      );
+
+      // Type-aware population check
+      const isFieldPopulated = (value: unknown): boolean => {
+        if (value === null || value === undefined) return false;
+        if (typeof value === 'string') {
+          const trimmed = value.trim();
+          return trimmed !== '' && trimmed !== '--None--';
+        }
+        if (typeof value === 'boolean') return true;
+        if (typeof value === 'number') return true;
+        return true;
+      };
+
+      let fieldsScanned = 0;
+      let fieldsBlocked = 0;
+
+      for (const field of fieldsToScan) {
+        // Check if field was accessible (present in query results)
+        const firstRow = activeProductRows[0];
+        if (!firstRow || !(field in firstRow)) {
+          // FLS-blocked or not in query results
+          fieldsBlocked++;
+          findings.push(
+            createFinding({
+              domain: 'catalog',
+              collector: 'catalog',
+              artifactType: 'ProductFieldUtilization',
+              artifactName: field,
+              sourceType: 'object',
+              textValue: field,
+              notes: 'Field not accessible (FLS)',
+              evidenceRefs: [
+                { type: 'count', value: String(activeProducts), label: 'TotalActive' },
+              ],
+            })
+          );
+          continue;
+        }
+
+        fieldsScanned++;
+        const populatedCount = activeProductRows.filter((row) =>
+          isFieldPopulated(row[field])
+        ).length;
+
+        // For picklist fields, capture top 5 value distribution
+        let topValues = '';
+        if (typeof activeProductRows[0]?.[field] === 'string') {
+          const valueCounts: Record<string, number> = {};
+          for (const row of activeProductRows) {
+            const v = String(row[field] ?? '').trim();
+            if (v && v !== '--None--') {
+              valueCounts[v] = (valueCounts[v] ?? 0) + 1;
+            }
+          }
+          const sorted = Object.entries(valueCounts)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 5);
+          if (sorted.length > 0) {
+            topValues = ` Top values: ${sorted.map(([v, c]) => `${v} (${c})`).join(', ')}`;
+          }
+        }
+
+        findings.push(
+          createFinding({
+            domain: 'catalog',
+            collector: 'catalog',
+            artifactType: 'ProductFieldUtilization',
+            artifactName: field,
+            sourceType: 'object',
+            countValue: populatedCount,
+            textValue: field,
+            notes: `${populatedCount} of ${activeProducts} active products have ${field} populated (${Math.round((populatedCount / activeProducts) * 100)}%).${topValues}`,
+            evidenceRefs: [{ type: 'count', value: String(activeProducts), label: 'TotalActive' }],
+          })
+        );
+      }
+
+      this.log.info({ fieldsScanned, fieldsBlocked, activeProducts }, 'field_utilization_computed');
+      metrics.fieldUtilizationFieldsScanned = fieldsScanned;
+      metrics.fieldUtilizationFieldsBlocked = fieldsBlocked;
+    }
+
+    if (await this.checkCancellation()) return this.emptyResult('success');
+
+    // ================================================================
     // 5.2: Features
     // ================================================================
     this.ctx.progress.updateSubstep('catalog', 'features');
@@ -278,6 +385,36 @@ export class CatalogCollector extends BaseCollector {
       );
       totalFeatures = features.length;
       metrics.totalFeatures = totalFeatures;
+
+      // Emit a DataCount so the assembler's 6.6.1 table can use a real denominator.
+      // Without this, assembleBundlesDeepDive was counting `ProductFeature` findings
+      // (which is 0, since we don't emit a per-feature finding) and producing a
+      // Features/Feature Orphans inconsistency (e.g. Features=0 but Orphans=39).
+      if (totalFeatures > 0) {
+        // Count distinct bundle-capable parents that have features
+        const configuredSkusWithFeatures = new Set(
+          features.map((f) => String(f.SBQQ__ConfiguredSKU__c ?? ''))
+        );
+        configuredSkusWithFeatures.delete('');
+        findings.push(
+          createFinding({
+            domain: 'catalog',
+            collector: 'catalog',
+            artifactType: 'DataCount',
+            artifactName: 'Features',
+            sourceType: 'object',
+            countValue: totalFeatures,
+            notes: `${totalFeatures} SBQQ__ProductFeature__c records across ${configuredSkusWithFeatures.size} bundle-capable product(s)`,
+            evidenceRefs: [
+              {
+                type: 'count',
+                value: String(configuredSkusWithFeatures.size),
+                label: 'ProductsWithFeatures',
+              },
+            ],
+          })
+        );
+      }
     }
 
     // ================================================================
@@ -316,7 +453,12 @@ export class CatalogCollector extends BaseCollector {
       );
       totalOptions = options.length;
 
-      // Nested bundle detection
+      // Normalize Salesforce IDs to 15-char for consistent comparison
+      // SF IDs come as 15-char (case-sensitive) or 18-char (with checksum suffix)
+      // Lookup fields like SBQQ__ConfiguredSKU__c may return either format
+      const normalizeId = (id: string) => id?.substring(0, 15) ?? '';
+
+      // Nested bundle detection — use normalized IDs throughout
       const bundleIds = new Set(
         products
           .filter(
@@ -326,14 +468,19 @@ export class CatalogCollector extends BaseCollector {
           )
           .map((p) => p.Id as string)
       );
+      const bundleIds15 = new Set([...bundleIds].map(normalizeId));
 
-      const nestedOptions = options.filter((o) => bundleIds.has(o.SBQQ__OptionalSKU__c as string));
+      const nestedOptions = options.filter((o) =>
+        bundleIds15.has(normalizeId(o.SBQQ__OptionalSKU__c as string))
+      );
       if (nestedOptions.length > 0) {
-        const childBundles = new Set(nestedOptions.map((o) => o.SBQQ__OptionalSKU__c as string));
+        const childBundles = new Set(
+          nestedOptions.map((o) => normalizeId(o.SBQQ__OptionalSKU__c as string))
+        );
         const grandchild = options.filter(
           (o) =>
-            childBundles.has(o.SBQQ__ConfiguredSKU__c as string) &&
-            bundleIds.has(o.SBQQ__OptionalSKU__c as string)
+            childBundles.has(normalizeId(o.SBQQ__ConfiguredSKU__c as string)) &&
+            bundleIds15.has(normalizeId(o.SBQQ__OptionalSKU__c as string))
         );
         maxBundleDepth = grandchild.length > 0 ? 3 : 2;
       } else if (bundleProducts > 0) {
@@ -345,12 +492,11 @@ export class CatalogCollector extends BaseCollector {
       metrics.nestedBundleCount = nestedOptions.length;
       metrics.requiredOptions = options.filter((o) => o.SBQQ__Required__c === true).length;
 
-      // G-07: Store parent→option map for post-processing attachment rate computation
-      // Key: parentProductId, Value: array of option product IDs
+      // Store parent→option map using normalized IDs
       const optionMapData: Record<string, string[]> = {};
       for (const o of options) {
-        const parent = o.SBQQ__ConfiguredSKU__c as string;
-        const option = o.SBQQ__OptionalSKU__c as string;
+        const parent = normalizeId(o.SBQQ__ConfiguredSKU__c as string);
+        const option = normalizeId(o.SBQQ__OptionalSKU__c as string);
         if (parent && option) {
           if (!optionMapData[parent]) optionMapData[parent] = [];
           optionMapData[parent].push(option);
@@ -358,8 +504,151 @@ export class CatalogCollector extends BaseCollector {
       }
       metrics.optionMap = JSON.stringify(optionMapData);
 
+      // Count bundle-capable products that have child options
+      // Uses normalized 15-char IDs to avoid 15 vs 18-char SF ID mismatch
+      const configuredBundleCount = Object.keys(optionMapData).filter((parentId) =>
+        bundleIds15.has(parentId)
+      ).length;
+      metrics.configuredBundleCount = configuredBundleCount;
+
+      // Emit as a DataCount finding so assembler can use it in ReportCounts
+      findings.push(
+        createFinding({
+          domain: 'catalog',
+          collector: 'catalog',
+          artifactType: 'DataCount',
+          artifactName: 'Configured Bundles',
+          sourceType: 'object',
+          countValue: configuredBundleCount,
+          notes: `${configuredBundleCount} bundle-capable products have at least one SBQQ__ProductOption__c child record (configured bundles with active nested options)`,
+        })
+      );
+
       if (maxBundleDepth >= 3) {
         warnings.push('Bundle nesting depth ≥ 3 — complex migration to RCA Product Compositions');
+      }
+    }
+
+    // ================================================================
+    // 5.3a: Feature orphan detection (C-03a)
+    // Features with no ProductOption referencing them = tech debt
+    // ================================================================
+    if (featureDescribe && optionDescribe && totalFeatures > 0) {
+      const featureQ = buildSafeQuery('SBQQ__ProductFeature__c', ['Id'], featureDescribe);
+      const allFeatureIds = (
+        await this.ctx.restApi.queryAll<Record<string, unknown>>(featureQ.query, this.signal)
+      ).map((f) => String(f.Id));
+
+      // Get distinct feature IDs referenced by options
+      const referencedFeatureIds = new Set(
+        (
+          await this.ctx.restApi.queryAll<Record<string, unknown>>(
+            `SELECT SBQQ__Feature__c FROM SBQQ__ProductOption__c WHERE SBQQ__Feature__c != null GROUP BY SBQQ__Feature__c`,
+            this.signal
+          )
+        ).map((o) => String(o.SBQQ__Feature__c).substring(0, 15))
+      );
+
+      const orphanCount = allFeatureIds.filter(
+        (id) => !referencedFeatureIds.has(id.substring(0, 15))
+      ).length;
+
+      findings.push(
+        createFinding({
+          domain: 'catalog',
+          collector: 'catalog',
+          artifactType: 'DataCount',
+          artifactName: 'Feature Orphans',
+          sourceType: 'object',
+          countValue: orphanCount,
+          notes: `${orphanCount} of ${totalFeatures} features are not referenced by any product option — tech debt indicator`,
+        })
+      );
+      metrics.featureOrphanCount = orphanCount;
+    }
+
+    // ================================================================
+    // 5.3b: Option constraint count (C-03b)
+    // ================================================================
+    const constraintDescribe = this.ctx.describeCache.get('SBQQ__OptionConstraint__c') as
+      | DescribeResult
+      | undefined;
+
+    if (constraintDescribe) {
+      try {
+        const constraintResult = await this.ctx.restApi.queryAll<Record<string, unknown>>(
+          'SELECT COUNT(Id) cnt FROM SBQQ__OptionConstraint__c',
+          this.signal
+        );
+        const constraintCount = Number(constraintResult[0]?.cnt ?? 0);
+        findings.push(
+          createFinding({
+            domain: 'catalog',
+            collector: 'catalog',
+            artifactType: 'DataCount',
+            artifactName: 'Option Constraints',
+            sourceType: 'object',
+            countValue: constraintCount,
+            notes: `${constraintCount} option constraint records configured`,
+          })
+        );
+        metrics.optionConstraintCount = constraintCount;
+      } catch {
+        findings.push(
+          createFinding({
+            domain: 'catalog',
+            collector: 'catalog',
+            artifactType: 'DataCount',
+            artifactName: 'Option Constraints',
+            sourceType: 'object',
+            detected: false,
+            notes: 'SBQQ__OptionConstraint__c query failed — object may not be accessible',
+          })
+        );
+      }
+    } else {
+      findings.push(
+        createFinding({
+          domain: 'catalog',
+          collector: 'catalog',
+          artifactType: 'DataCount',
+          artifactName: 'Option Constraints',
+          sourceType: 'object',
+          detected: false,
+          notes: 'SBQQ__OptionConstraint__c not found in org describe',
+        })
+      );
+    }
+
+    // ================================================================
+    // 5.3c: Optional-for count (C-03c)
+    // Products that appear as options in other bundles
+    // ================================================================
+    if (optionDescribe) {
+      try {
+        const optionalForResult = await this.ctx.restApi.queryAll<Record<string, unknown>>(
+          'SELECT COUNT(Id) cnt FROM SBQQ__ProductOption__c WHERE SBQQ__OptionalSKU__c != null',
+          this.signal
+        );
+        const distinctOptionalForResult = await this.ctx.restApi.queryAll<Record<string, unknown>>(
+          'SELECT SBQQ__OptionalSKU__c FROM SBQQ__ProductOption__c WHERE SBQQ__OptionalSKU__c != null GROUP BY SBQQ__OptionalSKU__c',
+          this.signal
+        );
+        const optionalForCount = distinctOptionalForResult.length;
+        findings.push(
+          createFinding({
+            domain: 'catalog',
+            collector: 'catalog',
+            artifactType: 'DataCount',
+            artifactName: 'Optional For',
+            sourceType: 'object',
+            countValue: optionalForCount,
+            notes: `${optionalForCount} distinct products appear as options in other bundles (${Number(optionalForResult[0]?.cnt ?? 0)} total option records)`,
+          })
+        );
+        metrics.optionalForCount = optionalForCount;
+      } catch {
+        warnings.push('Optional-for count query failed');
       }
     }
 

@@ -34,7 +34,7 @@ test.describe('Salesforce Connection', () => {
       {
         data: { instanceType: 'production', connectionRole: 'source' },
         headers: { 'Content-Type': 'application/json' },
-      },
+      }
     );
 
     const connectBody = await connectResponse.text();
@@ -102,7 +102,11 @@ test.describe('Salesforce Connection', () => {
         await page.screenshot({ path: `${DIR}/04b-code-entered.png` });
 
         // Click Verify/Submit button
-        const btnSelectors = ['input[id="save"]', 'button:has-text("Verify")', 'input[value="Verify"]'];
+        const btnSelectors = [
+          'input[id="save"]',
+          'button:has-text("Verify")',
+          'input[value="Verify"]',
+        ];
         for (const sel of btnSelectors) {
           const btn = page.locator(sel).first();
           if (await btn.isVisible({ timeout: 2000 }).catch(() => false)) {
@@ -142,7 +146,7 @@ test.describe('Salesforce Connection', () => {
 
     // Step 5: Check connection status via API
     const statusResponse = await page.request.get(
-      `${API_URL}/api/v1/projects/${PHASE2_PROJECT_ID}/salesforce/connections`,
+      `${API_URL}/api/v1/projects/${PHASE2_PROJECT_ID}/salesforce/connections`
     );
 
     if (statusResponse.ok()) {
@@ -165,7 +169,7 @@ test.describe('Salesforce Connection', () => {
           {
             data: { connectionRole: 'source' },
             headers: { 'Content-Type': 'application/json' },
-          },
+          }
         );
 
         if (testResponse.ok()) {
@@ -179,7 +183,7 @@ test.describe('Salesforce Connection', () => {
           {
             data: { connectionRole: 'source' },
             headers: { 'Content-Type': 'application/json' },
-          },
+          }
         );
 
         if (disconnectResponse.ok()) {

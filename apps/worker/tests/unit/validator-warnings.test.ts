@@ -35,7 +35,10 @@ function makeFinding(overrides: Partial<AssessmentFindingInput>): AssessmentFind
 
 function makeResult(
   findings: AssessmentFindingInput[],
-  opts?: { status?: 'success' | 'partial' | 'failed'; droppedFields?: Array<{ object: string; fields: string[] }> }
+  opts?: {
+    status?: 'success' | 'partial' | 'failed';
+    droppedFields?: Array<{ object: string; fields: string[] }>;
+  }
 ): CollectorResult {
   return {
     findings,
@@ -64,11 +67,27 @@ describe('FindingsValidator V0 warning scenarios — T4a', () => {
       )
     );
     // Add other expected domains to avoid unrelated warnings
-    results.set('pricing', makeResult([makeFinding({ domain: 'pricing', artifactType: 'PriceRule' })]));
-    results.set('usage', makeResult([
-      makeFinding({ domain: 'usage', artifactType: 'DataCount', artifactName: 'Quote', countValue: 100 }),
-      makeFinding({ domain: 'usage', artifactType: 'DataCount', artifactName: 'QuoteLine', countValue: 500 }),
-    ]));
+    results.set(
+      'pricing',
+      makeResult([makeFinding({ domain: 'pricing', artifactType: 'PriceRule' })])
+    );
+    results.set(
+      'usage',
+      makeResult([
+        makeFinding({
+          domain: 'usage',
+          artifactType: 'DataCount',
+          artifactName: 'Quote',
+          countValue: 100,
+        }),
+        makeFinding({
+          domain: 'usage',
+          artifactType: 'DataCount',
+          artifactName: 'QuoteLine',
+          countValue: 500,
+        }),
+      ])
+    );
     results.set('customization', makeResult([makeFinding({ domain: 'customization' })]));
     results.set('dependencies', makeResult([makeFinding({ domain: 'dependency' })]));
     results.set('order-lifecycle', makeResult([makeFinding({ domain: 'order-lifecycle' })]));
@@ -104,11 +123,27 @@ describe('FindingsValidator V0 warning scenarios — T4a', () => {
     );
     // No AdvancedApprovalRule findings anywhere
     results.set('catalog', makeResult([makeFinding({ domain: 'catalog' })]));
-    results.set('pricing', makeResult([makeFinding({ domain: 'pricing', artifactType: 'PriceRule' })]));
-    results.set('usage', makeResult([
-      makeFinding({ domain: 'usage', artifactType: 'DataCount', artifactName: 'Quote', countValue: 100 }),
-      makeFinding({ domain: 'usage', artifactType: 'DataCount', artifactName: 'QuoteLine', countValue: 500 }),
-    ]));
+    results.set(
+      'pricing',
+      makeResult([makeFinding({ domain: 'pricing', artifactType: 'PriceRule' })])
+    );
+    results.set(
+      'usage',
+      makeResult([
+        makeFinding({
+          domain: 'usage',
+          artifactType: 'DataCount',
+          artifactName: 'Quote',
+          countValue: 100,
+        }),
+        makeFinding({
+          domain: 'usage',
+          artifactType: 'DataCount',
+          artifactName: 'QuoteLine',
+          countValue: 500,
+        }),
+      ])
+    );
     results.set('customization', makeResult([makeFinding({ domain: 'customization' })]));
     results.set('dependencies', makeResult([makeFinding({ domain: 'dependency' })]));
     results.set('order-lifecycle', makeResult([makeFinding({ domain: 'order-lifecycle' })]));
@@ -125,17 +160,32 @@ describe('FindingsValidator V0 warning scenarios — T4a', () => {
     results.set('catalog', makeResult([makeFinding({ domain: 'catalog' })]));
     // pricing domain has no findings and no failure
     results.set('pricing', makeResult([]));
-    results.set('usage', makeResult([
-      makeFinding({ domain: 'usage', artifactType: 'DataCount', artifactName: 'Quote', countValue: 100 }),
-      makeFinding({ domain: 'usage', artifactType: 'DataCount', artifactName: 'QuoteLine', countValue: 500 }),
-    ]));
+    results.set(
+      'usage',
+      makeResult([
+        makeFinding({
+          domain: 'usage',
+          artifactType: 'DataCount',
+          artifactName: 'Quote',
+          countValue: 100,
+        }),
+        makeFinding({
+          domain: 'usage',
+          artifactType: 'DataCount',
+          artifactName: 'QuoteLine',
+          countValue: 500,
+        }),
+      ])
+    );
     results.set('customization', makeResult([makeFinding({ domain: 'customization' })]));
     results.set('dependencies', makeResult([makeFinding({ domain: 'dependency' })]));
     results.set('order-lifecycle', makeResult([makeFinding({ domain: 'order-lifecycle' })]));
 
     const result = await validateExtraction(mockCtx, results);
 
-    const skipWarning = result.warnings.find((w) => w.includes('[V0-SKIP]') && w.includes('pricing'));
+    const skipWarning = result.warnings.find(
+      (w) => w.includes('[V0-SKIP]') && w.includes('pricing')
+    );
     expect(skipWarning).toBeTruthy();
     expect(skipWarning).toContain('no findings');
   });

@@ -17,16 +17,22 @@ dotenv.config({ path: path.resolve(__dirname, '.env.e2e') });
 const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL!;
 const ADMIN_PASSWORD = process.env.E2E_ADMIN_PASSWORD!;
 const BASE_URL = process.env.E2E_BASE_URL ?? 'https://stg.revbrain.ai';
-const API_URL = process.env.E2E_API_URL ?? 'https://qutuivleheybnkbhpdbn.supabase.co/functions/v1/api';
-const ANON_KEY = process.env.E2E_ANON_KEY ?? 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1dHVpdmxlaGV5Ym5rYmhwZGJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTQxMzgsImV4cCI6MjA4OTY3MDEzOH0.Arjxw1r7DhD1LLGQBiNkPkqo1ycsQVBQqXPEjugPsPA';
+const API_URL =
+  process.env.E2E_API_URL ?? 'https://qutuivleheybnkbhpdbn.supabase.co/functions/v1/api';
+const ANON_KEY =
+  process.env.E2E_ANON_KEY ??
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1dHVpdmxlaGV5Ym5rYmhwZGJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTQxMzgsImV4cCI6MjA4OTY3MDEzOH0.Arjxw1r7DhD1LLGQBiNkPkqo1ycsQVBQqXPEjugPsPA';
 
 // Helper: get auth token
 async function getToken(): Promise<string> {
-  const res = await fetch('https://qutuivleheybnkbhpdbn.supabase.co/auth/v1/token?grant_type=password', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', apikey: ANON_KEY },
-    body: JSON.stringify({ email: ADMIN_EMAIL, password: ADMIN_PASSWORD }),
-  });
+  const res = await fetch(
+    'https://qutuivleheybnkbhpdbn.supabase.co/auth/v1/token?grant_type=password',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: ANON_KEY },
+      body: JSON.stringify({ email: ADMIN_EMAIL, password: ADMIN_PASSWORD }),
+    }
+  );
   const { access_token } = await res.json();
   return access_token;
 }

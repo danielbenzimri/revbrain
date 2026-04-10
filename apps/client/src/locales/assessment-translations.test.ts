@@ -11,7 +11,9 @@ import en from './en/assessment.json';
 import he from './he/assessment.json';
 
 type JsonValue = string | number | boolean | null | JsonObj;
-interface JsonObj { [key: string]: JsonValue }
+interface JsonObj {
+  [key: string]: JsonValue;
+}
 
 /**
  * Recursively extracts all dot-notation keys from a nested object.
@@ -77,8 +79,16 @@ describe('Assessment translation parity', () => {
 
   it('tab name keys cover all 10 domain tabs', () => {
     const expectedTabs = [
-      'overview', 'products', 'pricing', 'rules', 'code',
-      'integrations', 'amendments', 'approvals', 'documents', 'dataReporting',
+      'overview',
+      'products',
+      'pricing',
+      'rules',
+      'code',
+      'integrations',
+      'amendments',
+      'approvals',
+      'documents',
+      'dataReporting',
     ];
     for (const tab of expectedTabs) {
       expect(enKeys).toContain(`tabs.${tab}`);
@@ -88,10 +98,20 @@ describe('Assessment translation parity', () => {
 
   it('Hebrew strings differ from English (not just copied)', () => {
     // Check a sample of keys to ensure Hebrew is actually translated
-    const sampleKeys = ['title', 'tabs.overview', 'tabs.products', 'migrationStatus.auto', 'complexity.low'];
+    const sampleKeys = [
+      'title',
+      'tabs.overview',
+      'tabs.products',
+      'migrationStatus.auto',
+      'complexity.low',
+    ];
     for (const key of sampleKeys) {
-      const enValue = key.split('.').reduce((obj: JsonValue, k) => (obj as JsonObj)[k], en as unknown as JsonValue) as string;
-      const heValue = key.split('.').reduce((obj: JsonValue, k) => (obj as JsonObj)[k], he as unknown as JsonValue) as string;
+      const enValue = key
+        .split('.')
+        .reduce((obj: JsonValue, k) => (obj as JsonObj)[k], en as unknown as JsonValue) as string;
+      const heValue = key
+        .split('.')
+        .reduce((obj: JsonValue, k) => (obj as JsonObj)[k], he as unknown as JsonValue) as string;
       expect(enValue).not.toBe(heValue);
     }
   });

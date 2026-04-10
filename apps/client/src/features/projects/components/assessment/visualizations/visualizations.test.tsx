@@ -55,33 +55,25 @@ describe('MigrationTreemap', () => {
   afterEach(() => cleanup());
 
   it('renders treemap', () => {
-    render(
-      <MigrationTreemap domains={assessment.domains} onDomainClick={vi.fn()} t={mockT} />,
-    );
+    render(<MigrationTreemap domains={assessment.domains} onDomainClick={vi.fn()} t={mockT} />);
     expect(screen.getByTestId('migration-treemap')).toBeTruthy();
   });
 
   it('shows domain names', () => {
-    render(
-      <MigrationTreemap domains={assessment.domains} onDomainClick={vi.fn()} t={mockT} />,
-    );
+    render(<MigrationTreemap domains={assessment.domains} onDomainClick={vi.fn()} t={mockT} />);
     const treemap = screen.getByTestId('migration-treemap');
     expect(treemap.textContent).toContain('assessment.tabs.pricing');
     expect(treemap.textContent).toContain('assessment.tabs.products');
   });
 
   it('shows percentages', () => {
-    render(
-      <MigrationTreemap domains={assessment.domains} onDomainClick={vi.fn()} t={mockT} />,
-    );
+    render(<MigrationTreemap domains={assessment.domains} onDomainClick={vi.fn()} t={mockT} />);
     const treemap = screen.getByTestId('migration-treemap');
     expect(treemap.textContent).toContain('%');
   });
 
   it('renders legend with 3 status colors', () => {
-    render(
-      <MigrationTreemap domains={assessment.domains} onDomainClick={vi.fn()} t={mockT} />,
-    );
+    render(<MigrationTreemap domains={assessment.domains} onDomainClick={vi.fn()} t={mockT} />);
     expect(screen.getAllByText('assessment.migrationStatus.auto').length).toBeGreaterThan(0);
     expect(screen.getAllByText('assessment.migrationStatus.guided').length).toBeGreaterThan(0);
     expect(screen.getAllByText('assessment.migrationStatus.manual').length).toBeGreaterThan(0);

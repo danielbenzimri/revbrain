@@ -69,10 +69,7 @@ export class PostgRESTOauthPendingFlowRepository implements OauthPendingFlowRepo
   }
 
   async deleteByNonce(nonce: string): Promise<boolean> {
-    const { error } = await this.supabase
-      .from('oauth_pending_flows')
-      .delete()
-      .eq('nonce', nonce);
+    const { error } = await this.supabase.from('oauth_pending_flows').delete().eq('nonce', nonce);
     return !error;
   }
 
@@ -99,10 +96,7 @@ export class PostgRESTOauthPendingFlowRepository implements OauthPendingFlowRepo
       }
 
       // Expired flow — clean it up before inserting new one
-      await this.supabase
-        .from('oauth_pending_flows')
-        .delete()
-        .eq('nonce', existing.nonce);
+      await this.supabase.from('oauth_pending_flows').delete().eq('nonce', existing.nonce);
     }
 
     return insertOne<OauthPendingFlowEntity>(this.supabase, 'oauth_pending_flows', {
