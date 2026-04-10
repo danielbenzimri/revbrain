@@ -36,6 +36,9 @@ import { buildSummaries } from './summaries/builder.ts';
 import { logger } from './lib/logger.ts';
 import { writeCollectorData } from './db/writes.ts';
 import type { BaseCollector } from './collectors/base.ts';
+import { runBB3 } from './pipeline/run-bb3.ts';
+import type { NormalizeResult } from '@revbrain/bb3-normalizer';
+import type { AssessmentFindingInput } from '@revbrain/contract';
 
 /** Maximum concurrent collectors (respect SF API concurrency) */
 const MAX_CONCURRENCY = 3;
@@ -301,6 +304,45 @@ export async function runPipeline(ctx: CollectorContext): Promise<PipelineResult
   } else {
     log.info('phase_5_5_skip: llm_enrichment_disabled');
   }
+
+  // ── Phase 5.6: BB-3 normalization (PH9.9) ───────────────────────
+  // Feeds every collector's findings into the BB-3 normalizer and
+  // captures the resulting IRGraph for downstream persistence
+  // (PH9.10) and metrics emission (PH9.11). BB-3 failures are
+  // logged but NEVER fail the extraction run — per §10.1 the
+  // graph is advisory output, not a gate.
+  let bb3Result: NormalizeResult | null = null;
+  try {
+    log.info('phase_5_6_start: bb3_normalize');
+    const allFindings: AssessmentFindingInput[] = [];
+    for (const collectorResult of results.values()) {
+      allFindings.push(...collectorResult.findings);
+    }
+    bb3Result = await runBB3(allFindings, {
+      extractedAt: new Date().toISOString(),
+    });
+    log.info(
+      {
+        findingsIn: bb3Result.runtimeStats.totalFindingsIn,
+        nodesOut: bb3Result.runtimeStats.totalNodesOut,
+        edgeCount: bb3Result.graph.edges.length,
+        diagnosticCount: bb3Result.diagnostics.length,
+        quarantineCount: bb3Result.runtimeStats.quarantineCount,
+        durationMs: bb3Result.runtimeStats.durationMs,
+        bb3Version: bb3Result.runtimeStats.bb3Version,
+      },
+      'bb3_normalize_complete'
+    );
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    log.warn({ error: msg }, 'phase_5_6_warning: bb3_normalize failed (non-fatal)');
+    errors.push(`BB-3 normalization warning: ${msg}`);
+  }
+  // PH9.10 + PH9.11 will consume `bb3Result` here. For PH9.9 we
+  // just produce + log it; persistence and metrics sink wiring
+  // lands in the next two cards. Reference the result explicitly
+  // so TS knows it is intentionally held.
+  void bb3Result;
 
   const finalStatus = errors.length > 0 ? 'completed_warnings' : 'completed';
   log.info(
