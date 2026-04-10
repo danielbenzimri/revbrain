@@ -1279,6 +1279,12 @@ export const assessmentRuns = pgTable(
     orgFingerprint: jsonb('org_fingerprint'),
     normalizationStatus: varchar('normalization_status', { length: 20 }).default('pending'),
 
+    // BB-3 IR graph payload (PH8.2). Nullable: populated after BB-3
+    // normalization completes. Byte-identical round-trip is guaranteed
+    // via canonicalJson at the repository layer. Row-level sensitivity
+    // policy mirrors assessment_findings RLS. See spec §17.
+    irGraph: jsonb('ir_graph'),
+
     // Lease model
     workerId: text('worker_id'),
     leaseExpiresAt: timestamp('lease_expires_at', { withTimezone: true }),

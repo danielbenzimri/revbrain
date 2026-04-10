@@ -18,6 +18,7 @@ import { MockSalesforceConnectionSecretsRepository } from './salesforce-connecti
 import { MockOauthPendingFlowRepository } from './oauth-pending-flow.repository.ts';
 import { MockSalesforceConnectionLogRepository } from './salesforce-connection-log.repository.ts';
 import { MockAssessmentRepository } from './assessment.repository.ts';
+import { MockAssessmentIRRepository } from './assessment-ir.repository.ts';
 
 export { resetAllMockData as resetMockData } from '../../mocks/index.ts';
 export { MockTicketRepository } from './ticket.repository.ts';
@@ -41,6 +42,7 @@ export function createMockRepositories(): Repositories {
     oauthPendingFlows: new MockOauthPendingFlowRepository(),
     salesforceConnectionLogs: new MockSalesforceConnectionLogRepository(),
     assessmentRuns: new MockAssessmentRepository(),
+    assessmentIRGraphs: new MockAssessmentIRRepository(),
   };
 }
 

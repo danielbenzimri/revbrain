@@ -20,6 +20,7 @@ import { PostgRESTSalesforceConnectionSecretsRepository } from './salesforce-con
 import { PostgRESTSalesforceConnectionLogRepository } from './salesforce-connection-log.repository.ts';
 import { PostgRESTOauthPendingFlowRepository } from './oauth-pending-flow.repository.ts';
 import { PostgRESTAssessmentRepository } from './assessment.repository.ts';
+import { PostgRESTAssessmentIRRepository } from './assessment-ir.repository.ts';
 
 // Re-export individual repositories
 export { PostgRESTUserRepository } from './user.repository.ts';
@@ -32,6 +33,7 @@ export { PostgRESTSalesforceConnectionSecretsRepository } from './salesforce-con
 export { PostgRESTSalesforceConnectionLogRepository } from './salesforce-connection-log.repository.ts';
 export { PostgRESTOauthPendingFlowRepository } from './oauth-pending-flow.repository.ts';
 export { PostgRESTAssessmentRepository } from './assessment.repository.ts';
+export { PostgRESTAssessmentIRRepository } from './assessment-ir.repository.ts';
 
 /**
  * Create all PostgREST repositories.
@@ -50,5 +52,6 @@ export function createPostgRESTRepositories(supabase: SupabaseClient): Repositor
     oauthPendingFlows: new PostgRESTOauthPendingFlowRepository(supabase),
     salesforceConnectionLogs: new PostgRESTSalesforceConnectionLogRepository(supabase),
     assessmentRuns: new PostgRESTAssessmentRepository(supabase),
+    assessmentIRGraphs: new PostgRESTAssessmentIRRepository(supabase),
   };
 }

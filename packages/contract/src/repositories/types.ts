@@ -630,6 +630,29 @@ export interface AssessmentFindingEntity {
   createdAt: Date;
 }
 
+/**
+ * BB-3 IRGraph persistence (PH8.2).
+ *
+ * A thin per-run repo that reads and writes the `ir_graph` JSONB
+ * column on `assessment_runs`. Kept separate from
+ * {@link AssessmentRepository} so the run entity stays unchanged —
+ * IRGraph payloads are large and tangential to run state.
+ *
+ * The stored payload is the canonical-JSON-serialized `IRGraph`
+ * from `@revbrain/migration-ir-contract`. Typed here as `unknown`
+ * to avoid pulling the migration-ir-contract package into
+ * `@revbrain/contract` — callers should validate via
+ * `IRGraphSchema.safeParse` on read.
+ */
+export interface AssessmentIRRepository {
+  /** Store an IRGraph for a run. Overwrites any existing graph. */
+  saveIRGraph(runId: string, graph: unknown): Promise<void>;
+  /** Fetch the stored IRGraph for a run, or null if none. */
+  findIRGraphByRunId(runId: string): Promise<unknown | null>;
+  /** Remove the stored IRGraph (e.g. on re-run). */
+  deleteIRGraphByRunId(runId: string): Promise<void>;
+}
+
 export interface AssessmentRepository {
   // Runs
   createRun(data: CreateAssessmentRunInput): Promise<AssessmentRunEntity>;
@@ -676,6 +699,7 @@ export interface Repositories {
   oauthPendingFlows: OauthPendingFlowRepository;
   salesforceConnectionLogs: SalesforceConnectionLogRepository;
   assessmentRuns: AssessmentRepository;
+  assessmentIRGraphs: AssessmentIRRepository;
 }
 
 // ============================================================

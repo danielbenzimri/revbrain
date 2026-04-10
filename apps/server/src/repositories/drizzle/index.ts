@@ -18,6 +18,7 @@ import { DrizzleSalesforceConnectionSecretsRepository } from './salesforce-conne
 import { DrizzleOauthPendingFlowRepository } from './oauth-pending-flow.repository.ts';
 import { DrizzleSalesforceConnectionLogRepository } from './salesforce-connection-log.repository.ts';
 import { DrizzleAssessmentRepository } from './assessment.repository.ts';
+import { DrizzleAssessmentIRRepository } from './assessment-ir.repository.ts';
 export type { DrizzleDB } from '@revbrain/database';
 
 // Re-export individual repositories
@@ -31,6 +32,7 @@ export { DrizzleSalesforceConnectionSecretsRepository } from './salesforce-conne
 export { DrizzleOauthPendingFlowRepository } from './oauth-pending-flow.repository.ts';
 export { DrizzleSalesforceConnectionLogRepository } from './salesforce-connection-log.repository.ts';
 export { DrizzleAssessmentRepository } from './assessment.repository.ts';
+export { DrizzleAssessmentIRRepository } from './assessment-ir.repository.ts';
 
 /**
  * Create all Drizzle repositories.
@@ -52,6 +54,7 @@ export function createDrizzleRepositories(dbOrTx?: DrizzleDB): Repositories {
     oauthPendingFlows: new DrizzleOauthPendingFlowRepository(instance),
     salesforceConnectionLogs: new DrizzleSalesforceConnectionLogRepository(instance),
     assessmentRuns: new DrizzleAssessmentRepository(instance),
+    assessmentIRGraphs: new DrizzleAssessmentIRRepository(instance),
   };
 }
 

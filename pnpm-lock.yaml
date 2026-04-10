@@ -243,6 +243,9 @@ importers:
       '@revbrain/database':
         specifier: workspace:*
         version: link:../../packages/database
+      '@revbrain/migration-ir-contract':
+        specifier: workspace:*
+        version: link:../../packages/migration-ir-contract
       '@revbrain/seed-data':
         specifier: workspace:*
         version: link:../../packages/seed-data

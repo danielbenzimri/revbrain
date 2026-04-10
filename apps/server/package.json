@@ -22,6 +22,7 @@
   "dependencies": {
     "@revbrain/contract": "workspace:*",
     "@revbrain/database": "workspace:*",
+    "@revbrain/migration-ir-contract": "workspace:*",
     "@revbrain/seed-data": "workspace:*",
     "@hono/node-server": "^1.19.9",
     "@hono/zod-openapi": "^1.2.1",
