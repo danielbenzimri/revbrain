@@ -2,7 +2,7 @@
 
 > **Purpose:** Track known tech debt, deferred infrastructure items, and future platform improvements. Updated as items are resolved or added.
 >
-> **Last updated:** 2026-04-01
+> **Last updated:** 2026-04-10
 
 ---
 
@@ -87,6 +87,20 @@ Also: `routes/admin/notifications.ts`, `routes/health.ts`, `routes/project-files
 | **TanStack Virtual warning**            | `use-virtual-list.ts` — incompatible-library ESLint warning  | 1 ESLint warning, not an error                                                                                                                                                                                                                                           | Low — third-party library issue                                   |
 | **Step-up auth mechanism**              | Uses JWT `iat` claim as proxy for last MFA time              | Works but not a true MFA re-challenge — requires session refresh                                                                                                                                                                                                         | Acceptable for now; upgrade when MFA is enforced                  |
 | **Test coverage %**                     | Unknown — not formally measured                              | Cannot assert coverage targets                                                                                                                                                                                                                                           | Low — 889+ tests exist, critical paths covered                    |
+
+---
+
+## BB-3 (Migration Planner IR Normalizer) — Deferred Items
+
+BB-3 Wave 1 is shipped (PH0–PH6 complete, PH7.11–PH7.14 + PH8.1–PH8.5 complete). These items were carved out because they depend on staging access or are scheduled for a later wave.
+
+| Item                                         | Spec ref                                           | Why deferred                                                                                                                                                                                                                                                                                                                            | Unblocks when                                                                                       |
+| -------------------------------------------- | -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| **PH7.12 — Staging golden file (A12)**       | `docs/MIGRATION-PLANNER-BB3-TASKS.md` PH7.12 / A12 | Requires capturing the IRGraph output from a real staging extraction and wiring a CI job that fails on byte-level diff. Needs a human to review the first golden capture so we're not locking in a bug. Cannot be captured autonomously because it requires a staging org.                                                              | A staging extraction run exists AND someone reviews the first captured golden before CI is gated.   |
+| **BB-3 IR column encryption at rest (§17)**  | `assessment_runs.ir_graph` (PH8.2)                 | Spec §17 calls for column-level encryption of the JSONB payload. Landed as plain JSONB in migration 0044 so PH8.5 / BB-17 could start consuming graphs. Supabase's pgcrypto-based encryption is how other sensitive columns in this repo are handled.                                                                                   | Whichever comes first: BB-17 ships OR the first real tenant loads PII-bearing graphs.               |
+| **CustomComputationIR.rawSource blob split** | `§8.2` sensitivity policy                          | Large Apex source blobs still live inline on `assessment_runs.ir_graph` rather than in object storage keyed by content hash. Acceptable today because synthetic fixtures fit comfortably in a JSONB row; not acceptable once a real org with 200+ triggers lands.                                                                       | Before a real production staging run with >1 MB raw Apex sources.                                   |
+| **Synthetic parent NodeRef resolution pass** | Stage 4 (`resolveReferences`)                      | Wave 1–3 normalizers build synthetic `{id: 'bundle:${code}', resolved: true}` for `BundleOptionIR.parentBundle` / `BundleFeatureIR.parentBundle`. Stage 4 does identity merging but does NOT re-resolve these into the real identity-hash IDs. Nothing in the test suite flags it (validator only checks `CyclicDependencyIR.members`). | BB-4 / BB-17 start traversing parent pointers OR a post-Stage-4 resolver is added (one small task). |
+| **PH7.12 nightly regression seed**           | `docs/MIGRATION-PLANNER-BB3-TASKS.md` A4           | The determinism harness runs via `pnpm --filter @revbrain/bb3-normalizer test __tests__/determinism.test.ts`, but there is no nightly CI job running it against a frozen seed. Once the staging golden lands (PH7.12) they should share the same CI job.                                                                                | When PH7.12 ships.                                                                                  |
 
 ---
 
