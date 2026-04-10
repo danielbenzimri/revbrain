@@ -395,6 +395,16 @@ importers:
         specifier: ^5.3.3
         version: 5.9.3
 
+  packages/migration-ir-contract:
+    dependencies:
+      zod:
+        specifier: ^4.3.6
+        version: 4.3.6
+    devDependencies:
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.3
+
   packages/seed-data:
     dependencies:
       '@revbrain/contract':
