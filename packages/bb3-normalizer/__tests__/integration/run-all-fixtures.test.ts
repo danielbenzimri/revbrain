@@ -26,32 +26,67 @@ import {
 import { normalize } from '../../src/pipeline.ts';
 
 describe('PH7.11 — Integration harness', () => {
-  it('PH7.1 / A1 minimal-org → non-empty graph, every known type normalized', async () => {
+  it('PH7.1 / A1 minimal-org → semantic graph with wired parent-of, parsed Apex, catalog hash', async () => {
+    // PH9.8 rewrite: assert semantic invariants, not just "no throw".
     const fixture = minimalOrgFixture();
     const result = await normalize(fixture.findings, {
       catalog: tinyCatalog(),
       extractedAt: '2026-04-10T00:00:00Z',
     });
     expect(result.graph.nodes.length).toBeGreaterThan(0);
-    // All six findings (Product2, PriceRule, 2×PriceCondition,
-    // PriceAction, ApexClass) are registered types — none should
-    // fall through to UnknownArtifactIR.
     const unknownNodes = result.graph.nodes.filter((n) => n.nodeType === 'UnknownArtifact');
     expect(unknownNodes.length).toBe(0);
-    // And none should quarantine.
     expect(result.quarantine.length).toBe(0);
+
+    // G1 + G7: the seeded rule has exactly 2 conditions + 1 action
+    // wired into its children arrays, and edges[] contains parent-of
+    // projections for them.
+    const rule = result.graph.nodes.find((n) => n.nodeType === 'PricingRule') as
+      | (import('@revbrain/migration-ir-contract').IRNodeBase & {
+          conditions: { id: string; resolved: boolean }[];
+          actions: { id: string; resolved: boolean }[];
+        })
+      | undefined;
+    expect(rule).toBeDefined();
+    expect(rule!.conditions.length).toBe(2);
+    expect(rule!.actions.length).toBe(1);
+    expect(rule!.conditions.every((c) => c.resolved)).toBe(true);
+    const parentOfEdges = result.graph.edges.filter((e) => e.edgeType === 'parent-of');
+    expect(parentOfEdges.length).toBeGreaterThanOrEqual(3);
+
+    // G4: the ApexClass finding emits an Automation node whose
+    // parseStatus flipped from 'partial' to one of the parser
+    // outcomes via Stage 5 enrichment.
+    const apex = result.graph.nodes.find((n) => n.nodeType === 'Automation') as
+      | (import('@revbrain/migration-ir-contract').IRNodeBase & {
+          sourceType: string;
+          parseStatus: string;
+        })
+      | undefined;
+    expect(apex).toBeDefined();
+    expect(apex!.sourceType).toBe('ApexClass');
+    expect(['parsed', 'budget-skipped', 'size-limit-skipped']).toContain(apex!.parseStatus);
+
+    // G3: schemaCatalogHash is populated because a catalog was passed.
+    expect(result.graph.metadata.schemaCatalogHash).not.toBeNull();
   });
 
-  it('PH7.2 / A3 cyclic-rules → pipeline produces rule nodes', async () => {
-    // Stage 6 is driven by the pipeline's internal outEdges map, which
-    // is empty in PH3.11 for PH3.5-style parent-wire deferral. We
-    // assert the baseline: both rule nodes are emitted and the
-    // pipeline never throws. Full cycle emission is re-asserted in
-    // `s6-detect-cycles.test.ts`.
+  it('PH7.2 / A3 cyclic-rules → pipeline produces rule nodes and runs cycle detection (G5)', async () => {
+    // PH9.8 rewrite: the fixture itself doesn't emit linked
+    // dependency arrays (the PricingRule normalizer hardcodes
+    // dependencies: []), so no cycle fires — but we now assert that
+    // Stage 6 actually ran over real projected edges and produced
+    // a defined cycleCount.
     const fixture = cyclicRulesFixture();
     const result = await normalize(fixture.findings);
-    const ruleIds = result.graph.nodes.filter((n) => n.nodeType === 'PricingRule');
-    expect(ruleIds.length).toBeGreaterThanOrEqual(2);
+    const rules = result.graph.nodes.filter((n) => n.nodeType === 'PricingRule');
+    expect(rules.length).toBeGreaterThanOrEqual(2);
+    // cycleCount is a deterministic 0 (no linked deps in the fixture).
+    expect(result.graph.metadata.cycleCount).toBe(0);
+    // But detect-cycles stage is no longer a zero-duration no-op —
+    // it ran with real projected edges (G5).
+    const stage = result.runtimeStats.stageDurations.find((s) => s.stage === 'detect-cycles');
+    expect(stage).toBeDefined();
   });
 
   it('PH7.3 / A2 large-synthetic-1k → 3500 findings handled without throwing', async () => {
@@ -96,24 +131,42 @@ describe('PH7.11 — Integration harness', () => {
     expect(after - before).toBeLessThan(1024 * 1024 * 1024);
   });
 
-  it('PH7.7 / A5 rename fixture → BEFORE and AFTER_RENAME routed identically', async () => {
+  it('PH7.7 / A5 rename fixture → id-set equality across rename (rename-stable identity)', async () => {
+    // PH9.8 rewrite: assert SET equality on id values, not just
+    // totalNodesOut equality. A rename must NOT change any node id.
     const fixture = renamedAndEditedRulesFixture();
     const before = await normalize(fixture.before, { extractedAt: '2026-04-10T00:00:00Z' });
     const afterRename = await normalize(fixture.afterRename, {
       extractedAt: '2026-04-10T00:00:00Z',
     });
-    // Both runs should produce the same number of nodes + quarantine
-    // entries and identical totalNodesOut.
-    expect(before.runtimeStats.totalNodesOut).toBe(afterRename.runtimeStats.totalNodesOut);
+    const beforeIds = new Set(before.graph.nodes.map((n) => n.id));
+    const afterIds = new Set(afterRename.graph.nodes.map((n) => n.id));
+    expect(afterIds).toEqual(beforeIds);
   });
 
-  it('PH7.7 / A13 edit fixture → BEFORE and AFTER_EDIT runs complete cleanly', async () => {
+  it('PH7.7 / A13 edit fixture → ids unchanged but contentHash differs for edited node', async () => {
+    // PH9.8 rewrite: the A13 load-bearing proof. Operator edits
+    // (gt → gte) MUST preserve id and MUST change contentHash.
     const fixture = renamedAndEditedRulesFixture();
     const before = await normalize(fixture.before, { extractedAt: '2026-04-10T00:00:00Z' });
     const afterEdit = await normalize(fixture.afterEdit, { extractedAt: '2026-04-10T00:00:00Z' });
-    // Same node count; per-node content changes are exercised at
-    // the normalizer level in PH4.1's unit tests.
-    expect(before.runtimeStats.totalNodesOut).toBe(afterEdit.runtimeStats.totalNodesOut);
+    const beforeIds = new Set(before.graph.nodes.map((n) => n.id));
+    const afterIds = new Set(afterEdit.graph.nodes.map((n) => n.id));
+    expect(afterIds).toEqual(beforeIds);
+
+    // At least one node whose id is unchanged must have a different
+    // contentHash between the two runs. This proves Stage 4 +
+    // structuralSignature's v1.2 operator-removal is holding end-to-end.
+    const beforeHashes = new Map(before.graph.nodes.map((n) => [n.id, n.contentHash]));
+    const afterHashes = new Map(afterEdit.graph.nodes.map((n) => [n.id, n.contentHash]));
+    let anyContentChanged = false;
+    for (const [id, beforeHash] of beforeHashes) {
+      if (afterHashes.get(id) !== beforeHash) {
+        anyContentChanged = true;
+        break;
+      }
+    }
+    expect(anyContentChanged).toBe(true);
   });
 
   it('PH7.8 / A6 sandbox-refresh → swapping artifactIds does not crash the pipeline', async () => {
@@ -132,11 +185,16 @@ describe('PH7.11 — Integration harness', () => {
     expect(result.graph.irSchemaVersion).toBe('1.0.0');
   });
 
-  it('PH7.10 / A15 no-schema-catalog → degraded mode, V4 warning, graph still produced', async () => {
+  it('PH7.10 / A15 no-schema-catalog → degraded mode, schemaCatalogHash is null, graph still produced', async () => {
+    // PH9.8 rewrite: assert the full A15 contract — degraded warning,
+    // null catalog hash (G3 null path), and a non-empty graph.
     const fixture = noSchemaCatalogFixture();
     const result = await normalize(fixture.findings);
-    // Exactly one degraded-inputs entry for the missing catalog.
     expect(result.graph.metadata.degradedInputs.length).toBeGreaterThanOrEqual(1);
     expect(result.graph.metadata.degradedInputs[0]?.source).toBe('schema-catalog');
+    // G3: null catalog → null hash, explicitly. Previously the field
+    // was hardcoded to null so this would pass trivially; post-PH9.6
+    // it's a real invariant.
+    expect(result.graph.metadata.schemaCatalogHash).toBeNull();
   });
 });
