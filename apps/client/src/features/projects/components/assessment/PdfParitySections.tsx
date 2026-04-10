@@ -185,7 +185,9 @@ function AtAGlanceDashboard({ data }: { data: NonNullable<AssessmentData['atAGla
             key={panel.title}
             className="bg-white rounded-2xl border border-slate-200 overflow-hidden"
           >
-            <div className={`px-4 py-2 text-xs font-semibold uppercase tracking-wide ${panel.color}`}>
+            <div
+              className={`px-4 py-2 text-xs font-semibold uppercase tracking-wide ${panel.color}`}
+            >
               {panel.title}
             </div>
             <div className="p-4 space-y-2">
@@ -290,11 +292,7 @@ function QuotingActivityCard({
 // Section 6.2: Product Deep Dive
 // ---------------------------------------------------------------------------
 
-function ProductDeepDiveCard({
-  data,
-}: {
-  data: NonNullable<AssessmentData['productDeepDive']>;
-}) {
+function ProductDeepDiveCard({ data }: { data: NonNullable<AssessmentData['productDeepDive']> }) {
   return (
     <Card
       icon={<Boxes size={16} />}
@@ -419,11 +417,7 @@ function ProductDeepDiveCard({
 // Section 6.6: Bundles & Options Deep Dive
 // ---------------------------------------------------------------------------
 
-function BundlesDeepDiveCard({
-  data,
-}: {
-  data: NonNullable<AssessmentData['bundlesDeepDive']>;
-}) {
+function BundlesDeepDiveCard({ data }: { data: NonNullable<AssessmentData['bundlesDeepDive']> }) {
   const s = data.summary;
   const summaryBoxes = [
     { label: 'Bundle-capable', value: s.bundleCapable, color: 'text-indigo-600' },
@@ -661,7 +655,9 @@ export default function PdfParitySections({ assessment }: PdfParitySectionsProps
                         />
                       </svg>
                       <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-2xl font-bold text-slate-900 tabular-nums">{pct}%</span>
+                        <span className="text-2xl font-bold text-slate-900 tabular-nums">
+                          {pct}%
+                        </span>
                         <span className="text-[10px] text-slate-500">
                           {used} of {total}
                         </span>

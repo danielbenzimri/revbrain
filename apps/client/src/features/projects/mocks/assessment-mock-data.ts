@@ -343,25 +343,87 @@ export interface AssessmentData {
   // ─────────────────────────────────────────────────────────────
   /** Section 3: CPQ At A Glance — unified 6-box summary panel */
   atAGlance?: {
-    productCatalog: { activeProducts: number; inactiveProducts: number; bundleCapable: number; productOptions: number; priceBooks: number };
-    pricingRules: { priceRulesActive: number; productRules: number; discountSchedules: number; customScripts: number; configuredQcp: string | null };
-    quoting: { quotesCreated: number; quoteLines: number; avgLinesPerQuote: number; activeUsers: number; ordersCreated: number };
-    techDebt: { dormantProductsPercent: string; inactiveRules: number; staleRules: number; duplicateSchedules: number; orphanedRecords: number };
+    productCatalog: {
+      activeProducts: number;
+      inactiveProducts: number;
+      bundleCapable: number;
+      productOptions: number;
+      priceBooks: number;
+    };
+    pricingRules: {
+      priceRulesActive: number;
+      productRules: number;
+      discountSchedules: number;
+      customScripts: number;
+      configuredQcp: string | null;
+    };
+    quoting: {
+      quotesCreated: number;
+      quoteLines: number;
+      avgLinesPerQuote: number;
+      activeUsers: number;
+      ordersCreated: number;
+    };
+    techDebt: {
+      dormantProductsPercent: string;
+      inactiveRules: number;
+      staleRules: number;
+      duplicateSchedules: number;
+      orphanedRecords: number;
+    };
   };
   /** Section 4.1: Installed Packages */
   installedPackages?: Array<{ name: string; namespace: string; version: string; status: string }>;
   /** Section 6.2: Product Deep Dive */
   productDeepDive?: {
-    summary: { activeProducts: number; inactiveProducts: number; bundleCapable: number; priceBooks: number; dormantPercent: string };
-    fieldUtilization: Array<{ label: string; count: number; percentage: string; category: 'NOT_USED' | 'SOMETIMES' | 'MOST_TIMES' | 'ALWAYS' | 'NOT_APPLICABLE'; notes: string; isNested?: boolean }>;
-    pricingMethodDistribution: Array<{ method: string; count: number; percentOfActive: string; complexity: string }>;
-    subscriptionProfile: Array<{ type: string; count: number; percentOfActive: string; notes: string }>;
+    summary: {
+      activeProducts: number;
+      inactiveProducts: number;
+      bundleCapable: number;
+      priceBooks: number;
+      dormantPercent: string;
+    };
+    fieldUtilization: Array<{
+      label: string;
+      count: number;
+      percentage: string;
+      category: 'NOT_USED' | 'SOMETIMES' | 'MOST_TIMES' | 'ALWAYS' | 'NOT_APPLICABLE';
+      notes: string;
+      isNested?: boolean;
+    }>;
+    pricingMethodDistribution: Array<{
+      method: string;
+      count: number;
+      percentOfActive: string;
+      complexity: string;
+    }>;
+    subscriptionProfile: Array<{
+      type: string;
+      count: number;
+      percentOfActive: string;
+      notes: string;
+    }>;
     denominator: number;
   };
   /** Section 6.6: Bundles & Options Deep Dive */
   bundlesDeepDive?: {
-    summary: { bundleCapable: number; configuredBundles: number; nestedBundles: number; avgOptionsPerBundle: string; totalOptions: number; optionsWithConstraintsPercent: string; configAttributesPercent: string; configRulesPercent: string };
-    relatedObjectUtilization: Array<{ label: string; count: number; percentage: string | null; category: 'NOT_USED' | 'SOMETIMES' | 'MOST_TIMES' | 'ALWAYS' | 'NOT_APPLICABLE'; notes: string }>;
+    summary: {
+      bundleCapable: number;
+      configuredBundles: number;
+      nestedBundles: number;
+      avgOptionsPerBundle: string;
+      totalOptions: number;
+      optionsWithConstraintsPercent: string;
+      configAttributesPercent: string;
+      configRulesPercent: string;
+    };
+    relatedObjectUtilization: Array<{
+      label: string;
+      count: number;
+      percentage: string | null;
+      category: 'NOT_USED' | 'SOMETIMES' | 'MOST_TIMES' | 'ALWAYS' | 'NOT_APPLICABLE';
+      notes: string;
+    }>;
     denominator: number;
   };
   /** Section 7.1: 90-Day Quoting Activity */

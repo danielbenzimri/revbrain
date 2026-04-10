@@ -90,17 +90,17 @@ async function main() {
     fieldPopulation['SBQQ__ChargeType__c'] = Math.round(totalActive * 0.42);
     fieldPopulation['SBQQ__ConfigurationType__c'] = 19; // Known bundle-capable count
     fieldPopulation['SBQQ__DiscountSchedule__c'] = Math.round(totalActive * 0.15);
-    fieldPopulation['SBQQ__PriceEditable__c'] = Math.round(totalActive * 0.30);
+    fieldPopulation['SBQQ__PriceEditable__c'] = Math.round(totalActive * 0.3);
     fieldPopulation['SBQQ__NonDiscountable__c'] = Math.round(totalActive * 0.05);
     fieldPopulation['SBQQ__Hidden__c'] = Math.round(totalActive * 0.08);
-    fieldPopulation['SBQQ__Taxable__c'] = Math.round(totalActive * 0.60);
+    fieldPopulation['SBQQ__Taxable__c'] = Math.round(totalActive * 0.6);
     fieldPopulation['SBQQ__BlockPricingField__c'] = Math.round(totalActive * 0.02);
     fieldPopulation['SBQQ__ExternallyConfigurable__c'] = 0;
     fieldPopulation['SBQQ__HasConfigurationAttributes__c'] = Math.round(totalActive * 0.12);
-    fieldPopulation['SBQQ__GenerateContractedPrice__c'] = Math.round(totalActive * 0.10);
-    fieldPopulation['Description'] = Math.round(totalActive * 0.70);
+    fieldPopulation['SBQQ__GenerateContractedPrice__c'] = Math.round(totalActive * 0.1);
+    fieldPopulation['Description'] = Math.round(totalActive * 0.7);
     fieldPopulation['SBQQ__BillingFrequency__c'] = Math.round(totalActive * 0.35);
-    fieldPopulation['SBQQ__SubscriptionPricing__c'] = Math.round(totalActive * 0.40);
+    fieldPopulation['SBQQ__SubscriptionPricing__c'] = Math.round(totalActive * 0.4);
     fieldPopulation['SBQQ__SubscriptionTerm__c'] = Math.round(totalActive * 0.38);
     fieldPopulation['SBQQ__SubscriptionBase__c'] = Math.round(totalActive * 0.35);
 
@@ -179,9 +179,15 @@ async function main() {
   const { reportData, validation, html } = generateReport(findings);
 
   console.log('=== V2.1 Sections ===');
-  console.log(`  Section 6.2 (Product Deep Dive): ${reportData.productDeepDive ? `✅ ${reportData.productDeepDive.fieldUtilization.length} fields` : '❌ absent'}`);
-  console.log(`  Section 6.6 (Bundles Deep Dive): ${reportData.bundlesDeepDive ? `✅ ${reportData.bundlesDeepDive.relatedObjectUtilization.length} rows` : '❌ absent'}`);
-  console.log(`  Section 10 (Related Functionality): ${reportData.relatedFunctionality ? `✅ ${reportData.relatedFunctionality.items.length} items` : '❌ absent (none detected)'}`);
+  console.log(
+    `  Section 6.2 (Product Deep Dive): ${reportData.productDeepDive ? `✅ ${reportData.productDeepDive.fieldUtilization.length} fields` : '❌ absent'}`
+  );
+  console.log(
+    `  Section 6.6 (Bundles Deep Dive): ${reportData.bundlesDeepDive ? `✅ ${reportData.bundlesDeepDive.relatedObjectUtilization.length} rows` : '❌ absent'}`
+  );
+  console.log(
+    `  Section 10 (Related Functionality): ${reportData.relatedFunctionality ? `✅ ${reportData.relatedFunctionality.items.length} items` : '❌ absent (none detected)'}`
+  );
 
   console.log(`\n=== Validation (${validation.rules.length} rules) ===`);
   console.log(`  Overall: ${validation.valid ? 'PASSED' : 'FAILED'}`);

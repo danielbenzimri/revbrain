@@ -25,7 +25,9 @@ async function main() {
   page.on('pageerror', (err) => console.log(`[PAGE ERROR] ${err.message}`));
   page.on('response', (r) => {
     if (r.url().includes('/assessment/') && r.request().method() !== 'OPTIONS') {
-      console.log(`[HTTP ${r.status()}] ${r.request().method()} ${r.url().replace(BASE_URL, '').replace('http://localhost:3000', '')}`);
+      console.log(
+        `[HTTP ${r.status()}] ${r.request().method()} ${r.url().replace(BASE_URL, '').replace('http://localhost:3000', '')}`
+      );
     }
   });
 
@@ -47,7 +49,9 @@ async function main() {
   await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
 
   console.log('Navigating to Assessment tab...');
-  const assessmentLink = page.locator('a:has-text("Assessment"), button:has-text("Assessment")').first();
+  const assessmentLink = page
+    .locator('a:has-text("Assessment"), button:has-text("Assessment")')
+    .first();
   if ((await assessmentLink.count()) > 0) {
     await assessmentLink.click();
   }

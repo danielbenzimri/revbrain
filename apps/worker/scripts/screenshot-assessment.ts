@@ -46,7 +46,9 @@ async function main() {
 
   console.log('Navigating to Assessment tab...');
   // The workspace sidebar has an "Assessment" item
-  const assessmentLink = page.locator('a:has-text("Assessment"), button:has-text("Assessment")').first();
+  const assessmentLink = page
+    .locator('a:has-text("Assessment"), button:has-text("Assessment")')
+    .first();
   if ((await assessmentLink.count()) > 0) {
     await assessmentLink.click();
   } else {

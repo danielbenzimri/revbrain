@@ -15,7 +15,7 @@ const data = useMemo(() => {
   if (isMockMode) {
     return getMockProjectWorkspaceData(id);
   }
-  return null;  // ← BUG: staging mode always returns null
+  return null; // ← BUG: staging mode always returns null
 }, [id, isMockMode]);
 ```
 
@@ -27,11 +27,11 @@ The OverviewPage needs to build its `data` from real API responses (project deta
 
 ## Tasks
 
-| # | Task | Description | Files |
-|---|------|-------------|-------|
-| 1 | **Build real data fetcher for OverviewPage** | Use existing hooks (`useSalesforceConnections`, `useProject`) to construct `ProjectWorkspaceData` from real API responses. Health strip, connection cards, recent activity — all from API. | `OverviewPage.tsx` |
-| 2 | **Verify SF connection flow works** | Test: click Connect → OAuth redirect → callback → connection stored. Use Playwright to verify end-to-end. | Playwright test |
-| 3 | **Verify 403 errors are non-blocking** | The 403s on `audit`, `tenants`, `stats` are admin-only routes. Confirm they don't block normal user flow. | Console check |
+| #   | Task                                         | Description                                                                                                                                                                                | Files              |
+| --- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------ |
+| 1   | **Build real data fetcher for OverviewPage** | Use existing hooks (`useSalesforceConnections`, `useProject`) to construct `ProjectWorkspaceData` from real API responses. Health strip, connection cards, recent activity — all from API. | `OverviewPage.tsx` |
+| 2   | **Verify SF connection flow works**          | Test: click Connect → OAuth redirect → callback → connection stored. Use Playwright to verify end-to-end.                                                                                  | Playwright test    |
+| 3   | **Verify 403 errors are non-blocking**       | The 403s on `audit`, `tenants`, `stats` are admin-only routes. Confirm they don't block normal user flow.                                                                                  | Console check      |
 
 ## Immediate Workaround
 

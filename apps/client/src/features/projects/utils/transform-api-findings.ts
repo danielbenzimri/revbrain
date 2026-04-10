@@ -709,9 +709,7 @@ export function transformFindingsToAssessmentData(
   // ── Section 3: CPQ At A Glance ──
   const quoteLinesCount =
     findings.find(
-      (f) =>
-        f.artifactType === 'DataCount' &&
-        f.artifactName?.toLowerCase().includes('quote line')
+      (f) => f.artifactType === 'DataCount' && f.artifactName?.toLowerCase().includes('quote line')
     )?.countValue ?? 0;
   const orderCount =
     findings.find(
@@ -719,9 +717,7 @@ export function transformFindingsToAssessmentData(
     )?.countValue ?? 0;
   const priceBookCount =
     findings.find(
-      (f) =>
-        f.artifactType === 'DataCount' &&
-        f.artifactName?.toLowerCase().startsWith('pricebook')
+      (f) => f.artifactType === 'DataCount' && f.artifactName?.toLowerCase().startsWith('pricebook')
     )?.countValue ?? 0;
   const productOptionsCount = dataCountByName('ProductOption');
   const configuredBundlesCount = dataCountByName('ConfiguredBundle');
@@ -819,7 +815,9 @@ export function transformFindingsToAssessmentData(
     const fieldUtilization: PddFieldRow[] = [];
     const family = findByField('Family');
     if (family) {
-      fieldUtilization.push(buildFieldRow('Product Family', family.countValue ?? 0, 'Categorization field'));
+      fieldUtilization.push(
+        buildFieldRow('Product Family', family.countValue ?? 0, 'Categorization field')
+      );
     }
     const pm = findByField('SBQQ__PricingMethod__c');
     if (pm) {
@@ -856,7 +854,11 @@ export function transformFindingsToAssessmentData(
     const st = findByField('SBQQ__SubscriptionType__c');
     if (st) {
       fieldUtilization.push(
-        buildFieldRow('Subscription Type', st.countValue ?? 0, 'Field populated (see breakdown below)')
+        buildFieldRow(
+          'Subscription Type',
+          st.countValue ?? 0,
+          'Field populated (see breakdown below)'
+        )
       );
       for (const sub of ['One-time', 'Renewable', 'Evergreen']) {
         fieldUtilization.push(
@@ -885,16 +887,18 @@ export function transformFindingsToAssessmentData(
         buildFieldRow('Renewal Product', renewal.countValue ?? 0, 'Product swap on renewal')
       );
 
-    const pricingMethodDistribution = ['List', 'Cost', 'Block', 'Percent of Total'].map((method) => {
-      const count = enumValueCount('SBQQ__PricingMethod__c', method);
-      return {
-        method,
-        count,
-        percentOfActive:
-          activeProductCount > 0 ? `${Math.round((count / activeProductCount) * 100)}%` : '0%',
-        complexity: method === 'Percent of Total' ? 'High' : method === 'List' ? 'Low' : 'Medium',
-      };
-    });
+    const pricingMethodDistribution = ['List', 'Cost', 'Block', 'Percent of Total'].map(
+      (method) => {
+        const count = enumValueCount('SBQQ__PricingMethod__c', method);
+        return {
+          method,
+          count,
+          percentOfActive:
+            activeProductCount > 0 ? `${Math.round((count / activeProductCount) * 100)}%` : '0%',
+          complexity: method === 'Percent of Total' ? 'High' : method === 'List' ? 'Low' : 'Medium',
+        };
+      }
+    );
     const subscriptionProfile = ['One-time', 'Renewable', 'Evergreen'].map((type) => {
       const count = enumValueCount('SBQQ__SubscriptionType__c', type);
       return {
@@ -946,7 +950,9 @@ export function transformFindingsToAssessmentData(
         f.artifactType === 'SBQQ__ConfigurationAttribute__c'
     ).length;
 
-    type RouRow = NonNullable<AssessmentData['bundlesDeepDive']>['relatedObjectUtilization'][number];
+    type RouRow = NonNullable<
+      AssessmentData['bundlesDeepDive']
+    >['relatedObjectUtilization'][number];
     const rou: RouRow[] = [
       {
         label: 'Features',
@@ -964,7 +970,8 @@ export function transformFindingsToAssessmentData(
       {
         label: 'Feature Orphans',
         count: featureOrphans,
-        percentage: totalFeatures > 0 ? `${Math.round((featureOrphans / totalFeatures) * 100)}%` : null,
+        percentage:
+          totalFeatures > 0 ? `${Math.round((featureOrphans / totalFeatures) * 100)}%` : null,
         category: getCbCategory(featureOrphans, totalFeatures > 0 ? totalFeatures : 1),
         notes:
           totalFeatures > 0
@@ -985,10 +992,7 @@ export function transformFindingsToAssessmentData(
         label: 'Nested Bundles',
         count: nestedBundles,
         percentage: null,
-        category: getCbCategory(
-          nestedBundles,
-          bundleCapableCount > 0 ? bundleCapableCount : 1
-        ),
+        category: getCbCategory(nestedBundles, bundleCapableCount > 0 ? bundleCapableCount : 1),
         notes: 'Options that are also bundles',
       },
       {
@@ -1059,8 +1063,7 @@ export function transformFindingsToAssessmentData(
     quotesCreated: totalQuotes,
     quoteLines: quoteLinesCount,
     ordersCreated: orderCount,
-    avgLinesPerQuote:
-      totalQuotes > 0 ? Math.round((quoteLinesCount / totalQuotes) * 10) / 10 : 0,
+    avgLinesPerQuote: totalQuotes > 0 ? Math.round((quoteLinesCount / totalQuotes) * 10) / 10 : 0,
   };
 
   // ── Section 10: Related Functionality Detection ──
@@ -1120,9 +1123,14 @@ export function transformFindingsToAssessmentData(
     },
   ];
   const rfObservations: string[] = [];
-  if (rfItems[0].used) rfObservations.push('Community presence detected — adds complexity to the CPQ environment.');
-  if (rfItems[1].used) rfObservations.push('Salesforce Billing active — invoice handling is part of the quote-to-cash flow.');
-  if (rfItems[2].used || rfItems[4].used) rfObservations.push('External dependencies detected — integration points require assessment.');
+  if (rfItems[0].used)
+    rfObservations.push('Community presence detected — adds complexity to the CPQ environment.');
+  if (rfItems[1].used)
+    rfObservations.push(
+      'Salesforce Billing active — invoice handling is part of the quote-to-cash flow.'
+    );
+  if (rfItems[2].used || rfItems[4].used)
+    rfObservations.push('External dependencies detected — integration points require assessment.');
   const relatedFunctionality: AssessmentData['relatedFunctionality'] = {
     items: rfItems,
     observations: rfObservations,

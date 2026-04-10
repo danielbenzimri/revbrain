@@ -35,7 +35,8 @@ import { type CollectorContext, type CollectorResult } from '../src/collectors/b
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const SUPABASE_URL = 'https://qutuivleheybnkbhpdbn.supabase.co';
-const SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1dHVpdmxlaGV5Ym5rYmhwZGJuIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDA5NDEzOCwiZXhwIjoyMDg5NjcwMTM4fQ.rkAxpHrCIY2112oHB26bEvGXjxsrmofa8lAQhnXkeNU';
+const SERVICE_ROLE_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1dHVpdmxlaGV5Ym5rYmhwZGJuIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDA5NDEzOCwiZXhwIjoyMDg5NjcwMTM4fQ.rkAxpHrCIY2112oHB26bEvGXjxsrmofa8lAQhnXkeNU';
 const CONNECTION_ID = '1a2bab20-a442-4a68-973f-cf2b18b56b38';
 const INSTANCE_URL = 'https://rdolce-23march23-385-demo.my.salesforce.com';
 
@@ -95,7 +96,9 @@ async function main() {
     // Try refreshing via Salesforce directly using the connected app
     console.log('\nTrying to get token via Salesforce OAuth refresh...');
     // Fall back: use the existing April 1 data
-    console.error('\nCannot decrypt staging tokens. The staging encryption key differs from local.');
+    console.error(
+      '\nCannot decrypt staging tokens. The staging encryption key differs from local.'
+    );
     console.error('Falling back to existing extraction data from April 1.');
     process.exit(1);
   }
@@ -120,7 +123,9 @@ async function main() {
       }
     );
     const [conn] = await connResp.json();
-    const clientId = conn?.connected_app_client_id || '3MVG9QN_oTOaL3XR90KRg_g20VVVE_86ppgUDiUEhbSwnSt8LRAQJKa8jl89TfquVqGS0eurIxH4UnaGC_xIn';
+    const clientId =
+      conn?.connected_app_client_id ||
+      '3MVG9QN_oTOaL3XR90KRg_g20VVVE_86ppgUDiUEhbSwnSt8LRAQJKa8jl89TfquVqGS0eurIxH4UnaGC_xIn';
     const clientSecret = conn?.connected_app_client_secret;
 
     if (!clientId) {
@@ -166,7 +171,7 @@ async function main() {
   const bulkApi = new SalesforceBulkApi(sfClient, 'v62.0');
   const metadataApi = new SalesforceMetadataApi(auth, '62.0');
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const mockSql = ((strings: TemplateStringsArray) => {
     const q = strings.join('');
     if (q.includes('SELECT status')) return Promise.resolve([{ status: 'running' }]);

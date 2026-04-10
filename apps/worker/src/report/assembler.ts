@@ -1308,11 +1308,7 @@ function assembleProductDeepDive(
   const billingField = findByField('blng__BillingRule__c');
   if (billingField) {
     fieldUtilization.push(
-      buildRow(
-        'Billing Rule',
-        getCountOrNull(billingField) ?? 0,
-        'Salesforce Billing integration'
-      )
+      buildRow('Billing Rule', getCountOrNull(billingField) ?? 0, 'Salesforce Billing integration')
     );
   }
 
@@ -1332,11 +1328,7 @@ function assembleProductDeepDive(
   const renewalField = findByField('SBQQ__RenewalProduct__c');
   if (renewalField) {
     fieldUtilization.push(
-      buildRow(
-        'Renewal Product',
-        getCountOrNull(renewalField) ?? 0,
-        'Product swap on renewal'
-      )
+      buildRow('Renewal Product', getCountOrNull(renewalField) ?? 0, 'Product swap on renewal')
     );
   }
 
@@ -1369,7 +1361,8 @@ function assembleProductDeepDive(
   // Price Books: look for a Pricebook2 DataCount or dedicated PriceBook finding
   const priceBookFinding = findings.find(
     (f) =>
-      (f.artifactType === 'DataCount' && /pricebook|price[_\s-]?book/i.test(f.artifactName ?? '')) ||
+      (f.artifactType === 'DataCount' &&
+        /pricebook|price[_\s-]?book/i.test(f.artifactName ?? '')) ||
       f.artifactType === 'Pricebook2'
   );
   const priceBookCount =
@@ -2629,9 +2622,7 @@ function buildDefaultKeyFindings(
         .join(', ');
       const currencyList = currencyRefs || currencyMatch?.[1] || '';
       kf.push({
-        title: currencyList
-          ? `Multi-currency enabled (${currencyList})`
-          : 'Multi-currency enabled',
+        title: currencyList ? `Multi-currency enabled (${currencyList})` : 'Multi-currency enabled',
         detail:
           'The org uses multi-currency pricing — adding complexity to field mapping, exchange rate handling, and multi-currency price book structures.',
         confidence: 'Confirmed',
