@@ -75,3 +75,32 @@ describe('PH3.3 — prepareCatalog', () => {
     expect(ctx.lookupObject('sbqq__quote__c')?.apiName).toBe('SBQQ__Quote__c');
   });
 });
+
+describe('PH9.6 — schemaCatalogHash (G3)', () => {
+  it('with catalog: hash is a stable 22-char URL-safe base64 string', () => {
+    const ctx = prepareCatalog(catalog);
+    expect(ctx.hash).not.toBeNull();
+    expect(ctx.hash).toMatch(/^[A-Za-z0-9_-]{22}$/);
+  });
+
+  it('without catalog: hash is null', () => {
+    const ctx = prepareCatalog();
+    expect(ctx.hash).toBeNull();
+  });
+
+  it('determinism: same catalog → same hash across re-runs', () => {
+    const a = prepareCatalog(catalog);
+    const b = prepareCatalog(catalog);
+    expect(a.hash).toBe(b.hash);
+  });
+
+  it('sensitivity: different catalogs → different hashes', () => {
+    const mutated: SchemaCatalog = {
+      ...catalog,
+      summary: { ...catalog.summary, objectCount: 99 },
+    };
+    const a = prepareCatalog(catalog);
+    const b = prepareCatalog(mutated);
+    expect(a.hash).not.toBe(b.hash);
+  });
+});

@@ -12,7 +12,13 @@
  * canonically cased as `SBQQ__Quote__c`.
  */
 
-import type { FieldSchema, ObjectSchema, SchemaCatalog } from '@revbrain/migration-ir-contract';
+import { createHash } from 'node:crypto';
+import {
+  canonicalJson,
+  type FieldSchema,
+  type ObjectSchema,
+  type SchemaCatalog,
+} from '@revbrain/migration-ir-contract';
 
 export interface CatalogContext {
   /** The catalog itself, or `null` if none was provided. */
@@ -29,6 +35,27 @@ export interface CatalogContext {
   lookupObject: (object: string) => ObjectSchema | null;
   /** Degraded-mode warnings. Recorded on `GraphMetadataIR.degradedInputs`. */
   warnings: string[];
+  /**
+   * PH9.6 — Canonical-JSON SHA-256 of the input catalog (first 128
+   * bits, URL-safe base64), or `null` when no catalog was provided.
+   * Stored on `GraphMetadataIR.schemaCatalogHash` at assembly time
+   * so BB-17 re-assessment can detect catalog drift between runs.
+   */
+  hash: string | null;
+}
+
+/**
+ * Compute a deterministic fingerprint of the catalog suitable for
+ * BB-17 drift detection. Uses canonicalJson to guarantee key order
+ * independence. Returns `null` for a null input so the assembly
+ * step can emit `schemaCatalogHash: null` unchanged in degraded mode.
+ */
+function hashCatalog(catalog: SchemaCatalog | null): string | null {
+  if (catalog === null) return null;
+  const canonical = canonicalJson(catalog);
+  const digest = createHash('sha256').update(canonical, 'utf8').digest();
+  const b64 = digest.subarray(0, 16).toString('base64');
+  return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
 /**
@@ -43,6 +70,7 @@ export function prepareCatalog(catalog?: SchemaCatalog): CatalogContext {
       warnings: [
         'No SchemaCatalog provided — V4 field-ref validation will run in degraded (syntactic-only) mode',
       ],
+      hash: null,
     };
   }
 
@@ -75,5 +103,5 @@ export function prepareCatalog(catalog?: SchemaCatalog): CatalogContext {
     return catalog.objects[canonicalObj]?.fields[canonicalField] ?? null;
   };
 
-  return { catalog, lookup, lookupObject, warnings: [] };
+  return { catalog, lookup, lookupObject, warnings: [], hash: hashCatalog(catalog) };
 }

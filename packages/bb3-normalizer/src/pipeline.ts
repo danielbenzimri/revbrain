@@ -315,7 +315,10 @@ export async function normalize(
     cycleCount,
     unknownArtifactCount: quarantine.filter((q) => q.reason === 'unknown-artifact').length,
     unresolvedRefCount: idx.unresolvedRefCount,
-    schemaCatalogHash: null,
+    // PH9.6 — canonical-JSON SHA-256 of the input catalog (or null
+    // when no catalog was supplied). BB-17 re-assessment compares
+    // this across runs to detect catalog drift.
+    schemaCatalogHash: catalogCtx.hash,
   };
 
   const extractedAt =
