@@ -317,10 +317,12 @@ assessmentRouter.get('/:projectId/assessment/status', async (c) => {
   }
 
   const findingsCount = await repos.assessmentRuns.countFindingsByRun(latestRun.id);
+  const graph = await repos.assessmentIRGraphs.findIRGraphByRunId(latestRun.id);
+  const irNodeCount = countIRNodes(graph);
 
   return c.json({
     success: true,
-    data: formatRunResponse(latestRun, findingsCount),
+    data: formatRunResponse(latestRun, findingsCount, irNodeCount),
   });
 });
 
@@ -374,10 +376,12 @@ assessmentRouter.get('/:projectId/assessment/runs/:runId/status', async (c) => {
   }
 
   const findingsCount = await repos.assessmentRuns.countFindingsByRun(runId);
+  const graph = await repos.assessmentIRGraphs.findIRGraphByRunId(runId);
+  const irNodeCount = countIRNodes(graph);
 
   return c.json({
     success: true,
-    data: formatRunResponse(run, findingsCount),
+    data: formatRunResponse(run, findingsCount, irNodeCount),
   });
 });
 
@@ -714,7 +718,8 @@ function formatRunResponse(
     failedAt: Date | null;
     cancelRequestedAt: Date | null;
   },
-  findingsCount?: number
+  findingsCount?: number,
+  irNodeCount?: number | null
 ) {
   return {
     runId: run.id,
@@ -729,6 +734,11 @@ function formatRunResponse(
     recordsExtracted: run.recordsExtracted,
     completenessPct: run.completenessPct,
     findingsCount: findingsCount ?? null,
+    // PH8.5: BB-3 IR node count. Null when no graph has been stored
+    // (either the run is pre-BB-3 or normalization hasn't run yet).
+    // The client renders a placeholder badge on the assessment page
+    // as a smoke indicator that BB-3 output reached the UI.
+    irNodeCount: irNodeCount ?? null,
     createdAt: run.createdAt.toISOString(),
     dispatchedAt: run.dispatchedAt?.toISOString() ?? null,
     startedAt: run.startedAt?.toISOString() ?? null,
@@ -736,4 +746,20 @@ function formatRunResponse(
     failedAt: run.failedAt?.toISOString() ?? null,
     cancelRequestedAt: run.cancelRequestedAt?.toISOString() ?? null,
   };
+}
+
+/**
+ * PH8.5 — Extract the node count from a stored BB-3 IRGraph payload.
+ *
+ * The stored payload is a canonical-JSON-serialized IRGraph from
+ * `@revbrain/migration-ir-contract`. We don't validate the full
+ * schema here — the goal is a cheap smoke indicator for the UI,
+ * so a best-effort `graph.nodes.length` read is enough. Returns
+ * null if the graph is missing, malformed, or has no nodes array.
+ */
+function countIRNodes(graph: unknown): number | null {
+  if (!graph || typeof graph !== 'object') return null;
+  const nodes = (graph as { nodes?: unknown }).nodes;
+  if (!Array.isArray(nodes)) return null;
+  return nodes.length;
 }

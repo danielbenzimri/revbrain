@@ -49,6 +49,9 @@ describe('Assessment API Routes', () => {
         expect(body.data.runId).toBe(RUN_Q1);
         expect(body.data.status).toBe('completed');
         expect(body.data.projectId).toBe(PROJECT_Q1);
+        // PH8.5 — IR node count surface is wired (null until BB-3 runs).
+        expect(body.data).toHaveProperty('irNodeCount');
+        expect(body.data.irNodeCount).toBeNull();
       }
     });
 
@@ -111,6 +114,8 @@ describe('Assessment API Routes', () => {
       if (body.data) {
         expect(body.data.runId).toBe(RUN_Q1);
         expect(body.data.status).toBe('completed');
+        // PH8.5 — per-run status endpoint also surfaces irNodeCount.
+        expect(body.data).toHaveProperty('irNodeCount');
       }
     });
 

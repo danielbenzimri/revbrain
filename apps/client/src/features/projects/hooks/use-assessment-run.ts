@@ -32,6 +32,8 @@ export interface AssessmentRunResponse {
   recordsExtracted: number | null;
   completenessPct: number | null;
   findingsCount: number | null;
+  /** PH8.5: BB-3 IR graph node count. Null until BB-3 has stored a graph for this run. */
+  irNodeCount?: number | null;
   createdAt: string;
   dispatchedAt: string | null;
   startedAt: string | null;

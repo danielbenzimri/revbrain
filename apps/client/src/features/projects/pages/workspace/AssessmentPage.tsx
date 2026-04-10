@@ -15,6 +15,7 @@ import DomainTabWrapper from '../../components/assessment/DomainTabWrapper';
 import ItemDetailPanel from '../../components/assessment/ItemDetailPanel';
 import { RunSelector } from '../../components/assessment/RunDelta';
 import ChatStub from '../../components/assessment/ChatStub';
+import IRNodeCountBadge from '../../components/assessment/IRNodeCountBadge';
 import type { AssessmentItem } from '../../mocks/assessment-mock-data';
 import {
   useAssessmentStatus,
@@ -204,7 +205,10 @@ export default function AssessmentPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-xl font-semibold text-slate-900">{t('assessment.title')}</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-xl font-semibold text-slate-900">{t('assessment.title')}</h1>
+              <IRNodeCountBadge irNodeCount={apiStatus?.irNodeCount} />
+            </div>
             <RunSelector
               runs={assessment.runs}
               currentIndex={assessment.currentRunIndex}
