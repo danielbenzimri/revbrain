@@ -10,13 +10,19 @@
  * pipeline stages land in PH3.11.
  */
 
-// Re-export the whole contract surface for convenience. When PH0.3–PH0.10
-// populate it with real types, those will flow through this barrel.
+// Re-export the whole contract surface for convenience.
 export * from '@revbrain/migration-ir-contract';
 
+// Phase 2 — shared algorithms
+export * from './graph/tarjan-scc.ts';
+export * from './graph/field-ref-normalize.ts';
+export * from './graph/edge-projection.ts';
+export * from './parsers/formula.ts';
+export * from './parsers/soql.ts';
+export * from './parsers/apex.ts';
+
 /**
- * BB-3 package version marker. Used by the PH0.2 smoke test and by
- * downstream telemetry to stamp `GraphMetadataIR.generatedBy` in later
- * tasks. Must be a non-empty string.
+ * BB-3 package version marker. Downstream telemetry stamps this on
+ * `GraphMetadataIR.generatedBy` once the envelope is wired.
  */
-export const BB3_VERSION = '0.0.0-ph0.2';
+export const BB3_VERSION = '0.0.0-ph2';
