@@ -18,6 +18,7 @@ import type { CollectorDefinition } from './registry.ts';
 import type { AssessmentFindingInput } from '@revbrain/contract';
 import { createFinding } from '../normalize/findings.ts';
 import { truncateWithFlag } from '../lib/truncate.ts';
+import { isApexTestClass } from '../lib/apex-classify.ts';
 
 const CPQ_OBJECTS = [
   'SBQQ__Quote__c',
@@ -79,12 +80,50 @@ export class DependenciesCollector extends BaseCollector {
 
       metrics.totalCustomApexClasses = allClasses.length;
 
+      let testClassCount = 0;
       for (const cls of allClasses) {
         const body = (cls.Body as string) || '';
         const name = cls.Name as string;
         const hasSbqq = /SBQQ__/.test(body);
         const hasTriggerControl = /SBQQ\.TriggerControl/.test(body);
         const hasCallout = /Http\s*\(|HttpRequest|fetch|WebServiceCallout/.test(body);
+        // EXT-CC2 — detect @isTest annotation via the pure helper in
+        // lib/apex-classify.ts. Test classes still need to be
+        // accounted for (so they show up in BB-3 as findings) but
+        // MUST NOT inflate the cpqRelatedApexClasses /
+        // cpqApexLineCount / triggerControlCount metrics that drive
+        // the report's "47 Apex classes" line. The pre-fix count was
+        // ~30% inflated by test classes that don't migrate.
+        const isTestClass = isApexTestClass(body);
+
+        if (hasSbqq && isTestClass) {
+          testClassCount++;
+          findings.push(
+            createFinding({
+              domain: 'dependency',
+              collector: 'dependencies',
+              artifactType: 'ApexClass',
+              artifactName: name,
+              artifactId: cls.Id as string,
+              findingType: 'apex_test_class',
+              sourceType: 'tooling',
+              riskLevel: 'low',
+              complexityLevel: 'low',
+              migrationRelevance: 'optional',
+              textValue: this.ctx.config.codeExtractionEnabled ? body : undefined,
+              countValue: body.split('\n').length,
+              notes: `Apex test class — excluded from migration metrics. Tests must be re-run on the target platform but do not migrate as code.`,
+              evidenceRefs: [
+                {
+                  type: 'code-snippet',
+                  value: `@isTest in ${name}`,
+                  label: `Apex test: ${name}`,
+                },
+              ],
+            })
+          );
+          continue;
+        }
 
         if (hasSbqq) {
           cpqApexClasses++;
@@ -138,6 +177,10 @@ export class DependenciesCollector extends BaseCollector {
 
       metrics.cpqRelatedApexClasses = cpqApexClasses;
       metrics.cpqApexLineCount = totalApexLines;
+      // EXT-CC2 — surface the test-class population separately so the
+      // observability/report layer can distinguish "47 Apex classes,
+      // 18 of which are tests" from the inflated 47.
+      metrics.testClassCount = testClassCount;
       metrics.triggerControlUsage = triggerControlCount > 0;
       metrics.triggerBypassCount = triggerControlCount;
 
