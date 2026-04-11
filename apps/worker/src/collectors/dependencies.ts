@@ -206,7 +206,15 @@ export class DependenciesCollector extends BaseCollector {
                 artifactType: 'ApexClass',
                 artifactName: name,
                 artifactId: cls.Id as string,
-                findingType: 'cpq_apex_plugin',
+                // EXT-1.1 wave-3 staging fix — include the
+                // interface name in the findingType so a class
+                // implementing MULTIPLE plugin interfaces
+                // produces distinct findingKeys per interface.
+                // Pre-fix: the fixed `cpq_apex_plugin` string
+                // collided into one findingKey for each iface on
+                // the same class → BB-3 invariant I2 duplicate-
+                // key error against real staging.
+                findingType: `cpq_apex_plugin:${iface}`,
                 sourceType: 'tooling',
                 riskLevel: 'high',
                 complexityLevel: 'high',

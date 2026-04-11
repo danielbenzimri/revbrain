@@ -1,20 +1,35 @@
 /**
- * Chunked Tooling-API `Metadata` fetch helper (EXT-1.4 + EXT-1.6).
+ * Per-ID Tooling-API `Metadata` fetch helper (EXT-1.4 + EXT-1.6).
  *
- * The Tooling API rejects bulk `SELECT Id, Metadata FROM <Object>`
- * queries with `MALFORMED_QUERY: Implementation restriction:
- * Metadata column must be filtered with strong filter`. The
- * documented workaround is to filter by a small set of IDs:
- * `WHERE Id IN ('<id1>', '<id2>', ...)`. The chunk size is
- * conservative — Salesforce hasn't published a hard limit but
- * empirically chunks of 10 are reliable; chunks of 25+ start
- * intermittently failing on large `Metadata` payloads (flow
- * definitions in particular).
+ * The Tooling API enforces a HARD ONE-ROW limit on any query
+ * that selects the `Metadata` or `FullName` columns. The error
+ * message caught by a real-staging run on 2026-04-11:
+ *
+ *   MALFORMED_QUERY: When retrieving results with Metadata or
+ *   FullName fields, the query qualifications must specify no
+ *   more than one row for retrieval. Result size: 10
+ *
+ * The pre-2026-04-11-wave-3 implementation used a chunk-of-10
+ * pattern based on the v1.1 audit's "conservative 10-25"
+ * guidance, which was WRONG: Salesforce's actual limit is 1
+ * row per query — no retry, no batch, no exception. EXT-1.4
+ * (validation rule formulas) and EXT-1.6 (flow XML) both failed
+ * against real data until the chunk size was changed to 1.
+ *
+ * So we issue ONE query per ID. That means 25 SOQL calls for
+ * 25 validation rules, 13 for 13 flows. These are small N so
+ * the per-call overhead is acceptable (the API budget is
+ * bounded by the input cardinality, not quadratic).
+ *
+ * **Why "chunk" is still in the name:** the internal loop
+ * still groups by `chunkSize` so callers can bump the default
+ * if SF ever relaxes the limit. Default MUST stay 1 until
+ * Salesforce ships a change.
  *
  * **Why a shared helper:** EXT-1.4 (validation rule formulas)
  * and EXT-1.6 (flow XML bodies) both need this exact pattern,
  * just with different object names. Sharing the helper means:
- *   - one place to tune the chunk size if SF changes its limits
+ *   - one place to fix the limit if SF changes it
  *   - one place to handle retry / partial-failure semantics
  *   - one place to add metrics/logging
  *
@@ -32,8 +47,10 @@
 
 import type { Logger } from 'pino';
 
-// Conservative chunk size — see module header comment.
-export const TOOLING_METADATA_CHUNK_SIZE = 10;
+// Salesforce Tooling API HARD LIMIT for Metadata column queries.
+// Enforced against real staging on 2026-04-11 — changing this to
+// anything > 1 will cause `MALFORMED_QUERY` errors.
+export const TOOLING_METADATA_CHUNK_SIZE = 1;
 
 export interface ToolingMetadataFetchResult<TMetadata> {
   /** id → Metadata payload (typed by the caller via the generic). */

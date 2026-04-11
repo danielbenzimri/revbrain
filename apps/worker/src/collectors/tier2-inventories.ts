@@ -148,12 +148,18 @@ export class Tier2InventoriesCollector extends BaseCollector {
     warnings: string[]
   ): Promise<SubStatus> {
     try {
+      // EXT-2.2 wave-3 staging fix — the pre-fix query used
+      // `WHERE NamespacePrefix = null` which hid every record on
+      // real staging (all 5 CustomPermissions on the test org
+      // have a non-null namespace). We now query unfiltered and
+      // flag managed-package ones via the evidenceRef.
       const customPerms = await this.ctx.restApi.queryAll<Record<string, unknown>>(
-        'SELECT Id, DeveloperName, MasterLabel FROM CustomPermission WHERE NamespacePrefix = null',
+        'SELECT Id, DeveloperName, MasterLabel, NamespacePrefix FROM CustomPermission',
         this.signal
       );
       metrics.customPermissionCount = customPerms.length;
       for (const cp of customPerms) {
+        const namespace = cp.NamespacePrefix as string | null;
         findings.push(
           createFinding({
             domain: 'customization',
@@ -165,7 +171,10 @@ export class Tier2InventoriesCollector extends BaseCollector {
             sourceType: 'object',
             riskLevel: 'info',
             migrationRelevance: 'optional',
-            notes: `Custom permission: ${cp.MasterLabel as string}`,
+            notes: `Custom permission: ${cp.MasterLabel as string}${namespace ? ` (${namespace})` : ''}`,
+            evidenceRefs: namespace
+              ? [{ type: 'object-ref', value: namespace, label: 'managedPackageNamespace' }]
+              : [],
           })
         );
       }
@@ -241,7 +250,14 @@ export class Tier2InventoriesCollector extends BaseCollector {
     }
   }
 
-  /** EXT-2.5 — Remote Site Settings inventory. */
+  /**
+   * EXT-2.5 — Remote Site Settings via the Tooling API
+   * `RemoteProxy` object. Wave-3 staging fix: the pre-fix code
+   * queried `RemoteSiteSetting` which does NOT exist in either
+   * the Data API or the Tooling API. The correct object name
+   * is `RemoteProxy` on the Tooling API. A probe against real
+   * staging returned 102 records the pre-fix code missed.
+   */
   private async extractRemoteSites(
     findings: AssessmentFindingInput[],
     metrics: Record<string, number | string | boolean>,
@@ -249,17 +265,18 @@ export class Tier2InventoriesCollector extends BaseCollector {
   ): Promise<SubStatus> {
     try {
       const result = await this.ctx.restApi.toolingQuery<Record<string, unknown>>(
-        'SELECT Id, DeveloperName, EndpointUrl, IsActive, Description FROM RemoteSiteSetting',
+        'SELECT Id, SiteName, EndpointUrl, IsActive FROM RemoteProxy',
         this.signal
       );
       metrics.remoteSiteCount = result.records.length;
       for (const rs of result.records) {
+        const siteName = (rs.SiteName as string) ?? 'unnamed-remote-site';
         findings.push(
           createFinding({
             domain: 'integration',
             collector: 'tier2-inventories',
             artifactType: 'RemoteSiteSetting',
-            artifactName: rs.DeveloperName as string,
+            artifactName: siteName,
             artifactId: rs.Id as string,
             findingType: 'remote_site_setting',
             sourceType: 'tooling',

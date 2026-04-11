@@ -165,18 +165,20 @@ describe('Tier2InventoriesCollector', () => {
     expect(result.metrics.metrics.permissionSetGroupCount).toBe(1);
   });
 
-  it('Remote Site Settings are inventoried via Tooling API', async () => {
+  it('Remote Site Settings are inventoried via Tooling API RemoteProxy object', async () => {
     const ctx = makeStubContext({
       tooling: (soql) => {
-        if (soql.includes('FROM RemoteSiteSetting')) {
+        // Wave-3 staging fix: the correct Tooling API object is
+        // `RemoteProxy`, NOT `RemoteSiteSetting` (which doesn't
+        // exist in either Data or Tooling API).
+        if (soql.includes('FROM RemoteProxy')) {
           return {
             records: [
               {
-                Id: '0Cm1',
-                DeveloperName: 'AcmePartnerApi',
+                Id: '0rp1',
+                SiteName: 'AcmePartnerApi',
                 EndpointUrl: 'https://api.acme.com',
                 IsActive: true,
-                Description: 'Acme partner integration',
               },
             ],
           };
@@ -188,6 +190,7 @@ describe('Tier2InventoriesCollector', () => {
     const result = await runExecute(new Tier2InventoriesCollector(ctx));
     const rs = result.findings.find((f) => f.artifactType === 'RemoteSiteSetting');
     expect(rs).toBeDefined();
+    expect(rs!.artifactName).toBe('AcmePartnerApi');
     expect(rs!.riskLevel).toBe('medium'); // active
     expect(result.metrics.metrics.remoteSiteCount).toBe(1);
   });
@@ -221,7 +224,7 @@ describe('Tier2InventoriesCollector', () => {
   it('one sub-extractor failure does not block the others (per-extractor degradation)', async () => {
     const ctx = makeStubContext({
       tooling: (soql) => {
-        if (soql.includes('FROM RemoteSiteSetting')) {
+        if (soql.includes('FROM RemoteProxy')) {
           throw new Error('remote site query failed');
         }
         return { records: [] };

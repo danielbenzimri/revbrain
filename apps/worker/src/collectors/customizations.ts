@@ -114,11 +114,22 @@ export class CustomizationsCollector extends BaseCollector {
     this.ctx.progress.updateSubstep('customizations', 'metadata_types');
 
     try {
-      const mdtResult = await this.ctx.restApi.toolingQuery<Record<string, unknown>>(
-        'SELECT DeveloperName, NamespacePrefix ' +
-          "FROM CustomObject WHERE DeveloperName LIKE '%mdt' AND NamespacePrefix = null",
-        this.signal
-      );
+      // EXT-1.3 wave-3 staging fix — the pre-fix Tooling query
+      // `FROM CustomObject WHERE DeveloperName LIKE '%mdt'` does
+      // NOT match real Salesforce CMT types because `DeveloperName`
+      // on CustomObject is the short name WITHOUT the `__mdt`
+      // suffix. Discovery already uses `describeGlobal` and
+      // filters by `endsWith('__mdt')` which IS correct. We
+      // mirror that pattern here; the call is cheap (one API
+      // call) and describeGlobal is not per-object cached.
+      const descGlobal = await this.ctx.restApi.describeGlobal(this.signal);
+      const mdtObjects = descGlobal.sobjects
+        .filter((o) => o.name.endsWith('__mdt') && o.custom && !o.name.startsWith('SBQQ__'))
+        .map((o) => ({
+          DeveloperName: o.name.replace(/__mdt$/, ''),
+          NamespacePrefix: null as null,
+        }));
+      const mdtResult: { records: Array<Record<string, unknown>> } = { records: mdtObjects };
       metrics.customMetadataTypesCount = mdtResult.records.length;
 
       // EXT-1.3 — Per-type record extraction. The pre-fix collector

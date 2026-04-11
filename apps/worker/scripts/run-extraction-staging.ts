@@ -22,6 +22,12 @@ import { TemplatesCollector } from '../src/collectors/templates.ts';
 import { ApprovalsCollector } from '../src/collectors/approvals.ts';
 import { IntegrationsCollector } from '../src/collectors/integrations.ts';
 import { LocalizationCollector } from '../src/collectors/localization.ts';
+// EXT-1.7 + EXT-2.x — new collectors added by feat/extraction-coverage
+import { ComponentsCollector } from '../src/collectors/components.ts';
+import { Tier2InventoriesCollector } from '../src/collectors/tier2-inventories.ts';
+// EXT-1.2 + EXT-CC1 — post-processing helpers
+import { joinPluginActivation } from '../src/normalize/plugin-activation.ts';
+import { introspectFls, type FieldPermissionsRow } from '../src/salesforce/fls-introspect.ts';
 import { SalesforceRestApi } from '../src/salesforce/rest.ts';
 import { SalesforceBulkApi } from '../src/salesforce/bulk.ts';
 import { SalesforceMetadataApi } from '../src/salesforce/soap.ts';
@@ -123,10 +129,15 @@ async function main() {
       }
     );
     const [conn] = await connResp.json();
+    // Prefer env vars (SALESFORCE_CONSUMER_KEY/SECRET from
+    // .env.stg) so local runs don't depend on secrets stored in
+    // the staging DB being current.
     const clientId =
+      process.env.SALESFORCE_CONSUMER_KEY ||
       conn?.connected_app_client_id ||
       '3MVG9QN_oTOaL3XR90KRg_g20VVVE_86ppgUDiUEhbSwnSt8LRAQJKa8jl89TfquVqGS0eurIxH4UnaGC_xIn';
-    const clientSecret = conn?.connected_app_client_secret;
+    const clientSecret =
+      process.env.SALESFORCE_CONSUMER_SECRET || conn?.connected_app_client_secret;
 
     if (!clientId) {
       console.error('No connected app credentials found. Cannot refresh token.');
@@ -198,7 +209,35 @@ async function main() {
     config: { codeExtractionEnabled: true, rawSnapshotMode: 'none' },
   };
 
-  // Run all collectors
+  // EXT-CC1 — FLS pre-flight. Runs BEFORE the collectors so a
+  // gap is surfaced up-front. Failures log + continue (same
+  // behavior as the real pipeline.ts in Phase 0).
+  console.log('▶ FLS Pre-flight (EXT-CC1)...');
+  try {
+    const fls = await introspectFls(async (objects) => {
+      const objectList = objects.map((o) => `'${o}'`).join(',');
+      const soql = `SELECT Field, PermissionsRead FROM FieldPermissions WHERE SObjectType IN (${objectList})`;
+      const res = await restApi.query<FieldPermissionsRow>(soql);
+      return res.records;
+    });
+    console.log(
+      `  → ${fls.requiredCount} fields required, ${fls.gaps.length} gaps${fls.hasHardFailures ? ' (HARD FAIL!)' : ''}`
+    );
+    if (fls.gaps.length > 0) {
+      console.log(
+        `  → sample gaps: ${fls.gaps
+          .slice(0, 5)
+          .map((g) => `${g.object}.${g.field}`)
+          .join(', ')}`
+      );
+    }
+  } catch (err) {
+    console.log(`  ⚠️  FLS pre-flight failed (non-fatal): ${(err as Error).message}`);
+  }
+  console.log();
+
+  // Run all collectors (now includes EXT-1.7 components +
+  // EXT-2.x tier2-inventories)
   const collectors = [
     ['Discovery', new DiscoveryCollector(ctx)],
     ['Catalog', new CatalogCollector(ctx)],
@@ -212,6 +251,8 @@ async function main() {
     ['Approvals', new ApprovalsCollector(ctx)],
     ['Integrations', new IntegrationsCollector(ctx)],
     ['Localization', new LocalizationCollector(ctx)],
+    ['Components (EXT-1.7)', new ComponentsCollector(ctx)],
+    ['Tier2 Inventories (EXT-2.x)', new Tier2InventoriesCollector(ctx)],
   ] as const;
 
   const allResults: CollectorResult[] = [];
@@ -228,16 +269,107 @@ async function main() {
     }
   }
 
+  // EXT-1.2 — plugin activation join. Same post-processing pass
+  // as pipeline.ts does in Phase 4: walk the plugin registration
+  // settings and cross-link active Apex classes.
+  console.log('\n▶ Plugin Activation Join (EXT-1.2)...');
+  const allFindingsPreJoin = allResults.flatMap((r) => r.findings);
+  const activation = joinPluginActivation(allFindingsPreJoin);
+  console.log(
+    `  → ${activation.stats.activePluginCount} active, ${activation.stats.unsetPluginCount} unset, ${activation.stats.orphanedRegistrationCount} orphaned`
+  );
+  if (activation.warnings.length > 0) {
+    console.log(`  ⚠️  ${activation.warnings.length} warning(s):`);
+    for (const w of activation.warnings.slice(0, 3)) console.log(`     - ${w}`);
+  }
+
+  // Merge activation output into findings: updatedFindings
+  // replace the originals (by findingKey), newFindings appended.
+  const updatedByKey = new Map(activation.updatedFindings.map((f) => [f.findingKey, f]));
+  const mergedFindings = allFindingsPreJoin.map((f) => updatedByKey.get(f.findingKey) ?? f);
+  mergedFindings.push(...activation.newFindings);
+
   // Save findings
-  const allFindings = allResults.flatMap((r) => r.findings);
   const outputPath = resolve(__dirname, '../output/assessment-results.json');
-  writeFileSync(outputPath, JSON.stringify({ findings: allFindings }, null, 2));
+  writeFileSync(outputPath, JSON.stringify({ findings: mergedFindings }, null, 2));
 
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
   console.log(`\n${'═'.repeat(60)}`);
   console.log(`Extraction complete in ${elapsed}s`);
-  console.log(`Total findings: ${allFindings.length}`);
+  console.log(`Total findings: ${mergedFindings.length}`);
   console.log(`Saved to: ${outputPath}`);
+
+  // Breakdown by artifactType so we can see the new EXT cards
+  // are actually producing findings.
+  const byType = new Map<string, number>();
+  for (const f of mergedFindings) {
+    byType.set(f.artifactType, (byType.get(f.artifactType) ?? 0) + 1);
+  }
+  console.log('\n── findings by artifactType ──');
+  const sorted = [...byType.entries()].sort((a, b) => b[1] - a[1]);
+  for (const [t, c] of sorted) console.log(`  ${t.padEnd(40)} ${c}`);
+
+  // EXT-specific evidence presence checks
+  console.log('\n── EXT card evidence checks ──');
+  const pluginFindings = mergedFindings.filter(
+    (f) =>
+      f.artifactType === 'ApexClass' &&
+      f.evidenceRefs.some((r) => r.label === 'interfaceName' && /^(SBQQ|sbaa)\./.test(r.value))
+  );
+  console.log(`  EXT-1.1 cpq_apex_plugin findings:       ${pluginFindings.length}`);
+  const activePluginFindings = mergedFindings.filter((f) =>
+    f.evidenceRefs.some((r) => r.label === 'isActivePlugin')
+  );
+  console.log(`  EXT-1.2 active plugin markers:          ${activePluginFindings.length}`);
+  const testClassFindings = mergedFindings.filter(
+    (f) => f.artifactType === 'ApexClass' && f.migrationRelevance === 'optional'
+  );
+  console.log(`  EXT-CC2 test class findings:            ${testClassFindings.length}`);
+  const vrWithBody = mergedFindings.filter(
+    (f) =>
+      f.artifactType === 'ValidationRule' &&
+      f.evidenceRefs.some((r) => r.value === 'bodyFetchStatus' && r.label === 'ok')
+  );
+  console.log(`  EXT-1.4 VRs with formula body:          ${vrWithBody.length}`);
+  const cmtRecords = mergedFindings.filter((f) => f.artifactType === 'CustomMetadataRecord');
+  console.log(`  EXT-1.3 CMT record findings:            ${cmtRecords.length}`);
+  const flowsWithBody = mergedFindings.filter(
+    (f) =>
+      f.artifactType === 'Flow' &&
+      f.evidenceRefs.some((r) => r.value === 'bodyFetchStatus' && r.label === 'ok')
+  );
+  console.log(`  EXT-1.6 flows with XML body:            ${flowsWithBody.length}`);
+  const lwcBundles = mergedFindings.filter((f) => f.artifactType === 'LightningComponentBundle');
+  const auraBundles = mergedFindings.filter((f) => f.artifactType === 'AuraDefinitionBundle');
+  const vfPages = mergedFindings.filter((f) => f.artifactType === 'ApexPage');
+  const staticResources = mergedFindings.filter((f) => f.artifactType === 'StaticResource');
+  console.log(`  EXT-1.7 LWC bundles:                    ${lwcBundles.length}`);
+  console.log(`  EXT-1.7 Aura bundles:                   ${auraBundles.length}`);
+  console.log(`  EXT-1.7 VF pages:                       ${vfPages.length}`);
+  console.log(`  EXT-1.7 Static resources:               ${staticResources.length}`);
+  const dynamicDispatch = mergedFindings.filter((f) =>
+    f.evidenceRefs.some((r) => r.value === 'dynamicDispatchPattern')
+  );
+  console.log(`  EXT-CC3 dynamic dispatch findings:      ${dynamicDispatch.length}`);
+  const thirdParty = mergedFindings.filter(
+    (f) =>
+      f.artifactType === 'ApexClass' &&
+      f.evidenceRefs.some((r) => r.label === 'managedPackageNamespace')
+  );
+  console.log(`  EXT-CC4 third-party Apex findings:      ${thirdParty.length}`);
+  const runtimeStability = mergedFindings.filter((f) => f.stability === 'runtime');
+  console.log(`  EXT-CC5 stability='runtime' findings:   ${runtimeStability.length}`);
+  const emailTemplates = mergedFindings.filter((f) => f.artifactType === 'EmailTemplate');
+  const customPerms = mergedFindings.filter((f) => f.artifactType === 'CustomPermission');
+  const scheduledApex = mergedFindings.filter((f) => f.artifactType === 'ScheduledApex');
+  const remoteSites = mergedFindings.filter((f) => f.artifactType === 'RemoteSiteSetting');
+  const customLabels = mergedFindings.filter((f) => f.artifactType === 'CustomLabel');
+  console.log(`  EXT-2.1 Email templates:                ${emailTemplates.length}`);
+  console.log(`  EXT-2.2 Custom permissions:             ${customPerms.length}`);
+  console.log(`  EXT-2.3 Scheduled Apex:                 ${scheduledApex.length}`);
+  console.log(`  EXT-2.5 Remote site settings:           ${remoteSites.length}`);
+  console.log(`  EXT-2.7 Custom labels:                  ${customLabels.length}`);
+
   console.log('\nNext: npx tsx apps/worker/scripts/generate-report.ts');
 }
 
