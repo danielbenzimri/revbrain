@@ -7,7 +7,7 @@
 import type { AssessmentFindingInput } from '@revbrain/contract';
 import type { IRNodeBase } from '@revbrain/migration-ir-contract';
 import type { NormalizerFn } from '../registry.ts';
-import { buildBaseNode, findEvidenceRef } from '../base.ts';
+import { buildBaseNode, extractFieldValue } from '../base.ts';
 
 export interface ConnectedAppIR extends IRNodeBase {
   nodeType: 'ConnectedApp';
@@ -19,7 +19,10 @@ export interface ConnectedAppIR extends IRNodeBase {
 
 export const normalizeConnectedApp: NormalizerFn = (finding: AssessmentFindingInput) => {
   const developerName = finding.artifactName;
-  const oauthConsumerKey = findEvidenceRef(finding, 'field-ref');
+  // PH9 §8.3 — read the actual oauth key value, not the field path.
+  const oauthConsumerKey =
+    extractFieldValue(finding, 'OauthConsumerKey') ||
+    extractFieldValue(finding, 'oauthConsumerKey');
   // NEVER read a secret — we only store the key. If the finding's
   // evidenceRefs include anything that looks like a secret
   // (type === 'code-snippet' with 'secret' in the value), we skip.

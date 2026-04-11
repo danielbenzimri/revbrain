@@ -7,7 +7,7 @@
 import type { AssessmentFindingInput } from '@revbrain/contract';
 import type { IRNodeBase, NodeRef } from '@revbrain/migration-ir-contract';
 import type { NormalizerFn } from '../registry.ts';
-import { buildBaseNode, findEvidenceRef } from '../base.ts';
+import { buildBaseNode, extractFieldValue, findEvidenceRef } from '../base.ts';
 
 export interface ContractedPriceIR extends IRNodeBase {
   nodeType: 'ContractedPrice';
@@ -31,7 +31,13 @@ function parseScopeType(raw: string | null): ContractedPriceIR['scopeType'] {
 }
 
 export const normalizeContractedPrice: NormalizerFn = (finding: AssessmentFindingInput) => {
-  const productCode = findEvidenceRef(finding, 'field-ref') ?? finding.artifactName;
+  // PH9 §8.3 — extract via canonical helper.
+  const productCode =
+    extractFieldValue(finding, 'Product2.ProductCode') ||
+    extractFieldValue(finding, 'productCode') ||
+    finding.artifactName ||
+    finding.artifactId ||
+    'unknown';
   const scopeType = parseScopeType(finding.notes ?? null);
   const scopeKey = findEvidenceRef(finding, 'object-ref') ?? '<unknown-scope>';
   const currencyIsoCode = findEvidenceRef(finding, 'api-response');
@@ -42,6 +48,7 @@ export const normalizeContractedPrice: NormalizerFn = (finding: AssessmentFindin
   const warnings: string[] = [];
   if (scopeKey === '<unknown-scope>') warnings.push('contracted-price-scope-unstable');
 
+  // PH9 §8.3 — buildBaseNode adds the per-record discriminator.
   const stableIdentity = { productCode, scopeType, scopeKey, currencyIsoCode };
   const semanticPayload = {
     ...stableIdentity,

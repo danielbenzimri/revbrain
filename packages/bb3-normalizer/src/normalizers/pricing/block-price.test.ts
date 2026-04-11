@@ -10,14 +10,16 @@ function validBP(over: Partial<AssessmentFindingInput> = {}): AssessmentFindingI
     collectorName: 'pricing',
     artifactType: 'SBQQ__BlockPrice__c',
     artifactName: 'Product-A-Block-10',
+    artifactId: 'a0X3x000003BPCDEAA',
     findingKey: 'bp-1',
     sourceType: 'object',
     detected: true,
     countValue: 10,
     textValue: '9.99',
     sourceRef: 'StandardPriceBook',
+    // PH9 §8.3 — canonical field-ref shape: value=path, label=value.
     evidenceRefs: [
-      { type: 'field-ref', value: 'PROD-A' },
+      { type: 'field-ref', value: 'Product2.ProductCode', label: 'PROD-A' },
       { type: 'api-response', value: 'USD' },
     ],
     schemaVersion: '1.0',
@@ -42,7 +44,7 @@ describe('PH4.7 — BlockPrice currency + pricebook in identity', () => {
     const b = normalizeBlockPrice(
       validBP({
         evidenceRefs: [
-          { type: 'field-ref', value: 'PROD-A' },
+          { type: 'field-ref', value: 'Product2.ProductCode', label: 'PROD-A' },
           { type: 'api-response', value: 'EUR' },
         ],
       }),

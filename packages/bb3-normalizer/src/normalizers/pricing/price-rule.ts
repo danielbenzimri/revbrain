@@ -20,7 +20,7 @@ import {
   type NodeRef,
 } from '@revbrain/migration-ir-contract';
 import type { NormalizerFn } from '../registry.ts';
-import { buildBaseNode, findEvidenceRef } from '../base.ts';
+import { buildBaseNode, extractFieldValue } from '../base.ts';
 
 type CalculatorEvent = 'on-init' | 'before-calc' | 'on-calc' | 'after-calc';
 type ConfiguratorEvent = 'save' | 'edit';
@@ -107,7 +107,13 @@ function parseConditionLogic(raw: string | null): {
  * The full `PricingRuleIR` normalizer.
  */
 export const normalizePricingRule: NormalizerFn = (finding: AssessmentFindingInput) => {
-  const rawEvaluationEventValue = findEvidenceRef(finding, 'field-ref') ?? finding.textValue ?? '';
+  // PH9 §8.3 — read the actual evaluation event value via the
+  // canonical helper. Both shapes are tolerated.
+  const rawEvaluationEventValue =
+    extractFieldValue(finding, 'SBQQ__EvaluationEvent__c') ||
+    extractFieldValue(finding, 'EvaluationEvent') ||
+    finding.textValue ||
+    '';
   const { calculatorEvents, configuratorEvents, scope } =
     parseEvaluationEvent(rawEvaluationEventValue);
   const { logic: conditionLogic, advancedRaw: advancedConditionRaw } = parseConditionLogic(
@@ -129,6 +135,8 @@ export const normalizePricingRule: NormalizerFn = (finding: AssessmentFindingInp
     conditions: [] as Array<{ field: string }>,
     actions: [] as Array<{ actionType: string; targetField: string }>,
   };
+  // PH9 §8.3 — buildBaseNode adds the per-record discriminator
+  // automatically. The signature stays focused on structural shape.
   const stableIdentity = {
     signature: structuralSignature(signatureInput),
   };

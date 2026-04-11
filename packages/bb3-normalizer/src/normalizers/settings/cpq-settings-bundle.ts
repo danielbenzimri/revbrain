@@ -61,6 +61,9 @@ export const normalizeCPQSettingsBundle: NormalizerFn = (finding: AssessmentFind
     nodeType: 'CPQSettingsBundle',
     stableIdentity,
     semanticPayload,
+    // PH9 §8.3 — singleton: every setting finding rolls into one
+    // bundle (the recipe is `{ bundle: 'singleton' }`).
+    intentionalCollapse: true,
   });
 
   const node: CPQSettingsBundleIR = {

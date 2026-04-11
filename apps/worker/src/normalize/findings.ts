@@ -49,6 +49,7 @@ export function createFinding(params: CreateFindingParams): AssessmentFindingInp
   const findingKey = generateFindingKey({
     collector: params.collector,
     artifactType: params.artifactType,
+    artifactName: params.artifactName,
     recordId: params.artifactId,
     findingType: params.findingType,
     metricName: params.metricName,

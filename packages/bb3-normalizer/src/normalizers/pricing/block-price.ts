@@ -12,7 +12,7 @@
 import type { AssessmentFindingInput } from '@revbrain/contract';
 import type { IRNodeBase } from '@revbrain/migration-ir-contract';
 import type { NormalizerFn } from '../registry.ts';
-import { buildBaseNode, findEvidenceRef } from '../base.ts';
+import { buildBaseNode, extractFieldValue, findEvidenceRef } from '../base.ts';
 
 export interface BlockPriceIR extends IRNodeBase {
   nodeType: 'BlockPrice';
@@ -25,18 +25,20 @@ export interface BlockPriceIR extends IRNodeBase {
 }
 
 export const normalizeBlockPrice: NormalizerFn = (finding: AssessmentFindingInput) => {
-  const productCode = findEvidenceRef(finding, 'field-ref') ?? finding.artifactName;
+  // PH9 §8.3 — extract via canonical helper.
+  const productCode =
+    extractFieldValue(finding, 'Product2.ProductCode') ||
+    extractFieldValue(finding, 'productCode') ||
+    finding.artifactName ||
+    finding.artifactId ||
+    'unknown';
   const lowerBound = finding.countValue ?? 0;
   const price = Number.parseFloat(finding.textValue ?? '0') || 0;
   const currencyIsoCode = findEvidenceRef(finding, 'api-response');
   const pricebookNaturalKey = finding.sourceRef ?? '<standard>';
 
-  const stableIdentity = {
-    productCode,
-    lowerBound,
-    currencyIsoCode,
-    pricebookNaturalKey,
-  };
+  // PH9 §8.3 — buildBaseNode adds the per-record discriminator.
+  const stableIdentity = { productCode, lowerBound, currencyIsoCode, pricebookNaturalKey };
   const semanticPayload = { ...stableIdentity, price, upperBound: null };
 
   const base = buildBaseNode({

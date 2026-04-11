@@ -133,7 +133,16 @@ export function buildSchemaCatalogFromFindings(
   }
 
   return {
-    capturedAt: new Date().toISOString(),
+    // BB-3 determinism non-negotiable (spec §6.2 / §6.4): nothing that
+    // affects `IRGraph` may depend on wall-clock. `capturedAt` is the
+    // contract-required field but is not used downstream by the
+    // normalizer (verified: zero reads of `catalog.capturedAt` in
+    // packages/bb3-normalizer/src), and `s2-5-schema-catalog.ts`
+    // explicitly excludes it from `schemaCatalogHash`. We therefore
+    // emit a stable empty string here. If a caller has a real
+    // capture timestamp, it belongs on `NormalizeResult.runtimeStats`,
+    // not on the catalog that flows into the graph.
+    capturedAt: '',
     objects,
     summary: {
       objectCount: Object.keys(objects).length,

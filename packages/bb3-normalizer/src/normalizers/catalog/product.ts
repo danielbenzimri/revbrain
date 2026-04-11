@@ -7,7 +7,7 @@
 import type { AssessmentFindingInput } from '@revbrain/contract';
 import type { IRNodeBase, NodeRef } from '@revbrain/migration-ir-contract';
 import type { NormalizerFn } from '../registry.ts';
-import { buildBaseNode, findEvidenceRef } from '../base.ts';
+import { buildBaseNode, extractFieldValue } from '../base.ts';
 
 export interface ProductIR extends IRNodeBase {
   nodeType: 'Product';
@@ -43,11 +43,23 @@ function parseSubscriptionType(raw: string | null): ProductIR['subscriptionType'
 }
 
 export const normalizeProduct: NormalizerFn = (finding: AssessmentFindingInput) => {
-  const productCode = findEvidenceRef(finding, 'field-ref') ?? finding.artifactName;
+  // PH9 §8.3 — Read the actual ProductCode value via the canonical
+  // helper. Pre-fix this read the field PATH (`Product2.ProductCode`)
+  // for every product → 178 of 179 staging products silently
+  // collapsed via Stage 4 identity merging.
+  const productCode =
+    extractFieldValue(finding, 'Product2.ProductCode') ||
+    finding.artifactName ||
+    finding.artifactId ||
+    'unknown';
   const isActive = finding.detected;
   const pricingMethod = parsePricingMethod(finding.notes ?? null);
   const subscriptionType = parseSubscriptionType(finding.sourceRef ?? null);
 
+  // PH9 §8.3 — buildBaseNode automatically wraps this with a
+  // per-record discriminator (artifactId). The recipe stays focused
+  // on the semantic identity (productCode); discrimination is
+  // automatic.
   const stableIdentity = { productCode };
   const semanticPayload = {
     ...stableIdentity,

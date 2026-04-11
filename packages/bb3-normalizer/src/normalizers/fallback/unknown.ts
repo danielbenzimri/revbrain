@@ -38,6 +38,9 @@ export const normalizeUnknownArtifact: NormalizerFn = (finding: AssessmentFindin
     stableIdentity,
     semanticPayload,
     warnings: ['unknown-artifact-type'],
+    // PH9 §8.3 — opt out of the auto-discriminator: the recipe
+    // above already includes findingKey so distinctness is built in.
+    intentionalCollapse: true,
   });
 
   const node: UnknownArtifactIR = {

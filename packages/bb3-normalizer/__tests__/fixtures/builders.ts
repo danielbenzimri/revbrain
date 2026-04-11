@@ -237,6 +237,7 @@ export function renamedAndEditedRulesFixture(): {
   afterRename: AssessmentFindingInput[];
   afterEdit: AssessmentFindingInput[];
 } {
+  // PH9 §8.3 — canonical field-ref shape: value=path, label=actual data.
   const before: AssessmentFindingInput[] = [
     f({
       domain: 'pricing',
@@ -244,14 +245,26 @@ export function renamedAndEditedRulesFixture(): {
       artifactType: 'SBQQ__PriceRule__c',
       artifactName: 'Original Name',
       findingKey: 'rule-x',
-      evidenceRefs: [{ type: 'field-ref', value: 'On Calculate' }],
+      evidenceRefs: [
+        {
+          type: 'field-ref',
+          value: 'SBQQ__PriceRule__c.SBQQ__EvaluationEvent__c',
+          label: 'On Calculate',
+        },
+      ],
     }),
   ];
   const afterRename: AssessmentFindingInput[] = [{ ...before[0]!, artifactName: 'Renamed Rule' }];
   const afterEdit: AssessmentFindingInput[] = [
     {
       ...before[0]!,
-      evidenceRefs: [{ type: 'field-ref', value: 'After Calculate; On Calculate' }],
+      evidenceRefs: [
+        {
+          type: 'field-ref',
+          value: 'SBQQ__PriceRule__c.SBQQ__EvaluationEvent__c',
+          label: 'After Calculate; On Calculate',
+        },
+      ],
     },
   ];
   return { before, afterRename, afterEdit };

@@ -49,10 +49,19 @@ export interface CatalogContext {
  * BB-17 drift detection. Uses canonicalJson to guarantee key order
  * independence. Returns `null` for a null input so the assembly
  * step can emit `schemaCatalogHash: null` unchanged in degraded mode.
+ *
+ * `capturedAt` is intentionally excluded from the hash: it is wall-
+ * clock telemetry of *when* the catalog snapshot was taken, not part
+ * of the schema's identity. Including it would make the hash drift
+ * between runs over the same source bytes, defeating its purpose
+ * (drift detection) and violating the BB-3 §6.2/§6.4 determinism
+ * non-negotiable on `IRGraph.metadata.schemaCatalogHash`.
  */
 function hashCatalog(catalog: SchemaCatalog | null): string | null {
   if (catalog === null) return null;
-  const canonical = canonicalJson(catalog);
+  const { capturedAt: _capturedAt, ...identityFields } = catalog;
+  void _capturedAt;
+  const canonical = canonicalJson(identityFields);
   const digest = createHash('sha256').update(canonical, 'utf8').digest();
   const b64 = digest.subarray(0, 16).toString('base64');
   return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');

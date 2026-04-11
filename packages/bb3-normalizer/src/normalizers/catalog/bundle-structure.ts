@@ -7,7 +7,7 @@
 import type { AssessmentFindingInput } from '@revbrain/contract';
 import type { IRNodeBase, NodeRef } from '@revbrain/migration-ir-contract';
 import type { NormalizerFn } from '../registry.ts';
-import { buildBaseNode, findEvidenceRef } from '../base.ts';
+import { buildBaseNode, extractFieldValue } from '../base.ts';
 
 export interface BundleStructureIR extends IRNodeBase {
   nodeType: 'BundleStructure';
@@ -30,10 +30,17 @@ function parseConfigType(raw: string | null): BundleStructureIR['configurationTy
 }
 
 export const normalizeBundleStructure: NormalizerFn = (finding: AssessmentFindingInput) => {
-  const parentProductCode = findEvidenceRef(finding, 'field-ref') ?? finding.artifactName;
+  // PH9 §8.3 — read the actual ProductCode value via the canonical helper.
+  const parentProductCode =
+    extractFieldValue(finding, 'Product2.ProductCode') ||
+    extractFieldValue(finding, 'parentProductCode') ||
+    finding.artifactName ||
+    finding.artifactId ||
+    'unknown';
   const parentProductId: NodeRef = { id: `product:${parentProductCode}`, resolved: true };
   const configurationType = parseConfigType(finding.notes ?? null);
 
+  // PH9 §8.3 — buildBaseNode adds the per-record discriminator.
   const stableIdentity = { parentProductCode };
   const semanticPayload = { ...stableIdentity, configurationType };
 

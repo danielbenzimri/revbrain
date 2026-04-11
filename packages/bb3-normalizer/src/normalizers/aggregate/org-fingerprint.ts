@@ -48,6 +48,8 @@ export const normalizeOrgFingerprint: NormalizerFn = (finding: AssessmentFinding
     stableIdentity,
     semanticPayload,
     displayName: orgName,
+    // PH9 §8.3 — singleton: exactly one OrgFingerprint per org.
+    intentionalCollapse: true,
   });
 
   const node: OrgFingerprintNode = {

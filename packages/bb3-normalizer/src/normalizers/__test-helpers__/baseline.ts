@@ -54,6 +54,15 @@ export interface BaselineSuiteFixtures {
    * are identical by construction).
    */
   contentChangeMutation?: ((finding: AssessmentFindingInput) => AssessmentFindingInput) | null;
+  /**
+   * PH9 §8.3 — opt out of the distinctness invariant test for
+   * normalizers that intentionally collapse multiple findings into
+   * a single node (singletons like `OrgFingerprintIR`, aggregators
+   * like `CPQSettingsBundleIR` whose recipe is `{ bundle: 'singleton' }`,
+   * fallbacks like `UnknownArtifactIR` whose findingKey-based
+   * identity already discriminates).
+   */
+  intentionallyCollapses?: boolean;
 }
 
 function defaultContext(): NormalizerContext {
@@ -136,5 +145,49 @@ export function runBaselineSuite(fixtures: BaselineSuiteFixtures): void {
         expect(ra.nodes[0]!.contentHash).not.toBe(rb.nodes[0]!.contentHash);
       });
     }
+
+    // PH9 §8.3 — distinctness invariant. The bug we shipped to
+    // production: 178 of 179 staging Product2 records collapsed
+    // to one ProductIR node because the identity recipe didn't
+    // include any per-record discriminator. This test catches
+    // that class of bug at the per-normalizer level: two findings
+    // that differ in EVERY identity-relevant field MUST produce
+    // different node ids.
+    //
+    // The mutation rotates artifactName too because many normalizers
+    // derive their developerName / displayName from it, and
+    // buildBaseNode prefers developerName as the discriminator.
+    //
+    // Singleton/aggregator normalizers can opt out via
+    // `intentionallyCollapses: true` on the fixture (e.g.
+    // OrgFingerprint, CPQSettingsBundle).
+    if (fixtures.intentionallyCollapses === true) return;
+    it('PH9 §8.3 distinctness: distinct findingKey + artifactId + artifactName → distinct ids', () => {
+      const a = fixtures.validFinding();
+      const b: AssessmentFindingInput = {
+        ...a,
+        findingKey: a.findingKey + '-distinct',
+        artifactId: (a.artifactId ?? 'a000000000000001') + 'B',
+        artifactName: a.artifactName + '_distinct',
+      };
+      const ra = fixtures.fn(a, defaultContext());
+      const rb = fixtures.fn(b, defaultContext());
+      // Singleton normalizers (e.g. OrgFingerprint) and fallback
+      // normalizers (UnknownArtifact) intentionally collapse to one
+      // node — they can opt out by returning zero nodes for the
+      // distinct case. The default expectation is "distinct in,
+      // distinct out".
+      if (ra.nodes.length === 0 || rb.nodes.length === 0) return;
+      if (ra.nodes[0]!.id === rb.nodes[0]!.id) {
+        throw new Error(
+          `${fixtures.taskId} (${fixtures.nodeType}) — distinctness violation: ` +
+            `two findings with different findingKey + artifactId + artifactName produced the SAME ` +
+            `node id '${ra.nodes[0]!.id}'. The normalizer's stableIdentity recipe is missing a ` +
+            `per-record discriminator and N distinct findings will silently collapse into 1 node ` +
+            `via Stage 4 identity merging.`
+        );
+      }
+      expect(ra.nodes[0]!.id).not.toBe(rb.nodes[0]!.id);
+    });
   });
 }

@@ -103,4 +103,16 @@ describe('PH9.6 — schemaCatalogHash (G3)', () => {
     const b = prepareCatalog(mutated);
     expect(a.hash).not.toBe(b.hash);
   });
+
+  // BB-3 §6.2/§6.4 — `capturedAt` is wall-clock telemetry and MUST
+  // NOT influence the catalog hash that flows into
+  // `IRGraph.metadata.schemaCatalogHash`. Two catalogs that differ
+  // only in their captured-at timestamp must hash identically.
+  it('determinism: capturedAt drift does NOT change the hash', () => {
+    const t1: SchemaCatalog = { ...catalog, capturedAt: '2024-01-01T00:00:00Z' };
+    const t2: SchemaCatalog = { ...catalog, capturedAt: '2026-12-31T23:59:59Z' };
+    const t3: SchemaCatalog = { ...catalog, capturedAt: '' };
+    expect(prepareCatalog(t1).hash).toBe(prepareCatalog(t2).hash);
+    expect(prepareCatalog(t2).hash).toBe(prepareCatalog(t3).hash);
+  });
 });

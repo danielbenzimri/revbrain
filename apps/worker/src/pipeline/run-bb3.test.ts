@@ -220,3 +220,76 @@ describe('PH9.7 — default projected descriptors + catalog hash cascade', () =>
     expect(result.graph.metadata.schemaCatalogHash).toMatch(/^[A-Za-z0-9_-]{22}$/);
   });
 });
+
+// BB-3 §6.2/§6.4 — the IRGraph identity surface must be byte-stable
+// across runs over the same input findings. The only field on
+// `NormalizeResult.graph` that is allowed to drift is the caller-
+// provided `extractedAt` (which is metadata about the run, not the
+// graph identity). Anything else drifting is a wall-clock /
+// non-determinism leak — see [run-bb3.ts:buildSchemaCatalogFromFindings]
+// for the original regression that motivated this test.
+describe('BB-3 determinism — IRGraph byte-stability across runs', () => {
+  const sampleFindings = (): AssessmentFindingInput[] => [
+    finding({
+      artifactType: 'ObjectConfiguration',
+      artifactName: 'SBQQ__Quote__c',
+      textValue: 'Id, Name, SBQQ__NetAmount__c',
+      findingKey: 'oc-1',
+    }),
+    finding({
+      domain: 'pricing',
+      collectorName: 'pricing',
+      artifactType: 'SBQQ__PriceRule__c',
+      artifactName: 'Distributor Discount',
+      findingKey: 'rule-1',
+      sourceType: 'object',
+      evidenceRefs: [{ type: 'field-ref', value: 'On Calculate' }],
+    }),
+    finding({
+      domain: 'dependency',
+      collectorName: 'dependencies',
+      artifactType: 'ApexClass',
+      artifactName: 'MyPricingHandler',
+      findingKey: 'apex-1',
+      sourceType: 'metadata',
+      textValue: 'public class MyPricingHandler { public Decimal compute() { return 1; } }',
+    }),
+  ];
+
+  it('two runs over identical findings produce byte-identical graph content', async () => {
+    const findings = sampleFindings();
+    const fixedExtractedAt = '2026-04-10T00:00:00Z';
+    const a = await runBB3(findings, { extractedAt: fixedExtractedAt });
+    const b = await runBB3(findings, { extractedAt: fixedExtractedAt });
+    expect(JSON.stringify(a.graph)).toBe(JSON.stringify(b.graph));
+  });
+
+  it('graph content is stable even when extractedAt differs (only that field drifts)', async () => {
+    const findings = sampleFindings();
+    const a = await runBB3(findings, { extractedAt: '2024-01-01T00:00:00Z' });
+    const b = await runBB3(findings, { extractedAt: '2099-12-31T23:59:59Z' });
+    // extractedAt itself differs (caller-provided telemetry).
+    expect(a.graph.extractedAt).not.toBe(b.graph.extractedAt);
+    // Everything else must be identical, including schemaCatalogHash.
+    const stripExtractedAt = (g: typeof a.graph) => {
+      const { extractedAt: _e, ...rest } = g;
+      void _e;
+      return rest;
+    };
+    expect(JSON.stringify(stripExtractedAt(a.graph))).toBe(
+      JSON.stringify(stripExtractedAt(b.graph))
+    );
+    expect(a.graph.metadata.schemaCatalogHash).toBe(b.graph.metadata.schemaCatalogHash);
+  });
+
+  it('schemaCatalogHash is stable across two buildSchemaCatalogFromFindings calls', async () => {
+    // Targets the original wall-clock leak: even if buildSchemaCatalog
+    // is called twice (once per run, no caller-supplied catalog), the
+    // resulting schemaCatalogHash on the graph must be identical.
+    const findings = sampleFindings();
+    const a = await runBB3(findings, { extractedAt: '2026-04-10T00:00:00Z' });
+    const b = await runBB3(findings, { extractedAt: '2026-04-10T00:00:00Z' });
+    expect(a.graph.metadata.schemaCatalogHash).toBe(b.graph.metadata.schemaCatalogHash);
+    expect(a.graph.metadata.schemaCatalogHash).not.toBeNull();
+  });
+});

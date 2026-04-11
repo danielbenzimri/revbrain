@@ -111,26 +111,47 @@ export type MergeFieldRef = z.infer<typeof MergeFieldRefSchema>;
 // Assessment Finding
 // ============================================================================
 
+/**
+ * `nullishOptional(schema)` accepts `undefined`, `null`, or a parsed
+ * value, and normalizes `null` to `undefined` so the inferred output
+ * type stays `T | undefined` AND the field remains optional in the
+ * parsed object (not required-with-undefined). This lets findings
+ * round-trip through Postgres / JSON-as-DB-row shapes (where absent
+ * fields arrive as explicit `null`) without forcing every consumer
+ * to handle three states. Without this helper, a fixture loaded
+ * straight from a DB dump would 100%-quarantine on the BB-3 input
+ * gate (BB3_IG002), which is the failure mode that motivated this
+ * helper in 2026-04.
+ *
+ * Implemented via `z.preprocess` rather than `.transform` because
+ * `.transform()` after `.optional()` causes Zod's inferred output
+ * type to mark the field as required-with-undefined, breaking
+ * downstream consumers that destructure on optionality. `preprocess`
+ * runs before validation so the `.optional()` is preserved.
+ */
+const nullishOptional = <T extends z.ZodTypeAny>(schema: T) =>
+  z.preprocess((v) => (v === null ? undefined : v), schema.optional());
+
 export const AssessmentFindingSchema = z.object({
   domain: AssessmentDomainSchema,
   collectorName: z.string(),
   artifactType: z.string(),
   artifactName: z.string(),
-  artifactId: z.string().optional(),
+  artifactId: nullishOptional(z.string()),
   findingKey: z.string(),
   sourceType: SourceTypeSchema,
-  sourceRef: z.string().optional(),
+  sourceRef: nullishOptional(z.string()),
   detected: z.boolean().default(true),
-  countValue: z.number().int().optional(),
-  textValue: z.string().optional(),
-  usageLevel: UsageLevelSchema.optional(),
-  riskLevel: RiskLevelSchema.optional(),
-  complexityLevel: ComplexityLevelSchema.optional(),
-  migrationRelevance: MigrationRelevanceSchema.optional(),
-  rcaTargetConcept: z.string().optional(),
-  rcaMappingComplexity: RcaMappingComplexitySchema.optional(),
+  countValue: nullishOptional(z.number().int()),
+  textValue: nullishOptional(z.string()),
+  usageLevel: nullishOptional(UsageLevelSchema),
+  riskLevel: nullishOptional(RiskLevelSchema),
+  complexityLevel: nullishOptional(ComplexityLevelSchema),
+  migrationRelevance: nullishOptional(MigrationRelevanceSchema),
+  rcaTargetConcept: nullishOptional(z.string()),
+  rcaMappingComplexity: nullishOptional(RcaMappingComplexitySchema),
   evidenceRefs: z.array(EvidenceRefSchema).default([]),
-  notes: z.string().optional(),
+  notes: nullishOptional(z.string()),
   schemaVersion: z.string().default('1.0'),
 });
 export type AssessmentFindingInput = z.infer<typeof AssessmentFindingSchema>;
@@ -191,10 +212,18 @@ export type CollectorTier = z.infer<typeof CollectorTierSchema>;
  * - Record-based: {collector}:{artifactType}:{sfRecordId}:{findingType}
  * - Aggregate: {collector}:{metricName}:{scope}
  * - Cross-object: {collector}:{sourceType}:{targetType}:{key}
+ * - Fallback: {collector}:{artifactType}:{artifactName} — used when no
+ *   record/metric/cross-object key is supplied. The artifactName is
+ *   included so that callers iterating over Describe-derived items
+ *   (which have no SF record ID) cannot silently produce duplicate
+ *   keys. Pre-2026-04 behavior used a literal `unknown` sentinel,
+ *   which collapsed every such caller's findings into a single key
+ *   and tripped BB-3 invariant I2 ("findingKey must be unique").
  */
 export function generateFindingKey(parts: {
   collector: string;
   artifactType: string;
+  artifactName?: string;
   recordId?: string;
   findingType?: string;
   metricName?: string;
@@ -212,5 +241,5 @@ export function generateFindingKey(parts: {
   if (parts.sourceType && parts.targetType && parts.key) {
     return `${parts.collector}:${parts.sourceType}:${parts.targetType}:${parts.key}`;
   }
-  return `${parts.collector}:${parts.artifactType}:unknown`;
+  return `${parts.collector}:${parts.artifactType}:${parts.artifactName ?? 'unknown'}`;
 }

@@ -32,6 +32,9 @@ runBaselineSuite({
   malformedFinding: null,
   renameMutation: (f) => ({ ...f, artifactId: 'a0V3x00000newid' }),
   contentChangeMutation: (f) => ({ ...f, textValue: 'false' }),
+  // PH9 §8.3 — CPQSettingsBundle is a singleton aggregator: all CPQ
+  // settings in an org collapse into one bundle node by design.
+  intentionallyCollapses: true,
 });
 
 describe('PH6.15 — CPQSettingsBundle disposition relevance', () => {

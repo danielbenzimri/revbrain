@@ -32,6 +32,7 @@ export const normalizeConfigurationAttribute: NormalizerFn = (finding: Assessmen
     nodeType: 'ConfigurationAttribute',
     stableIdentity,
     semanticPayload,
+    developerName,
   });
 
   const node: ConfigurationAttributeIR = {

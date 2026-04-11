@@ -8,7 +8,7 @@
 import type { AssessmentFindingInput } from '@revbrain/contract';
 import type { IRNodeBase, NodeRef } from '@revbrain/migration-ir-contract';
 import type { NormalizerFn } from '../registry.ts';
-import { buildBaseNode, findEvidenceRef } from '../base.ts';
+import { buildBaseNode, extractFieldValue, findEvidenceRef } from '../base.ts';
 
 export interface BundleOptionIR extends IRNodeBase {
   nodeType: 'BundleOption';
@@ -35,11 +35,20 @@ function parseOptionType(raw: string | null): BundleOptionIR['optionType'] {
 }
 
 export const normalizeBundleOption: NormalizerFn = (finding: AssessmentFindingInput) => {
+  // PH9 §8.3 — extract via the canonical helper. The 'object-ref'
+  // call is unaffected (object-ref evidence carries the value as
+  // 'value' by convention).
   const parentProductCode = findEvidenceRef(finding, 'object-ref') ?? '<unknown-bundle>';
-  const optionProductCode = findEvidenceRef(finding, 'field-ref') ?? finding.artifactName;
+  const optionProductCode =
+    extractFieldValue(finding, 'OptionalSKU.ProductCode') ||
+    extractFieldValue(finding, 'optionProductCode') ||
+    finding.artifactName ||
+    finding.artifactId ||
+    'unknown';
   const number = finding.countValue ?? 0;
   const optionType = parseOptionType(finding.notes ?? null);
 
+  // PH9 §8.3 — buildBaseNode adds the per-record discriminator.
   const stableIdentity = { parentProductCode, optionProductCode, number };
   const semanticPayload = { ...stableIdentity, optionType };
 

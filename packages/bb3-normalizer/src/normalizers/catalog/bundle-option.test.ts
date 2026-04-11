@@ -8,14 +8,16 @@ function validBO(over: Partial<AssessmentFindingInput> = {}): AssessmentFindingI
     collectorName: 'catalog',
     artifactType: 'SBQQ__ProductOption__c',
     artifactName: 'Add-on Storage',
+    artifactId: 'a0M3x000003ABCDEAA',
     findingKey: 'bo-1',
     sourceType: 'object',
     detected: true,
     countValue: 1,
     notes: 'Component',
+    // PH9 §8.3 — canonical field-ref shape: value=path, label=value.
     evidenceRefs: [
       { type: 'object-ref', value: 'BUNDLE-01' },
-      { type: 'field-ref', value: 'ADDON-STORAGE' },
+      { type: 'field-ref', value: 'OptionalSKU.ProductCode', label: 'ADDON-STORAGE' },
     ],
     schemaVersion: '1.0',
     ...over,

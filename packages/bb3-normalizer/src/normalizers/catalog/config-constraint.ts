@@ -65,6 +65,7 @@ export const normalizeConfigConstraint: NormalizerFn = (finding: AssessmentFindi
     actions: [],
   });
 
+  // PH9 §8.3 — buildBaseNode adds the per-record discriminator.
   const stableIdentity = { sourceCategory, signature };
   const semanticPayload = { ...stableIdentity, ruleType, evaluationEvent, isActive };
 

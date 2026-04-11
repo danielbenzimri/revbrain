@@ -13,7 +13,14 @@ function validRule(over: Partial<AssessmentFindingInput> = {}): AssessmentFindin
     findingKey: 'rule-1',
     sourceType: 'object',
     detected: true,
-    evidenceRefs: [{ type: 'field-ref', value: 'On Calculate; Before Calculate' }],
+    // PH9 §8.3 — canonical field-ref shape: value=path, label=value.
+    evidenceRefs: [
+      {
+        type: 'field-ref',
+        value: 'SBQQ__PriceRule__c.SBQQ__EvaluationEvent__c',
+        label: 'On Calculate; Before Calculate',
+      },
+    ],
     schemaVersion: '1.0',
     ...over,
   };
@@ -27,7 +34,13 @@ runBaselineSuite({
   malformedFinding: null,
   contentChangeMutation: (f) => ({
     ...f,
-    evidenceRefs: [{ type: 'field-ref', value: 'After Calculate' }],
+    evidenceRefs: [
+      {
+        type: 'field-ref',
+        value: 'SBQQ__PriceRule__c.SBQQ__EvaluationEvent__c',
+        label: 'After Calculate',
+      },
+    ],
   }),
 });
 
@@ -70,7 +83,15 @@ describe('PH4.1 — PricingRule extras', () => {
     // differs — which lives in semantic payload alone.
     const a = normalizePricingRule(validRule(), ctx).nodes[0]!;
     const b = normalizePricingRule(
-      validRule({ evidenceRefs: [{ type: 'field-ref', value: 'After Calculate; On Calculate' }] }),
+      validRule({
+        evidenceRefs: [
+          {
+            type: 'field-ref',
+            value: 'SBQQ__PriceRule__c.SBQQ__EvaluationEvent__c',
+            label: 'After Calculate; On Calculate',
+          },
+        ],
+      }),
       ctx
     ).nodes[0]!;
     expect(a.id).toBe(b.id);

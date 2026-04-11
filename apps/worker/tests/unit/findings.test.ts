@@ -104,6 +104,33 @@ describe('generateFindingKey', () => {
       collector: 'test',
       artifactType: 'unknown',
     });
+    // Fallback when neither artifactName nor recordId/metric/cross-object
+    // is supplied — preserved for back-compat with callers that don't
+    // pass artifactName.
     expect(key).toBe('test:unknown:unknown');
+  });
+
+  // BB-3 invariant I2 (findingKey uniqueness) regression. Pre-2026-04,
+  // describe-derived collectors (e.g., integrations.ts external-ID
+  // fields) called createFinding without a recordId, metricName, or
+  // cross-object key, collapsing every iteration into the literal
+  // `<collector>:<artifactType>:unknown` key. The normalizer's
+  // group-index stage caught this and hard-failed the entire run.
+  // The fallback now incorporates artifactName so iterators over
+  // multiple distinct artifacts produce distinct keys.
+  it('uses artifactName in the fallback to prevent duplicate-key collisions', () => {
+    const k1 = generateFindingKey({
+      collector: 'integrations',
+      artifactType: 'ExternalIdField',
+      artifactName: 'Account.Foo__c',
+    });
+    const k2 = generateFindingKey({
+      collector: 'integrations',
+      artifactType: 'ExternalIdField',
+      artifactName: 'Account.Bar__c',
+    });
+    expect(k1).toBe('integrations:ExternalIdField:Account.Foo__c');
+    expect(k2).toBe('integrations:ExternalIdField:Account.Bar__c');
+    expect(k1).not.toBe(k2);
   });
 });

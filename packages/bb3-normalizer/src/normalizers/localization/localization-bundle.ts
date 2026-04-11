@@ -27,6 +27,9 @@ export const normalizeLocalizationBundle: NormalizerFn = (finding: AssessmentFin
     nodeType: 'LocalizationBundle',
     stableIdentity,
     semanticPayload,
+    // PH9 §8.3 — opt out: languageCode IS the natural identity
+    // for a localization bundle. One bundle per language.
+    intentionalCollapse: true,
   });
   const node: LocalizationBundleIR = {
     ...base,

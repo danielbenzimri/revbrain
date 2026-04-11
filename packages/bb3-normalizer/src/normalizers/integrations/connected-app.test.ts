@@ -14,7 +14,14 @@ function validCA(over: Partial<AssessmentFindingInput> = {}): AssessmentFindingI
     sourceType: 'metadata',
     detected: true,
     textValue: 'api, refresh_token, offline_access',
-    evidenceRefs: [{ type: 'field-ref', value: '3MVG9CONSUMER_KEY_EXAMPLE' }],
+    // PH9 §8.3 — canonical field-ref shape: value=path, label=value.
+    evidenceRefs: [
+      {
+        type: 'field-ref',
+        value: 'ConnectedApplication.OauthConsumerKey',
+        label: '3MVG9CONSUMER_KEY_EXAMPLE',
+      },
+    ],
     schemaVersion: '1.0',
     ...over,
   };

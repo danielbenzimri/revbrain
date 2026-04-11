@@ -99,7 +99,7 @@ async function main(): Promise<void> {
   await writeFile(outPath, canonicalJson(result.graph) + '\n', 'utf8');
 
   // Pretty-print a 5-line summary to stdout.
-   
+
   console.log(
     [
       `bb3 smoke: ${summary.totalFindingsIn} findings → ${summary.totalNodesOut} nodes in ${elapsed} ms`,
@@ -114,9 +114,8 @@ async function main(): Promise<void> {
 }
 
 main().catch((err) => {
-   
   console.error('bb3 smoke: FAILED with unexpected error:');
-   
+
   console.error(err);
   process.exit(1);
 });

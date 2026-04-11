@@ -8,11 +8,13 @@ function validBS(over: Partial<AssessmentFindingInput> = {}): AssessmentFindingI
     collectorName: 'catalog',
     artifactType: 'BundleStructure',
     artifactName: 'Premium Bundle',
+    artifactId: '01t3x000008zVqQAAU',
     findingKey: 'bs-1',
     sourceType: 'object',
     detected: true,
     notes: 'Required',
-    evidenceRefs: [{ type: 'field-ref', value: 'BUNDLE-01' }],
+    // PH9 §8.3 — canonical field-ref shape: value=path, label=value.
+    evidenceRefs: [{ type: 'field-ref', value: 'Product2.ProductCode', label: 'BUNDLE-01' }],
     schemaVersion: '1.0',
     ...over,
   };
