@@ -620,6 +620,71 @@ function renderCustomCode(data: ReportData): string {
     )}`;
     })()}
 
+    ${(() => {
+      // §9.1b — Active CPQ Plugins & Custom Scripts (aka §D.1 from the
+      // mitigation plan, rendered here directly under §9 per customer
+      // request to preserve the 11-section layout). Shows the three
+      // things the customer cannot currently see:
+      //
+      //   1. Which customer-namespace Apex classes implement a CPQ
+      //      plugin interface, with LOC and registration status
+      //   2. Which QCP custom scripts exist in the org (by name + LOC)
+      //   3. The full CPQ plugin slot table: every plugin interface
+      //      CPQ supports and whether the tenant has wired Apex into it
+      //
+      // Source: flat findings via EXT-1.1 cpq_apex_plugin markers +
+      // PluginActivation sidecar findings. See assembler.ts for the
+      // extraction logic.
+      const p = data.customCode.activePluginsAndScripts;
+      if (
+        p.apexPlugins.length === 0 &&
+        p.qcpScripts.length === 0 &&
+        p.interfaceActivation.length === 0
+      )
+        return '';
+      const apexPluginsTable =
+        p.apexPlugins.length > 0
+          ? `
+    <h4>9.1b.1 Apex Classes Implementing CPQ Plugin Interfaces</h4>
+    ${table(
+      ['Class Name', 'Interface(s)', 'Lines', 'Registration'],
+      p.apexPlugins.map((pl) => [
+        escapeHtml(pl.name),
+        escapeHtml(pl.interfaceNames.join(', ')),
+        String(pl.lines),
+        escapeHtml(pl.registrationStatus),
+      ])
+    )}`
+          : '';
+      const qcpTable =
+        p.qcpScripts.length > 0
+          ? `
+    <h4>9.1b.2 Quote Calculator Plugin (QCP) Custom Scripts</h4>
+    ${table(
+      ['Script Name', 'Lines'],
+      p.qcpScripts.map((s) => [escapeHtml(s.name), String(s.lines)])
+    )}`
+          : '';
+      const slotTable =
+        p.interfaceActivation.length > 0
+          ? `
+    <h4>9.1b.3 CPQ Plugin Slot Activation</h4>
+    <p><em>One row per CPQ plugin slot. "unset" = tenant uses the standard CPQ implementation; "active" = tenant has registered a custom Apex class.</em></p>
+    ${table(
+      ['Plugin Slot', 'Interface', 'Status'],
+      p.interfaceActivation.map((ia) => [
+        escapeHtml(ia.slot),
+        escapeHtml(ia.interfaceName),
+        escapeHtml(ia.status),
+      ])
+    )}`
+          : '';
+      return `
+    <h3>9.1b Active CPQ Plugins & Custom Scripts</h3>
+    <p><em>Everything below is extracted automatically from the tenant's Apex + CPQ plugin settings. Classes listed as "unset" exist in the org's codebase but are NOT wired into the CPQ plugin configuration — they will not run at quote time unless the tenant updates SBQQ__Plugin__c.</em></p>
+    ${apexPluginsTable}${qcpTable}${slotTable}`;
+    })()}
+
     <h3>9.2 Triggers & Flows</h3>
     ${
       data.counts.flowCountActive > 0

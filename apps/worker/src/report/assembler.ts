@@ -176,6 +176,48 @@ export interface ReportData {
      * leave this empty and show only `thirdPartyApex` above.
      */
     thirdPartyApexDetail: Array<{ name: string; namespace: string; lines: number }>;
+    /**
+     * §D.1 Active CPQ Plugins & Custom Scripts — added 2026-04-12
+     * per `docs/PDF-AND-GRAPH-DECISIONS.md` decision 3. Customer
+     * requested the 11-section format be preserved; this sub-appendix
+     * under §9 is the ONE content addition. Shows:
+     *   - Apex classes that implement a CPQ plugin interface
+     *     (SBQQ.QuoteCalculatorPlugin, SBQQ.ProductSearchPlugin,
+     *     SBQQ.PageSecurityPlugin, etc.), with the interface name,
+     *     LOC, and registration status
+     *   - QCP custom scripts (SBQQ__CustomScript__c), with LOC
+     *
+     * Both come from the flat findings array via EXT-1.1 cpq_apex_plugin
+     * findings and SBQQ__CustomScript__c findings. The per-class
+     * registration status comes from `PluginActivation` sidecar
+     * findings — "unset" means the Apex class exists but is NOT
+     * wired into the SBQQ__Plugin__c configuration record, so it
+     * is effectively dead code from CPQ's perspective.
+     */
+    activePluginsAndScripts: {
+      apexPlugins: Array<{
+        name: string;
+        interfaceNames: string[];
+        lines: number;
+        registrationStatus: 'registered' | 'unset' | 'unknown';
+      }>;
+      qcpScripts: Array<{
+        name: string;
+        lines: number;
+      }>;
+      /**
+       * Per-interface activation status. Source: PluginActivation
+       * findings. Each entry is one CPQ plugin slot (Quote Calculator,
+       * Configurator, Product Search, etc.) and whether the tenant
+       * has configured it.
+       */
+      interfaceActivation: Array<{
+        interfaceName: string;
+        slot: string;
+        status: 'active' | 'unset';
+        notes: string;
+      }>;
+    };
     triggersFlows: Array<{ name: string; type: string; object: string; status: string }>;
     validationRules: Array<{ object: string; rule: string; status: string; complexity: string }>;
     permissionSets: Array<{ name: string; type: string; namespace: string }>;
@@ -1173,6 +1215,120 @@ export function assembleReport(
             }))
             .sort((a, b) => a.name.localeCompare(b.name))
         : [],
+      activePluginsAndScripts: (() => {
+        // Collect plugin Apex classes (those whose findings declare
+        // "Implements CPQ plugin interface: X" in notes). Dedupe by
+        // class name — a single class can implement multiple
+        // interfaces (Q2CLegacyqcp implements both QuoteCalculatorPlugin
+        // AND QuoteCalculatorPlugin2), and we want one row per class
+        // with the full interface list.
+        type PluginInfo = {
+          name: string;
+          interfaceNames: Set<string>;
+          lines: number;
+          registrationStatus: 'registered' | 'unset' | 'unknown';
+        };
+        const byClass = new Map<string, PluginInfo>();
+
+        // The class LOC is on the canonical ApexClass finding (not
+        // the plugin-interface sidecar). Build a LOC lookup.
+        const apexLocByName = new Map<string, number>();
+        for (const a of apexClasses) {
+          if (typeof a.countValue === 'number' && a.countValue > 0) {
+            apexLocByName.set(a.artifactName, a.countValue);
+          }
+        }
+
+        for (const a of apexClasses) {
+          const notes = a.notes ?? '';
+          const ifaceMatch = notes.match(/Implements CPQ plugin interface: ([^,\n]+)/);
+          if (!ifaceMatch) continue;
+          const iface = ifaceMatch[1]!.trim();
+          const existing = byClass.get(a.artifactName);
+          if (existing) {
+            existing.interfaceNames.add(iface);
+          } else {
+            byClass.set(a.artifactName, {
+              name: a.artifactName,
+              interfaceNames: new Set([iface]),
+              lines: apexLocByName.get(a.artifactName) ?? 0,
+              registrationStatus: 'unknown',
+            });
+          }
+        }
+
+        // Resolve registration status from PluginActivation sidecar
+        // findings. Each PluginActivation's field-ref evidenceRef
+        // carries the plugin setting field path (e.g.
+        // SBQQ__Plugin__c.SBQQ__QuoteCalculator__c) with the label
+        // holding the actual setting VALUE — either "unset" or the
+        // DeveloperName of the currently-registered Apex class.
+        //
+        // Matching strategy: build the set of Apex DeveloperNames
+        // that appear as a non-"unset" label anywhere in the
+        // PluginActivation findings. A class is "registered" if its
+        // name is in that set. Otherwise "unset". This sidesteps
+        // the need to reconcile interface-name variants (e.g.
+        // `SBQQ.QuoteCalculatorPluginInterface` vs
+        // `SBQQ.QuoteCalculatorPlugin`) which differ by the
+        // collector source in the cpq_apex_plugin marker notes.
+        const pluginActivations = get('PluginActivation');
+        const registeredClassNames = new Set<string>();
+        for (const pa of pluginActivations) {
+          const settingValue = pa.evidenceRefs?.find(
+            (r) => typeof r.value === 'string' && r.value.includes('SBQQ__Plugin__c')
+          )?.label as string | undefined;
+          if (settingValue && settingValue !== 'unset') {
+            registeredClassNames.add(settingValue);
+          }
+        }
+        for (const info of byClass.values()) {
+          info.registrationStatus = registeredClassNames.has(info.name) ? 'registered' : 'unset';
+        }
+
+        const apexPlugins = [...byClass.values()]
+          .sort((a, b) => a.name.localeCompare(b.name))
+          .map((p) => ({
+            name: p.name,
+            interfaceNames: [...p.interfaceNames].sort(),
+            lines: p.lines,
+            registrationStatus: p.registrationStatus,
+          }));
+
+        // QCP custom scripts — one row per SBQQ__CustomScript__c row.
+        // LOC comes from the same countValue convention used by
+        // pricing.ts's customScripts collector pass.
+        const qcpScripts = customScripts
+          .map((cs) => ({
+            name: cs.artifactName,
+            lines: cs.countValue ?? 0,
+          }))
+          .sort((a, b) => a.name.localeCompare(b.name));
+
+        // Interface activation slot table — flat view of every CPQ
+        // plugin slot and whether it's wired. Shows the tenant the
+        // full plugin surface area, not just the slots they have
+        // custom Apex for.
+        const interfaceActivation = pluginActivations
+          .map((pa) => {
+            const iface =
+              (pa.evidenceRefs?.find((r) => r.label === 'interfaceName')?.value as string) ??
+              'unknown';
+            const settingValue = pa.evidenceRefs?.find((r) =>
+              (r.value as string).includes('SBQQ__Plugin__c')
+            )?.label as string | undefined;
+            const isActive = !!settingValue && settingValue !== 'unset';
+            return {
+              interfaceName: iface,
+              slot: pa.artifactName,
+              status: (isActive ? 'active' : 'unset') as 'active' | 'unset',
+              notes: pa.notes ?? '',
+            };
+          })
+          .sort((a, b) => a.slot.localeCompare(b.slot));
+
+        return { apexPlugins, qcpScripts, interfaceActivation };
+      })(),
       triggersFlows: [
         ...triggers.map((t) => ({
           name: t.artifactName,

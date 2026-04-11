@@ -1037,6 +1037,33 @@
 <tr><td>SBQQDS</td><td>18</td><td>0</td></tr>
 <tr><td>SFBD</td><td>6</td><td>0</td></tr></tbody></table>
 
+    
+    <h3>9.1b Active CPQ Plugins & Custom Scripts</h3>
+    <p><em>Everything below is extracted automatically from the tenant's Apex + CPQ plugin settings. Classes listed as "unset" exist in the org's codebase but are NOT wired into the CPQ plugin configuration — they will not run at quote time unless the tenant updates SBQQ__Plugin__c.</em></p>
+    
+    <h4>9.1b.1 Apex Classes Implementing CPQ Plugin Interfaces</h4>
+    <table><thead><tr><th>Class Name</th><th>Interface(s)</th><th>Lines</th><th>Registration</th></tr></thead><tbody><tr><td>DemoPageSecurityPlugin</td><td>SBQQ.PageSecurityPlugin, SBQQ.PageSecurityPlugin2</td><td>45</td><td>unset</td></tr>
+<tr><td>ExampleProductSearchPlugin</td><td>SBQQ.ProductSearchPlugin</td><td>298</td><td>unset</td></tr>
+<tr><td>PluginDemoProductSearchPlugin</td><td>SBQQ.ProductSearchPlugin</td><td>98</td><td>unset</td></tr>
+<tr><td>ProductRecommendationPluginRevCloud</td><td>SBQQ.ProductRecommendationPlugin</td><td>34</td><td>unset</td></tr>
+<tr><td>Q2CLegacyPageSecurityPlugin</td><td>SBQQ.PageSecurityPlugin2</td><td>23</td><td>unset</td></tr>
+<tr><td>Q2CLegacyqcp</td><td>SBQQ.QuoteCalculatorPlugin, SBQQ.QuoteCalculatorPlugin2</td><td>139</td><td>unset</td></tr>
+<tr><td>Q2CProductSearchPlugin</td><td>SBQQ.ProductSearchPlugin</td><td>98</td><td>unset</td></tr></tbody></table>
+    <h4>9.1b.2 Quote Calculator Plugin (QCP) Custom Scripts</h4>
+    <table><thead><tr><th>Script Name</th><th>Lines</th></tr></thead><tbody><tr><td>Q2CBundleSpecific</td><td>27</td></tr>
+<tr><td>q2cJSPSP</td><td>37</td></tr>
+<tr><td>q2cJSPSP5ALEX</td><td>31</td></tr>
+<tr><td>q2cJSQCP</td><td>63</td></tr>
+<tr><td>qtc_Debugger</td><td>108</td></tr></tbody></table>
+    <h4>9.1b.3 CPQ Plugin Slot Activation</h4>
+    <p><em>One row per CPQ plugin slot. "unset" = tenant uses the standard CPQ implementation; "active" = tenant has registered a custom Apex class.</em></p>
+    <table><thead><tr><th>Plugin Slot</th><th>Interface</th><th>Status</th></tr></thead><tbody><tr><td>Approval Chain Custom Condition</td><td>sbaa.ApprovalChainCustomCondition</td><td>unset</td></tr>
+<tr><td>Configurator Plugin (Apex)</td><td>SBQQ.ConfiguratorPluginInterface</td><td>unset</td></tr>
+<tr><td>Product Search Plugin (Apex)</td><td>SBQQ.ProductSearchPluginInterface</td><td>unset</td></tr>
+<tr><td>Quote Calculator Plugin (Apex)</td><td>SBQQ.QuoteCalculatorPluginInterface</td><td>unset</td></tr>
+<tr><td>Quote Calculator Plugin (JavaScript)</td><td>SBQQ.QuoteCalculatorPluginInterface</td><td>unset</td></tr>
+<tr><td>Quote Line Group Splitter Plugin (Apex)</td><td>SBQQ.QuoteLineGroupSplitterPluginInterface</td><td>unset</td></tr></tbody></table>
+
     <h3>9.2 Triggers & Flows</h3>
     <p><em>44 active flows (13 CPQ-related, 31 additional active flows in org). 44 active flows shown. Total flows in org (including inactive and managed package flows) may be higher.</em></p>
     <table><thead><tr><th>Component</th><th>Type</th><th>Object</th><th>Status</th></tr></thead><tbody><tr><td>TemplateOpportunityAfter</td><td>Trigger</td><td>Opportunity</td><td>Active</td></tr>
