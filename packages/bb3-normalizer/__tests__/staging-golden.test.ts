@@ -84,9 +84,11 @@ describe('PH7.12 — staging golden file (A12)', () => {
 
     const actual = canonicalJson(result.graph);
 
-    // Compare against the trailing-newline-stripped golden so the
-    // capture script's `+ '\n'` convention doesn't break the diff.
-    const expectedGolden = goldenRaw.replace(/\n$/, '');
+    // Re-canonicalize the golden after parsing so the comparison is
+    // robust to disk-side formatting (lint-staged / prettier may
+    // pretty-print the file). canonicalJson is the source of truth
+    // for byte equality, not the on-disk representation.
+    const expectedGolden = canonicalJson(JSON.parse(goldenRaw));
     expect(actual).toBe(expectedGolden);
   });
 

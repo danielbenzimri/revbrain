@@ -15,6 +15,14 @@ pnpm-lock.yaml
 package-lock.json
 *.tsbuildinfo
 
+# BB-3 staging golden fixtures — captured via canonicalJson, must
+# stay as the capture script wrote them. The staging-golden test
+# normalizes by re-canonicalizing on read so prettier-formatted
+# fixtures DO still pass, but the on-disk diffs are easier to
+# review when they stay in canonical single-line form.
+packages/bb3-normalizer/__tests__/fixtures/staging-findings.json
+packages/bb3-normalizer/__tests__/fixtures/staging-golden.json
+
 # Database
 supabase/.branches/
 supabase/.temp/
