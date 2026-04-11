@@ -44,7 +44,7 @@ const ALLOWLIST = new Set([
   'templates.ts:358:array slice — limit JSON output of merge fields',
   'templates.ts:361:array slice — limit referenced field list',
   'pricing.ts:386:array slice — limit referenced field list',
-  'dependencies.ts:169:array slice — limit referenced field regex matches',
+  'dependencies.ts:170:array slice — limit referenced field regex matches',
   // Short label/description truncations (200 chars, human-readable
   // notes that are NOT load-bearing for BB-3 identity):
   'approvals.ts:207:notes label truncation — 200 chars, human-readable',

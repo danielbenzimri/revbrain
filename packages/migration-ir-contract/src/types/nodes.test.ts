@@ -47,6 +47,7 @@ describe('PH0.3 — IRNodeBase + IRNodeType + AutomationIR', () => {
           case 'ValidationRule':
           case 'FormulaField':
           case 'CustomMetadataType':
+          case 'CustomMetadataRecord':
           case 'RecordType':
           case 'DocumentTemplate':
           case 'QuoteTermBlock':

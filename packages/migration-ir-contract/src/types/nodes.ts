@@ -113,6 +113,7 @@ export type IRNodeType =
   | 'ValidationRule'
   | 'FormulaField'
   | 'CustomMetadataType'
+  | 'CustomMetadataRecord'
   | 'RecordType'
   | 'DocumentTemplate'
   | 'QuoteTermBlock'
@@ -156,6 +157,7 @@ export const IR_NODE_TYPES: readonly IRNodeType[] = [
   'ValidationRule',
   'FormulaField',
   'CustomMetadataType',
+  'CustomMetadataRecord',
   'RecordType',
   'DocumentTemplate',
   'QuoteTermBlock',

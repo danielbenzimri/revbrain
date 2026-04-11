@@ -23,6 +23,7 @@ import {
   detectCpqPluginInterfaces,
   isApexTestClass,
 } from '../lib/apex-classify.ts';
+import { fetchToolingMetadata } from '../salesforce/tooling-metadata-fetch.ts';
 
 const CPQ_OBJECTS = [
   'SBQQ__Quote__c',
@@ -359,8 +360,91 @@ export class DependenciesCollector extends BaseCollector {
       ).length;
       metrics.synchronousFlowCount = syncFlows;
 
+      // EXT-1.6 — Phase 2: chunked Tooling-Metadata fetch for the
+      // active version of each CPQ flow. The Metadata column on
+      // the `Flow` object holds the JSON representation of the
+      // flow including all elements, decisions, formulas, and
+      // assignments. Bulk SELECT is rejected by SF without a
+      // strong filter, so we use the same chunked-IN-clause
+      // helper as EXT-1.4 (validation rule formulas).
+      //
+      // We collect the ActiveVersionId values (NOT the Definition
+      // Id), because the Metadata column lives on `Flow` (the
+      // version), not `FlowDefinition`. ActiveVersionId is
+      // already in the FlowDefinitionView result.
+      const activeVersionIds = cpqFlows
+        .map((f) => f.ActiveVersionId as string | undefined)
+        .filter((id): id is string => typeof id === 'string' && id.length > 0);
+      let flowMetadataById = new Map<string, { Metadata?: Record<string, unknown> }>();
+      try {
+        const metadataResult = await fetchToolingMetadata<{
+          Id: string;
+          Metadata?: Record<string, unknown>;
+        }>(
+          'Flow',
+          activeVersionIds,
+          (soql, signal) => this.ctx.restApi.toolingQuery(soql, signal),
+          { log: this.log, signal: this.signal }
+        );
+        flowMetadataById = metadataResult.byId;
+        metrics.cpqFlowsWithBody = flowMetadataById.size;
+        if (metadataResult.failedIds.size > 0) {
+          this.log.warn(
+            { failed: metadataResult.failedIds.size, total: activeVersionIds.length },
+            'flow_metadata_partial_failure'
+          );
+        }
+      } catch (err) {
+        this.log.warn({ error: (err as Error).message }, 'flow_metadata_total_failure');
+        metrics.cpqFlowsWithBody = 0;
+      }
+
       // Create findings for CPQ-related flows
       for (const f of cpqFlows) {
+        const activeId = f.ActiveVersionId as string | undefined;
+        const md = activeId ? flowMetadataById.get(activeId) : undefined;
+        const metadata = md?.Metadata ?? null;
+
+        // EXT-1.6 — element-count complexity. Sum the array
+        // lengths for the well-known element categories. The
+        // breakdown matches the SF Flow Builder UI semantics.
+        let elementCount = 0;
+        if (metadata) {
+          const ELEMENT_KEYS = [
+            'actionCalls',
+            'apexPluginCalls',
+            'assignments',
+            'collectionProcessors',
+            'decisions',
+            'loops',
+            'recordCreates',
+            'recordDeletes',
+            'recordLookups',
+            'recordRollbacks',
+            'recordUpdates',
+            'screens',
+            'subflows',
+            'waits',
+          ];
+          for (const k of ELEMENT_KEYS) {
+            const v = metadata[k];
+            if (Array.isArray(v)) elementCount += v.length;
+          }
+        }
+        const complexityFromElements: 'low' | 'medium' | 'high' | 'very-high' =
+          elementCount > 100
+            ? 'very-high'
+            : elementCount > 25
+              ? 'high'
+              : elementCount > 5
+                ? 'medium'
+                : 'low';
+
+        // Serialize metadata to JSON for textValue, gated by
+        // codeExtractionEnabled and bounded by truncateWithFlag.
+        const metadataJson = metadata ? JSON.stringify(metadata) : '';
+        const truncated = truncateWithFlag(metadataJson, 262_144); // 256 KB
+
         findings.push(
           createFinding({
             domain: 'dependency',
@@ -371,10 +455,24 @@ export class DependenciesCollector extends BaseCollector {
             findingType: 'flow_cpq',
             sourceType: 'tooling',
             riskLevel: f.ProcessType === 'Workflow' ? 'high' : 'medium',
+            // EXT-1.6 — complexityLevel from element count instead
+            // of just the inventory presence. The pre-fix collector
+            // never set complexityLevel for flows.
+            complexityLevel: metadata ? complexityFromElements : undefined,
             migrationRelevance: 'must-migrate',
             rcaTargetConcept: 'Updated Flow',
             rcaMappingComplexity: f.ProcessType === 'Workflow' ? 'redesign' : 'transform',
-            notes: `${f.ProcessType} on ${f.TriggerObjectOrEvent}${f.ProcessType === 'Workflow' ? ' (DEPRECATED — must migrate)' : ''}`,
+            textValue:
+              this.ctx.config.codeExtractionEnabled && metadata ? truncated.value : undefined,
+            countValue: metadata ? elementCount : undefined,
+            notes:
+              `${f.ProcessType} on ${f.TriggerObjectOrEvent}${f.ProcessType === 'Workflow' ? ' (DEPRECATED — must migrate)' : ''}` +
+              (metadata
+                ? ` — ${elementCount} elements (${complexityFromElements})`
+                : ' — body unavailable') +
+              (truncated.wasTruncated
+                ? ` (textValue truncated from ${truncated.originalBytes} bytes)`
+                : ''),
           })
         );
       }
