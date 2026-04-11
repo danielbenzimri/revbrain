@@ -14,6 +14,13 @@
  * reliable DeveloperName — no structural signature needed.
  */
 
+import type { AssessmentFindingInput } from '@revbrain/contract';
+import type { ApexClassAutomationIR, FieldRefIR, NodeRef } from '@revbrain/migration-ir-contract';
+import { detectCpqPluginInterfaces } from '@revbrain/migration-ir-contract';
+import type { NormalizerFn } from '../registry.ts';
+import { buildBaseNode } from '../base.ts';
+import { createGlobalBudgetState, parseApexClass } from '../../parsers/apex.ts';
+
 /**
  * EXT-1.1 — Resolve `implementedInterfaces` from BOTH the source
  * regex AND any sidecar `interfaceName` evidenceRefs the worker
@@ -47,13 +54,6 @@ function resolveImplementedInterfaces(finding: AssessmentFindingInput): string[]
   }
   return [...new Set([...fromSource, ...fromEvidence])].sort();
 }
-
-import type { AssessmentFindingInput } from '@revbrain/contract';
-import type { ApexClassAutomationIR, FieldRefIR, NodeRef } from '@revbrain/migration-ir-contract';
-import { detectCpqPluginInterfaces } from '@revbrain/migration-ir-contract';
-import type { NormalizerFn } from '../registry.ts';
-import { buildBaseNode } from '../base.ts';
-import { createGlobalBudgetState, parseApexClass } from '../../parsers/apex.ts';
 
 /**
  * Synchronous wrapper around the async `parseApexClass`. For PH5.1
