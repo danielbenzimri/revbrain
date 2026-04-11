@@ -39,3 +39,7 @@ export * from './merge/domain-authority.ts';
 export { normalize } from './pipeline.ts';
 export type { NormalizeOptions, NormalizeResult, RuntimeStats, StageDuration } from './pipeline.ts';
 export { BB3_VERSION } from './version.ts';
+
+// PH9 §8.2 — content-addressable blob extraction for large source bodies
+export * from './blobs/blob-store.ts';
+export * from './blobs/blob-split.ts';

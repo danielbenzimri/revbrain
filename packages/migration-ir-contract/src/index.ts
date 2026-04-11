@@ -25,3 +25,4 @@ export * from './types/errors.ts';
 export * from './types/quarantine.ts';
 export * from './types/graph.ts';
 export * from './types/schema-version.ts';
+export * from './types/blob-ref.ts';

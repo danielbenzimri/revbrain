@@ -43,11 +43,18 @@ describe('PH6.11 — CustomComputation QCP placeholder', () => {
     expect(node.functionName).toBeNull();
   });
 
-  it('preserves rawSource verbatim', () => {
+  it('preserves rawSource verbatim as an inline BlobRef', () => {
     const source = 'function foo() { return "magic"; }';
     const result = normalizeCustomScript(validCS({ textValue: source }), ctx);
     const node = result.nodes[0]! as CustomComputationIR;
-    expect(node.rawSource).toBe(source);
+    // PH9 §8.2: rawSource is now a BlobRef discriminated union.
+    // The normalizer always emits inline; the worker may externalize
+    // large blobs via splitLargeBlobs in a separate post-transform.
+    expect(node.rawSource.kind).toBe('inline');
+    if (node.rawSource.kind === 'inline') {
+      expect(node.rawSource.content).toBe(source);
+      expect(node.rawSource.size).toBe(source.length);
+    }
   });
 
   it('warns about BB-3b pending', () => {

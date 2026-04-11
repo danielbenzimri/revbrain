@@ -38,8 +38,9 @@ import { writeCollectorData } from './db/writes.ts';
 import type { BaseCollector } from './collectors/base.ts';
 import { runBB3 } from './pipeline/run-bb3.ts';
 import { emitBB3Metrics, type Logger as BB3Logger } from './pipeline/bb3-metrics.ts';
+import { SupabaseBlobStore } from './pipeline/supabase-blob-store.ts';
 import { writeIRGraph } from './db/write-ir-graph.ts';
-import type { NormalizeResult } from '@revbrain/bb3-normalizer';
+import type { BlobStore, NormalizeResult } from '@revbrain/bb3-normalizer';
 import type { AssessmentFindingInput } from '@revbrain/contract';
 
 /** Maximum concurrent collectors (respect SF API concurrency) */
@@ -320,8 +321,28 @@ export async function runPipeline(ctx: CollectorContext): Promise<PipelineResult
     for (const collectorResult of results.values()) {
       allFindings.push(...collectorResult.findings);
     }
+
+    // PH9 §8.2 — wire a Supabase blob store when the env vars are
+    // present so large CustomComputationIR.rawSource blobs get
+    // externalized to the bb3-blobs bucket. Falls back to inline
+    // (no store) when the env is incomplete — fixture / unit
+    // test runs always take the inline path. Reads from process.env
+    // directly because CollectorContext.config is a slimmer
+    // subset that doesn't include the Supabase env vars.
+    const supabaseUrl = process.env.SUPABASE_STORAGE_URL ?? process.env.SUPABASE_URL;
+    const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const blobStore: BlobStore | undefined =
+      supabaseUrl && supabaseServiceRoleKey
+        ? new SupabaseBlobStore({
+            url: supabaseUrl,
+            serviceRoleKey: supabaseServiceRoleKey,
+            prefix: ctx.organizationId,
+          })
+        : undefined;
+
     bb3Result = await runBB3(allFindings, {
       extractedAt: new Date().toISOString(),
+      ...(blobStore && { blobStore }),
     });
     log.info(
       {

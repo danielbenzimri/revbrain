@@ -8,7 +8,8 @@
  */
 
 import type { AssessmentFindingInput } from '@revbrain/contract';
-import type { FieldRefIR, IRNodeBase } from '@revbrain/migration-ir-contract';
+import type { BlobRef, FieldRefIR, IRNodeBase } from '@revbrain/migration-ir-contract';
+import { inlineBlob } from '@revbrain/migration-ir-contract';
 import type { NormalizerFn } from '../registry.ts';
 import { buildBaseNode } from '../base.ts';
 
@@ -16,7 +17,13 @@ export interface CustomComputationIR extends IRNodeBase {
   nodeType: 'CustomComputation';
   scriptDeveloperName: string;
   functionName: string | null;
-  rawSource: string;
+  /**
+   * Raw QCP source code. Always emitted as an inline `BlobRef` by
+   * the normalizer; the worker may externalize large blobs via
+   * `splitLargeBlobs` (PH9 §8.2) so the persisted graph carries
+   * an external content-hash reference instead of inline source.
+   */
+  rawSource: BlobRef;
   lineCount: number;
   sbqqFieldRefs: FieldRefIR[];
   customFieldRefs: FieldRefIR[];
@@ -25,13 +32,13 @@ export interface CustomComputationIR extends IRNodeBase {
 
 export const normalizeCustomScript: NormalizerFn = (finding: AssessmentFindingInput) => {
   const scriptDeveloperName = finding.artifactName;
-  const rawSource = finding.textValue ?? '';
-  const lineCount = rawSource.split('\n').length;
+  const rawSourceText = finding.textValue ?? '';
+  const lineCount = rawSourceText.split('\n').length;
 
   const stableIdentity = { scriptDeveloperName, functionName: null };
   // Do NOT include raw source in the identity — it's opaque to BB-3.
   // contentHash uses a SHA-256 of the raw source per §5.2.
-  const semanticPayload = { ...stableIdentity, rawSourceLength: rawSource.length };
+  const semanticPayload = { ...stableIdentity, rawSourceLength: rawSourceText.length };
 
   const base = buildBaseNode({
     finding,
@@ -47,7 +54,7 @@ export const normalizeCustomScript: NormalizerFn = (finding: AssessmentFindingIn
     nodeType: 'CustomComputation',
     scriptDeveloperName,
     functionName: null,
-    rawSource,
+    rawSource: inlineBlob(rawSourceText),
     lineCount,
     sbqqFieldRefs: [],
     customFieldRefs: [],

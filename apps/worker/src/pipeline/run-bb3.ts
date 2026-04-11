@@ -16,7 +16,13 @@
  */
 
 import type { AssessmentFindingInput } from '@revbrain/contract';
-import { normalize, type NormalizeOptions, type NormalizeResult } from '@revbrain/bb3-normalizer';
+import {
+  normalize,
+  splitLargeBlobs,
+  type BlobStore,
+  type NormalizeOptions,
+  type NormalizeResult,
+} from '@revbrain/bb3-normalizer';
 import type { SchemaCatalog } from '@revbrain/migration-ir-contract';
 
 export interface RunBB3Options {
@@ -35,6 +41,33 @@ export interface RunBB3Options {
    * field allowed on the graph. Defaults to now.
    */
   extractedAt?: string;
+  /**
+   * PH9 §8.2 — Optional blob store for content-addressable
+   * externalization of large `CustomComputationIR.rawSource`
+   * payloads. When provided, `runBB3` runs `splitLargeBlobs`
+   * after `normalize()` so the persisted graph carries external
+   * references for any blob exceeding the threshold. When
+   * omitted (the default for tests + the in-process smoke
+   * script), the graph carries inline blobs unchanged.
+   */
+  blobStore?: BlobStore;
+  /**
+   * PH9 §8.2 — Override the split threshold in bytes. Defaults
+   * to {@link DEFAULT_BLOB_SPLIT_THRESHOLD_BYTES} (100 KiB).
+   * Only meaningful when `blobStore` is set.
+   */
+  blobSplitThresholdBytes?: number;
+}
+
+/**
+ * PH9 §8.2 — Counters surfaced when blob splitting actually ran.
+ * Returned alongside the NormalizeResult so the caller can log
+ * the externalization activity. Zero / null when no blob store
+ * was provided.
+ */
+export interface BlobSplitInfo {
+  splitCount: number;
+  bytesExternalized: number;
 }
 
 /**
@@ -116,6 +149,13 @@ export function buildSchemaCatalogFromFindings(
  * internally unless the caller supplies one. Never throws on
  * normal input — errors surface as diagnostics per the §10.1
  * hard-fail policy.
+ *
+ * When `options.blobStore` is provided, runs the PH9 §8.2 blob
+ * split post-transform: any inline `CustomComputationIR.rawSource`
+ * exceeding the threshold is externalized to the store and
+ * replaced with a content-addressed reference in the graph.
+ * The split is deterministic and idempotent — the same input
+ * always lands on the same content hash.
  */
 export async function runBB3(
   findings: readonly AssessmentFindingInput[],
@@ -131,5 +171,20 @@ export async function runBB3(
     normalizeOpts.extractedAt = options.extractedAt;
   }
 
-  return normalize(findings as AssessmentFindingInput[], normalizeOpts);
+  const result = await normalize(findings as AssessmentFindingInput[], normalizeOpts);
+
+  // PH9 §8.2 — content-addressable blob externalization. Only runs
+  // when the caller supplied a BlobStore; otherwise the graph
+  // carries inline blobs unchanged. The split is a pure post-
+  // transform on the graph object; it does not change runtimeStats.
+  if (options.blobStore) {
+    const split = await splitLargeBlobs(result.graph, options.blobStore, {
+      ...(options.blobSplitThresholdBytes !== undefined && {
+        thresholdBytes: options.blobSplitThresholdBytes,
+      }),
+    });
+    return { ...result, graph: split.graph };
+  }
+
+  return result;
 }
