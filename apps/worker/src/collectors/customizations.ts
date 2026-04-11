@@ -5,7 +5,7 @@
  * - Custom fields on CPQ objects (9.1)
  * - Custom objects related to CPQ (9.2 + auto-detection §16.3)
  * - Custom Metadata Types (9.3)
- * - Validation rules (9.4) — formulas preserved for LLM
+ * - Validation rules (9.4) — formulas extracted via Tooling Metadata (EXT-1.4)
  * - Record types (9.5)
  * - Sharing rules & OWD (9.7)
  *
@@ -18,6 +18,8 @@ import type { AssessmentFindingInput } from '@revbrain/contract';
 import { createFinding } from '../normalize/findings.ts';
 import { getCustomFields } from '../salesforce/query-builder.ts';
 import type { DescribeResult } from '../salesforce/rest.ts';
+import { fetchToolingMetadata } from '../salesforce/tooling-metadata-fetch.ts';
+import { truncateWithFlag } from '../lib/truncate.ts';
 
 const CPQ_OBJECTS_TO_SCAN = [
   'Product2',
@@ -163,8 +165,78 @@ export class CustomizationsCollector extends BaseCollector {
       metrics.totalValidationRules = allVRs.length;
       metrics.activeValidationRules = allVRs.filter((r) => r.Active === true).length;
 
+      // EXT-1.4 — Phase 2: chunked Tooling-Metadata fetch to retrieve
+      // the `errorConditionFormula` field for every enumerated rule.
+      // The bulk `SELECT Metadata FROM ValidationRule` is rejected
+      // by SF without a strong filter, so we batch IDs into chunks
+      // of 10 and issue `WHERE Id IN (...)` per chunk. Failures
+      // degrade gracefully — partial maps are returned and the
+      // affected rules emit findings without textValue.
+      let formulaByVrId = new Map<string, { Metadata?: { errorConditionFormula?: string } }>();
+      const vrIds = allVRs.map((vr) => vr.Id as string);
+      try {
+        const metadataResult = await fetchToolingMetadata<{
+          Id: string;
+          Metadata?: { errorConditionFormula?: string };
+        }>('ValidationRule', vrIds, (soql, signal) => this.ctx.restApi.toolingQuery(soql, signal), {
+          log: this.log,
+          signal: this.signal,
+        });
+        formulaByVrId = metadataResult.byId;
+        metrics.validationRulesWithFormulaBody = formulaByVrId.size;
+        if (metadataResult.failedIds.size > 0) {
+          this.log.warn(
+            { failed: metadataResult.failedIds.size, total: vrIds.length },
+            'validation_rule_metadata_partial_failure'
+          );
+        }
+      } catch (err) {
+        // Hard failure on every chunk — log and proceed with no
+        // formulas. The findings still emit so G1 conservation
+        // holds; downstream consumers see textValue: undefined.
+        this.log.warn({ error: (err as Error).message }, 'validation_rule_metadata_total_failure');
+        metrics.validationRulesWithFormulaBody = 0;
+      }
+
       for (const vr of allVRs) {
         const entity = vr._entity as string;
+        const id = vr.Id as string;
+        const md = formulaByVrId.get(id);
+        const formula = md?.Metadata?.errorConditionFormula ?? '';
+        // Extract field references from the formula via the same
+        // pattern used elsewhere in the codebase. The regex matches
+        // both bare field names (`SBQQ__NetAmount__c`) and dotted
+        // paths (`Account.Name`, `SBQQ__Quote__r.SBQQ__Owner__c`).
+        const fieldRefs = formula
+          ? [
+              ...new Set(
+                formula.match(/\b[A-Z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)*__[a-z]\b/g) ?? []
+              ),
+            ]
+          : [];
+        // EXT-CC6 — formulas are normally < 32 KB but defensive cap
+        // protects against pathological auto-generated rules.
+        const truncated = truncateWithFlag(formula, 32_768);
+
+        const evidenceRefs: AssessmentFindingInput['evidenceRefs'] = [
+          {
+            type: 'object-ref' as const,
+            value: entity,
+            label: vr.ValidationName as string,
+            referencedObjects: [entity],
+            referencedFields: fieldRefs.length > 0 ? fieldRefs : undefined,
+          },
+        ];
+        // Add a separate field-ref entry per parsed field name so
+        // BB-3 + downstream consumers can join validation rules to
+        // the field references that drive RCA migration risk.
+        for (const fieldName of fieldRefs.slice(0, 50)) {
+          evidenceRefs.push({
+            type: 'field-ref' as const,
+            value: `${entity}.${fieldName}`,
+            label: vr.ValidationName as string,
+          });
+        }
 
         findings.push(
           createFinding({
@@ -172,20 +244,20 @@ export class CustomizationsCollector extends BaseCollector {
             collector: 'customizations',
             artifactType: 'ValidationRule',
             artifactName: `${entity}.${vr.ValidationName}`,
-            artifactId: vr.Id as string,
+            artifactId: id,
             findingType: 'validation_rule',
             sourceType: 'tooling',
             riskLevel: 'low',
             migrationRelevance: vr.Active ? 'should-migrate' : 'optional',
-            notes: `${vr.Active ? 'Active' : 'Inactive'} validation on ${entity}. ${(vr.Description as string) ?? ''}`,
-            evidenceRefs: [
-              {
-                type: 'object-ref' as const,
-                value: entity,
-                label: vr.ValidationName as string,
-                referencedObjects: [entity],
-              },
-            ],
+            textValue:
+              this.ctx.config.codeExtractionEnabled && formula ? truncated.value : undefined,
+            notes:
+              `${vr.Active ? 'Active' : 'Inactive'} validation on ${entity}. ${(vr.Description as string) ?? ''}` +
+              (truncated.wasTruncated
+                ? ` (textValue truncated from ${truncated.originalBytes} bytes)`
+                : '') +
+              (formula ? '' : ' (formula body unavailable)'),
+            evidenceRefs,
           })
         );
       }

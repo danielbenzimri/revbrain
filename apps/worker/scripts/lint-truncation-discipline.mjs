@@ -50,6 +50,9 @@ const ALLOWLIST = new Set([
   'approvals.ts:207:notes label truncation — 200 chars, human-readable',
   'integrations.ts:164:notes label truncation — 200 chars, human-readable',
   'integrations.ts:297:notes label truncation — 200 chars, human-readable',
+  // EXT-1.4 — array slice limiting per-finding field-ref evidence
+  // entries (the formula text itself uses truncateWithFlag):
+  'customizations.ts:231:array slice — limit referenced field list',
 ]);
 
 const SLICE_PATTERN = /\.slice\(\s*0\s*,\s*\d+\s*\)/;
