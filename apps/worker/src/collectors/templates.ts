@@ -355,9 +355,11 @@ export class TemplatesCollector extends BaseCollector {
                 evidenceRefs: [
                   {
                     type: 'field-ref',
+                    // allow-slice: bound merge-field list for evidence payload
                     value: JSON.stringify(mergeFields.slice(0, 50)),
                     label: `Merge fields in: ${name}`,
                     referencedObjects,
+                    // allow-slice: bound referenced-field list for evidence
                     referencedFields: referencedFields.slice(0, 20),
                   },
                 ],

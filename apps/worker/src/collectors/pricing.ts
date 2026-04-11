@@ -384,6 +384,7 @@ export class PricingCollector extends BaseCollector {
                   value: snippet.value,
                   label: `QCP: ${s.Name}`,
                   referencedObjects: ['SBQQ__Quote__c', 'SBQQ__QuoteLine__c'],
+                  // allow-slice: bound referenced-field list per QCP
                   referencedFields: [...new Set([...sbqqRefs, ...customFieldRefs])].slice(0, 50),
                   referencedMetadata: mdtRefs,
                   ...(snippet.wasTruncated

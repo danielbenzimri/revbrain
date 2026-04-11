@@ -240,7 +240,7 @@ export class CatalogCollector extends BaseCollector {
           complexityLevel: 'low',
           countValue: blankFamilyProducts.length,
           notes: `${blankFamilyProducts.length} products have no Product Family assigned: ${blankFamilyProducts
-            .slice(0, 5)
+            .slice(0, 5) // allow-slice: top-N name sample for notes
             .map((p) => p.Name as string)
             .join(
               ', '
@@ -327,7 +327,7 @@ export class CatalogCollector extends BaseCollector {
           }
           const sorted = Object.entries(valueCounts)
             .sort((a, b) => b[1] - a[1])
-            .slice(0, 5);
+            .slice(0, 5); // allow-slice: top-5 values for notes summary
           if (sorted.length > 0) {
             topValues = ` Top values: ${sorted.map(([v, c]) => `${v} (${c})`).join(', ')}`;
           }

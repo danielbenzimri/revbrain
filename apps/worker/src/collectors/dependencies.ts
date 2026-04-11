@@ -168,6 +168,7 @@ export class DependenciesCollector extends BaseCollector {
                     value: snippet.value,
                     label: `Apex: ${name}`,
                     referencedObjects: CPQ_OBJECTS.filter((o) => body.includes(o)),
+                    // allow-slice: bound referenced-field list for evidence
                     referencedFields: (body.match(/SBQQ__\w+__c/g) || []).slice(0, 20),
                     ...(snippet.wasTruncated
                       ? { truncated: true, originalBytes: snippet.originalBytes }
@@ -542,6 +543,7 @@ export class DependenciesCollector extends BaseCollector {
             value: 'bodyFetchStatus',
             label: bodyFetchStatus,
           },
+          // allow-slice: EXT-1.6 bound flow field-ref evidence
           ...fieldRefs.slice(0, 50).map((field) => ({
             type: 'field-ref' as const,
             value: field,

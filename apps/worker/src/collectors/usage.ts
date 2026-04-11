@@ -234,6 +234,7 @@ export class UsageCollector extends BaseCollector {
         productCounts[pid] = (productCounts[pid] || 0) + 1;
       }
       const sortedProducts = Object.entries(productCounts).sort((a, b) => b[1] - a[1]);
+      // allow-slice: top-5 products for concentration metric
       const top5Volume = sortedProducts.slice(0, 5).reduce((sum, [, count]) => sum + count, 0);
       metrics.top5ProductConcentration =
         totalQuoteLines > 0 ? Math.round((top5Volume / totalQuoteLines) * 100) : 0;
@@ -275,6 +276,7 @@ export class UsageCollector extends BaseCollector {
       if (creatorIds.length > 0) {
         try {
           const userResult = await this.ctx.restApi.query<Record<string, unknown>>(
+            // allow-slice: SOQL IN-clause cap (200 ids per query)
             `SELECT Id, Name, Profile.Name, UserRole.Name, IsActive FROM User WHERE Id IN ('${creatorIds.slice(0, 200).join("','")}')`,
             this.signal
           );
@@ -504,7 +506,7 @@ export class UsageCollector extends BaseCollector {
       const top10 = [...productQuoteSets.entries()]
         .map(([id, quotes]) => ({ id, quotedCount: quotes.size }))
         .sort((a, b) => b.quotedCount - a.quotedCount)
-        .slice(0, 10);
+        .slice(0, 10); // allow-slice: top-10 most-quoted products
 
       // Enrich with product names
       if (top10.length > 0) {

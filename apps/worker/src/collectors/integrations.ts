@@ -161,6 +161,7 @@ export class IntegrationsCollector extends BaseCollector {
             migrationRelevance: 'should-migrate',
             rcaTargetConcept: 'Connected App',
             rcaMappingComplexity: 'direct',
+            // allow-slice: human-readable notes, 200 chars max
             notes: `Connected App: ${app.Name}${app.Description ? ` — ${(app.Description as string).slice(0, 200)}` : ''}`,
           })
         );
@@ -294,6 +295,7 @@ export class IntegrationsCollector extends BaseCollector {
             migrationRelevance: 'should-migrate',
             rcaTargetConcept: 'Platform Event',
             rcaMappingComplexity: 'direct',
+            // allow-slice: human-readable notes, 200 chars max
             notes: `Platform Event: ${evt.QualifiedApiName} (${evt.Label})${evt.Description ? ` — ${(evt.Description as string).slice(0, 200)}` : ''}`,
           })
         );

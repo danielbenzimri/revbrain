@@ -262,6 +262,7 @@ export class CustomizationsCollector extends BaseCollector {
                       value: 'masterLabel',
                       label: (rec.MasterLabel as string) ?? recDevName,
                     },
+                    // allow-slice: EXT-1.3 bound value pairs per CMT record
                     ...valuePairs.slice(0, 30).map((p) => ({
                       type: 'field-ref' as const,
                       value: `${apiName}.${p.field}`,
@@ -413,6 +414,7 @@ export class CustomizationsCollector extends BaseCollector {
         // Add a separate field-ref entry per parsed field name so
         // BB-3 + downstream consumers can join validation rules to
         // the field references that drive RCA migration risk.
+        // allow-slice: EXT-1.4 bound referenced-field list per VR
         for (const fieldName of fieldRefs.slice(0, 50)) {
           evidenceRefs.push({
             type: 'field-ref' as const,

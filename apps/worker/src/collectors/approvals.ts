@@ -204,6 +204,7 @@ export class ApprovalsCollector extends BaseCollector {
             migrationRelevance: proc.State === 'Active' ? 'must-migrate' : 'optional',
             rcaTargetConcept: 'Flow-based approval orchestration',
             rcaMappingComplexity: 'redesign',
+            // allow-slice: human-readable notes, 200 chars max
             notes: `Standard Approval Process on ${proc.TableEnumOrId}: ${proc.Name}${proc.State === 'Active' ? ' (ACTIVE)' : ' (INACTIVE)'}${proc.Description ? ` — ${(proc.Description as string).slice(0, 200)}` : ''}`,
           })
         );

@@ -7,19 +7,19 @@
  * body that confused downstream consumers.
  *
  * **What this catches:** any `.slice(0, N)` where N is a literal
- * integer AND the call site is plausibly a body truncation
- * (heuristic: not preceded by an array name like `records.` or
- * `findings.`). The check is line-based, deliberately strict,
- * and any new violation must be opted-out with an inline comment
- * `// eslint-disable-next-line truncation-discipline` on the
- * matching line.
+ * integer, UNLESS the line carries an inline sentinel comment
+ * `allow-slice:` with a short reason. The sentinel pattern
+ * replaces the pre-2026-04-11 line-number allowlist which rot
+ * constantly as prettier/eslint-fix reformatted the collectors.
  *
- * **Allowlist:** the file maintains a small static allowlist for
- * legitimate truncation sites that have been reviewed and use the
- * `truncateWithFlag` helper internally OR are short-string label
- * truncations (notes, descriptions) where silent truncation is OK
- * because the value is human-readable, not load-bearing for the
- * BB-3 IR.
+ * **How to opt out a legitimate site:**
+ *
+ *   const topN = records.slice(0, 5); // allow-slice: top-N array bound
+ *
+ * The reason is free-text after `allow-slice:`. Any non-empty
+ * reason passes the lint; empty reasons fail. This keeps the
+ * opt-out visible at the call site instead of in a separate
+ * registry.
  *
  * Run via `node apps/worker/scripts/lint-truncation-discipline.mjs`
  * — the worker `lint` script invokes it as part of the chain.
@@ -29,39 +29,8 @@ import { join, relative } from 'node:path';
 
 const COLLECTORS_DIR = new URL('../src/collectors/', import.meta.url).pathname;
 
-// Sites where `.slice(0, N)` is on an ARRAY (not a string body)
-// or is a short label/notes truncation that has been reviewed.
-// Format: `relativePath:lineNumber:reason`. Adding to this list
-// means a human reviewed the call and decided silent truncation
-// is acceptable for that specific site.
-const ALLOWLIST = new Set([
-  // Array slices (not body truncation):
-  'catalog.ts:243:array slice — top-N records',
-  'catalog.ts:330:array slice — top-N records',
-  'usage.ts:237:array slice — top-N products',
-  'usage.ts:278:array slice — id batch for IN clause',
-  'usage.ts:507:array slice — top-N',
-  'templates.ts:358:array slice — limit JSON output of merge fields',
-  'templates.ts:361:array slice — limit referenced field list',
-  'pricing.ts:387:array slice — limit referenced field list',
-  'dependencies.ts:171:array slice — limit referenced field regex matches',
-  // Short label/description truncations (200 chars, human-readable
-  // notes that are NOT load-bearing for BB-3 identity):
-  'approvals.ts:207:notes label truncation — 200 chars, human-readable',
-  'integrations.ts:164:notes label truncation — 200 chars, human-readable',
-  'integrations.ts:297:notes label truncation — 200 chars, human-readable',
-  // EXT-1.4 — array slice limiting per-finding field-ref evidence
-  // entries (the formula text itself uses truncateWithFlag):
-  'customizations.ts:418:array slice — EXT-1.4 limit referenced field list',
-  // EXT-1.3 — array slice bounding per-CMT-record evidence entries
-  // (the records themselves are LIMIT-capped at the SOQL level):
-  'customizations.ts:267:array slice — EXT-1.3 limit value pairs in evidence',
-  // EXT-1.6 wave-2 — array slice bounding per-flow field-ref
-  // evidence entries (the flow body itself uses truncateWithFlag):
-  'dependencies.ts:545:array slice — EXT-1.6 limit flow field references',
-]);
-
 const SLICE_PATTERN = /\.slice\(\s*0\s*,\s*\d+\s*\)/;
+const ALLOW_MARKER = /\/\/\s*allow-slice:\s*\S+/;
 
 function* walk(dir) {
   for (const entry of readdirSync(dir)) {
@@ -80,13 +49,14 @@ for (const file of walk(COLLECTORS_DIR)) {
   const lines = readFileSync(file, 'utf8').split('\n');
   lines.forEach((line, idx) => {
     if (!SLICE_PATTERN.test(line)) return;
-    const lineNo = idx + 1;
-    const key = `${rel}:${lineNo}:`;
-    // Allowlist check — match by file:line prefix (reason may
-    // change without breaking the lookup).
-    const allowed = [...ALLOWLIST].some((entry) => entry.startsWith(key));
-    if (allowed) return;
-    violations.push({ file: rel, line: lineNo, snippet: line.trim() });
+    // The pattern may match on a single line (literal slice) OR
+    // across multiple lines (e.g. method chain). The sentinel can
+    // appear on the same line OR on the line immediately above,
+    // which supports both inline and "comment-above" opt-outs.
+    if (ALLOW_MARKER.test(line)) return;
+    const prev = idx > 0 ? lines[idx - 1] : '';
+    if (ALLOW_MARKER.test(prev)) return;
+    violations.push({ file: rel, line: idx + 1, snippet: line.trim() });
   });
 }
 
@@ -98,7 +68,12 @@ if (violations.length > 0) {
     console.error(`  ${v.file}:${v.line}    ${v.snippet}`);
   }
   console.error(
-    '\nFix by either (a) using `truncateWithFlag` from `apps/worker/src/lib/truncate.ts` and propagating the wasTruncated flag onto the produced evidenceRef, or (b) adding the site to the ALLOWLIST in this script with a one-line reason.\n'
+    '\nFix by either:\n' +
+      '  (a) use `truncateWithFlag` from `apps/worker/src/lib/truncate.ts` and propagate\n' +
+      '      the wasTruncated flag onto the produced evidenceRef, or\n' +
+      '  (b) add an inline sentinel `// allow-slice: <reason>` on the matching line\n' +
+      '      (or the line immediately above) documenting why it is safe. The reason\n' +
+      '      text is free-form but must be non-empty.\n'
   );
   process.exit(1);
 }
