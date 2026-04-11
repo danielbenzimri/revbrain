@@ -33,6 +33,7 @@ import { Tier2InventoriesCollector } from './collectors/tier2-inventories.ts';
 import { buildRelationships } from './normalize/relationships.ts';
 import { computeDerivedMetrics, computeAttachmentRates } from './normalize/metrics.ts';
 import { joinPluginActivation } from './normalize/plugin-activation.ts';
+import { introspectFls, type FieldPermissionsRow } from './salesforce/fls-introspect.ts';
 import { validateExtraction } from './normalize/validation.ts';
 import { buildContextBlueprint } from './normalize/context-blueprint.ts';
 import { buildSummaries } from './summaries/builder.ts';
@@ -105,6 +106,51 @@ export async function runPipeline(ctx: CollectorContext): Promise<PipelineResult
   const results = new Map<string, CollectorResult>();
   const errors: string[] = [];
   const limit = pLimit(MAX_CONCURRENCY);
+
+  // ── Phase 0: FLS pre-flight (EXT-CC1) ────────────────────────────
+  // Per the v1.1 fix in gaps-doc §7 CC-1: View All Data does NOT
+  // override Field-Level Security. An integration user with VAD
+  // but missing FLS read on a CPQ field will silently fail to
+  // extract that field — the field is just absent with no error.
+  // This pre-flight catches the gap up front.
+  //
+  // Failure mode: graceful — we log gaps + emit fls metrics on
+  // the run, but DO NOT abort yet. The hard-abort branch (when
+  // an identifier like Id/Name is unreadable) is gated behind a
+  // config flag because we cannot validate it against staging
+  // until a follow-up integration test lands.
+  try {
+    const fls = await introspectFls(async (objects) => {
+      const objectList = objects.map((o) => `'${o}'`).join(',');
+      // Standard FieldPermissions query — limited to the
+      // SObjectTypes the worker actually projects in its SOQL.
+      const soql =
+        `SELECT Field, PermissionsRead FROM FieldPermissions ` +
+        `WHERE SObjectType IN (${objectList})`;
+      const result = await ctx.restApi.query<FieldPermissionsRow>(soql, undefined);
+      return result.records;
+    });
+    log.info(
+      {
+        required: fls.requiredCount,
+        gaps: fls.gaps.length,
+        hardFailures: fls.hasHardFailures,
+      },
+      'fls_introspection_complete'
+    );
+    if (fls.gaps.length > 0) {
+      log.warn(
+        { sample: fls.gaps.slice(0, 10).map((g) => `${g.object}.${g.field}`) },
+        'fls_gaps_detected'
+      );
+    }
+  } catch (err) {
+    // Pre-flight failure should never block extraction — log
+    // and continue. The collectors themselves will report any
+    // privilege issues per-collector.
+    log.warn({ error: (err as Error).message }, 'fls_introspection_failed_continuing_with_warning');
+    errors.push(`FLS pre-flight warning: ${(err as Error).message}`);
+  }
 
   // ── Phase 1: Discovery (sequential) ──────────────────────────────
   log.info('phase_1_start: discovery');

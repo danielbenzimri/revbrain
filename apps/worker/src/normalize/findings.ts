@@ -11,6 +11,7 @@ import {
   type AssessmentFindingInput,
   type AssessmentDomain,
   type EvidenceRef,
+  type Stability,
   generateFindingKey,
 } from '@revbrain/contract';
 
@@ -39,6 +40,12 @@ interface CreateFindingParams {
   usageLevel?: 'high' | 'medium' | 'low' | 'dormant';
   evidenceRefs?: EvidenceRef[];
   notes?: string;
+  // EXT-CC5 — stability tag. Optional; defaults to 'metadata' via
+  // the schema's nullishOptional convention. Set 'runtime' for
+  // findings whose payload is observed at extraction time and
+  // may drift between runs (CronTrigger.NextFireTime, usage
+  // counts, etc.).
+  stability?: Stability;
 }
 
 /**
@@ -76,6 +83,11 @@ export function createFinding(params: CreateFindingParams): AssessmentFindingInp
     rcaMappingComplexity: params.rcaMappingComplexity,
     evidenceRefs: params.evidenceRefs ?? [],
     notes: params.notes,
+    // EXT-CC5 — propagate stability through. The wave-3 review
+    // caught that the only call site (tier2-inventories
+    // CronTrigger) was setting stability via a type cast, which
+    // suppressed the TS error but the value was silently dropped.
+    stability: params.stability,
     schemaVersion: '1.0',
   };
 }

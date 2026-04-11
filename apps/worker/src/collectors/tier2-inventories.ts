@@ -231,7 +231,7 @@ export class Tier2InventoriesCollector extends BaseCollector {
             // drift. EXT-CC5 stability convention.
             stability: 'runtime',
             notes: `Scheduled Apex: ${ct.CronExpression as string} (next: ${ct.NextFireTime as string}, triggered ${ct.TimesTriggered as number}x)`,
-          } as Parameters<typeof createFinding>[0])
+          })
         );
       }
       return 'ok';
