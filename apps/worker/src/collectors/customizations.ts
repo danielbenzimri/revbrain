@@ -121,21 +121,168 @@ export class CustomizationsCollector extends BaseCollector {
       );
       metrics.customMetadataTypesCount = mdtResult.records.length;
 
+      // EXT-1.3 — Per-type record extraction. The pre-fix collector
+      // emitted only the type names, leaving the actual records
+      // (which often hold rules-engine config — pricing tables,
+      // approval matrices, etc.) silently absent. The closure
+      // strategy from the v1.1 audit:
+      //   1. Describe each MDT type to discover its field list.
+      //   2. Build an explicit `SELECT Id, DeveloperName,
+      //      MasterLabel, <field1>, <field2>, ... FROM Type__mdt`.
+      //      Explicit field lists have NO 200-row cap (only the
+      //      `FIELDS(STANDARD)` form does).
+      //   3. Cap per-type at 5,000 records (configurable).
+      //   4. Heuristically classify rules-engine candidates by
+      //      record count + presence of `Active__c|Sequence__c|
+      //      Condition__c`-style fields.
+      const MDT_RECORD_CAP = 5000;
+      let cmtRecordCount = 0;
+      let rulesEngineCandidateCount = 0;
+
       for (const mdt of mdtResult.records) {
+        const devName = mdt.DeveloperName as string;
+        const apiName = `${devName}__mdt`;
+
+        // Per-type type-level finding (existing behavior, with
+        // counts added once we know them).
+        let perTypeRecordCount = 0;
+        let isRulesEngineCandidate = false;
+        let truncationWarning: string | null = null;
+
+        try {
+          // Step 1: Describe the type to get the field list.
+          let describe: DescribeResult | undefined;
+          try {
+            describe = this.ctx.describeCache.get(apiName) as DescribeResult | undefined;
+            if (!describe) {
+              describe = await this.ctx.restApi.describe(apiName, this.signal);
+              this.ctx.describeCache.set(apiName, describe);
+            }
+          } catch (descErr) {
+            // Describe failed — emit the type-level finding only.
+            this.log.warn(
+              { type: apiName, error: (descErr as Error).message },
+              'mdt_describe_failed'
+            );
+          }
+
+          if (describe) {
+            // Step 2: Build the field list. Always include the
+            // identity fields; for the rest skip system + audit
+            // fields that don't carry config.
+            const SKIP = new Set([
+              'IsDeleted',
+              'SystemModstamp',
+              'CreatedById',
+              'CreatedDate',
+              'LastModifiedById',
+              'LastModifiedDate',
+              'NamespacePrefix',
+              'QualifiedApiName',
+            ]);
+            const userFields = describe.fields
+              .map((f) => f.name)
+              .filter(
+                (n) => !SKIP.has(n) && n !== 'Id' && n !== 'DeveloperName' && n !== 'MasterLabel'
+              );
+            const projection = ['Id', 'DeveloperName', 'MasterLabel', ...userFields];
+            const soql = `SELECT ${projection.join(', ')} FROM ${apiName} LIMIT ${MDT_RECORD_CAP + 1}`;
+            const records = await this.ctx.restApi.queryAll<Record<string, unknown>>(
+              soql,
+              this.signal
+            );
+            perTypeRecordCount = records.length;
+            // EXT-1.3 — record-cap detection
+            const trimmed = records.slice(0, MDT_RECORD_CAP);
+            if (records.length > MDT_RECORD_CAP) {
+              truncationWarning = `more than ${MDT_RECORD_CAP} records (showing first ${MDT_RECORD_CAP})`;
+            }
+
+            // Step 3: rules-engine heuristic. >10 records AND
+            // presence of any of these field names → classify as
+            // a DecisionTable candidate (worth a closer look in
+            // the migration plan).
+            isRulesEngineCandidate =
+              records.length > 10 &&
+              userFields.some((f) =>
+                /^(Active|Sequence|Condition|Priority|Order|Rule)__c$/.test(f)
+              );
+            if (isRulesEngineCandidate) rulesEngineCandidateCount++;
+
+            // Step 4: emit one finding per CMT RECORD. Use the
+            // record's Id as artifactId so the §8.3 distinctness
+            // invariant holds (each record gets its own node).
+            for (const rec of trimmed) {
+              cmtRecordCount++;
+              const recId = rec.Id as string;
+              const recDevName = (rec.DeveloperName as string) ?? '<unnamed>';
+              // Serialize field values into evidence for downstream
+              // consumers. Skip Id/DevName/MasterLabel since they
+              // appear at the top level.
+              const valuePairs = userFields
+                .map((f) => ({ field: f, value: rec[f] }))
+                .filter((p) => p.value !== null && p.value !== undefined && p.value !== '');
+              findings.push(
+                createFinding({
+                  domain: 'customization',
+                  collector: 'customizations',
+                  artifactType: 'CustomMetadataRecord',
+                  artifactName: `${devName}.${recDevName}`,
+                  artifactId: recId,
+                  findingType: 'custom_metadata_record',
+                  sourceType: 'tooling',
+                  complexityLevel: 'low',
+                  migrationRelevance: 'should-migrate',
+                  notes: `${devName}__mdt record: ${(rec.MasterLabel as string) ?? recDevName}`,
+                  evidenceRefs: [
+                    {
+                      type: 'object-ref' as const,
+                      value: apiName,
+                      label: recDevName,
+                    },
+                    ...valuePairs.slice(0, 30).map((p) => ({
+                      type: 'field-ref' as const,
+                      value: `${apiName}.${p.field}`,
+                      label: String(p.value),
+                    })),
+                  ],
+                })
+              );
+            }
+          }
+        } catch (err) {
+          this.log.warn(
+            { type: apiName, error: (err as Error).message },
+            'mdt_record_extraction_failed'
+          );
+        }
+
+        // Type-level finding (one per CMT type — preserved for
+        // back-compat AND to carry the rules-engine classification).
         findings.push(
           createFinding({
             domain: 'customization',
             collector: 'customizations',
             artifactType: 'CustomMetadataType',
-            artifactName: mdt.DeveloperName as string,
+            artifactName: devName,
             sourceType: 'tooling',
             findingType: 'custom_metadata',
-            complexityLevel: 'medium',
+            complexityLevel: isRulesEngineCandidate ? 'high' : 'medium',
             migrationRelevance: 'should-migrate',
-            notes: `Custom Metadata Type: ${mdt.DeveloperName}__mdt`,
+            rcaTargetConcept: isRulesEngineCandidate ? 'DecisionTable candidate' : undefined,
+            countValue: perTypeRecordCount,
+            notes:
+              `Custom Metadata Type: ${apiName} (${perTypeRecordCount} records)` +
+              (isRulesEngineCandidate
+                ? ' — possible DecisionTable candidate (Active/Sequence/Condition fields detected)'
+                : '') +
+              (truncationWarning ? ` — ${truncationWarning}` : ''),
           })
         );
       }
+
+      metrics.customMetadataRecordCount = cmtRecordCount;
+      metrics.cmtRulesEngineCandidateCount = rulesEngineCandidateCount;
     } catch (err) {
       this.log.warn({ error: (err as Error).message }, 'mdt_extraction_failed');
     }

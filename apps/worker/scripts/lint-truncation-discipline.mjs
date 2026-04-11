@@ -52,7 +52,10 @@ const ALLOWLIST = new Set([
   'integrations.ts:297:notes label truncation — 200 chars, human-readable',
   // EXT-1.4 — array slice limiting per-finding field-ref evidence
   // entries (the formula text itself uses truncateWithFlag):
-  'customizations.ts:231:array slice — limit referenced field list',
+  'customizations.ts:380:array slice — EXT-1.4 limit referenced field list',
+  // EXT-1.3 — array slice bounding per-CMT-record evidence entries
+  // (the records themselves are LIMIT-capped at the SOQL level):
+  'customizations.ts:243:array slice — EXT-1.3 limit value pairs in evidence',
 ]);
 
 const SLICE_PATTERN = /\.slice\(\s*0\s*,\s*\d+\s*\)/;

@@ -41,6 +41,7 @@ import { normalizeConfigurationAttribute } from './catalog/configuration-attribu
 import { normalizeFormulaField } from './formula/formula-field.ts';
 import { normalizeValidationRule } from './formula/validation-rule.ts';
 import { normalizeCustomMetadataType } from './customization/custom-metadata.ts';
+import { normalizeCustomMetadataRecord } from './customization/custom-metadata-record.ts';
 import { normalizeRecordType } from './customization/record-type.ts';
 
 // Automation
@@ -99,6 +100,7 @@ export function registerAllNormalizers(): void {
   registerNormalizer('FormulaField', normalizeFormulaField);
   registerNormalizer('ValidationRule', normalizeValidationRule);
   registerNormalizer('CustomMetadataType', normalizeCustomMetadataType);
+  registerNormalizer('CustomMetadataRecord', normalizeCustomMetadataRecord);
   registerNormalizer('RecordType', normalizeRecordType);
 
   // Automation
