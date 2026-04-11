@@ -2,9 +2,42 @@
 
 > **Companion to:** [CPQ-EXTRACTION-COVERAGE-GAPS.md](./CPQ-EXTRACTION-COVERAGE-GAPS.md) (**v1.1**)
 > **Purpose:** The executable shard of the gaps doc. Every gap becomes one or more task cards sized for a single AI-agent invocation. Cards mirror the format used by [MIGRATION-PLANNER-BB3-TASKS.md](./MIGRATION-PLANNER-BB3-TASKS.md): self-contained, pinned to specific gap-doc sections, with explicit acceptance criteria and test plans.
-> **Tasks doc version:** 1.0
-> **Last updated:** 2026-04-11
+> **Tasks doc version:** 1.1 — closure status added
+> **Last updated:** 2026-04-11 (post-execution close-out)
 > **Scope:** Closes the extraction-side gaps in `apps/worker/src/collectors/`. Does NOT change the assessment PDF surface (`apps/worker/src/report/`) — that's tracked separately. Does NOT change the BB-3 normalizer (`packages/bb3-normalizer/`) — those gaps closed in Wave 1 §8.3.
+
+---
+
+## ✅ STATUS: ALL 22 CARDS SHIPPED (2026-04-11)
+
+All five phases (PHE0 → PHE4) shipped on `feat/extraction-coverage` between commits `6ac52af` and `e150701`. Total: **18 implementation commits + 3 self-review fixup commits**. Three CTO-level self-reviews ran at 5-commit boundaries; each caught issues that were fixed before sync. The branch synced to staging + main twice during execution and the final sync (after wave-3 fixups) is the close-out.
+
+**Final test counts (across all 3 packages):**
+
+- @revbrain/worker: **429 tests** (was 348 pre-branch — **+81**)
+- @revbrain/bb3-normalizer: **562 tests** (was 544 pre-branch — **+18**)
+- @revbrain/migration-ir-contract: **145 tests** (was 131 pre-branch — **+14**)
+- **Total: 1136 tests, all green**
+
+**Cumulative impact across the branch:**
+
+- 7 new collectors / library modules: `truncate.ts`, `apex-classify.ts`, `plugin-activation.ts`, `tooling-metadata-fetch.ts`, `fls-introspect.ts`, `components.ts`, `tier2-inventories.ts`
+- 1 new BB-3 normalizer (`custom-metadata-record.ts`) + 1 new IR node type (`CustomMetadataRecord`)
+- 1 new contract field (`stability`) + 1 new ApexClass IR field (`implementedInterfaces: string[]`)
+- 1 new shared module in the contract package (`@revbrain/migration-ir-contract/detection/cpq-plugin-interface.ts`) — single source of truth for the SBQQ._ / sbaa._ implements regex shared between worker and BB-3
+- 6 new artifact types added to `NOT_MODELED_V1_TYPES` (12 → 18)
+- 1 new lint guard (`lint-truncation-discipline.mjs`) catching new bare `.slice(0, N)` body truncations
+- All 6 OQ-x open questions resolved (defaults applied per the §9 list)
+
+### What did NOT ship (deferred to follow-up branches)
+
+These items are intentionally deferred and tracked for the next branch:
+
+- **EXT-CC1 hard-fail branch** — pre-flight runs and surfaces gaps, but the hard-abort on missing identifier reads is gated until staging-credentials integration testing validates the FieldPermissions SOQL against a real org.
+- **Static Resource body fetch (EXT-1.7c)** — inventory only. Body fetch needs the SF REST client to support raw-bytes responses (currently JSON-only). The `isBinaryByMagic` helper is exported and tested for the follow-up.
+- **`REQUIRED_FLS` auto-extraction from collector SOQL builders** — the static map is hand-maintained today.
+- **`NOT_MODELED_V1_TYPES` manifest migration** — at 18 entries the inline list is still readable; migrate before BB-3 v2 starts.
+- **PDF surface changes** — explicitly out of scope per "do not change PDF for now" directive. The PDF-relevant items are tracked in §6 below for the eventual PDF audit.
 
 ---
 
