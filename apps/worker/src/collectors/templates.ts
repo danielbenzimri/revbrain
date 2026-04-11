@@ -21,6 +21,7 @@ import type { AssessmentFindingInput } from '@revbrain/contract';
 import { createFinding } from '../normalize/findings.ts';
 import { buildSafeQuery } from '../salesforce/query-builder.ts';
 import type { DescribeResult } from '../salesforce/rest.ts';
+import { truncateWithFlag } from '../lib/truncate.ts';
 
 /** Merge field patterns from Spec §7.3 */
 const MERGE_FIELD_REGEX = /\{!(\w+)\.(\w+)\}/g;
@@ -286,6 +287,16 @@ export class TemplatesCollector extends BaseCollector {
           if (scripts.length > 0) {
             javaScriptBlockCount += scripts.length;
 
+            // EXT-CC6 + EXT-1.5 — replace the silent 2,000-char cap
+            // with a 100 KB byte-aware cap and propagate the
+            // truncation flag onto the produced evidenceRef so the
+            // BB-3 normalizer + downstream consumers can see partial
+            // bodies. The 100 KB cap matches gaps-doc OQ-2.
+            const joined = scripts.join('\n---\n');
+            const fullBody = truncateWithFlag(joined, 102_400);
+            const snippetSrc = scripts[0] ?? '';
+            const snippet = truncateWithFlag(snippetSrc, 500);
+
             findings.push(
               createFinding({
                 domain: 'templates',
@@ -301,15 +312,20 @@ export class TemplatesCollector extends BaseCollector {
                 rcaTargetConcept: 'Custom logic in document generation',
                 rcaMappingComplexity: 'redesign',
                 countValue: scripts.length,
-                textValue: this.ctx.config.codeExtractionEnabled
-                  ? scripts.join('\n---\n').slice(0, 2000)
-                  : undefined,
-                notes: `${scripts.length} JavaScript <script> block(s) found — HIGH RISK: must be rewritten for RCA`,
+                textValue: this.ctx.config.codeExtractionEnabled ? fullBody.value : undefined,
+                notes:
+                  `${scripts.length} JavaScript <script> block(s) found — HIGH RISK: must be rewritten for RCA` +
+                  (fullBody.wasTruncated
+                    ? ` (textValue truncated from ${fullBody.originalBytes} bytes to 102400)`
+                    : ''),
                 evidenceRefs: [
                   {
                     type: 'code-snippet',
-                    value: (scripts[0] ?? '').slice(0, 500),
+                    value: snippet.value,
                     label: `JS in template: ${name}`,
+                    ...(snippet.wasTruncated
+                      ? { truncated: true, originalBytes: snippet.originalBytes }
+                      : {}),
                   },
                 ],
               })

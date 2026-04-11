@@ -22,6 +22,7 @@ import type { AssessmentFindingInput, AssessmentRelationshipInput } from '@revbr
 import { createFinding } from '../normalize/findings.ts';
 import { buildSafeQuery } from '../salesforce/query-builder.ts';
 import type { DescribeResult } from '../salesforce/rest.ts';
+import { truncateWithFlag } from '../lib/truncate.ts';
 
 export class PricingCollector extends BaseCollector {
   constructor(ctx: CollectorContext) {
@@ -375,14 +376,20 @@ export class PricingCollector extends BaseCollector {
             countValue: lineCount,
             notes: `${lineCount} lines, ${sbqqRefs.length} SBQQ refs, ${customFieldRefs.length} custom field refs${hasCallouts ? ', HAS EXTERNAL CALLOUTS' : ''}`,
             evidenceRefs: [
-              {
-                type: 'code-snippet',
-                value: code.slice(0, 500),
-                label: `QCP: ${s.Name}`,
-                referencedObjects: ['SBQQ__Quote__c', 'SBQQ__QuoteLine__c'],
-                referencedFields: [...new Set([...sbqqRefs, ...customFieldRefs])].slice(0, 50),
-                referencedMetadata: mdtRefs,
-              },
+              ((): AssessmentFindingInput['evidenceRefs'][number] => {
+                const snippet = truncateWithFlag(code, 500);
+                return {
+                  type: 'code-snippet',
+                  value: snippet.value,
+                  label: `QCP: ${s.Name}`,
+                  referencedObjects: ['SBQQ__Quote__c', 'SBQQ__QuoteLine__c'],
+                  referencedFields: [...new Set([...sbqqRefs, ...customFieldRefs])].slice(0, 50),
+                  referencedMetadata: mdtRefs,
+                  ...(snippet.wasTruncated
+                    ? { truncated: true, originalBytes: snippet.originalBytes }
+                    : {}),
+                };
+              })(),
             ],
           })
         );

@@ -92,6 +92,16 @@ export const EvidenceRefSchema = z.object({
   referencedFields: z.array(z.string()).optional(),
   referencedMetadata: z.array(z.string()).optional(),
   referencedUrls: z.array(z.string()).optional(),
+  /**
+   * EXT-CC6 truncation discipline. When the `value` (or the
+   * sibling finding's `textValue`) was capped, set `truncated: true`
+   * and `originalBytes` to the pre-truncation byte length so
+   * downstream consumers can render "(truncated from N bytes)" badges
+   * and so the BB-3 normalizer can reason about partial bodies
+   * when computing identity hashes.
+   */
+  truncated: z.boolean().optional(),
+  originalBytes: z.number().int().optional(),
 });
 export type EvidenceRef = z.infer<typeof EvidenceRefSchema>;
 

@@ -17,6 +17,7 @@ import { BaseCollector, type CollectorContext, type CollectorResult } from './ba
 import type { CollectorDefinition } from './registry.ts';
 import type { AssessmentFindingInput } from '@revbrain/contract';
 import { createFinding } from '../normalize/findings.ts';
+import { truncateWithFlag } from '../lib/truncate.ts';
 
 const CPQ_OBJECTS = [
   'SBQQ__Quote__c',
@@ -114,13 +115,19 @@ export class DependenciesCollector extends BaseCollector {
               countValue: body.split('\n').length,
               notes: `CPQ-related Apex${hasTriggerControl ? ' — uses TriggerControl (pattern breaks in RCA)' : ''}${hasCallout ? ' — has callouts' : ''}. Concerns: ${concerns.join(', ') || 'general'}`,
               evidenceRefs: [
-                {
-                  type: 'code-snippet',
-                  value: body.slice(0, 500),
-                  label: `Apex: ${name}`,
-                  referencedObjects: CPQ_OBJECTS.filter((o) => body.includes(o)),
-                  referencedFields: (body.match(/SBQQ__\w+__c/g) || []).slice(0, 20),
-                },
+                ((): AssessmentFindingInput['evidenceRefs'][number] => {
+                  const snippet = truncateWithFlag(body, 500);
+                  return {
+                    type: 'code-snippet',
+                    value: snippet.value,
+                    label: `Apex: ${name}`,
+                    referencedObjects: CPQ_OBJECTS.filter((o) => body.includes(o)),
+                    referencedFields: (body.match(/SBQQ__\w+__c/g) || []).slice(0, 20),
+                    ...(snippet.wasTruncated
+                      ? { truncated: true, originalBytes: snippet.originalBytes }
+                      : {}),
+                  };
+                })(),
               ],
             })
           );
