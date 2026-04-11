@@ -54,6 +54,54 @@ export const NOT_MODELED_V1_TYPES = new Set<string>([
   // explicitly so G1 conservation holds; the per-namespace summary
   // is built in the report layer from the flat finding list.
   'ThirdPartyPackagedApexClass',
+  // Phase 4.1 CTO audit 2026-04-12 — PDF-analytics and sidecar
+  // metadata types. None of these are business-logic IR nodes:
+  // they are either aggregate rows the assembler reads directly
+  // (UsageOverview, DiscountDistribution, TopQuotedProduct, etc.)
+  // or observability findings (PluginStatus, CPQSettingValue,
+  // CPQReport). Routing them to not-modeled-v1 quarantine (rather
+  // than letting them fall through to UnknownArtifact) makes the
+  // coverage map explicit — every raw finding is accounted for.
+  'CPQReport',
+  'CPQSettingValue',
+  'CPQSetting',
+  'DataCount',
+  'DataQualityFlag',
+  'InstalledPackage',
+  'TopQuotedProduct',
+  'ProductFieldUtilization',
+  'PluginStatus',
+  'PermissionSet',
+  'ConversionSegment',
+  'ExternalIdField',
+  'UserAdoption',
+  'UserBehavior',
+  'DiscountDistribution',
+  'PriceOverrideAnalysis',
+  'TrendIndicator',
+  'UsageOverview',
+  'OrderLifecycleOverview',
+  'Document',
+  'ExperienceCloud',
+  'TaxCalculator',
+  'LocalizationSummary',
+  'LanguageTranslation',
+  'TemplateContent',
+  'TemplateSection',
+  'QuoteTerm',
+  'AdvancedApprovalRule',
+  'AdvancedApprovals',
+  // CustomAction — the approvals.ts collector emits this short
+  // name (distinct from SBQQ__CustomAction__c which has its own
+  // normalizer). These are ProcessDefinition-backed approval
+  // buttons, rendered directly in §6 Approvals; not an IR node.
+  'CustomAction',
+  // QuoteTemplate — the templates collector emits the short name;
+  // the normalizer is registered for SBQQ__QuoteTemplate__c (full
+  // API name). Both coexist on real staging. The short-name form
+  // is quarantined as a deliberate "not via this alias" signal;
+  // the full-form findings still produce IR nodes.
+  'QuoteTemplate',
 ]);
 
 /** Return true iff the finding's artifactType is on the not-modeled list. */

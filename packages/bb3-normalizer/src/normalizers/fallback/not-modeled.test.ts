@@ -20,8 +20,8 @@ function finding(artifactType: string): AssessmentFindingInput {
 describe('PH6.17 — not-modeled-v1 quarantine router', () => {
   const ctx = { catalog: prepareCatalog(), diagnostics: [] };
 
-  it('list has exactly 19 types (6 wave-1 + 5 EXT-1.7 + 1 EXT-1.2 + 6 EXT-2.x + 1 EXT-CC4)', () => {
-    expect(NOT_MODELED_V1_TYPES.size).toBe(19);
+  it('list has 50 types (6 wave-1 + 5 EXT-1.7 + 1 EXT-1.2 + 6 EXT-2.x + 1 EXT-CC4 + 31 CTO audit)', () => {
+    expect(NOT_MODELED_V1_TYPES.size).toBe(50);
   });
 
   it.each([
@@ -48,6 +48,38 @@ describe('PH6.17 — not-modeled-v1 quarantine router', () => {
     'CustomLabel',
     // EXT-CC4 — third-party packaged Apex (2026-04-11)
     'ThirdPartyPackagedApexClass',
+    // Phase 4.1 CTO audit 2026-04-12 — PDF-analytics + sidecar
+    'CPQReport',
+    'CPQSettingValue',
+    'CPQSetting',
+    'DataCount',
+    'DataQualityFlag',
+    'InstalledPackage',
+    'TopQuotedProduct',
+    'ProductFieldUtilization',
+    'PluginStatus',
+    'PermissionSet',
+    'ConversionSegment',
+    'ExternalIdField',
+    'UserAdoption',
+    'UserBehavior',
+    'DiscountDistribution',
+    'PriceOverrideAnalysis',
+    'TrendIndicator',
+    'UsageOverview',
+    'OrderLifecycleOverview',
+    'Document',
+    'ExperienceCloud',
+    'TaxCalculator',
+    'LocalizationSummary',
+    'LanguageTranslation',
+    'TemplateContent',
+    'TemplateSection',
+    'QuoteTerm',
+    'AdvancedApprovalRule',
+    'AdvancedApprovals',
+    'CustomAction',
+    'QuoteTemplate',
   ])('routes %s to quarantine with reason not-modeled-v1', (t) => {
     expect(isNotModeledV1(t)).toBe(true);
     const result = normalizeNotModeled(finding(t), ctx);

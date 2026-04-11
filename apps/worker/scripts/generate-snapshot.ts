@@ -4,7 +4,7 @@
  * Task T5a from CPQ-REPORT-V4-MITIGATION-PLAN.md
  */
 
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, statSync, writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { generateReport } from '../src/report/index.ts';
@@ -12,9 +12,17 @@ import { generateReport } from '../src/report/index.ts';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const outputDir = resolve(__dirname, '../output');
 
-const raw = JSON.parse(readFileSync(resolve(outputDir, 'assessment-results.json'), 'utf-8'));
+const inputPath = resolve(outputDir, 'assessment-results.json');
+const raw = JSON.parse(readFileSync(inputPath, 'utf-8'));
 const findings = raw.findings ?? [];
-const { reportData, validation } = generateReport(findings);
+// Phase 2 — anchor assessment timestamp to the file mtime (or raw
+// extractedAt when present) so the snapshot is deterministic across
+// renders of the same findings JSON. See assembler.ts contract.
+const assessmentTimestamp =
+  typeof raw.extractedAt === 'string' && raw.extractedAt.length > 0
+    ? raw.extractedAt
+    : statSync(inputPath).mtime.toISOString();
+const { reportData, validation } = generateReport(findings, { assessmentTimestamp });
 
 const c = reportData.counts;
 

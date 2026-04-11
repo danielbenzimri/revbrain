@@ -26,6 +26,17 @@
  *      Allowlist via `// allow-renderpdf: <reason>` sentinel if
  *      there is a legitimate new entry point.
  *
+ *  R4. No wall-clock calls (`Date.now`, `performance.now`,
+ *      `new Date(`) inside `apps/worker/src/report/**`. The PDF
+ *      path must be deterministic across renders of the same
+ *      extraction JSON. Phase 2 fix 2026-04-11: the assembler
+ *      previously plugged `new Date()` into `assessmentDate` /
+ *      `assessmentPeriod`, making the customer PDF non-stable.
+ *      Callers now pass `assessmentTimestamp` from the extraction
+ *      run metadata instead. Opt out with `// allow-wallclock:
+ *      <reason>` on the matching line or the line immediately
+ *      above (test files are excluded from the scan).
+ *
  * Run via `node apps/worker/scripts/lint-report-discipline.mjs`.
  * Invoked from the worker `lint` script.
  */
@@ -40,6 +51,8 @@ const MATH_RANDOM = /Math\.random\s*\(/;
 const FINDINGS_PUSH = /\bfindings\.push\s*\(/;
 const RENDER_PDF_IMPORT = /\bimport\b[^;]*\brenderPdf\b/;
 const ALLOW_RENDERPDF = /\/\/\s*allow-renderpdf:\s*\S+/;
+const WALL_CLOCK = /(Date\.now\s*\(|performance\.now\s*\(|new\s+Date\s*\()/;
+const ALLOW_WALLCLOCK = /\/\/\s*allow-wallclock:\s*\S+/;
 
 const RENDERPDF_ALLOWLIST = new Set(['generate-report.ts']);
 
@@ -56,12 +69,26 @@ function* walk(dir, filter) {
 
 const violations = [];
 
+function isCommentOrDocline(line) {
+  const trimmed = line.trim();
+  return (
+    trimmed.startsWith('//') ||
+    trimmed.startsWith('*') ||
+    trimmed.startsWith('/*')
+  );
+}
+
 function scan(file, rules) {
   const rel = relative(WORKER_ROOT, file);
   const lines = readFileSync(file, 'utf8').split('\n');
   lines.forEach((line, idx) => {
     for (const rule of rules) {
       if (!rule.pattern.test(line)) continue;
+      // Comments are documentation, not executable code. Comment
+      // lines that mention `Date.now` or `new Date(` in prose get
+      // a free pass so we don't need sentinels on every rationale
+      // paragraph.
+      if (isCommentOrDocline(line)) continue;
       if (rule.allow && rule.allow(line, idx, lines, file)) continue;
       violations.push({
         file: rel,
@@ -73,9 +100,20 @@ function scan(file, rules) {
   });
 }
 
-// R1 + report src path — Math.random forbidden everywhere under src/report/
+// R1 + R4 — forbidden patterns under src/report/ (Math.random, wall-clock)
 for (const file of walk(REPORT_SRC, (f) => f.endsWith('.ts') && !f.endsWith('.test.ts'))) {
-  scan(file, [{ id: 'R1', pattern: MATH_RANDOM }]);
+  scan(file, [
+    { id: 'R1', pattern: MATH_RANDOM },
+    {
+      id: 'R4',
+      pattern: WALL_CLOCK,
+      allow: (line, idx, lines) => {
+        if (ALLOW_WALLCLOCK.test(line)) return true;
+        const prev = idx > 0 ? lines[idx - 1] : '';
+        return ALLOW_WALLCLOCK.test(prev);
+      },
+    },
+  ]);
 }
 
 // R1 + report scripts + R2 + R3 — scan all *report*.ts scripts under apps/worker/scripts/
@@ -125,7 +163,13 @@ if (violations.length > 0) {
       '      enrich-and-generate.ts shim incident.)\n' +
       '  R3  renderPdf may only be imported from generate-report.ts.\n' +
       '      Opt out with `// allow-renderpdf: <reason>` if a new legitimate\n' +
-      '      entry point is genuinely required.\n'
+      '      entry point is genuinely required.\n' +
+      '  R4  No wall-clock (Date.now / performance.now / new Date(...)) in\n' +
+      '      apps/worker/src/report/**. The PDF must be deterministic across\n' +
+      '      renders of the same findings JSON. Callers pass\n' +
+      '      `assessmentTimestamp` from the extraction run metadata instead.\n' +
+      '      Opt out with `// allow-wallclock: <reason>` on the matching line\n' +
+      '      or the line immediately above.\n'
   );
   process.exit(1);
 }

@@ -10,7 +10,7 @@
  *   npx tsx apps/worker/scripts/generate-report.ts --input path/to/results.json
  */
 
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, statSync, writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { generateReport } from '../src/report/index.ts';
@@ -33,8 +33,28 @@ async function main() {
   const findings = raw.findings ?? [];
   console.log(`Findings: ${findings.length}`);
 
+  // Phase 2 (2026-04-11): assessor timestamp MUST come from the
+  // extraction run, NOT from `new Date()`. Prefer an explicit
+  // `extractedAt` on the raw JSON; fall back to the file mtime
+  // (stable across renders of the same file). Only as a last
+  // resort do we pass the sentinel `'unknown'`, which forces the
+  // report to show "not recorded" instead of plugging today.
+  let assessmentTimestamp: string;
+  if (typeof raw.extractedAt === 'string' && raw.extractedAt.length > 0) {
+    assessmentTimestamp = raw.extractedAt;
+  } else {
+    try {
+      assessmentTimestamp = statSync(inputPath).mtime.toISOString();
+    } catch {
+      assessmentTimestamp = 'unknown';
+    }
+  }
+  console.log(`Assessment timestamp: ${assessmentTimestamp}`);
+
   // Assemble + Validate + Render via full pipeline
-  const { reportData, validation, html } = generateReport(findings);
+  const { reportData, validation, html } = generateReport(findings, {
+    assessmentTimestamp,
+  });
   console.log(`Report sections assembled:`);
   console.log(`  Settings: ${reportData.packageSettings.coreSettings.length} values`);
   console.log(`  Plugins: ${reportData.packageSettings.plugins.length}`);

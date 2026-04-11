@@ -9,14 +9,15 @@
  *   const pdf = await renderPdf(html);
  */
 
-import { assembleReport } from './assembler.ts';
+import { assembleReport, type AssembleReportOptions } from './assembler.ts';
 import { renderReport } from './templates/index.ts';
 import { validateReportConsistency } from '../normalize/validation.ts';
 import type { ReportData } from './assembler.ts';
 import type { ReportValidationResult } from '../normalize/validation.ts';
+import type { AssessmentFindingInput } from '@revbrain/contract';
 
 export { assembleReport } from './assembler.ts';
-export type { ReportData } from './assembler.ts';
+export type { AssembleReportOptions, ReportData } from './assembler.ts';
 export { renderReport } from './templates/index.ts';
 export { renderPdf } from './renderer.ts';
 export { validateReportConsistency } from '../normalize/validation.ts';
@@ -27,13 +28,16 @@ export { validateReportConsistency } from '../normalize/validation.ts';
  * Validation errors are surfaced as visible banners in the report HTML.
  * Returns the assembled data, validation result, and final HTML.
  */
-export function generateReport(findings: Parameters<typeof assembleReport>[0]): {
+export function generateReport(
+  findings: AssessmentFindingInput[],
+  options: AssembleReportOptions
+): {
   reportData: ReportData;
   validation: ReportValidationResult;
   html: string;
 } {
   // Step 1: Assemble
-  const reportData = assembleReport(findings);
+  const reportData = assembleReport(findings, options);
 
   // Step 2: Validate (V17-V24 cross-section consistency)
   const validation = validateReportConsistency(reportData);

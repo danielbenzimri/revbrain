@@ -222,42 +222,13 @@ export class CatalogCollector extends BaseCollector {
         })
       );
 
-      // Phase 4.1 — for bundle-capable products (ConfigurationType =
-      // Required or Allowed), also emit a BundleStructure finding so
-      // BB-3 produces a BundleStructure node that Stage 4 parent-lookup
-      // can use as the parent target for BundleOption / BundleFeature
-      // children. Without this, the graph has the product and the
-      // children but no bundle container → zero parent-of edges to
-      // options and features. Keyed by the product's ProductCode so
-      // both the bundle-structure normalizer AND the bundle-option /
-      // bundle-feature normalizers resolve against the same
-      // `bundle:${productCode}` synthetic id.
-      const isBundleCapable =
-        p.SBQQ__ConfigurationType__c === 'Required' || p.SBQQ__ConfigurationType__c === 'Allowed';
-      if (isBundleCapable) {
-        const productCode = (p.ProductCode as string | null) ?? (p.Id as string);
-        findings.push(
-          createFinding({
-            domain: 'catalog',
-            collector: 'catalog',
-            artifactType: 'BundleStructure',
-            artifactName: p.Name as string,
-            artifactId: p.Id as string,
-            findingType: 'bundle_structure',
-            sourceType: 'object',
-            complexityLevel: 'medium',
-            migrationRelevance: 'must-migrate',
-            notes: (p.SBQQ__ConfigurationType__c as string | null) ?? undefined,
-            evidenceRefs: [
-              {
-                type: 'field-ref',
-                value: 'Product2.ProductCode',
-                label: productCode,
-              },
-            ],
-          })
-        );
-      }
+      // BundleStructure emission moved below (after options + features
+      // are queried). See the "Emit BundleStructure for every product
+      // that is a parent of at least one option/feature" block — this
+      // is a more robust definition than `ConfigurationType in
+      // {Required, Allowed}`, which misses bundles that have their
+      // children populated but don't set ConfigurationType (discovered
+      // 2026-04-12 via the orphan quarantine entries on real staging).
     }
 
     // Flag products with blank Family for data quality
@@ -653,6 +624,71 @@ export class CatalogCollector extends BaseCollector {
         warnings.push('Bundle nesting depth ≥ 3 — complex migration to RCA Product Compositions');
       }
     }
+
+    // ================================================================
+    // 5.3b: BundleStructure emission (Phase 4.1, refined 2026-04-12)
+    // ================================================================
+    // Emit one BundleStructure finding per product that is the parent
+    // of at least one ProductOption OR ProductFeature. This is a
+    // stronger definition than `SBQQ__ConfigurationType__c ∈
+    // {Required, Allowed}` — the previous rule missed 5 real bundles
+    // on staging where ConfigurationType was null but the product had
+    // options, producing 14 orphan quarantine entries.
+    //
+    // The parent-lookup rules wire BundleOption.parentBundle /
+    // BundleFeature.parentBundle under BundleStructure.options /
+    // BundleStructure.features respectively, keyed by the product's
+    // ProductCode. This emission must run AFTER options + features
+    // have been queried so we have the full set of parent IDs.
+    // Rebuild the set of parent product codes from the option and
+    // feature findings we just pushed. We use the object-ref evidence
+    // (which carries the parentProductCode) rather than re-querying
+    // Salesforce. This is cheap at CPQ scale (hundreds of children).
+    const bundleParentIds = new Set<string>();
+    for (const finding of findings) {
+      if (
+        finding.artifactType === 'SBQQ__ProductOption__c' ||
+        finding.artifactType === 'SBQQ__ProductFeature__c'
+      ) {
+        const parentCode = finding.evidenceRefs?.find((r) => r.type === 'object-ref')?.value as
+          | string
+          | undefined;
+        if (parentCode) bundleParentIds.add(parentCode);
+      }
+    }
+    // De-duplicate against products we've already emitted — the
+    // normalizer's identity recipe uses productCode, so two findings
+    // with the same productCode would merge into the same node. We
+    // emit at-most-one BundleStructure per product code.
+    const emittedBundleCodes = new Set<string>();
+    for (const p of products) {
+      const productCode = (p.ProductCode as string | null) ?? (p.Id as string);
+      if (!bundleParentIds.has(productCode)) continue;
+      if (emittedBundleCodes.has(productCode)) continue;
+      emittedBundleCodes.add(productCode);
+      findings.push(
+        createFinding({
+          domain: 'catalog',
+          collector: 'catalog',
+          artifactType: 'BundleStructure',
+          artifactName: p.Name as string,
+          artifactId: p.Id as string,
+          findingType: 'bundle_structure',
+          sourceType: 'object',
+          complexityLevel: 'medium',
+          migrationRelevance: 'must-migrate',
+          notes: (p.SBQQ__ConfigurationType__c as string | null) ?? undefined,
+          evidenceRefs: [
+            {
+              type: 'field-ref',
+              value: 'Product2.ProductCode',
+              label: productCode,
+            },
+          ],
+        })
+      );
+    }
+    metrics.bundleStructureCount = emittedBundleCodes.size;
 
     // ================================================================
     // 5.3a: Feature orphan detection (C-03a)

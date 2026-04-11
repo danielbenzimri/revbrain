@@ -97,7 +97,9 @@ describe('assembleReport', () => {
       }),
     ];
 
-    const report = assembleReport(findings);
+    const report = assembleReport(findings, {
+      assessmentTimestamp: '2026-04-11T00:00:00Z',
+    });
 
     // Metadata
     expect(report.metadata.orgId).toBe('00D123');

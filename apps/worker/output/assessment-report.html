@@ -145,17 +145,17 @@
     
     <div style="display: flex; align-items: center; margin: 4px 0;">
       <div style="width: 180px; font-weight: 600;">Overall Complexity</div>
-      <div style="color: #e67e22; font-weight: 600; width: 50px;">25/100</div>
+      <div style="color: #e67e22; font-weight: 600; width: 50px;">26/100</div>
       <div class="score-bar" style="flex: 1;">
-        <div class="score-fill" style="width: 25%;"></div>
+        <div class="score-fill" style="width: 26%;"></div>
       </div>
     </div>
     
     <div style="display: flex; align-items: center; margin: 4px 0;">
       <div style="width: 180px; font-weight: 600;">Configuration Depth</div>
-      <div style="color: #e67e22; font-weight: 600; width: 50px;">26/100</div>
+      <div style="color: #e67e22; font-weight: 600; width: 50px;">32/100</div>
       <div class="score-bar" style="flex: 1;">
-        <div class="score-fill" style="width: 26%;"></div>
+        <div class="score-fill" style="width: 32%;"></div>
       </div>
     </div>
     
@@ -193,7 +193,7 @@
     <p><em>Scores are directional indicators of relative complexity, not absolute measures.</em></p>
 
     <h3>2.3 Scoring Methodology</h3>
-    <table><thead><tr><th>Dimension</th><th>Weight</th><th>Score</th><th>Drivers</th></tr></thead><tbody><tr><td>Configuration Depth</td><td>25%</td><td>26/100</td><td>Product catalog size, bundle nesting, option constraints, config attributes<br/><em style="font-size:0.9em;color:#555;">Score reflects 179 total products (176 active), 19 bundle-capable products, and 475 product options. Moderate configuration surface area.</em></td></tr>
+    <table><thead><tr><th>Dimension</th><th>Weight</th><th>Score</th><th>Drivers</th></tr></thead><tbody><tr><td>Configuration Depth</td><td>25%</td><td>32/100</td><td>Product catalog size, bundle nesting, option constraints, config attributes<br/><em style="font-size:0.9em;color:#555;">Score reflects 179 total products (176 active), 19 bundle-capable products, and 310 product options. Moderate configuration surface area.</em></td></tr>
 <tr><td>Pricing Logic</td><td>25%</td><td>35/100</td><td>Price rules, discount schedules, custom scripts (QCP), contracted pricing<br/><em style="font-size:0.9em;color:#555;">Score reflects 28 price rules, 22 discount schedules, and 5 custom script(s) (QCP). QCP presence significantly elevates pricing complexity.</em></td></tr>
 <tr><td>Customization Level</td><td>20%</td><td>23/100</td><td>Apex class count, trigger count, flow complexity, code dependencies, custom fields, validation rules<br/><em style="font-size:0.9em;color:#555;">Score reflects 76 Apex classes, 5 triggers, and 13 flows referencing CPQ objects. Substantial custom code dependency detected.</em></td></tr>
 <tr><td>Data Volume &amp; Usage</td><td>15%</td><td>21/100</td><td>Quote volume, line count, user adoption, discount patterns<br/><em style="font-size:0.9em;color:#555;">Score reflects 23 quotes in the 90-day assessment window. Low volume — some metrics may not be statistically meaningful.</em></td></tr>
@@ -202,7 +202,7 @@
   
   <div class="page-break">
     <h2>3. CPQ at a Glance</h2>
-    <p><em>Data confidence summary: approximately 98% Confirmed, 1% Estimated, 1% Partial.</em></p>
+    <p><em>Data confidence summary: approximately 98% Confirmed, 1% Estimated, 0% Partial.</em></p>
     <div class="glance-grid">
       
         <div class="glance-section">
@@ -648,7 +648,7 @@
       </div>
       <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #f0f0f0;">
         <span>Avg Options/Bundle</span>
-        <span style="font-weight: 600;">26.4</span>
+        <span style="font-weight: 600;">17.2</span>
       </div>
     </div>
       
@@ -659,11 +659,11 @@
       
       <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #f0f0f0;">
         <span>Total Options</span>
-        <span style="font-weight: 600;">475</span>
+        <span style="font-weight: 600;">310</span>
       </div>
       <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #f0f0f0;">
         <span>Options w/Constraints</span>
-        <span style="font-weight: 600;">19%</span>
+        <span style="font-weight: 600;">28%</span>
       </div>
       <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #f0f0f0;">
         <span>Config Attributes</span>
@@ -733,7 +733,7 @@
         <td class="cb-cell"><span class="cb-check"></span></td>
         <td class="cb-cell"><span class="cb-check"></span></td>
         <td class="cb-cell"><span class="cb-check checked"></span></td>
-        <td class="cb-count">475</td>
+        <td class="cb-count">310</td>
         <td class="cb-notes">Total option records</td>
       </tr>
       <tr>
@@ -1164,24 +1164,29 @@
     <table><thead><tr><th>Hotspot</th><th>Severity</th><th>Analysis</th></tr></thead><tbody><tr><td><strong>Quote Pricing Engine</strong></td><td><span class="severity-critical">Critical</span></td><td>20 active Price Rules + 37 active Product Rules + 22 Discount Schedules + 5 Custom Scripts (QCP) form a multi-layered calculation chain.</td></tr>
 <tr><td><strong>DocuSign Document Chain</strong></td><td><span class="severity-high">High</span></td><td>Quote PDF generation → DocuSign envelope → signing → Order creation spans CPQ, document generation, and e-signature.</td></tr>
 <tr><td><strong>Custom Code Dependencies</strong></td><td><span class="severity-high">High</span></td><td>76 Apex classes + 5 triggers reference CPQ objects. Code review required for full assessment.</td></tr>
-<tr><td><strong>Bundle &amp; Option Configuration</strong></td><td><span class="severity-high">High</span></td><td>19 bundle-capable products (18 with active nested options) and 475 product options, enforced by Selection, Validation, Filter, and Alert product rules. Nested bundle configurations increase quote calculation complexity and UI surface area.</td></tr></tbody></table>
+<tr><td><strong>Bundle &amp; Option Configuration</strong></td><td><span class="severity-high">High</span></td><td>19 bundle-capable products (18 with active nested options) and 310 product options, enforced by Selection, Validation, Filter, and Alert product rules. Nested bundle configurations increase quote calculation complexity and UI surface area.</td></tr></tbody></table>
   </div>
   
   <div class="page-break">
     <h2>Appendix A: Configuration Object Inventory</h2>
 
     <h3>A.1 CPQ Configuration Objects</h3>
-    <table><thead><tr><th>ID</th><th>Object(s)</th><th>API Name</th><th>Count</th><th>Complexity</th><th>Phase</th><th>Conf.</th></tr></thead><tbody><tr><td>1</td><td>SBQQ__Localization__c</td><td><code>SBQQ__Localization__c</code></td><td>269</td><td><span class="severity-medium">medium</span></td><td>—</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>2</td><td>Product2 (total records)</td><td><code>Product2</code></td><td>179</td><td><span class="severity-medium">medium</span></td><td>Phase 1</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>3</td><td>SBQQ__CustomScript__c</td><td><code>SBQQ__CustomScript__c</code></td><td>108</td><td><span class="severity-medium">medium</span></td><td>Phase 2</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>4</td><td>SBQQ__CustomAction__c</td><td><code>SBQQ__CustomAction__c</code></td><td>63</td><td><span class="severity-medium">medium</span></td><td>Phase 3</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>5</td><td>SBQQ__ProductRule__c</td><td><code>SBQQ__ProductRule__c</code></td><td>38</td><td><span class="severity-low">low</span></td><td>Phase 1</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>6</td><td>SBQQ__PriceRule__c</td><td><code>SBQQ__PriceRule__c</code></td><td>28</td><td><span class="severity-medium">medium</span></td><td>Phase 2</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>7</td><td>SBQQ__DiscountSchedule__c</td><td><code>SBQQ__DiscountSchedule__c</code></td><td>22</td><td><span class="severity-medium">medium</span></td><td>Phase 2</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>8</td><td>SBQQ__TemplateSection__c</td><td><code>SBQQ__TemplateSection__c</code></td><td>21</td><td><span class="severity-high">high</span></td><td>Phase 2</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>9</td><td>SBQQ__TemplateContent__c</td><td><code>SBQQ__TemplateContent__c</code></td><td>20</td><td><span class="severity-low">low</span></td><td>Phase 2</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>10</td><td>sbaa__ApprovalRule__c</td><td><code>sbaa__ApprovalRule__c</code></td><td>16</td><td><span class="severity-high">high</span></td><td>Phase 3</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>11</td><td>SBQQ__QuoteTemplate__c</td><td><code>SBQQ__QuoteTemplate__c</code></td><td>6</td><td><span class="severity-medium">medium</span></td><td>Phase 2</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr></tbody></table>
+    <table><thead><tr><th>ID</th><th>Object(s)</th><th>API Name</th><th>Count</th><th>Complexity</th><th>Phase</th><th>Conf.</th></tr></thead><tbody><tr><td>1</td><td>SBQQ__ProductOption__c</td><td><code>SBQQ__ProductOption__c</code></td><td>1220</td><td><span class="severity-low">low</span></td><td>Phase 1</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>2</td><td>SBQQ__ProductFeature__c</td><td><code>SBQQ__ProductFeature__c</code></td><td>1100</td><td><span class="severity-low">low</span></td><td>Phase 1</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>3</td><td>SBQQ__DiscountTier__c</td><td><code>SBQQ__DiscountTier__c</code></td><td>1029</td><td><span class="severity-low">low</span></td><td>—</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>4</td><td>SBQQ__Localization__c</td><td><code>SBQQ__Localization__c</code></td><td>269</td><td><span class="severity-medium">medium</span></td><td>—</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>5</td><td>Product2 (total records)</td><td><code>Product2</code></td><td>179</td><td><span class="severity-medium">medium</span></td><td>Phase 1</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>6</td><td>SBQQ__CustomScript__c</td><td><code>SBQQ__CustomScript__c</code></td><td>108</td><td><span class="severity-medium">medium</span></td><td>Phase 2</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>7</td><td>SBQQ__CustomAction__c</td><td><code>SBQQ__CustomAction__c</code></td><td>63</td><td><span class="severity-medium">medium</span></td><td>Phase 3</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>8</td><td>SBQQ__ProductRule__c</td><td><code>SBQQ__ProductRule__c</code></td><td>38</td><td><span class="severity-low">low</span></td><td>Phase 1</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>9</td><td>SBQQ__PriceRule__c</td><td><code>SBQQ__PriceRule__c</code></td><td>28</td><td><span class="severity-medium">medium</span></td><td>Phase 2</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>10</td><td>SBQQ__PriceAction__c</td><td><code>SBQQ__PriceAction__c</code></td><td>22</td><td><span class="severity-low">low</span></td><td>Phase 2</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>11</td><td>SBQQ__DiscountSchedule__c</td><td><code>SBQQ__DiscountSchedule__c</code></td><td>22</td><td><span class="severity-medium">medium</span></td><td>Phase 2</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>12</td><td>SBQQ__TemplateSection__c</td><td><code>SBQQ__TemplateSection__c</code></td><td>21</td><td><span class="severity-high">high</span></td><td>Phase 2</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>13</td><td>SBQQ__TemplateContent__c</td><td><code>SBQQ__TemplateContent__c</code></td><td>20</td><td><span class="severity-low">low</span></td><td>Phase 2</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>14</td><td>sbaa__ApprovalRule__c</td><td><code>sbaa__ApprovalRule__c</code></td><td>16</td><td><span class="severity-high">high</span></td><td>Phase 3</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>15</td><td>SBQQ__PriceCondition__c</td><td><code>SBQQ__PriceCondition__c</code></td><td>13</td><td><span class="severity-low">low</span></td><td>Phase 2</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>16</td><td>SBQQ__QuoteTemplate__c</td><td><code>SBQQ__QuoteTemplate__c</code></td><td>6</td><td><span class="severity-medium">medium</span></td><td>Phase 2</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr></tbody></table>
 
     
     <h3>A.2 Platform Metadata Summary</h3>
@@ -1201,17 +1206,18 @@
 <tr><td>14</td><td>InstalledPackage</td><td><code>InstalledPackage</code></td><td>35</td><td><span class="severity-low">low</span></td><td>—</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
 <tr><td>15</td><td>ValidationRule</td><td><code>ValidationRule</code></td><td>25</td><td><span class="severity-low">low</span></td><td>—</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
 <tr><td>16</td><td>CustomLabel</td><td><code>CustomLabel</code></td><td>23</td><td><span class="severity-low">low</span></td><td>—</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>17</td><td>PermissionSet</td><td><code>PermissionSet</code></td><td>16</td><td><span class="severity-low">low</span></td><td>—</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>18</td><td>LightningComponentBundle</td><td><code>LightningComponentBundle</code></td><td>13</td><td><span class="severity-medium">medium</span></td><td>—</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>19</td><td>ScheduledApex</td><td><code>ScheduledApex</code></td><td>11</td><td><span class="severity-low">low</span></td><td>—</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>20</td><td>PermissionSetGroup</td><td><code>PermissionSetGroup</code></td><td>10</td><td><span class="severity-low">low</span></td><td>—</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>21</td><td>ApexComponent</td><td><code>ApexComponent</code></td><td>6</td><td><span class="severity-low">low</span></td><td>—</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>22</td><td>PluginActivation</td><td><code>PluginActivation</code></td><td>6</td><td><span class="severity-low">low</span></td><td>—</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>23</td><td>ApexTrigger</td><td><code>ApexTrigger</code></td><td>5</td><td><span class="severity-high">high</span></td><td>Phase 3</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>24</td><td>CustomPermission</td><td><code>CustomPermission</code></td><td>5</td><td><span class="severity-low">low</span></td><td>—</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>25</td><td>NamedCredential</td><td><code>NamedCredential</code></td><td>1</td><td><span class="severity-low">low</span></td><td>—</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>26</td><td>ExperienceCloud</td><td><code>ExperienceCloud</code></td><td>1</td><td><span class="severity-low">low</span></td><td>—</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
-<tr><td>27</td><td>TaxCalculator</td><td><code>TaxCalculator</code></td><td>1</td><td><span class="severity-low">low</span></td><td>—</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr></tbody></table>
+<tr><td>17</td><td>BundleStructure</td><td><code>BundleStructure</code></td><td>22</td><td><span class="severity-medium">medium</span></td><td>—</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>18</td><td>PermissionSet</td><td><code>PermissionSet</code></td><td>16</td><td><span class="severity-low">low</span></td><td>—</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>19</td><td>LightningComponentBundle</td><td><code>LightningComponentBundle</code></td><td>13</td><td><span class="severity-medium">medium</span></td><td>—</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>20</td><td>ScheduledApex</td><td><code>ScheduledApex</code></td><td>11</td><td><span class="severity-low">low</span></td><td>—</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>21</td><td>PermissionSetGroup</td><td><code>PermissionSetGroup</code></td><td>10</td><td><span class="severity-low">low</span></td><td>—</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>22</td><td>ApexComponent</td><td><code>ApexComponent</code></td><td>6</td><td><span class="severity-low">low</span></td><td>—</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>23</td><td>PluginActivation</td><td><code>PluginActivation</code></td><td>6</td><td><span class="severity-low">low</span></td><td>—</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>24</td><td>ApexTrigger</td><td><code>ApexTrigger</code></td><td>5</td><td><span class="severity-high">high</span></td><td>Phase 3</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>25</td><td>CustomPermission</td><td><code>CustomPermission</code></td><td>5</td><td><span class="severity-low">low</span></td><td>—</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>26</td><td>NamedCredential</td><td><code>NamedCredential</code></td><td>1</td><td><span class="severity-low">low</span></td><td>—</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>27</td><td>ExperienceCloud</td><td><code>ExperienceCloud</code></td><td>1</td><td><span class="severity-low">low</span></td><td>—</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr>
+<tr><td>28</td><td>TaxCalculator</td><td><code>TaxCalculator</code></td><td>1</td><td><span class="severity-low">low</span></td><td>—</td><td><span class="badge badge-confirmed">Confirmed</span></td></tr></tbody></table>
   </div>
   
   <div class="page-break">
@@ -1311,7 +1317,7 @@
 <tr><td>QCP</td><td>Quote Calculator Plugin — JavaScript custom calculation injection</td></tr></tbody></table>
 
     <h2>Appendix D: Extraction Coverage</h2>
-    <table><thead><tr><th>Category</th><th>Coverage</th><th>Notes</th></tr></thead><tbody><tr><td>Product Catalog</td><td><span class="badge badge-confirmed">Full</span></td><td>Products, bundles, 475 options, 38 product rules.</td></tr>
+    <table><thead><tr><th>Category</th><th>Coverage</th><th>Notes</th></tr></thead><tbody><tr><td>Product Catalog</td><td><span class="badge badge-confirmed">Full</span></td><td>Products, bundles, 310 options, 38 product rules.</td></tr>
 <tr><td>Pricing &amp; Rules</td><td><span class="badge badge-confirmed">Full</span></td><td>Price rules, discount schedules, custom scripts. Price rule usage frequency: Not extracted — requires rule-to-quote linkage data.</td></tr>
 <tr><td>Transactional Data</td><td><span class="badge badge-partial">Partial</span></td><td>90-day quotes, quote lines, usage trends. Quote modification history and field-level change tracking not extracted.</td></tr>
 <tr><td>Custom Fields &amp; Validation</td><td><span class="badge badge-confirmed">Full</span></td><td>Custom fields, validation rules, formulas. </td></tr>

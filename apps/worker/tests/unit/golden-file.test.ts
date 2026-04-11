@@ -15,7 +15,12 @@ import { assembleReport } from '../../src/report/assembler.ts';
 import goldenData from '../fixtures/golden-findings.json';
 
 describe('Golden file regression — T8', () => {
-  const report = assembleReport(goldenData.findings as Parameters<typeof assembleReport>[0]);
+  // Phase 2 fix (2026-04-11): assembleReport no longer reads wall-clock;
+  // callers must pass assessmentTimestamp. Frozen here so the golden
+  // snapshot stays reproducible.
+  const report = assembleReport(goldenData.findings as Parameters<typeof assembleReport>[0], {
+    assessmentTimestamp: '2026-04-11T00:00:00Z',
+  });
 
   // ── Metadata ──
   it('metadata fields are populated', () => {

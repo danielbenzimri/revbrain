@@ -423,6 +423,25 @@ export interface AssembleReportOptions {
    * show the per-namespace summary and nothing else.
    */
   showThirdPartyApexDetail?: boolean;
+
+  /**
+   * ISO-8601 timestamp of the assessment run. Phase 2 fix
+   * (2026-04-11): the old path used `new Date().toISOString()`
+   * which leaked wall-clock into the PDF, making the document
+   * non-deterministic across renders of the same extraction JSON.
+   *
+   * Production callers (`generate-report.ts`, edge worker) MUST
+   * provide a stable timestamp sourced from the extraction run
+   * metadata (or the `assessment-results.json` file mtime when
+   * running offline).
+   *
+   * Tests may omit this field — the assembler defaults to the
+   * sentinel `'unknown'`, which renders "Assessment Date not
+   * recorded" on the cover page. The sentinel is a test convenience
+   * only; a production run landing on the default is a bug and
+   * should be caught by the `lint-report-discipline.mjs` guard.
+   */
+  assessmentTimestamp?: string;
 }
 
 export function assembleReport(
@@ -544,13 +563,56 @@ export function assembleReport(
   // Low volume detection — placeholder; re-evaluated after reportCounts are built
   // (see lowVolumeWarning below)
 
-  // Assessment period calculation
-  const assessmentDate = new Date().toISOString().split('T')[0];
-  const endDate = new Date();
-  const startDate = new Date(endDate.getTime() - 90 * 24 * 60 * 60 * 1000);
+  // Assessment period calculation — anchored to `options.assessmentTimestamp`
+  // (Phase 2 fix 2026-04-11). The previous implementation called
+  // `new Date()` which was a wall-clock leak — the PDF became
+  // non-deterministic across renders of the same extraction JSON.
+  // See `docs/PDF-AND-GRAPH-DECISIONS.md` Phase 2, and the broader
+  // no-wall-clock rule in bb3-doctor C2.
+  //
+  // Contract: caller MUST pass a stable timestamp sourced from the
+  // extraction run metadata or the extraction-results file mtime.
+  // Pass the sentinel `'unknown'` to display "Assessment Date not
+  // recorded" rather than plug today's date silently.
   const formatDate = (d: Date) =>
-    d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  const assessmentPeriod = `${formatDate(startDate)} – ${formatDate(endDate)} (90 Days)`;
+    // toLocaleDateString with en-US + explicit options is stable
+    // and does not read the host's locale, so this is deterministic.
+    d.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      timeZone: 'UTC',
+    });
+
+  const timestampInput = options.assessmentTimestamp ?? 'unknown';
+  let assessmentDate: string;
+  let assessmentPeriod: string;
+  // `nowForReport` is the monotonic anchor that downstream "staleness"
+  // calculations (e.g. §8 stale reports, last-12-months run counts)
+  // use in place of `Date.now()`. It is derived ONLY from the input
+  // timestamp, never from wall-clock. When the caller passes
+  // 'unknown' we fall back to epoch, which has the deterministic
+  // effect of marking every date-stamped finding as "stale" — this
+  // is the safer wrong answer than silently showing today.
+  let nowForReport: number;
+  if (timestampInput === 'unknown') {
+    assessmentDate = 'not recorded';
+    assessmentPeriod = 'Assessment window not recorded (90-day default)';
+    nowForReport = 0;
+  } else {
+    // allow-wallclock: constructs the monotonic anchor from the trusted input timestamp
+    const anchor = new Date(timestampInput);
+    if (Number.isNaN(anchor.getTime())) {
+      throw new Error(
+        `assembleReport: assessmentTimestamp '${timestampInput}' is not a valid ISO-8601 date`
+      );
+    }
+    assessmentDate = anchor.toISOString().split('T')[0]!;
+    // allow-wallclock: startDate derived from the trusted anchor, not wall-clock
+    const startDate = new Date(anchor.getTime() - 90 * 24 * 60 * 60 * 1000);
+    assessmentPeriod = `${formatDate(startDate)} – ${formatDate(anchor)} (90 Days)`;
+    nowForReport = anchor.getTime();
+  }
 
   // Discount distribution percentage calculation
   const discountRefs = Array.isArray(discountDist?.evidenceRefs) ? discountDist.evidenceRefs : [];
@@ -1193,8 +1255,10 @@ export function assembleReport(
           seenReports.set(r.artifactName, desc);
         }
       }
-      // Task 2.11: sort by last-run date descending, flag stale reports
-      const now = Date.now();
+      // Task 2.11: sort by last-run date descending, flag stale reports.
+      // Phase 2 fix: anchor staleness to `nowForReport` (derived from
+      // options.assessmentTimestamp) so the PDF is deterministic.
+      const now = nowForReport;
       const _twoYearsMs = 2 * 365 * 24 * 60 * 60 * 1000;
       const _oneYearMs = 365 * 24 * 60 * 60 * 1000;
       const entries = [...seenReports.entries()].map(([name, description]) => {
@@ -1214,7 +1278,8 @@ export function assembleReport(
         const desc = r.notes ?? '';
         if (!existing || desc.length > existing.length) seenReports.set(r.artifactName, desc);
       }
-      const now = Date.now();
+      // Phase 2 fix: anchor staleness to nowForReport, not wall-clock.
+      const now = nowForReport;
       const twoYearsMs = 2 * 365 * 24 * 60 * 60 * 1000;
       const oneYearMs = 365 * 24 * 60 * 60 * 1000;
       let runLast12Mo = 0;
