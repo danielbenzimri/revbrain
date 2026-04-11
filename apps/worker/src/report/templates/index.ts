@@ -587,6 +587,39 @@ function renderCustomCode(data: ReportData): string {
       ])
     )}
 
+    ${(() => {
+      // §9.1a — Third-party (managed package) Apex summary.
+      // Default view is one row per namespace (vendor). Per-class
+      // detail is suppressed because managed-package Apex migrates
+      // via a vendor plan, not via Apex rewrite. Internal diagnostic
+      // runs may set `showThirdPartyApexDetail: true` which also
+      // populates `thirdPartyApexDetail` below.
+      if (data.customCode.thirdPartyApex.length === 0) return '';
+      const total = data.customCode.thirdPartyApex.reduce((sum, ns) => sum + ns.classCount, 0);
+      const summary = `
+    <h3>9.1a Third-Party (Managed Package) Apex Classes</h3>
+    <p><em>${total} managed-package Apex classes across ${data.customCode.thirdPartyApex.length} installed vendor package(s). These do not migrate via Apex rewrite — each vendor requires a separate migration plan.</em></p>
+    ${table(
+      ['Managed Package Namespace', 'Class Count', 'Total Lines'],
+      data.customCode.thirdPartyApex.map((ns) => [
+        escapeHtml(ns.namespace),
+        String(ns.classCount),
+        String(ns.totalLines),
+      ])
+    )}`;
+      if (data.customCode.thirdPartyApexDetail.length === 0) return summary;
+      return `${summary}
+    <h4>9.1a.1 Per-Class Detail (Internal Diagnostic Mode)</h4>
+    ${table(
+      ['Class Name', 'Namespace', 'Lines'],
+      data.customCode.thirdPartyApexDetail.map((c) => [
+        escapeHtml(c.name),
+        escapeHtml(c.namespace),
+        String(c.lines),
+      ])
+    )}`;
+    })()}
+
     <h3>9.2 Triggers & Flows</h3>
     ${
       data.counts.flowCountActive > 0

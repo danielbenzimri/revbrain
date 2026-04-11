@@ -44,6 +44,16 @@ export const NOT_MODELED_V1_TYPES = new Set<string>([
   'ScheduledApex',
   'RemoteSiteSetting',
   'CustomLabel',
+  // EXT-CC4 — Third-party packaged Apex (DocuSign Gen, Conga,
+  // Drawloop, etc.) is emitted by the dependencies collector as
+  // `ThirdPartyPackagedApexClass` (NOT `ApexClass`) so the report
+  // layer, BB-3 normalizer, and any downstream consumer keep it
+  // on a separate track from customer-namespace Apex. The classes
+  // themselves are managed-package code and do not migrate via
+  // Apex rewrite — they need a vendor migration plan. Quarantined
+  // explicitly so G1 conservation holds; the per-namespace summary
+  // is built in the report layer from the flat finding list.
+  'ThirdPartyPackagedApexClass',
 ]);
 
 /** Return true iff the finding's artifactType is on the not-modeled list. */

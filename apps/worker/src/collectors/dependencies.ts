@@ -260,11 +260,21 @@ export class DependenciesCollector extends BaseCollector {
           // We don't fetch the Body here (managed package code is
           // typically inaccessible) — we only need to know the
           // class exists and which namespace it belongs to.
+          //
+          // NOTE: artifactType is `ThirdPartyPackagedApexClass`, NOT
+          // `ApexClass`. Fixed 2026-04-11 after the EXT-CC4 pass
+          // silently added 1565 rows to §9.1 Apex Classes in the
+          // customer PDF (36 → 111 pages) because the report
+          // assembler reads flat findings via `get('ApexClass')`
+          // with no filter. A distinct artifactType keeps
+          // customer-namespace Apex and managed-package Apex on
+          // separate tracks everywhere downstream (report, BB-3
+          // normalizer, any future consumer).
           findings.push(
             createFinding({
               domain: 'dependency',
               collector: 'dependencies',
-              artifactType: 'ApexClass',
+              artifactType: 'ThirdPartyPackagedApexClass',
               artifactName: `${namespace}.${className}`,
               artifactId: cls.Id as string,
               findingType: 'apex_third_party_packaged',

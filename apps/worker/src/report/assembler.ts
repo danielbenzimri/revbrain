@@ -158,6 +158,24 @@ export interface ReportData {
   };
   customCode: {
     apexClasses: Array<{ name: string; lines: number; purpose: string; origin: string }>;
+    /**
+     * Third-party packaged Apex summary (§9.1a). Collected from
+     * `ThirdPartyPackagedApexClass` findings — one row per managed
+     * package namespace, NOT one row per class. Added 2026-04-11
+     * after the EXT-CC4 third-party pass caused §9.1 to bloat from
+     * ~18 rows to 1583 rows on real staging (36 → 111 page PDF).
+     * Per-namespace is the default because managed-package Apex
+     * migrates via a vendor plan, not via Apex rewrite — the
+     * per-class detail is only useful for internal diagnostics.
+     */
+    thirdPartyApex: Array<{ namespace: string; classCount: number; totalLines: number }>;
+    /**
+     * Per-class detail, ONLY populated when
+     * `options.showThirdPartyApexDetail === true` (internal
+     * diagnostic mode). Production customer PDFs should always
+     * leave this empty and show only `thirdPartyApex` above.
+     */
+    thirdPartyApexDetail: Array<{ name: string; namespace: string; lines: number }>;
     triggersFlows: Array<{ name: string; type: string; object: string; status: string }>;
     validationRules: Array<{ object: string; rule: string; status: string; complexity: string }>;
     permissionSets: Array<{ name: string; type: string; namespace: string }>;
@@ -391,7 +409,26 @@ export function sectionConfidence(
 // Assembler
 // ============================================================================
 
-export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
+/**
+ * Runtime options for the assembler. Kept narrowly scoped — any
+ * flag added here should be one the customer-facing PDF CANNOT
+ * use by default (internal diagnostics, A/B comparison, etc.).
+ * See `docs/PDF-AND-GRAPH-DECISIONS.md` decision 2 action 4.
+ */
+export interface AssembleReportOptions {
+  /**
+   * When `true`, §9.1a expands to a per-class table of every
+   * managed-package Apex class (one row per class). Only used
+   * by internal diagnostic runs. Default `false` — customer PDFs
+   * show the per-namespace summary and nothing else.
+   */
+  showThirdPartyApexDetail?: boolean;
+}
+
+export function assembleReport(
+  findings: AssessmentFindingInput[],
+  options: AssembleReportOptions = {}
+): ReportData {
   // Normalize evidenceRefs — JSONB from DB may be string, object, or null instead of array
   for (const f of findings) {
     const refs = f.evidenceRefs;
@@ -448,6 +485,13 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
 
   // Code — handle both short and full SF API names
   const apexClasses = get('ApexClass');
+  // Third-party packaged Apex is emitted by the dependencies
+  // collector under a DISTINCT artifactType (see EXT-CC4 fix on
+  // 2026-04-11 / `docs/PDF-AND-GRAPH-DECISIONS.md` decision 2).
+  // Pulling these via `get('ApexClass')` was the root cause of
+  // the 36→111 page PDF bloat — the report assembler saw 1565
+  // managed-package classes as if they were customer Apex.
+  const thirdPartyApexFindings = get('ThirdPartyPackagedApexClass');
   const triggers = get('ApexTrigger');
   const flows = get('Flow');
   const validationRules = get('ValidationRule');
@@ -1028,6 +1072,45 @@ export function assembleReport(findings: AssessmentFindingInput[]): ReportData {
           a.evidenceRefs?.find((r) => r.label === 'NamespacePrefix')?.value ?? undefined
         ),
       })),
+      thirdPartyApex: (() => {
+        // Per-namespace rollup: one row per managed package, NOT
+        // one row per class. Deterministic order (alphabetical by
+        // namespace) so the PDF is byte-stable across runs.
+        const byNamespace = new Map<string, { classCount: number; totalLines: number }>();
+        for (const f of thirdPartyApexFindings) {
+          const ns =
+            (f.evidenceRefs?.find((r) => r.label === 'managedPackageNamespace')?.value as
+              | string
+              | undefined) ??
+            f.artifactName.split('.')[0] ??
+            'Unknown';
+          const entry = byNamespace.get(ns) ?? { classCount: 0, totalLines: 0 };
+          entry.classCount += 1;
+          entry.totalLines += f.countValue ?? 0;
+          byNamespace.set(ns, entry);
+        }
+        return Array.from(byNamespace.entries())
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([namespace, entry]) => ({
+            namespace,
+            classCount: entry.classCount,
+            totalLines: entry.totalLines,
+          }));
+      })(),
+      thirdPartyApexDetail: options.showThirdPartyApexDetail
+        ? thirdPartyApexFindings
+            .map((f) => ({
+              name: f.artifactName,
+              namespace:
+                (f.evidenceRefs?.find((r) => r.label === 'managedPackageNamespace')?.value as
+                  | string
+                  | undefined) ??
+                f.artifactName.split('.')[0] ??
+                'Unknown',
+              lines: f.countValue ?? 0,
+            }))
+            .sort((a, b) => a.name.localeCompare(b.name))
+        : [],
       triggersFlows: [
         ...triggers.map((t) => ({
           name: t.artifactName,
@@ -1868,7 +1951,12 @@ function buildFeatureUtilization(
     detail: csCount > 0 ? `${csCount} custom scripts detected.` : '',
   });
 
-  // V5-9: filter synthetic summary findings from template count
+  // V5-9: filter aggregate summary rows from template count
+  // (The templates collector emits a rollup row like
+  // `unused_templates_summary` alongside per-template rows —
+  // this is a legitimate aggregate, NOT a fabricated finding.
+  // Renamed from "synthetic" for clarity during the PDF mock
+  // audit on 2026-04-11.)
   const tmplFindings = findings.filter(
     (f) =>
       (f.artifactType === 'QuoteTemplate' || f.artifactType === 'SBQQ__QuoteTemplate__c') &&
@@ -2796,11 +2884,11 @@ function buildApprovalsAndDocs(
   const chainCount = Number(approvalSummary?.notes?.match(/(\d+)\s*chains?/)?.[1] ?? 0);
   const approverCount = Number(approvalSummary?.notes?.match(/(\d+)\s*approvers?/)?.[1] ?? 0);
 
-  // Quote templates from templates collector — V5-9: filter out synthetic summary findings
+  // Quote templates from templates collector — V5-9: filter out aggregate summary rows
   const allQuoteTemplates = findings.filter(
     (f) => f.artifactType === 'QuoteTemplate' || f.artifactType === 'SBQQ__QuoteTemplate__c'
   );
-  // quoteTemplates = actual template records (excluding synthetic summary findings)
+  // quoteTemplates = actual template records (excluding aggregate summary rows)
   const quoteTemplates = allQuoteTemplates.filter(
     (f) =>
       !f.findingKey?.includes('unused_templates_summary') &&
