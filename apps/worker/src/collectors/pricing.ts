@@ -23,6 +23,7 @@ import { createFinding } from '../normalize/findings.ts';
 import { buildSafeQuery } from '../salesforce/query-builder.ts';
 import type { DescribeResult } from '../salesforce/rest.ts';
 import { truncateWithFlag } from '../lib/truncate.ts';
+import { detectQcpDynamicDispatch } from '../lib/apex-classify.ts';
 
 export class PricingCollector extends BaseCollector {
   constructor(ctx: CollectorContext) {
@@ -390,6 +391,15 @@ export class PricingCollector extends BaseCollector {
                     : {}),
                 };
               })(),
+              // EXT-CC3 — surface every dynamic-dispatch pattern
+              // detected in this QCP body. The v1.1 critical
+              // pattern `conn.query()` runs arbitrary SOQL the
+              // static analyzer cannot resolve.
+              ...detectQcpDynamicDispatch(code).map((pattern) => ({
+                type: 'field-ref' as const,
+                value: 'dynamicDispatchPattern',
+                label: pattern,
+              })),
             ],
           })
         );

@@ -43,8 +43,8 @@ const ALLOWLIST = new Set([
   'usage.ts:507:array slice — top-N',
   'templates.ts:358:array slice — limit JSON output of merge fields',
   'templates.ts:361:array slice — limit referenced field list',
-  'pricing.ts:386:array slice — limit referenced field list',
-  'dependencies.ts:170:array slice — limit referenced field regex matches',
+  'pricing.ts:387:array slice — limit referenced field list',
+  'dependencies.ts:171:array slice — limit referenced field regex matches',
   // Short label/description truncations (200 chars, human-readable
   // notes that are NOT load-bearing for BB-3 identity):
   'approvals.ts:207:notes label truncation — 200 chars, human-readable',
@@ -58,7 +58,7 @@ const ALLOWLIST = new Set([
   'customizations.ts:254:array slice — EXT-1.3 limit value pairs in evidence',
   // EXT-1.6 wave-2 — array slice bounding per-flow field-ref
   // evidence entries (the flow body itself uses truncateWithFlag):
-  'dependencies.ts:480:array slice — EXT-1.6 limit flow field references',
+  'dependencies.ts:540:array slice — EXT-1.6 limit flow field references',
 ]);
 
 const SLICE_PATTERN = /\.slice\(\s*0\s*,\s*\d+\s*\)/;

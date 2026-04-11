@@ -113,3 +113,56 @@ export const CPQ_PLUGIN_INTERFACE_MAP: Readonly<
  * migration-ir-contract package.
  */
 export { detectCpqPluginInterfaces } from '@revbrain/migration-ir-contract';
+
+/**
+ * EXT-CC3 — Dynamic-dispatch / runtime-resolved-types detection.
+ * The v1.1 fix added the QCP-specific `conn.query()` pattern,
+ * which is the most dangerous hidden-dispatch vector in QCP
+ * source: a JSForce connection method that runs arbitrary SOQL
+ * the static analyzer cannot see.
+ *
+ * Returns the list of pattern names that matched, sorted and
+ * deduped. Empty if none. Used by both Apex and QCP-JS
+ * classification paths so the downstream BBs see one consistent
+ * flag.
+ */
+const APEX_DYNAMIC_PATTERNS: ReadonlyArray<{ name: string; re: RegExp }> = [
+  { name: 'Type.forName', re: /\bType\.forName\b/ },
+  { name: 'Type.newInstance', re: /\bType\.newInstance\b/ },
+  { name: 'Database.query', re: /\bDatabase\.query\(/ },
+  { name: 'Database.queryLocator', re: /\bDatabase\.queryLocator\(/ },
+];
+
+const QCP_JS_DYNAMIC_PATTERNS: ReadonlyArray<{ name: string; re: RegExp }> = [
+  { name: 'eval', re: /\beval\s*\(/ },
+  { name: 'new Function', re: /\bnew\s+Function\s*\(/ },
+  { name: 'dynamic import', re: /\bimport\s*\(/ },
+  // The v1.1 audit's critical addition — JSForce conn.query() is
+  // the QCP equivalent of `Database.query()` and was the original
+  // gaps-doc miss.
+  { name: 'conn.query', re: /\bconn\.query\s*\(/ },
+];
+
+/**
+ * Scan an Apex source body for dynamic-dispatch patterns.
+ * Returns the matched pattern names (deduplicated, sorted).
+ */
+export function detectApexDynamicDispatch(body: string): string[] {
+  const matches = new Set<string>();
+  for (const p of APEX_DYNAMIC_PATTERNS) {
+    if (p.re.test(body)) matches.add(p.name);
+  }
+  return [...matches].sort();
+}
+
+/**
+ * Scan a QCP JavaScript body for dynamic-dispatch patterns,
+ * including the critical `conn.query()` JSForce vector.
+ */
+export function detectQcpDynamicDispatch(body: string): string[] {
+  const matches = new Set<string>();
+  for (const p of QCP_JS_DYNAMIC_PATTERNS) {
+    if (p.re.test(body)) matches.add(p.name);
+  }
+  return [...matches].sort();
+}

@@ -142,6 +142,18 @@ export type MergeFieldRef = z.infer<typeof MergeFieldRefSchema>;
 const nullishOptional = <T extends z.ZodTypeAny>(schema: T) =>
   z.preprocess((v) => (v === null ? undefined : v), schema.optional());
 
+/**
+ * EXT-CC5 — Stability tag. Marks whether the finding's payload
+ * is sourced from metadata (deterministic across runs over the
+ * same source state) or runtime (observed at extraction time
+ * and may drift between runs even when the source hasn't
+ * changed). Defaults to 'metadata' so existing collectors
+ * validate without changes; collectors emitting usage / lifecycle
+ * findings should set 'runtime' explicitly.
+ */
+export const StabilitySchema = z.enum(['metadata', 'runtime']);
+export type Stability = z.infer<typeof StabilitySchema>;
+
 export const AssessmentFindingSchema = z.object({
   domain: AssessmentDomainSchema,
   collectorName: z.string(),
@@ -162,6 +174,12 @@ export const AssessmentFindingSchema = z.object({
   rcaMappingComplexity: nullishOptional(RcaMappingComplexitySchema),
   evidenceRefs: z.array(EvidenceRefSchema).default([]),
   notes: nullishOptional(z.string()),
+  // EXT-CC5 — stability tag. Optional via the same nullishOptional
+  // pattern as other fields so existing collectors validate
+  // unchanged. Absence = 'metadata' (deterministic source) by
+  // convention. Collectors emitting usage / lifecycle / runtime
+  // findings should set 'runtime' to make drift potential explicit.
+  stability: nullishOptional(StabilitySchema),
   schemaVersion: z.string().default('1.0'),
 });
 export type AssessmentFindingInput = z.infer<typeof AssessmentFindingSchema>;

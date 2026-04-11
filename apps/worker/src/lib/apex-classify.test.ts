@@ -5,7 +5,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   CPQ_PLUGIN_INTERFACE_MAP,
+  detectApexDynamicDispatch,
   detectCpqPluginInterfaces,
+  detectQcpDynamicDispatch,
   isApexTestClass,
 } from './apex-classify.ts';
 
@@ -115,6 +117,78 @@ describe('detectCpqPluginInterfaces', () => {
     const body =
       'public class Foo { String x = "implements SBQQ.QuoteCalculatorPluginInterface"; }';
     expect(detectCpqPluginInterfaces(body)).toEqual([]);
+  });
+});
+
+describe('detectApexDynamicDispatch (EXT-CC3)', () => {
+  it('detects Type.forName', () => {
+    expect(detectApexDynamicDispatch('Object o = Type.forName("Foo").newInstance();')).toContain(
+      'Type.forName'
+    );
+  });
+
+  it('detects Database.query', () => {
+    expect(
+      detectApexDynamicDispatch('List<SObject> r = Database.query("SELECT Id FROM Account");')
+    ).toContain('Database.query');
+  });
+
+  it('detects multiple patterns and dedupes', () => {
+    const body = `
+      Type t = Type.forName(s);
+      List<SObject> r = Database.query(soql);
+      Database.QueryLocator loc = Database.queryLocator(soql);
+    `;
+    expect(detectApexDynamicDispatch(body)).toEqual([
+      'Database.query',
+      'Database.queryLocator',
+      'Type.forName',
+    ]);
+  });
+
+  it('returns empty for static-only Apex', () => {
+    expect(
+      detectApexDynamicDispatch('Account a = [SELECT Id FROM Account WHERE Id = :acctId];')
+    ).toEqual([]);
+  });
+});
+
+describe('detectQcpDynamicDispatch (EXT-CC3 with v1.1 conn.query)', () => {
+  it('detects eval()', () => {
+    expect(detectQcpDynamicDispatch('const x = eval(userExpr);')).toContain('eval');
+  });
+
+  it('detects new Function()', () => {
+    expect(
+      detectQcpDynamicDispatch('const fn = new Function("a", "b", "return a + b");')
+    ).toContain('new Function');
+  });
+
+  it('detects dynamic import()', () => {
+    expect(detectQcpDynamicDispatch('const mod = await import(modPath);')).toContain(
+      'dynamic import'
+    );
+  });
+
+  it('detects conn.query() — the v1.1 critical addition', () => {
+    expect(
+      detectQcpDynamicDispatch('const records = await conn.query("SELECT Id FROM Account");')
+    ).toContain('conn.query');
+  });
+
+  it('detects multi-pattern QCP body and dedupes', () => {
+    const body = `
+      const records = await conn.query(dynSoql);
+      const fn = new Function('return ' + expr);
+      eval(extraCode);
+    `;
+    expect(detectQcpDynamicDispatch(body)).toEqual(['conn.query', 'eval', 'new Function']);
+  });
+
+  it('returns empty for static-only QCP code', () => {
+    expect(
+      detectQcpDynamicDispatch('function calculate(quote) { return quote.SBQQ__NetAmount__c * 2; }')
+    ).toEqual([]);
   });
 });
 

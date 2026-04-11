@@ -20,6 +20,7 @@ import { createFinding } from '../normalize/findings.ts';
 import { truncateWithFlag } from '../lib/truncate.ts';
 import {
   CPQ_PLUGIN_INTERFACE_MAP,
+  detectApexDynamicDispatch,
   detectCpqPluginInterfaces,
   isApexTestClass,
 } from '../lib/apex-classify.ts';
@@ -173,6 +174,15 @@ export class DependenciesCollector extends BaseCollector {
                       : {}),
                   };
                 })(),
+                // EXT-CC3 — surface every dynamic-dispatch pattern
+                // detected in this Apex body so downstream BBs know
+                // the class has hidden dependencies the static
+                // analyzer cannot resolve.
+                ...detectApexDynamicDispatch(body).map((pattern) => ({
+                  type: 'field-ref' as const,
+                  value: 'dynamicDispatchPattern',
+                  label: pattern,
+                })),
               ],
             })
           );
@@ -218,6 +228,53 @@ export class DependenciesCollector extends BaseCollector {
 
         if (hasTriggerControl) triggerControlCount++;
       }
+
+      // EXT-CC4 — Second pass for third-party packaged Apex
+      // classes (NamespacePrefix is set BUT not in the SBQQ /
+      // sbaa / blng namespaces). DocuSign Gen, Conga, Drawloop,
+      // and other vendors extending CPQ live here. We classify
+      // them as third-party and never extract bodies (managed
+      // package code does not migrate via Apex rewrite — needs
+      // a vendor migration plan instead).
+      let thirdPartyExtensionClassCount = 0;
+      try {
+        const thirdParty = await this.ctx.restApi.toolingQuery<Record<string, unknown>>(
+          'SELECT Id, Name, NamespacePrefix, LengthWithoutComments ' +
+            'FROM ApexClass ' +
+            'WHERE NamespacePrefix != null ' +
+            "AND NamespacePrefix NOT IN ('SBQQ', 'sbaa', 'blng', 'pi', 'rh2')",
+          this.signal
+        );
+        for (const cls of thirdParty.records) {
+          const namespace = cls.NamespacePrefix as string;
+          const className = cls.Name as string;
+          // We don't fetch the Body here (managed package code is
+          // typically inaccessible) — we only need to know the
+          // class exists and which namespace it belongs to.
+          findings.push(
+            createFinding({
+              domain: 'dependency',
+              collector: 'dependencies',
+              artifactType: 'ApexClass',
+              artifactName: `${namespace}.${className}`,
+              artifactId: cls.Id as string,
+              findingType: 'apex_third_party_packaged',
+              sourceType: 'tooling',
+              riskLevel: 'medium',
+              complexityLevel: 'low',
+              migrationRelevance: 'optional',
+              notes: `Third-party packaged Apex class: ${namespace}.${className}. Vendor migration plan required.`,
+              evidenceRefs: [
+                { type: 'object-ref', value: namespace, label: 'managedPackageNamespace' },
+              ],
+            })
+          );
+          thirdPartyExtensionClassCount++;
+        }
+      } catch (err) {
+        this.log.warn({ error: (err as Error).message }, 'third_party_apex_extraction_failed');
+      }
+      metrics.thirdPartyExtensionClassCount = thirdPartyExtensionClassCount;
 
       metrics.cpqRelatedApexClasses = cpqApexClasses;
       metrics.cpqApexLineCount = totalApexLines;
