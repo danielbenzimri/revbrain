@@ -1,5 +1,17 @@
 {
   "permissions": {
     "allow": ["Bash(*)", "Read(*)", "Edit(*)", "Write(*)", "WebFetch(*)"]
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "DIRTY=$(git -C \"${CLAUDE_PROJECT_DIR:-$PWD}\" status --porcelain packages/bb3-normalizer packages/migration-ir-contract docs/MIGRATION-PLANNER-BB3-DESIGN.md docs/MIGRATION-PLANNER-BB3-TASKS.md 2>/dev/null); if [ -n \"$DIRTY\" ]; then echo '[bb3] reminder: BB-3 files have uncommitted changes. Run /ship-it before ending the session.' >&2; fi; BRANCH=$(git -C \"${CLAUDE_PROJECT_DIR:-$PWD}\" branch --show-current 2>/dev/null); if [ \"$BRANCH\" = \"main\" ] || [ \"$BRANCH\" = \"staging\" ]; then echo \"[bb3] warning: on branch '$BRANCH' — BB-3 work should happen on feat/bb3-wave<N>.\" >&2; fi; exit 0"
+          }
+        ]
+      }
+    ]
   }
 }
