@@ -19,6 +19,22 @@ export const NOT_MODELED_V1_TYPES = new Set<string>([
   'ESignature',
   'LanguageDistribution',
   'FieldCompleteness',
+  // EXT-1.7 — components.ts emits these. Modeled in BB-3 v2 once
+  // BB-4 segmentation has a use case; for now they're explicitly
+  // quarantined so the §5 non-negotiable (no silent fall-through)
+  // is satisfied AND the G1 conservation invariant holds.
+  'LightningComponentBundle',
+  'AuraDefinitionBundle',
+  'ApexPage',
+  'ApexComponent',
+  'StaticResource',
+  // EXT-1.2 — plugin-activation findings (PluginActivation
+  // artifactType) are sidecar metadata that the worker emits when
+  // joinPluginActivation runs. They are not load-bearing for BB-3
+  // identity; the active-plugin info is already on the underlying
+  // ApexClass finding's evidenceRefs. Quarantine them with reason
+  // 'not-modeled-v1' for explicit accounting.
+  'PluginActivation',
 ]);
 
 /** Return true iff the finding's artifactType is on the not-modeled list. */

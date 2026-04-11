@@ -99,6 +99,15 @@ export const COLLECTOR_REGISTRY: CollectorDefinition[] = [
     requires: ['discovery'],
     domain: 'localization',
   },
+  // EXT-1.7 — components collector (LWC + Aura + VF + Static
+  // Resources). Tier 2, 10 minute budget per gaps-doc §5 Gap 1.7.
+  {
+    name: 'components',
+    tier: 'tier2',
+    timeoutMs: 10 * 60_000,
+    requires: ['discovery'],
+    domain: 'customization',
+  },
 ];
 
 /** Get collectors by tier */

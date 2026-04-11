@@ -28,6 +28,7 @@ import { TemplatesCollector } from './collectors/templates.ts';
 import { ApprovalsCollector } from './collectors/approvals.ts';
 import { IntegrationsCollector } from './collectors/integrations.ts';
 import { LocalizationCollector } from './collectors/localization.ts';
+import { ComponentsCollector } from './collectors/components.ts';
 import { buildRelationships } from './normalize/relationships.ts';
 import { computeDerivedMetrics, computeAttachmentRates } from './normalize/metrics.ts';
 import { joinPluginActivation } from './normalize/plugin-activation.ts';
@@ -159,6 +160,7 @@ export async function runPipeline(ctx: CollectorContext): Promise<PipelineResult
     new ApprovalsCollector(ctx),
     new IntegrationsCollector(ctx),
     new LocalizationCollector(ctx),
+    new ComponentsCollector(ctx),
   ];
 
   const phase3Collectors = [...tier1Collectors, ...tier2Collectors];
