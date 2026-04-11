@@ -110,6 +110,7 @@ describe('PH0.3 — IRNodeBase + IRNodeType + AutomationIR', () => {
       | 'hasTriggerControl'
       | 'hasDynamicFieldRef'
       | 'isTestClass'
+      | 'implementedInterfaces'
       | 'parseStatus'
       | 'parseErrors'
     > => ({
@@ -140,6 +141,7 @@ describe('PH0.3 — IRNodeBase + IRNodeType + AutomationIR', () => {
         hasTriggerControl: true,
         hasDynamicFieldRef: false,
         isTestClass: false,
+        implementedInterfaces: [],
         parseStatus: 'parsed',
         parseErrors: [],
       };

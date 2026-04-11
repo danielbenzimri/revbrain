@@ -6,12 +6,38 @@
  * Emits a discriminated-union variant with `sourceType: 'ApexClass'`.
  * Apex-specific metrics (`lineCount`, `calloutCount`,
  * `hasTriggerControl`, `hasDynamicFieldRef`, `isTestClass`,
- * `parseErrors`) live ONLY on this variant — per v1.2 Auditor 3 P2
- * #10 they MUST NOT leak onto Flow, WorkflowRule, or OutboundMessage.
+ * `implementedInterfaces`, `parseErrors`) live ONLY on this variant
+ * — per v1.2 Auditor 3 P2 #10 they MUST NOT leak onto Flow,
+ * WorkflowRule, or OutboundMessage.
  *
  * Identity: ('ApexClass', developerName). Apex classes have a
  * reliable DeveloperName — no structural signature needed.
  */
+
+/**
+ * EXT-1.1 — Detect implemented CPQ plugin interfaces from source.
+ * The worker emits a sibling `cpq_apex_plugin` finding with the
+ * same artifactId for each detected interface, but BB-3 cannot
+ * import from the worker (BB-3 must stay independent), so we
+ * re-derive deterministically from the source. Pure regex match
+ * on `implements (SBQQ|sbaa).*Interface` — same convention as
+ * the existing `@isTest` and `SBQQ.TriggerControl` detection
+ * inlined in this normalizer.
+ */
+function detectImplementedInterfaces(rawSource: string): string[] {
+  const matches = new Set<string>();
+  const implementsPattern =
+    /\bimplements\s+([\w.,\s]*?)(?=\{|\bextends\b|\bwith\s+sharing\b|\bwithout\s+sharing\b|\binherited\s+sharing\b|;)/gi;
+  for (const m of rawSource.matchAll(implementsPattern)) {
+    for (const rawIface of m[1]!.split(',')) {
+      const iface = rawIface.trim();
+      if (/^(SBQQ|sbaa)\.[A-Za-z_][A-Za-z0-9_]*$/.test(iface)) {
+        matches.add(iface);
+      }
+    }
+  }
+  return [...matches].sort();
+}
 
 import type { AssessmentFindingInput } from '@revbrain/contract';
 import type { ApexClassAutomationIR, FieldRefIR, NodeRef } from '@revbrain/migration-ir-contract';
@@ -35,12 +61,17 @@ export const normalizeApexClass: NormalizerFn = (finding: AssessmentFindingInput
   const rawSource = finding.textValue ?? '';
   const lineCount = rawSource.split('\n').length;
 
+  const implementedInterfaces = detectImplementedInterfaces(rawSource);
   const stableIdentity = { sourceType: 'ApexClass' as const, developerName };
   const semanticPayload = {
     ...stableIdentity,
     rawSourceLength: rawSource.length,
     isTestClass: /@isTest\b/i.test(rawSource),
     hasTriggerControl: /\bSBQQ\.TriggerControl\b/.test(rawSource),
+    // EXT-1.1 — implementedInterfaces is identity-bearing because
+    // a class gaining or losing a plugin interface is a meaningful
+    // semantic change (will be reflected in contentHash).
+    implementedInterfaces,
   };
 
   const base = buildBaseNode({
@@ -63,6 +94,7 @@ export const normalizeApexClass: NormalizerFn = (finding: AssessmentFindingInput
     hasTriggerControl: semanticPayload.hasTriggerControl,
     hasDynamicFieldRef: false,
     isTestClass: semanticPayload.isTestClass,
+    implementedInterfaces,
     parseStatus: 'partial', // Stage 5 upgrades this after AST walk
     parseErrors: [],
   };
@@ -91,5 +123,9 @@ export async function enrichApexClass(
     parseErrors: result.parseErrors,
     sbqqFieldRefs: result.fieldRefs,
     writtenFields: result.writtenFields,
+    // EXT-1.1 — preserve from the draft. Plugin interface detection
+    // is regex-based on the original source and is set during the
+    // sync normalize() pass; the AST-walk doesn't override it.
+    implementedInterfaces: draft.implementedInterfaces,
   };
 }

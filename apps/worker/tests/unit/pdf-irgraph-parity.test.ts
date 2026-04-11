@@ -158,6 +158,67 @@ describe('PDF ↔ IRGraph parity (CTO directive 2026-04-11)', () => {
     expect(irFlowCount).toBe(report.counts.flowCountCpqRelated);
   });
 
+  it('EXT-1.1 — Apex class implementing a CPQ plugin interface produces an IR node with implementedInterfaces populated', async () => {
+    // Synthetic finding pair: an apex_cpq_related finding for a class
+    // that implements SBQQ.QuoteCalculatorPluginInterface, plus the
+    // sibling cpq_apex_plugin finding the dependencies collector
+    // emits. Both share the same artifactId and merge by identity in
+    // BB-3, producing one IR node whose implementedInterfaces array
+    // contains the plugin name.
+    const apexBody = `public with sharing class AcmePricing implements SBQQ.QuoteCalculatorPluginInterface {
+  public void calculate(SBQQ__Quote__c quote) { }
+}`;
+    const findings: AssessmentFindingInput[] = [
+      {
+        domain: 'dependency',
+        collectorName: 'dependencies',
+        artifactType: 'ApexClass',
+        artifactName: 'AcmePricing',
+        artifactId: 'a01000000000001',
+        findingKey: 'dependencies:ApexClass:a01000000000001:apex_cpq_related',
+        sourceType: 'tooling',
+        evidenceRefs: [],
+        textValue: apexBody,
+        schemaVersion: '1.0',
+      },
+      {
+        domain: 'dependency',
+        collectorName: 'dependencies',
+        artifactType: 'ApexClass',
+        artifactName: 'AcmePricing',
+        artifactId: 'a01000000000001',
+        findingKey:
+          'dependencies:ApexClass:a01000000000001:cpq_apex_plugin:SBQQ.QuoteCalculatorPluginInterface',
+        sourceType: 'tooling',
+        evidenceRefs: [
+          {
+            type: 'object-ref',
+            value: 'SBQQ.QuoteCalculatorPluginInterface',
+            label: 'interfaceName',
+          },
+        ],
+        schemaVersion: '1.0',
+      },
+    ];
+    const result = await normalize(findings, {
+      extractedAt: '2026-04-11T00:00:00Z',
+      maxInvalidRate: 1,
+    });
+    // Both findings share artifactId so they merge into one node
+    // (the auto-discriminator at buildBaseNode picks artifactId as
+    // the per-record discriminator). The node's implementedInterfaces
+    // array MUST contain the plugin name — derived deterministically
+    // from textValue by the BB-3 normalizer's regex.
+    const apexNodes = result.graph.nodes.filter(
+      (n): n is typeof n & { implementedInterfaces: string[] } =>
+        n.nodeType === 'Automation' &&
+        'sourceType' in n &&
+        (n as { sourceType?: string }).sourceType === 'ApexClass'
+    );
+    expect(apexNodes.length).toBe(1);
+    expect(apexNodes[0]!.implementedInterfaces).toEqual(['SBQQ.QuoteCalculatorPluginInterface']);
+  });
+
   it('SBQQ__DiscountSchedule__c findings → discountScheduleTotal in PDF and DiscountSchedule nodes in IR are equal', async () => {
     const findings = loadStaging();
     const report = assembleReport(findings);

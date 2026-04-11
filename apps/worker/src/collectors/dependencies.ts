@@ -18,7 +18,11 @@ import type { CollectorDefinition } from './registry.ts';
 import type { AssessmentFindingInput } from '@revbrain/contract';
 import { createFinding } from '../normalize/findings.ts';
 import { truncateWithFlag } from '../lib/truncate.ts';
-import { isApexTestClass } from '../lib/apex-classify.ts';
+import {
+  CPQ_PLUGIN_INTERFACE_MAP,
+  detectCpqPluginInterfaces,
+  isApexTestClass,
+} from '../lib/apex-classify.ts';
 
 const CPQ_OBJECTS = [
   'SBQQ__Quote__c',
@@ -81,6 +85,7 @@ export class DependenciesCollector extends BaseCollector {
       metrics.totalCustomApexClasses = allClasses.length;
 
       let testClassCount = 0;
+      let cpqPluginClassCount = 0;
       for (const cls of allClasses) {
         const body = (cls.Body as string) || '';
         const name = cls.Name as string;
@@ -170,6 +175,50 @@ export class DependenciesCollector extends BaseCollector {
               ],
             })
           );
+
+          // EXT-1.1 — Plugin classification. After the existing
+          // body fetch, scan for `implements (SBQQ|sbaa).*Interface`
+          // and emit one ADDITIONAL finding per detected interface.
+          // The original apex_cpq_related finding still emits;
+          // these are joinable by artifactId in BB-3 + downstream.
+          // Plugin-classified findings are how the report can
+          // answer "which Apex class IS the active QCP?" — see
+          // EXT-1.2 for the activation join.
+          const ifaces = detectCpqPluginInterfaces(body);
+          for (const iface of ifaces) {
+            cpqPluginClassCount++;
+            const mapping = CPQ_PLUGIN_INTERFACE_MAP[iface];
+            findings.push(
+              createFinding({
+                domain: 'dependency',
+                collector: 'dependencies',
+                artifactType: 'ApexClass',
+                artifactName: name,
+                artifactId: cls.Id as string,
+                findingType: 'cpq_apex_plugin',
+                sourceType: 'tooling',
+                riskLevel: 'high',
+                complexityLevel: 'high',
+                migrationRelevance: 'must-migrate',
+                rcaTargetConcept: mapping?.rcaTargetConcept,
+                rcaMappingComplexity:
+                  (mapping?.rcaMappingComplexity as
+                    | 'direct'
+                    | 'transform'
+                    | 'redesign'
+                    | 'no-equivalent'
+                    | undefined) ?? 'redesign',
+                notes: `Implements CPQ plugin interface: ${iface}`,
+                evidenceRefs: [
+                  {
+                    type: 'object-ref',
+                    value: iface,
+                    label: 'interfaceName',
+                  },
+                ],
+              })
+            );
+          }
         }
 
         if (hasTriggerControl) triggerControlCount++;
@@ -181,6 +230,11 @@ export class DependenciesCollector extends BaseCollector {
       // observability/report layer can distinguish "47 Apex classes,
       // 18 of which are tests" from the inflated 47.
       metrics.testClassCount = testClassCount;
+      // EXT-1.1 — surface the Apex plugin class count so the report
+      // and BB-3 know how many classes implement CPQ extension points
+      // (vs ordinary CPQ-related Apex). This is the strongest signal
+      // for migration risk in the entire dependencies collector.
+      metrics.cpqPluginClassCount = cpqPluginClassCount;
       metrics.triggerControlUsage = triggerControlCount > 0;
       metrics.triggerBypassCount = triggerControlCount;
 

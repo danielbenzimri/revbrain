@@ -65,6 +65,22 @@ export interface ApexClassAutomationIR extends AutomationIRBase {
    * `no-migration-needed`.
    */
   isTestClass: boolean;
+  /**
+   * EXT-1.1 — Fully-qualified CPQ plugin interfaces this class
+   * implements (e.g. `SBQQ.QuoteCalculatorPluginInterface`,
+   * `sbaa.IApprovalCondition`). Empty array for ordinary classes
+   * that just reference CPQ fields. Sorted, deduplicated.
+   *
+   * The presence of any entry here means this class is one of the
+   * customer's CPQ extension points — the migration MUST decide
+   * what to do with it (rebuild as a target-platform plugin, port
+   * to a Flow, etc.) before cutover. The downstream BB-5
+   * disposition pass uses this list to set
+   * `migrationDisposition: 'must-redesign'`.
+   *
+   * Defaults to `[]` for back-compat with pre-EXT-1.1 graphs.
+   */
+  implementedInterfaces: string[];
   parseStatus: ApexParseStatus;
   parseErrors: string[];
 }
