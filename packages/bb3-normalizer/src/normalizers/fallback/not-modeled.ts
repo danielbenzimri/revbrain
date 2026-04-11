@@ -102,6 +102,22 @@ export const NOT_MODELED_V1_TYPES = new Set<string>([
   // is quarantined as a deliberate "not via this alias" signal;
   // the full-form findings still produce IR nodes.
   'QuoteTemplate',
+  // Phase 4.1 CTO audit 2026-04-12 (round 2) — integrations.ts,
+  // localization.ts, and metadata.ts collectors can emit these
+  // artifactTypes on orgs with the relevant features. They are
+  // observability / sidecar findings consumed by the PDF layer
+  // (integrations summary, translation workbench section) or by
+  // `buildSchemaCatalogFromFindings` (ObjectConfiguration), and
+  // are not business-logic IR nodes. The current staging org does
+  // not emit any of them, but a different tenant might — quarantine
+  // them now so the coverage map stays explicit.
+  'ApexCallout',
+  'BillingDetection',
+  'ESignatureIntegration',
+  'ExperienceCloudSite',
+  'ExternalService',
+  'ObjectConfiguration',
+  'TranslationWorkbench',
 ]);
 
 /** Return true iff the finding's artifactType is on the not-modeled list. */
