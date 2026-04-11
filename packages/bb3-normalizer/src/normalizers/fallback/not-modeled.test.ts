@@ -20,8 +20,8 @@ function finding(artifactType: string): AssessmentFindingInput {
 describe('PH6.17 — not-modeled-v1 quarantine router', () => {
   const ctx = { catalog: prepareCatalog(), diagnostics: [] };
 
-  it('list has exactly 12 types (6 wave-1 + 5 EXT-1.7 + 1 EXT-1.2)', () => {
-    expect(NOT_MODELED_V1_TYPES.size).toBe(12);
+  it('list has exactly 18 types (6 wave-1 + 5 EXT-1.7 + 1 EXT-1.2 + 6 EXT-2.x)', () => {
+    expect(NOT_MODELED_V1_TYPES.size).toBe(18);
   });
 
   it.each([
@@ -39,6 +39,13 @@ describe('PH6.17 — not-modeled-v1 quarantine router', () => {
     'StaticResource',
     // EXT-1.2 — plugin activation sidecar findings
     'PluginActivation',
+    // EXT-2.x — Tier 2 inventory backlog
+    'EmailTemplate',
+    'CustomPermission',
+    'PermissionSetGroup',
+    'ScheduledApex',
+    'RemoteSiteSetting',
+    'CustomLabel',
   ])('routes %s to quarantine with reason not-modeled-v1', (t) => {
     expect(isNotModeledV1(t)).toBe(true);
     const result = normalizeNotModeled(finding(t), ctx);

@@ -108,6 +108,16 @@ export const COLLECTOR_REGISTRY: CollectorDefinition[] = [
     requires: ['discovery'],
     domain: 'customization',
   },
+  // EXT-2.x — Tier 2 inventory backlog: email templates, custom
+  // permissions + PSGs, scheduled Apex, remote site settings,
+  // custom labels. Inventory-only.
+  {
+    name: 'tier2-inventories',
+    tier: 'tier2',
+    timeoutMs: 5 * 60_000,
+    requires: ['discovery'],
+    domain: 'customization',
+  },
 ];
 
 /** Get collectors by tier */

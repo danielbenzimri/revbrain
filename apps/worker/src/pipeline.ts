@@ -29,6 +29,7 @@ import { ApprovalsCollector } from './collectors/approvals.ts';
 import { IntegrationsCollector } from './collectors/integrations.ts';
 import { LocalizationCollector } from './collectors/localization.ts';
 import { ComponentsCollector } from './collectors/components.ts';
+import { Tier2InventoriesCollector } from './collectors/tier2-inventories.ts';
 import { buildRelationships } from './normalize/relationships.ts';
 import { computeDerivedMetrics, computeAttachmentRates } from './normalize/metrics.ts';
 import { joinPluginActivation } from './normalize/plugin-activation.ts';
@@ -161,6 +162,7 @@ export async function runPipeline(ctx: CollectorContext): Promise<PipelineResult
     new IntegrationsCollector(ctx),
     new LocalizationCollector(ctx),
     new ComponentsCollector(ctx),
+    new Tier2InventoriesCollector(ctx),
   ];
 
   const phase3Collectors = [...tier1Collectors, ...tier2Collectors];

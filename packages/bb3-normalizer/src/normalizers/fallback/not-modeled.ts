@@ -35,6 +35,15 @@ export const NOT_MODELED_V1_TYPES = new Set<string>([
   // ApexClass finding's evidenceRefs. Quarantine them with reason
   // 'not-modeled-v1' for explicit accounting.
   'PluginActivation',
+  // EXT-2.x — Tier 2 inventory backlog. Quarantined explicitly so
+  // G1 conservation holds. Modeled in BB-3 v2 once BB-4
+  // segmentation surfaces a use case.
+  'EmailTemplate',
+  'CustomPermission',
+  'PermissionSetGroup',
+  'ScheduledApex',
+  'RemoteSiteSetting',
+  'CustomLabel',
 ]);
 
 /** Return true iff the finding's artifactType is on the not-modeled list. */

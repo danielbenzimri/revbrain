@@ -58,7 +58,7 @@ const ALLOWLIST = new Set([
   'customizations.ts:254:array slice — EXT-1.3 limit value pairs in evidence',
   // EXT-1.6 wave-2 — array slice bounding per-flow field-ref
   // evidence entries (the flow body itself uses truncateWithFlag):
-  'dependencies.ts:540:array slice — EXT-1.6 limit flow field references',
+  'dependencies.ts:537:array slice — EXT-1.6 limit flow field references',
 ]);
 
 const SLICE_PATTERN = /\.slice\(\s*0\s*,\s*\d+\s*\)/;
