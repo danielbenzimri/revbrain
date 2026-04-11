@@ -1,0 +1,72 @@
+# =============================================================================
+# Nightly — BB-3 determinism + golden regression
+# =============================================================================
+# Runs on: nightly cron + manual dispatch
+# Purpose: Regression-check the BB-3 normalizer's load-bearing
+#          invariants on a stable schedule, independent of feature
+#          PR pressure.
+#
+#   1. Determinism harness — proves canonicalJson + identityHash
+#      produce byte-identical output across re-runs (spec §6.2, A4).
+#   2. Staging golden file diff — proves the canonical IRGraph
+#      output for a checked-in fixture matches the snapshot
+#      committed in packages/bb3-normalizer/__tests__/fixtures/
+#      (spec PH7.12, A12). Catches accidental drift in any of the
+#      40 normalizers, the 9 pipeline stages, the descriptor table,
+#      or the parent-wiring rules.
+#   3. RCA-leakage lint — re-asserts the A14 grep contract.
+#
+# Replaces the "PH7.12 nightly regression seed" deferred item that
+# previously lived in docs/TECH-DEBT.md. Lives in the same workflow
+# as the determinism harness so they share Setup time.
+# =============================================================================
+
+name: Nightly BB-3 regression
+
+on:
+  schedule:
+    # 03:00 UTC daily — well after typical PR merges, well before
+    # the start of EU work hours so failures land in inbox at 09:00.
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: nightly-bb3-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: '22'
+
+jobs:
+  bb3-regression:
+    name: BB-3 determinism + golden + RCA-leakage
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Determinism harness (PH7.13, A4)
+        run: pnpm --filter @revbrain/bb3-normalizer test __tests__/determinism.test.ts
+
+      - name: Staging golden diff (PH7.12, A12)
+        run: pnpm --filter @revbrain/bb3-normalizer test __tests__/staging-golden.test.ts
+
+      - name: RCA-leakage lint (PH7.14, A14)
+        run: pnpm --filter @revbrain/bb3-normalizer test __tests__/rca-leakage-lint.test.ts
+
+      - name: Native-deps barrier check
+        run: node scripts/check-no-native-deps.mjs @revbrain/migration-ir-contract
