@@ -172,10 +172,12 @@ export function joinPluginActivation(
 
   const warnings: string[] = [];
   const newFindings: AssessmentFindingInput[] = [];
-  const updatedFindings: AssessmentFindingInput[] = findings.map((f) => ({
-    ...f,
-    evidenceRefs: [...f.evidenceRefs],
-  }));
+  // Track which findings need an `isActivePlugin` evidence-ref
+  // appended. Keyed by findingKey → list of `{path}` to add.
+  // Built up by the loop below; applied non-mutationally when we
+  // materialize `updatedFindings` at the end. This keeps the
+  // function pure: the input `findings` is never written to.
+  const activationsByKey = new Map<string, string[]>();
 
   // Use the latest registration map. OQ-3 resolution: defer the
   // versioned-map switch until we hit an org that needs it.
@@ -245,7 +247,10 @@ export function joinPluginActivation(
         artifactType: 'PluginActivation',
         artifactName: reg.label,
         artifactId: path,
-        findingKey: `plugin-activation:orphaned:${path}`,
+        // Include the registered class name in the key so two
+        // re-runs against the same path with different class
+        // values produce distinct findings (per §8.3 distinctness).
+        findingKey: `plugin-activation:orphaned:${path}:${value}`,
         sourceType: 'object',
         detected: true,
         riskLevel: 'high',
@@ -268,20 +273,33 @@ export function joinPluginActivation(
       continue;
     }
 
-    // Found the active plugin — mutate the corresponding finding
-    // in the updatedFindings array (find by findingKey for
-    // determinism — we built updatedFindings as a copy of findings
-    // so indices match).
+    // Found the active plugin — record the activation. We do NOT
+    // mutate `match` directly; instead we accumulate per-finding
+    // activations and rebuild `updatedFindings` once at the end so
+    // the function stays pure (no side effects on the input array).
     activePluginCount++;
-    const idx = findings.indexOf(match);
-    if (idx >= 0) {
-      updatedFindings[idx]!.evidenceRefs.push({
-        type: 'field-ref',
-        value: path,
-        label: 'isActivePlugin',
-      });
-    }
+    const list = activationsByKey.get(match.findingKey) ?? [];
+    list.push(path);
+    activationsByKey.set(match.findingKey, list);
   }
+
+  // Materialize the updated findings non-mutationally. Findings
+  // not in `activationsByKey` round-trip unchanged.
+  const updatedFindings: AssessmentFindingInput[] = findings.map((f) => {
+    const activations = activationsByKey.get(f.findingKey);
+    if (!activations || activations.length === 0) return f;
+    return {
+      ...f,
+      evidenceRefs: [
+        ...f.evidenceRefs,
+        ...activations.map((path) => ({
+          type: 'field-ref' as const,
+          value: path,
+          label: 'isActivePlugin',
+        })),
+      ],
+    };
+  });
 
   return {
     newFindings,

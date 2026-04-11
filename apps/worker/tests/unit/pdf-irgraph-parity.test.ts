@@ -158,6 +158,49 @@ describe('PDF ↔ IRGraph parity (CTO directive 2026-04-11)', () => {
     expect(irFlowCount).toBe(report.counts.flowCountCpqRelated);
   });
 
+  it('EXT-1.1 NEGATIVE — sidecar finding with NO textValue but interfaceName evidence still produces implementedInterfaces', async () => {
+    // This is the round-trip case the wave-1 self-review caught:
+    // when the worker emits the cpq_apex_plugin sidecar finding
+    // with the body stripped (size budget, etc.) and only the
+    // interfaceName lives in evidenceRefs, the BB-3 normalizer
+    // MUST still surface implementedInterfaces from the evidence.
+    // Pre-fix the normalizer regex on textValue=undefined returned
+    // [] and the merge silently dropped the interface.
+    const findings: AssessmentFindingInput[] = [
+      {
+        domain: 'dependency',
+        collectorName: 'dependencies',
+        artifactType: 'ApexClass',
+        artifactName: 'BodyStrippedPlugin',
+        artifactId: 'a01000000000002',
+        findingKey:
+          'dependencies:ApexClass:a01000000000002:cpq_apex_plugin:SBQQ.QuoteCalculatorPluginInterface',
+        sourceType: 'tooling',
+        // No textValue. Sidecar finding only.
+        evidenceRefs: [
+          {
+            type: 'object-ref',
+            value: 'SBQQ.QuoteCalculatorPluginInterface',
+            label: 'interfaceName',
+          },
+        ],
+        schemaVersion: '1.0',
+      },
+    ];
+    const result = await normalize(findings, {
+      extractedAt: '2026-04-11T00:00:00Z',
+      maxInvalidRate: 1,
+    });
+    const apexNodes = result.graph.nodes.filter(
+      (n): n is typeof n & { implementedInterfaces: string[] } =>
+        n.nodeType === 'Automation' &&
+        'sourceType' in n &&
+        (n as { sourceType?: string }).sourceType === 'ApexClass'
+    );
+    expect(apexNodes.length).toBe(1);
+    expect(apexNodes[0]!.implementedInterfaces).toEqual(['SBQQ.QuoteCalculatorPluginInterface']);
+  });
+
   it('EXT-1.1 — Apex class implementing a CPQ plugin interface produces an IR node with implementedInterfaces populated', async () => {
     // Synthetic finding pair: an apex_cpq_related finding for a class
     // that implements SBQQ.QuoteCalculatorPluginInterface, plus the

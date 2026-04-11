@@ -48,11 +48,19 @@ export function isApexTestClass(body: string): boolean {
  * RCA mapping complexity is consumed by the report layer + BB-5.
  *
  * Add new interfaces here as Salesforce ships them — the regex in
- * `detectCpqPluginInterfaces` accepts any matching shape, but only
- * interfaces present in this map get classified with a target.
+ * `detectCpqPluginInterfaces` (re-exported from
+ * `@revbrain/migration-ir-contract`) accepts any matching shape,
+ * but only interfaces present in this map get classified with a
+ * target.
+ *
+ * The detection regex itself was moved to
+ * `@revbrain/migration-ir-contract/detection/cpq-plugin-interface.ts`
+ * during the wave-1 self-review (CTO directive 2026-04-11) so the
+ * worker and the BB-3 normalizer share a single source of truth.
  */
+type RcaMappingComplexity = 'direct' | 'transform' | 'redesign' | 'no-equivalent';
 export const CPQ_PLUGIN_INTERFACE_MAP: Readonly<
-  Record<string, { rcaTargetConcept: string; rcaMappingComplexity: string }>
+  Record<string, { rcaTargetConcept: string; rcaMappingComplexity: RcaMappingComplexity }>
 > = Object.freeze({
   // SBQQ (CPQ core)
   'SBQQ.QuoteCalculatorPluginInterface': {
@@ -91,43 +99,17 @@ export const CPQ_PLUGIN_INTERFACE_MAP: Readonly<
 });
 
 /**
- * EXT-1.1 — Detect CPQ plugin interfaces implemented by an Apex
- * class. Returns the list of fully-qualified interface names
- * found in the body via `implements ... PluginInterface | Condition`.
+ * EXT-1.1 — Re-export of the shared detector that lives in
+ * `@revbrain/migration-ir-contract`. The worker and the BB-3
+ * normalizer both call THIS function so the worker's emitted
+ * `cpq_apex_plugin` finding and the BB-3-derived
+ * `implementedInterfaces` field always agree byte-for-byte.
  *
- * The pre-fix collector classified Apex classes by substring
- * matching on field names (e.g. "mentions SBQQ__Quote__c" →
- * "pricing"). That heuristic could not distinguish a utility class
- * that happens to read SBQQ fields from THE class registered as
- * the active Quote Calculator Plugin. After this fix, plugin
- * implementations get a separate finding (in addition to the
- * existing apex_cpq_related finding) so the report and BB-3 can
- * answer "which Apex class IS the active QCP?"
- *
- * Detection is regex-based, intentionally — Apex tree-sitter is
- * reserved for the BB-3b QCP AST work per spec §14.4. The regex
- * accepts:
- *   class Foo implements SBQQ.QuoteCalculatorPluginInterface { ... }
- *   class Foo implements sbaa.ApprovalChainCustomCondition, Other { ... }
- * but NOT comments or strings (basic word-boundary discipline).
- *
- * Returns an empty array if no plugin interface is implemented.
+ * Pre-fix the regex was duplicated between this module and
+ * `packages/bb3-normalizer/src/normalizers/automation/apex-class.ts`.
+ * The wave-1 self-review caught the drift risk and consolidated
+ * to a single source. See spec §6.3 (contract package thinness):
+ * the regex has zero runtime deps so it's allowed in the
+ * migration-ir-contract package.
  */
-export function detectCpqPluginInterfaces(body: string): string[] {
-  const matches = new Set<string>();
-  // implements <Iface> [, <Iface2>] ... { — capture the interface
-  // list, then split on commas to handle multi-interface classes.
-  const implementsPattern =
-    /\bimplements\s+([\w.,\s]*?)(?=\{|\bextends\b|\bwith\s+sharing\b|\bwithout\s+sharing\b|\binherited\s+sharing\b|;)/gi;
-  for (const m of body.matchAll(implementsPattern)) {
-    const ifaceList = m[1]!;
-    for (const rawIface of ifaceList.split(',')) {
-      const iface = rawIface.trim();
-      // Only flag the SBQQ.* / sbaa.* namespaced interfaces.
-      if (/^(SBQQ|sbaa)\.[A-Za-z_][A-Za-z0-9_]*$/.test(iface)) {
-        matches.add(iface);
-      }
-    }
-  }
-  return [...matches].sort();
-}
+export { detectCpqPluginInterfaces } from '@revbrain/migration-ir-contract';

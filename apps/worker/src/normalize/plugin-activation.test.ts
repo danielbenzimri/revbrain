@@ -95,7 +95,9 @@ describe('joinPluginActivation', () => {
     expect(result.warnings[0]).toContain('GhostClass');
 
     const orphaned = result.newFindings.find(
-      (f) => f.findingKey === 'plugin-activation:orphaned:SBQQ__Plugin__c.SBQQ__QuoteCalculator__c'
+      (f) =>
+        f.findingKey ===
+        'plugin-activation:orphaned:SBQQ__Plugin__c.SBQQ__QuoteCalculator__c:GhostClass'
     );
     expect(orphaned).toBeDefined();
     expect(orphaned!.riskLevel).toBe('high');
@@ -122,9 +124,32 @@ describe('joinPluginActivation', () => {
     expect(findings[0]!.evidenceRefs.length).toBe(originalEvidenceCount);
   });
 
-  it('emits a degraded warning when an unknown CPQ version is supplied', () => {
+  it('emits a degraded warning AND remains functional when an unknown CPQ version is supplied', () => {
     const result = joinPluginActivation([], { cpqVersion: 'WinterFake' });
+    // Warning emitted.
     expect(result.warnings.some((w) => w.includes('WinterFake'))).toBe(true);
+    // Still produces unset findings for every entry in the
+    // registration map (graceful degradation, not a hard fail).
+    expect(result.newFindings.length).toBeGreaterThanOrEqual(6);
+    expect(result.stats.unsetPluginCount).toBeGreaterThanOrEqual(6);
+  });
+
+  it('orphaned finding key includes the registered class value (distinctness across re-runs)', () => {
+    const r1 = joinPluginActivation([
+      settingFinding('SBQQ__Plugin__c.SBQQ__QuoteCalculator__c', 'GhostA'),
+    ]);
+    const r2 = joinPluginActivation([
+      settingFinding('SBQQ__Plugin__c.SBQQ__QuoteCalculator__c', 'GhostB'),
+    ]);
+    const orphan1 = r1.newFindings.find((f) =>
+      f.findingKey.startsWith('plugin-activation:orphaned:')
+    )!;
+    const orphan2 = r2.newFindings.find((f) =>
+      f.findingKey.startsWith('plugin-activation:orphaned:')
+    )!;
+    expect(orphan1.findingKey).not.toBe(orphan2.findingKey);
+    expect(orphan1.findingKey).toContain('GhostA');
+    expect(orphan2.findingKey).toContain('GhostB');
   });
 
   it('handles multiple plugins for the same class (multi-interface implementer)', () => {

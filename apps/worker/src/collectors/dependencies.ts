@@ -201,13 +201,7 @@ export class DependenciesCollector extends BaseCollector {
                 complexityLevel: 'high',
                 migrationRelevance: 'must-migrate',
                 rcaTargetConcept: mapping?.rcaTargetConcept,
-                rcaMappingComplexity:
-                  (mapping?.rcaMappingComplexity as
-                    | 'direct'
-                    | 'transform'
-                    | 'redesign'
-                    | 'no-equivalent'
-                    | undefined) ?? 'redesign',
+                rcaMappingComplexity: mapping?.rcaMappingComplexity ?? 'redesign',
                 notes: `Implements CPQ plugin interface: ${iface}`,
                 evidenceRefs: [
                   {

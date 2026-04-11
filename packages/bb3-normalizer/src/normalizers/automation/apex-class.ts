@@ -15,32 +15,42 @@
  */
 
 /**
- * EXT-1.1 — Detect implemented CPQ plugin interfaces from source.
- * The worker emits a sibling `cpq_apex_plugin` finding with the
- * same artifactId for each detected interface, but BB-3 cannot
- * import from the worker (BB-3 must stay independent), so we
- * re-derive deterministically from the source. Pure regex match
- * on `implements (SBQQ|sbaa).*Interface` — same convention as
- * the existing `@isTest` and `SBQQ.TriggerControl` detection
- * inlined in this normalizer.
+ * EXT-1.1 — Resolve `implementedInterfaces` from BOTH the source
+ * regex AND any sidecar `interfaceName` evidenceRefs the worker
+ * dependencies collector emitted on the SAME finding (or merged
+ * findings of the same identity).
+ *
+ * **Why both:** the worker emits two findings per Apex class with
+ * a plugin interface — one `apex_cpq_related` (with the full
+ * source body in `textValue`) and one `cpq_apex_plugin` per
+ * interface (with the interface name in `evidenceRefs[].label`
+ * and `evidenceRefs[].value`, but typically NO `textValue`).
+ * If only the sidecar finding survives — for example because the
+ * primary finding's body was stripped due to budget/size — and
+ * the normalizer reads the regex alone, it gets `[]` and the
+ * resulting node silently drops the interface info.
+ *
+ * The wave-1 self-review (CTO directive 2026-04-11) caught this:
+ * the parity test was passing only because both findings had the
+ * source available. Reading evidenceRefs as a secondary source
+ * makes the round-trip robust to missing-body cases.
+ *
+ * Returns the sorted union, deduplicated.
  */
-function detectImplementedInterfaces(rawSource: string): string[] {
-  const matches = new Set<string>();
-  const implementsPattern =
-    /\bimplements\s+([\w.,\s]*?)(?=\{|\bextends\b|\bwith\s+sharing\b|\bwithout\s+sharing\b|\binherited\s+sharing\b|;)/gi;
-  for (const m of rawSource.matchAll(implementsPattern)) {
-    for (const rawIface of m[1]!.split(',')) {
-      const iface = rawIface.trim();
-      if (/^(SBQQ|sbaa)\.[A-Za-z_][A-Za-z0-9_]*$/.test(iface)) {
-        matches.add(iface);
-      }
+function resolveImplementedInterfaces(finding: AssessmentFindingInput): string[] {
+  const fromSource = detectCpqPluginInterfaces(finding.textValue ?? '');
+  const fromEvidence: string[] = [];
+  for (const ref of finding.evidenceRefs) {
+    if (ref.label === 'interfaceName' && /^(SBQQ|sbaa)\.[A-Za-z_][A-Za-z0-9_]*$/.test(ref.value)) {
+      fromEvidence.push(ref.value);
     }
   }
-  return [...matches].sort();
+  return [...new Set([...fromSource, ...fromEvidence])].sort();
 }
 
 import type { AssessmentFindingInput } from '@revbrain/contract';
 import type { ApexClassAutomationIR, FieldRefIR, NodeRef } from '@revbrain/migration-ir-contract';
+import { detectCpqPluginInterfaces } from '@revbrain/migration-ir-contract';
 import type { NormalizerFn } from '../registry.ts';
 import { buildBaseNode } from '../base.ts';
 import { createGlobalBudgetState, parseApexClass } from '../../parsers/apex.ts';
@@ -61,7 +71,7 @@ export const normalizeApexClass: NormalizerFn = (finding: AssessmentFindingInput
   const rawSource = finding.textValue ?? '';
   const lineCount = rawSource.split('\n').length;
 
-  const implementedInterfaces = detectImplementedInterfaces(rawSource);
+  const implementedInterfaces = resolveImplementedInterfaces(finding);
   const stableIdentity = { sourceType: 'ApexClass' as const, developerName };
   const semanticPayload = {
     ...stableIdentity,

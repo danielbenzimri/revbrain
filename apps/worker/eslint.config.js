@@ -9,6 +9,21 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
+    // EXT-CC6 — Node scripts (.mjs) need the same node globals
+    // as TypeScript collectors. Without this, lint-truncation-
+    // discipline.mjs (which uses URL, console, process) errors
+    // out with `no-undef`.
+    files: ['**/*.mjs'],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'module',
+      globals: {
+        ...globals.node,
+        ...globals.es2022,
+      },
+    },
+  },
+  {
     files: ['**/*.{ts,tsx}'],
     languageOptions: {
       ecmaVersion: 2022,

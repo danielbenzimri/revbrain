@@ -16,7 +16,7 @@
     "dev": "tsx watch src/index.ts",
     "local:db": "tsx watch src/index.ts",
     "build": "tsc",
-    "lint": "eslint . && tsc --noEmit",
+    "lint": "eslint . && tsc --noEmit && node scripts/lint-truncation-discipline.mjs",
     "test": "vitest run",
     "test:unit": "vitest run tests/unit/",
     "test:integration": "vitest run tests/integration/",

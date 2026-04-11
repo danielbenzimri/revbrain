@@ -26,3 +26,6 @@ export * from './types/quarantine.ts';
 export * from './types/graph.ts';
 export * from './types/schema-version.ts';
 export * from './types/blob-ref.ts';
+
+// EXT-1.1 — shared CPQ plugin-interface detection (zero deps)
+export * from './detection/cpq-plugin-interface.ts';
