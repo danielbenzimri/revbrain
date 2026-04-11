@@ -400,10 +400,21 @@ export class DependenciesCollector extends BaseCollector {
       }
 
       // Create findings for CPQ-related flows
+      let flowBodyFetchFailed = 0;
       for (const f of cpqFlows) {
         const activeId = f.ActiveVersionId as string | undefined;
         const md = activeId ? flowMetadataById.get(activeId) : undefined;
         const metadata = md?.Metadata ?? null;
+        // EXT-1.6 wave-2 fix — track per-flow body fetch status.
+        // Inactive flows (no ActiveVersionId) get bodyFetchStatus
+        // 'no-active-version' to distinguish from genuine fetch
+        // failures.
+        const bodyFetchStatus: 'ok' | 'failed' | 'no-active-version' = !activeId
+          ? 'no-active-version'
+          : metadata
+            ? 'ok'
+            : 'failed';
+        if (bodyFetchStatus === 'failed') flowBodyFetchFailed++;
 
         // EXT-1.6 — element-count complexity. Sum the array
         // lengths for the well-known element categories. The
@@ -445,6 +456,34 @@ export class DependenciesCollector extends BaseCollector {
         const metadataJson = metadata ? JSON.stringify(metadata) : '';
         const truncated = truncateWithFlag(metadataJson, 262_144); // 256 KB
 
+        // EXT-1.6 wave-2 fix — extract field references from the
+        // flow metadata so the BB-3 normalizer + downstream BBs
+        // do not have to re-parse the JSON blob from textValue.
+        // The regex matches CPQ-style field API names; it's a
+        // best-effort scan, not a full Flow parser.
+        const fieldRefs = metadata
+          ? [
+              ...new Set(
+                metadataJson.match(/\b[A-Z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)*__[a-z]\b/g) ??
+                  []
+              ),
+            ]
+          : [];
+
+        const flowEvidenceRefs: AssessmentFindingInput['evidenceRefs'] = [
+          // EXT-1.6 wave-2 fix — bodyFetchStatus convention.
+          {
+            type: 'field-ref' as const,
+            value: 'bodyFetchStatus',
+            label: bodyFetchStatus,
+          },
+          ...fieldRefs.slice(0, 50).map((field) => ({
+            type: 'field-ref' as const,
+            value: field,
+            label: 'flow-element-ref',
+          })),
+        ];
+
         findings.push(
           createFinding({
             domain: 'dependency',
@@ -473,9 +512,11 @@ export class DependenciesCollector extends BaseCollector {
               (truncated.wasTruncated
                 ? ` (textValue truncated from ${truncated.originalBytes} bytes)`
                 : ''),
+            evidenceRefs: flowEvidenceRefs,
           })
         );
       }
+      metrics.flowBodyFetchFailed = flowBodyFetchFailed;
 
       // Also create summary findings for non-CPQ flows (visible in report)
       const nonCpqFlowCount = allFlows.length - cpqFlows.length;

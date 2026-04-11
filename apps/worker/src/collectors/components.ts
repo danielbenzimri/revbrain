@@ -52,19 +52,14 @@ const TEXT_EXTENSIONS = new Set([
 /** Per-component textValue truncation cap. */
 const COMPONENT_BODY_CAP_BYTES = 262_144; // 256 KB
 
-// Static resource per-resource cap (1 MB, gaps-doc OQ-2 default).
-// Currently unused — body fetch deferred until SF client gains
-// raw-bytes support. Reserved here for the follow-up.
-const _STATIC_RESOURCE_CAP_BYTES = 1_048_576;
-void _STATIC_RESOURCE_CAP_BYTES;
-
 /**
- * Magic-byte sniff for known binary formats. The v1.1 fix
- * specifically calls out PNG / JPEG / ZIP / PDF as the formats
- * Salesforce Static Resources commonly hold and that should NOT
- * be body-extracted regardless of name extension.
+ * Magic-byte sniff for known binary formats. Exported so the
+ * follow-up SF-client raw-bytes refactor can wire it back into
+ * `extractStaticResources` without re-deriving the byte patterns.
+ * Currently unused at runtime (static resource body fetch is
+ * deferred — see the comment in `extractStaticResources`).
  */
-function isBinaryByMagic(body: Buffer): boolean {
+export function isBinaryByMagic(body: Buffer): boolean {
   if (body.length < 4) return false;
   const b0 = body[0]!,
     b1 = body[1]!,
@@ -510,11 +505,9 @@ export class ComponentsCollector extends BaseCollector {
   }
 }
 
-// EXT-1.7c follow-up: Static resource body fetch is deferred until
+// EXT-1.7c follow-up: static resource body fetch is deferred until
 // the SF REST client is extended to handle raw-bytes responses
-// (separate refactor — see TECH-DEBT.md). Until then we mark binary
-// resources via name-extension only and ship inventory.
-//
-// Reference helper kept for the future client refactor: walks the
-// first 4 bytes for known binary magic numbers.
-void isBinaryByMagic;
+// (separate refactor). The `isBinaryByMagic` helper above is
+// exported for that follow-up — once raw-bytes lands, the static
+// resource extractor can fetch the body and use the helper to
+// reject binaries.

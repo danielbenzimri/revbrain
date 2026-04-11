@@ -240,6 +240,17 @@ export class CustomizationsCollector extends BaseCollector {
                       value: apiName,
                       label: recDevName,
                     },
+                    // EXT-1.3 wave-2 fix — emit MasterLabel as a
+                    // structured evidence-ref so the BB-3 normalizer
+                    // does not have to parse it back out of `notes`
+                    // (notes is human-readable, not load-bearing).
+                    // The normalizer reads `interfaceName: 'masterLabel'`
+                    // by convention.
+                    {
+                      type: 'field-ref' as const,
+                      value: 'masterLabel',
+                      label: (rec.MasterLabel as string) ?? recDevName,
+                    },
                     ...valuePairs.slice(0, 30).map((p) => ({
                       type: 'field-ref' as const,
                       value: `${apiName}.${p.field}`,
@@ -345,11 +356,17 @@ export class CustomizationsCollector extends BaseCollector {
         metrics.validationRulesWithFormulaBody = 0;
       }
 
+      let vrBodyFetchFailed = 0;
       for (const vr of allVRs) {
         const entity = vr._entity as string;
         const id = vr.Id as string;
         const md = formulaByVrId.get(id);
         const formula = md?.Metadata?.errorConditionFormula ?? '';
+        // EXT-1.4 wave-2 fix — track per-VR fetch status so the
+        // metric is the truth, not "validationRulesWithFormulaBody"
+        // which is silently undercounted when chunks fail.
+        const bodyFetchSucceeded = formulaByVrId.has(id);
+        if (!bodyFetchSucceeded) vrBodyFetchFailed++;
         // Extract field references from the formula via the same
         // pattern used elsewhere in the codebase. The regex matches
         // both bare field names (`SBQQ__NetAmount__c`) and dotted
@@ -372,6 +389,14 @@ export class CustomizationsCollector extends BaseCollector {
             label: vr.ValidationName as string,
             referencedObjects: [entity],
             referencedFields: fieldRefs.length > 0 ? fieldRefs : undefined,
+          },
+          // EXT-1.4 wave-2 fix — bodyFetchStatus convention. The
+          // BB-3 normalizer + downstream BBs read this to know
+          // whether textValue is authoritative or absent.
+          {
+            type: 'field-ref' as const,
+            value: 'bodyFetchStatus',
+            label: bodyFetchSucceeded ? 'ok' : 'failed',
           },
         ];
         // Add a separate field-ref entry per parsed field name so
@@ -408,6 +433,12 @@ export class CustomizationsCollector extends BaseCollector {
           })
         );
       }
+      // EXT-1.4 wave-2 fix — surface the failed-fetch counter so
+      // the pre-existing `validationRulesWithFormulaBody` metric
+      // is not silently undercounted when chunks fail. The counter
+      // + per-finding bodyFetchStatus evidenceRefs together give
+      // downstream BBs the truth about coverage.
+      metrics.validationRulesBodyFetchFailed = vrBodyFetchFailed;
     } catch (err) {
       this.log.warn({ error: (err as Error).message }, 'validation_rules_extraction_failed');
     }

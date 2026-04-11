@@ -42,9 +42,17 @@ export const normalizeCustomMetadataRecord: NormalizerFn = (finding: AssessmentF
   const developerName = parts[1] ?? finding.artifactName;
   const parentTypeName = `${parentTypeDevName}__mdt`;
 
-  // The MasterLabel ends up in `notes` per the EXT-1.3 collector.
-  // Best-effort extraction; fall back to developerName.
-  const label = finding.notes?.split('record:')[1]?.trim() ?? developerName;
+  // EXT-1.3 wave-2 fix — read MasterLabel from a structured
+  // evidence-ref the collector emits with `value: 'masterLabel'`
+  // (the older normalizer parsed `notes.split('record:')[1]` which
+  // coupled the consumer to the producer's free-text format and
+  // broke contentHash determinism if anyone touched the notes
+  // string). Fall back to developerName if the ref is missing
+  // (e.g. for findings emitted by an older collector version).
+  const labelRef = finding.evidenceRefs.find(
+    (r) => r.type === 'field-ref' && r.value === 'masterLabel'
+  );
+  const label = labelRef?.label ?? developerName;
 
   // Field values come from the field-ref evidenceRefs the
   // collector emits. Each ref carries `value: '<typeApi>.<field>'`
