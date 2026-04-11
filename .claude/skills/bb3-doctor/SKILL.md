@@ -68,6 +68,17 @@ Run in parallel via the `Grep` tool. Report violations with `file:line`.
 - **Rationale:** all timing lives in `NormalizeResult.runtimeStats`, NOT on the graph.
 - **Spec:** §5.1, §5.6
 
+### C8 — Graph-structure invariants file exists and is load-bearing
+
+- **Required file:** `packages/bb3-normalizer/__tests__/invariants/graph-structure.test.ts`
+- **Must contain:**
+  - A reference to `PARENT_WIRING_RULES` (the parent-lookup table) so the test stays tied to the wiring contract
+  - A reference to `DEFAULT_NODE_REF_DESCRIPTORS` (the edge descriptor table) so the test stays tied to the projector contract
+  - An assertion of the form `edges.length).toBeGreaterThan` (I4 — edges must emerge on non-trivial input)
+- **Rationale:** on 2026-04-11 a real staging run produced 3102 nodes and ZERO edges. The §8.3 class of bug (validator passes on structurally-broken data) fires because none of the V1–V8 validator rules look at `edges.length`. Phase 4.1 / decision 4 made the I4/I5/I6 invariants executable in this file. This check is the "don't delete or weaken" guard — the real runtime enforcement happens when `pnpm test` runs the file as part of `/ship-it`.
+- **Expected:** file exists and all three strings are present
+- **Spec:** `docs/PDF-AND-GRAPH-DECISIONS.md` decision 4
+
 ## Report format
 
 ```
@@ -80,6 +91,7 @@ C4 (contract deps):           [OK] clean | [FAIL] <package>
 C5 (string[] vs NodeRef[]):   [OK] clean | [FAIL] <file:line>
 C6 (wall-clock timeouts):     [OK] clean | [FAIL] <file:line>
 C7 (graph timing fields):     [OK] clean | [FAIL] <field>
+C8 (graph-structure invariants file): [OK] present | [FAIL] <missing content>
 
 Verdict: CLEAN | DIRTY
 ```

@@ -132,12 +132,14 @@ export class PricingCollector extends BaseCollector {
         'SBQQ__PriceCondition__c',
         [
           'Id',
+          'Name',
           'SBQQ__Rule__c',
           'SBQQ__Field__c',
           'SBQQ__Object__c',
           'SBQQ__Operator__c',
           'SBQQ__Value__c',
           'SBQQ__FilterType__c',
+          'SBQQ__Index__c',
           'SBQQ__TestedField__c',
           'SBQQ__TestedVariable__c',
         ],
@@ -155,6 +157,34 @@ export class PricingCollector extends BaseCollector {
           contextFields.add(`${c.SBQQ__Object__c || 'Quote'}.${c.SBQQ__TestedField__c}`);
         if (c.SBQQ__Field__c) contextFields.add(`Quote.${c.SBQQ__Field__c}`);
       }
+
+      // Phase 4.1 (BB-3 graph edges) — emit one finding per condition
+      // so the pricing normalizer can produce PriceCondition nodes and
+      // Stage 4 parent-lookup can wire them under PricingRule.conditions.
+      // Without this, PriceConditions are silently dropped and the
+      // graph shows PricingRule parents with empty conditions arrays
+      // (and therefore zero projected edges).
+      for (const c of conditions) {
+        const parentRuleId = (c.SBQQ__Rule__c as string | null) ?? null;
+        if (!parentRuleId) continue;
+        const sbqqIndex = (c.SBQQ__Index__c as number | null) ?? null;
+        findings.push(
+          createFinding({
+            domain: 'pricing',
+            collector: 'pricing',
+            artifactType: 'SBQQ__PriceCondition__c',
+            artifactName: (c.Name as string) ?? `Condition ${sbqqIndex ?? c.Id}`,
+            artifactId: c.Id as string,
+            findingType: 'price_condition',
+            sourceType: 'object',
+            migrationRelevance: 'must-migrate',
+            countValue: sbqqIndex ?? undefined,
+            textValue: (c.SBQQ__Value__c as string | null) ?? undefined,
+            notes: (c.SBQQ__Operator__c as string | null) ?? undefined,
+            evidenceRefs: [{ type: 'record-id', value: parentRuleId }],
+          })
+        );
+      }
     }
 
     // ================================================================
@@ -169,6 +199,7 @@ export class PricingCollector extends BaseCollector {
         'SBQQ__PriceAction__c',
         [
           'Id',
+          'Name',
           'SBQQ__Rule__c',
           'SBQQ__Field__c',
           'SBQQ__Formula__c',
@@ -189,6 +220,35 @@ export class PricingCollector extends BaseCollector {
       for (const a of actions) {
         if (a.SBQQ__Field__c)
           contextFields.add(`${a.SBQQ__TargetObject__c || 'QuoteLine'}.${a.SBQQ__Field__c}`);
+      }
+
+      // Phase 4.1 — emit one finding per price action so the
+      // normalizer can produce PriceAction nodes and Stage 4 can
+      // wire them under PricingRule.actions (see comment above for
+      // conditions — same rationale).
+      for (const a of actions) {
+        const parentRuleId = (a.SBQQ__Rule__c as string | null) ?? null;
+        if (!parentRuleId) continue;
+        const order = (a.SBQQ__Order__c as number | null) ?? null;
+        findings.push(
+          createFinding({
+            domain: 'pricing',
+            collector: 'pricing',
+            artifactType: 'SBQQ__PriceAction__c',
+            artifactName: (a.Name as string) ?? `Action ${order ?? a.Id}`,
+            artifactId: a.Id as string,
+            findingType: 'price_action',
+            sourceType: 'object',
+            migrationRelevance: 'must-migrate',
+            countValue: order ?? undefined,
+            textValue:
+              (a.SBQQ__Value__c as string | null) ??
+              (a.SBQQ__Formula__c as string | null) ??
+              undefined,
+            notes: (a.SBQQ__Field__c as string | null) ?? undefined,
+            evidenceRefs: [{ type: 'record-id', value: parentRuleId }],
+          })
+        );
       }
     }
 
@@ -237,6 +297,7 @@ export class PricingCollector extends BaseCollector {
           'SBQQ__DiscountTier__c',
           [
             'Id',
+            'Name',
             'SBQQ__Schedule__c',
             'SBQQ__Discount__c',
             'SBQQ__LowerBound__c',
@@ -250,6 +311,32 @@ export class PricingCollector extends BaseCollector {
           this.signal
         );
         metrics.totalDiscountTiers = tiers.length;
+
+        // Phase 4.1 — emit one finding per tier so the normalizer can
+        // produce DiscountTier nodes and Stage 4 can wire them under
+        // DiscountSchedule.tiers.
+        for (const t of tiers) {
+          const parentScheduleId = (t.SBQQ__Schedule__c as string | null) ?? null;
+          if (!parentScheduleId) continue;
+          const lower = (t.SBQQ__LowerBound__c as number | null) ?? null;
+          const upper = (t.SBQQ__UpperBound__c as number | null) ?? null;
+          const discount = (t.SBQQ__Discount__c as number | null) ?? null;
+          findings.push(
+            createFinding({
+              domain: 'pricing',
+              collector: 'pricing',
+              artifactType: 'SBQQ__DiscountTier__c',
+              artifactName: (t.Name as string) ?? `Tier ${lower ?? ''}-${upper ?? ''}`,
+              artifactId: t.Id as string,
+              findingType: 'discount_tier',
+              sourceType: 'object',
+              migrationRelevance: 'must-migrate',
+              countValue: lower ?? undefined,
+              textValue: discount !== null ? String(discount) : undefined,
+              evidenceRefs: [{ type: 'record-id', value: parentScheduleId }],
+            })
+          );
+        }
       }
 
       for (const s of schedules) {

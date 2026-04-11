@@ -28,6 +28,8 @@ export * from './stages/s2-group-index.ts';
 export * from './stages/s2-5-schema-catalog.ts';
 export * from './normalizers/registry.ts';
 export * from './stages/s4-resolve-refs.ts';
+export * from './stages/parent-lookup.ts';
+export * from './stages/default-descriptors.ts';
 export * from './stages/s5-parse-code.ts';
 export * from './stages/s6-detect-cycles.ts';
 export * from './stages/s7-build-index.ts';

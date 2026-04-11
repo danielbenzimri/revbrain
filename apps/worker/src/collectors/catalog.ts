@@ -221,6 +221,43 @@ export class CatalogCollector extends BaseCollector {
           evidenceRefs: productEvidenceRefs,
         })
       );
+
+      // Phase 4.1 — for bundle-capable products (ConfigurationType =
+      // Required or Allowed), also emit a BundleStructure finding so
+      // BB-3 produces a BundleStructure node that Stage 4 parent-lookup
+      // can use as the parent target for BundleOption / BundleFeature
+      // children. Without this, the graph has the product and the
+      // children but no bundle container → zero parent-of edges to
+      // options and features. Keyed by the product's ProductCode so
+      // both the bundle-structure normalizer AND the bundle-option /
+      // bundle-feature normalizers resolve against the same
+      // `bundle:${productCode}` synthetic id.
+      const isBundleCapable =
+        p.SBQQ__ConfigurationType__c === 'Required' || p.SBQQ__ConfigurationType__c === 'Allowed';
+      if (isBundleCapable) {
+        const productCode = (p.ProductCode as string | null) ?? (p.Id as string);
+        findings.push(
+          createFinding({
+            domain: 'catalog',
+            collector: 'catalog',
+            artifactType: 'BundleStructure',
+            artifactName: p.Name as string,
+            artifactId: p.Id as string,
+            findingType: 'bundle_structure',
+            sourceType: 'object',
+            complexityLevel: 'medium',
+            migrationRelevance: 'must-migrate',
+            notes: (p.SBQQ__ConfigurationType__c as string | null) ?? undefined,
+            evidenceRefs: [
+              {
+                type: 'field-ref',
+                value: 'Product2.ProductCode',
+                label: productCode,
+              },
+            ],
+          })
+        );
+      }
     }
 
     // Flag products with blank Family for data quality
@@ -415,6 +452,43 @@ export class CatalogCollector extends BaseCollector {
           })
         );
       }
+
+      // Phase 4.1 — emit one finding per feature so BB-3 produces
+      // BundleFeature nodes and Stage 4 parent-lookup can wire them
+      // under BundleStructure.features. The normalizer reads the
+      // parent's productCode from the `object-ref` evidenceRef, so
+      // we translate SBQQ__ConfiguredSKU__c (a Product2 Id) to its
+      // ProductCode via the products map. Features whose parent is
+      // not in the catalog (managed package, deleted) are skipped.
+      const productByIdForFeatures = new Map<string, Record<string, unknown>>();
+      for (const p of products) {
+        // allow-slice: normalize 18-char SF id to 15-char case-sensitive form
+        productByIdForFeatures.set((p.Id as string).slice(0, 15), p);
+      }
+      for (const f of features) {
+        // allow-slice: normalize 18-char SF id to 15-char case-sensitive form
+        const parentId15 = String(f.SBQQ__ConfiguredSKU__c ?? '').slice(0, 15);
+        const parentProduct = productByIdForFeatures.get(parentId15);
+        if (!parentProduct) continue;
+        const parentProductCode =
+          (parentProduct.ProductCode as string | null) ?? (parentProduct.Id as string);
+        const featureNumber = (f.SBQQ__Number__c as number | null) ?? 0;
+        findings.push(
+          createFinding({
+            domain: 'catalog',
+            collector: 'catalog',
+            artifactType: 'SBQQ__ProductFeature__c',
+            artifactName: (f.Name as string) ?? `Feature ${featureNumber}`,
+            artifactId: f.Id as string,
+            findingType: 'bundle_feature',
+            sourceType: 'object',
+            migrationRelevance: 'must-migrate',
+            countValue: featureNumber,
+            notes: (f.SBQQ__Category__c as string | null) ?? undefined,
+            evidenceRefs: [{ type: 'object-ref', value: parentProductCode }],
+          })
+        );
+      }
     }
 
     // ================================================================
@@ -523,6 +597,57 @@ export class CatalogCollector extends BaseCollector {
           notes: `${configuredBundleCount} bundle-capable products have at least one SBQQ__ProductOption__c child record (configured bundles with active nested options)`,
         })
       );
+
+      // Phase 4.1 — emit one finding per option so BB-3 produces
+      // BundleOption nodes and Stage 4 parent-lookup can wire them
+      // under BundleStructure.options. Normalizer reads parent code
+      // via `object-ref` evidenceRef and option product code via
+      // `field-ref OptionalSKU.ProductCode`. Options whose parent is
+      // not in the local catalog (managed package, deleted) are
+      // skipped. Fields like `Required`, `Selected`, `Bundled` are
+      // dropped for now — the normalizer defaults them and the extra
+      // data lives on the finding's evidenceRefs only when we need it.
+      const productByIdForOptions = new Map<string, Record<string, unknown>>();
+      for (const p of products) {
+        // allow-slice: normalize 18-char SF id to 15-char case-sensitive form
+        productByIdForOptions.set((p.Id as string).slice(0, 15), p);
+      }
+      for (const o of options) {
+        // allow-slice: normalize 18-char SF id to 15-char case-sensitive form
+        const parentId15 = String(o.SBQQ__ConfiguredSKU__c ?? '').slice(0, 15);
+        const parentProduct = productByIdForOptions.get(parentId15);
+        if (!parentProduct) continue;
+        const parentProductCode =
+          (parentProduct.ProductCode as string | null) ?? (parentProduct.Id as string);
+        // allow-slice: normalize 18-char SF id to 15-char case-sensitive form
+        const optionalId15 = String(o.SBQQ__OptionalSKU__c ?? '').slice(0, 15);
+        const optionProduct = productByIdForOptions.get(optionalId15);
+        const optionProductCode =
+          (optionProduct?.ProductCode as string | null | undefined) ?? optionalId15 ?? '';
+        const optionNumber = (o.SBQQ__Number__c as number | null) ?? 0;
+        findings.push(
+          createFinding({
+            domain: 'catalog',
+            collector: 'catalog',
+            artifactType: 'SBQQ__ProductOption__c',
+            artifactName: (o.Name as string) ?? `${parentProductCode}:${optionProductCode}`,
+            artifactId: o.Id as string,
+            findingType: 'bundle_option',
+            sourceType: 'object',
+            migrationRelevance: 'must-migrate',
+            countValue: optionNumber,
+            notes: (o.SBQQ__Type__c as string | null) ?? undefined,
+            evidenceRefs: [
+              { type: 'object-ref', value: parentProductCode },
+              {
+                type: 'field-ref',
+                value: 'OptionalSKU.ProductCode',
+                label: optionProductCode,
+              },
+            ],
+          })
+        );
+      }
 
       if (maxBundleDepth >= 3) {
         warnings.push('Bundle nesting depth ≥ 3 — complex migration to RCA Product Compositions');
