@@ -30,6 +30,7 @@ import { IntegrationsCollector } from './collectors/integrations.ts';
 import { LocalizationCollector } from './collectors/localization.ts';
 import { buildRelationships } from './normalize/relationships.ts';
 import { computeDerivedMetrics, computeAttachmentRates } from './normalize/metrics.ts';
+import { joinPluginActivation } from './normalize/plugin-activation.ts';
 import { validateExtraction } from './normalize/validation.ts';
 import { buildContextBlueprint } from './normalize/context-blueprint.ts';
 import { buildSummaries } from './summaries/builder.ts';
@@ -198,6 +199,49 @@ export async function runPipeline(ctx: CollectorContext): Promise<PipelineResult
 
   // ── Phase 4: Post-processing ─────────────────────────────────────
   log.info('phase_4_start: post-processing');
+
+  // EXT-1.2 — Plugin activation join. Runs BEFORE buildRelationships
+  // because the join mutates the dependencies findings (appends an
+  // isActivePlugin evidenceRef to the matching cpq_apex_plugin
+  // finding) and emits new findings the relationship graph should
+  // see. Pure function — no SF API calls, just an in-memory pass.
+  try {
+    const allFindings: AssessmentFindingInput[] = [];
+    for (const [, result] of results) {
+      if (result.status !== 'failed') allFindings.push(...result.findings);
+    }
+    const activation = joinPluginActivation(allFindings);
+    log.info(
+      {
+        active: activation.stats.activePluginCount,
+        unset: activation.stats.unsetPluginCount,
+        orphaned: activation.stats.orphanedRegistrationCount,
+      },
+      'plugin_activation_joined'
+    );
+    if (activation.warnings.length > 0) {
+      log.warn({ warnings: activation.warnings }, 'plugin_activation_warnings');
+    }
+    // Persist the new findings as part of the dependencies result
+    // so they flow into BB-3 and the report. We pick dependencies
+    // (not settings) because the join is conceptually about Apex
+    // classes, and the report's "Apex Classes" section is where
+    // the activation flag will eventually surface.
+    const deps = results.get('dependencies');
+    if (deps) {
+      deps.findings = [...deps.findings, ...activation.newFindings];
+      // Replace the existing apex plugin findings with the
+      // updated copies (which now have the isActivePlugin
+      // evidence ref) so downstream stages see the activation.
+      const updatedByKey = new Map(activation.updatedFindings.map((f) => [f.findingKey, f]));
+      deps.findings = deps.findings.map((f) => updatedByKey.get(f.findingKey) ?? f);
+    }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    log.warn({ error: msg }, 'plugin_activation_join_failed');
+    errors.push(`Plugin activation join warning: ${msg}`);
+  }
+
   try {
     const relGraph = await buildRelationships(ctx, results);
     log.info(
