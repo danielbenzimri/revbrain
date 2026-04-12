@@ -319,6 +319,9 @@ importers:
       '@revbrain/migration-ir-contract':
         specifier: workspace:*
         version: link:../../packages/migration-ir-contract
+      '@revbrain/migration-segmenter':
+        specifier: workspace:*
+        version: link:../../packages/migration-segmenter
       csv-parse:
         specifier: ^5.6.0
         version: 5.6.0

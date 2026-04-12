@@ -28,6 +28,7 @@
     "@revbrain/contract": "workspace:*",
     "@revbrain/database": "workspace:*",
     "@revbrain/migration-ir-contract": "workspace:*",
+    "@revbrain/migration-segmenter": "workspace:*",
     "csv-parse": "^5.6.0",
     "fast-xml-parser": "^4.5.1",
     "p-limit": "^6.2.0",
