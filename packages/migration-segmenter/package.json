@@ -1,0 +1,27 @@
+{
+  "name": "@revbrain/migration-segmenter",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Migration Segmenter. Partitions an IRGraph into semantically coupled migration segments.",
+  "exports": {
+    ".": {
+      "import": "./src/index.ts",
+      "types": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "lint": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@revbrain/migration-ir-contract": "workspace:*",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.6",
+    "typescript": "^5.3.3",
+    "vitest": "^1.1.0"
+  }
+}
