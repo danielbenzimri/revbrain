@@ -44,7 +44,7 @@ export TEST_USER_PASSWORD=your-user-password
 
 **Default credentials** (if environment variables not set):
 
-- Admin: `admin@revbrain.io` / `test123456`
+- Admin: `admin@revbrain.ai` / `test123456`
 - User: `user@test.com` / `test123456`
 
 ## Running Tests

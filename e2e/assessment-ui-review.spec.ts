@@ -17,7 +17,7 @@ test.use({
 async function login(page: import('@playwright/test').Page) {
   await page.goto('/login');
   await page.waitForLoadState('networkidle');
-  await page.locator('input[type="email"]').fill('sarah@acme.com');
+  await page.locator('input[type="email"]').fill('sarah@test.org');
   await page.locator('input[type="password"]').fill('any');
   await page.getByRole('button', { name: /התחבר|sign in|login/i }).click();
   await page.waitForURL(/^(?!.*login).*$/, { timeout: 10000 });

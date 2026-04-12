@@ -21,7 +21,7 @@ dotenv.config({ path: path.resolve(__dirname, '.env.e2e') });
 
 const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL!; // daniel@revbrain.ai (system_admin)
 const ADMIN_PASSWORD = process.env.E2E_ADMIN_PASSWORD!;
-const USER_EMAIL = process.env.E2E_NONADMIN_EMAIL!; // david@acme.com (org_owner)
+const USER_EMAIL = process.env.E2E_NONADMIN_EMAIL!; // david@test.org (org_owner)
 const USER_PASSWORD = process.env.E2E_NONADMIN_PASSWORD!;
 const BASE_URL = process.env.E2E_BASE_URL ?? 'https://stg.revbrain.ai';
 const API_URL =

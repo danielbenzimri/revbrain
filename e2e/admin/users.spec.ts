@@ -105,7 +105,7 @@ test.describe('User Management', () => {
     const { status } = await apiFetch('/v1/admin/users', {
       method: 'POST',
       body: {
-        email: 'admin@revbrain.io',
+        email: 'admin@revbrain.ai',
         fullName: 'Duplicate',
         role: 'operator',
         organizationId: MOCK_IDS.ORG_ACME,

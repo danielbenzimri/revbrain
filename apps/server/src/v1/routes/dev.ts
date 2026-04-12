@@ -743,4 +743,95 @@ if (process.env.USE_MOCK_DATA === 'true') {
   console.log('[MOCK MODE] SF token endpoint: GET /v1/dev/sf-token/:connectionId');
 }
 
+// ============================================================================
+// PERSONA QUICK-LOGIN (staging only — server-issued sessions)
+// ============================================================================
+// Enables one-click role switching in staging mode without exposing credentials
+// to the client. Uses Supabase Admin API to mint sessions server-side.
+// Guarded by PERSONA_LOGIN_SECRET (non-VITE_, never in client bundle).
+
+const PERSONA_LOGIN_SECRET = process.env.PERSONA_LOGIN_SECRET;
+
+const PERSONA_MAP: Record<string, { email: string }> = {
+  system_admin: { email: 'admin@revbrain.ai' },
+  org_owner: { email: 'david@test.org' },
+  admin: { email: 'sarah@test.org' },
+  operator: { email: 'mike@test.org' },
+  reviewer: { email: 'amy@test.org' },
+};
+
+if (PERSONA_LOGIN_SECRET && !isProduction()) {
+  devRouter.post('/persona-login', async (c) => {
+    try {
+      const body = await c.req.json<{ role?: string }>();
+      const role = body?.role;
+
+      if (!role || !PERSONA_MAP[role]) {
+        return c.json(
+          { success: false, error: { code: 'BAD_REQUEST', message: `Unknown role: ${role}` } },
+          400
+        );
+      }
+
+      const persona = PERSONA_MAP[role];
+      const supabaseAdmin = getSupabaseAdmin();
+
+      // Use Admin API to generate a magic link token (no email sent)
+      const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+        type: 'magiclink',
+        email: persona.email,
+      });
+
+      if (linkError || !linkData) {
+        logger.error('Persona login: generateLink failed', { role, error: linkError?.message });
+        return c.json(
+          {
+            success: false,
+            error: {
+              code: 'PERSONA_LOGIN_FAILED',
+              message: linkError?.message || 'Failed to generate login link',
+            },
+          },
+          500
+        );
+      }
+
+      // Exchange the hashed token for a real session
+      const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.verifyOtp({
+        token_hash: linkData.properties.hashed_token,
+        type: 'magiclink',
+      });
+
+      if (sessionError || !sessionData.session) {
+        logger.error('Persona login: verifyOtp failed', { role, error: sessionError?.message });
+        return c.json(
+          {
+            success: false,
+            error: {
+              code: 'PERSONA_LOGIN_FAILED',
+              message: sessionError?.message || 'Failed to exchange token for session',
+            },
+          },
+          500
+        );
+      }
+
+      logger.info(`Persona login: ${role} → ${persona.email}`);
+      return c.json({
+        success: true,
+        data: {
+          accessToken: sessionData.session.access_token,
+          refreshToken: sessionData.session.refresh_token,
+        },
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      logger.error('Persona login: unexpected error', { error: message });
+      return c.json({ success: false, error: { code: 'INTERNAL_ERROR', message } }, 500);
+    }
+  });
+
+  console.log('[DEV] Persona quick-login: POST /v1/dev/persona-login');
+}
+
 export { devRouter };

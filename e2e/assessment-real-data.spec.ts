@@ -21,7 +21,7 @@ async function loginAndGoToAssessment(page: Page, tab?: string) {
   await page.goto('/login');
   await page.waitForLoadState('networkidle');
 
-  await page.locator('input[type="email"]').fill('sarah@acme.com');
+  await page.locator('input[type="email"]').fill('sarah@test.org');
   await page.locator('input[type="password"]').fill('any-password');
   await page.getByRole('button', { name: /sign in|login/i }).click();
 

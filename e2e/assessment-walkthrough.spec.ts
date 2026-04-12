@@ -20,7 +20,7 @@ async function setupPage(page: import('@playwright/test').Page) {
   const emailInput = page.locator('input[type="email"]');
   const passwordInput = page.locator('input[type="password"]');
 
-  await emailInput.fill('sarah@acme.com');
+  await emailInput.fill('sarah@test.org');
   await passwordInput.fill('any-password');
 
   const loginButton = page.getByRole('button', { name: /התחבר|sign in|login/i });

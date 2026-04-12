@@ -25,7 +25,7 @@ const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://qutuivleheybnkbhp
 const SUPABASE_ANON_KEY =
   process.env.VITE_SUPABASE_ANON_KEY ||
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF1dHVpdmxlaGV5Ym5rYmhwZGJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTQxMzgsImV4cCI6MjA4OTY3MDEzOH0.Arjxw1r7DhD1LLGQBiNkPkqo1ycsQVBQqXPEjugPsPA';
-const ADMIN_EMAIL = 'admin@revbrain.io';
+const ADMIN_EMAIL = 'admin@revbrain.ai';
 const ADMIN_PASSWORD = process.env.SEED_PASSWORD || 'RevBrain-Dev-2026!';
 
 // ============================================================================
@@ -159,7 +159,7 @@ test.describe('2. Auth & JWT', () => {
     // Sign in as regular user (operator)
     const authRes = await request.post(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
       headers: { apikey: SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
-      data: { email: 'mike@acme.com', password: ADMIN_PASSWORD },
+      data: { email: 'mike@test.org', password: ADMIN_PASSWORD },
     });
     const auth = await authRes.json();
 

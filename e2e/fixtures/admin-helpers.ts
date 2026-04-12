@@ -129,7 +129,7 @@ export async function loginAsAdmin(page: Page) {
   await injectAuth(page, {
     id: MOCK_IDS.USER_SYSTEM_ADMIN,
     name: 'System Admin',
-    email: 'admin@revbrain.io',
+    email: 'admin@revbrain.ai',
     role: 'system_admin',
   });
 }
@@ -139,7 +139,7 @@ export async function loginAsOperator(page: Page) {
   await injectAuth(page, {
     id: MOCK_IDS.USER_ACME_OPERATOR,
     name: 'Mike Johnson',
-    email: 'mike@acme.com',
+    email: 'mike@test.org',
     role: 'operator',
   });
 }

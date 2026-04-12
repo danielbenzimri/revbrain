@@ -22,7 +22,7 @@ import { test as base, expect, Page } from '@playwright/test';
  */
 export const TEST_USERS = {
   systemAdmin: {
-    email: process.env.TEST_ADMIN_EMAIL || 'admin@revbrain.io',
+    email: process.env.TEST_ADMIN_EMAIL || 'admin@revbrain.ai',
     password: process.env.TEST_ADMIN_PASSWORD || 'test123456',
   },
   orgAdmin: {

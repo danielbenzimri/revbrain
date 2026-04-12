@@ -316,21 +316,21 @@ test.describe('Flow 7: Language Switching', () => {
 
 test.describe('Flow 8: Error Handling', () => {
   test('API: non-admin gets 403 on admin endpoints', async () => {
-    // Login as a regular user (david@acme.com) and try admin endpoint
+    // Login as a regular user (david@test.org) and try admin endpoint
     const loginRes = await fetch(
       'https://qutuivleheybnkbhpdbn.supabase.co/auth/v1/token?grant_type=password',
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', apikey: ANON_KEY },
         body: JSON.stringify({
-          email: process.env.E2E_NONADMIN_EMAIL ?? 'david@acme.com',
+          email: process.env.E2E_NONADMIN_EMAIL ?? 'david@test.org',
           password: process.env.E2E_NONADMIN_PASSWORD ?? '',
         }),
       }
     );
 
     if (!loginRes.ok) {
-      test.skip(true, 'Could not login as david@acme.com');
+      test.skip(true, 'Could not login as david@test.org');
       return;
     }
 
