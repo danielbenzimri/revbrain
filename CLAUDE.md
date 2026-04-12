@@ -9,9 +9,9 @@ RevBrain — multi-tenant SaaS for migrating Salesforce CPQ to Revenue Cloud Adv
 ## Quick Reference
 
 ```
-pnpm dev            # Mock mode (offline dev, no credentials needed)
-pnpm dev:stg        # Local server against staging Supabase
-pnpm dev:stg-remote # Client-only against deployed staging edge functions
+pnpm mock           # Mock mode (offline dev, no credentials needed)
+pnpm stg            # Local server against staging Supabase
+pnpm stg:remote     # Client-only against deployed staging edge functions
 pnpm test           # All tests (889+)
 pnpm lint           # All packages
 pnpm db:seed        # Seed staging DB

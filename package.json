@@ -9,9 +9,9 @@
   },
   "packageManager": "pnpm@8.15.0",
   "scripts": {
-    "dev": "turbo run dev",
-    "dev:stg": "turbo run dev:stg",
-    "dev:stg-remote": "pnpm --filter client dev:stg-remote",
+    "mock": "turbo run mock",
+    "stg": "turbo run stg",
+    "stg:remote": "pnpm --filter client stg:remote",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "test": "turbo run test",

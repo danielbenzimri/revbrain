@@ -4,9 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --mode mock",
-    "dev:stg": "vite --mode staging",
-    "dev:stg-remote": "vite --mode staging-remote",
+    "mock": "vite --mode mock",
+    "stg": "vite --mode staging",
+    "stg:remote": "vite --mode staging-remote",
     "build": "NODE_OPTIONS='--max-old-space-size=8192' tsc -b && vite build",
     "build:dev": "NODE_OPTIONS='--max-old-space-size=8192' tsc -b && vite build --mode dev",
     "build:prod": "NODE_OPTIONS='--max-old-space-size=8192' tsc -b && vite build --mode prod",
