@@ -82,21 +82,26 @@ See `docs/TECH-DEBT.md` for deferred items. Notable:
 - Enterprise admin features deferred (SSO, approval workflows, PII masking)
 - In-app notifications not built yet
 
-## BB-3 Implementation Workflow (MANDATORY)
+## Pipeline Implementation Workflow (MANDATORY)
 
-When working on BB-3 (Migration Planner IR Normalizer — see [docs/MIGRATION-PLANNER-BB3-DESIGN.md](docs/MIGRATION-PLANNER-BB3-DESIGN.md) and [docs/MIGRATION-PLANNER-BB3-TASKS.md](docs/MIGRATION-PLANNER-BB3-TASKS.md)), Claude MUST follow this workflow. It is enforced via the skills in [.claude/skills/](.claude/skills/).
+The migration planner pipeline (Connect → Extract → Normalize → Segment → Disposition → Emit) follows a strict task-card workflow. Each module has its own design spec, task doc, and non-negotiables. The workflow is enforced via skills in [.claude/skills/](.claude/skills/).
 
-### The loop
+### The loop (applies to ALL pipeline modules)
 
-1. **Start every BB-3 task via `/bb3-next`.** Never start a BB-3 task by reading the design doc from scratch. `/bb3-next` loads narrow context, quotes non-negotiables, and presents a plan before any code is written.
-2. **Never declare a BB-3 task done without `/ship-it`.** No exceptions. `/ship-it` runs format → lint → test → build → commit → push and invokes `/bb3-doctor` automatically when BB-3 files are touched.
-3. **Every 5 shipped BB-3 task commits: invoke `/wave-review`** before picking up the next task. This catches drift before it compounds.
-4. **Every 5 shipped commits OR at the end of a working session: invoke `/sync-branches`** to promote `feat/bb3-*` → `staging` → `main`, watch CI/CD on both, and fix if red.
-5. **At each BB-3 wave boundary (Wave 1 / Wave 2 / Wave 3 per spec §14): invoke `/wave-review` followed by `/sync-branches`** regardless of commit counts. Wave boundaries are natural PR-merge points.
+1. **Start every task via `/task-next`.** Never start a task by reading the design doc from scratch. `/task-next` detects the active module from the branch name, loads narrow context, quotes non-negotiables, and presents a plan before any code is written.
+2. **Never declare a task done without `/ship-it`.** No exceptions. `/ship-it` runs format → lint → test → build → commit → push and invokes `/bb3-doctor` automatically when pipeline files are touched.
+3. **Every 5 shipped task commits: invoke `/wave-review`** before picking up the next task. This catches drift before it compounds.
+4. **Every 5 shipped commits OR at the end of a working session: invoke `/sync-branches`** to promote the feature branch → `staging` → `main`, watch CI/CD on both, and fix if red.
+5. **At each phase boundary: invoke `/wave-review` followed by `/sync-branches`** regardless of commit counts.
 
-### BB-3 non-negotiables (enforced by `/bb3-doctor`)
+### Module registry
 
-These are copied from the design spec. Any violation is a blocker and MUST be fixed before `/ship-it` can proceed:
+| Module               | Design spec                                                             | Task doc                                                              | Package                         | Branch prefix    |
+| -------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------- | ------------------------------- | ---------------- |
+| **Normalize (BB-3)** | [MIGRATION-PLANNER-BB3-DESIGN.md](docs/MIGRATION-PLANNER-BB3-DESIGN.md) | [MIGRATION-PLANNER-BB3-TASKS.md](docs/MIGRATION-PLANNER-BB3-TASKS.md) | `packages/bb3-normalizer/`      | `feat/bb3-*`     |
+| **Segment**          | [MIGRATION-SEGMENTER-DESIGN.md](docs/MIGRATION-SEGMENTER-DESIGN.md)     | [MIGRATION-SEGMENTER-TASKS.md](docs/MIGRATION-SEGMENTER-TASKS.md)     | `packages/migration-segmenter/` | `feat/segmenter` |
+
+### BB-3 non-negotiables (enforced by `/bb3-doctor` C1–C8)
 
 - **RCA neutrality:** no `PricingProcedure`, `DecisionTable`, `CML`, `ContextDefinition`, `ConstraintModelLanguage` anywhere in `packages/bb3-normalizer/src/`. (spec §2.4, acceptance test A14)
 - **Determinism:** no `Date.now()`, `performance.now()`, `Math.random()`, `crypto.randomUUID()` in code that affects `IRGraph`. All wall-clock telemetry lives in `NormalizeResult.runtimeStats`, outside the graph. (spec §6.2, §6.4)
@@ -105,9 +110,18 @@ These are copied from the design spec. Any violation is a blocker and MUST be fi
 - **Deterministic parser budgets** (byte / AST-node / depth) — no wall-clock timeouts. (spec §8.4)
 - **Contract package stays thin:** `packages/migration-ir-contract/` depends only on `zod`. No `tree-sitter`, no `@revbrain/database`, no `@revbrain/tpr`. (spec §6.3)
 
-### Branching strategy for BB-3
+### Segmenter non-negotiables (enforced by `/bb3-doctor` C9 + tests)
 
-- Feature branch: `feat/bb3-wave<N>` (e.g. `feat/bb3-wave1`) — one branch per wave
-- Commits: one per task card from `docs/MIGRATION-PLANNER-BB3-TASKS.md`, each tagged in the commit body with `Task: <TASK-ID>`
-- Promotion: `feat/bb3-wave<N>` → `staging` → `main`, via `/sync-branches`. Both `main` and `staging` run CI/CD; both must be green before the next task is picked up after a sync
+- **Determinism:** same graph + options → byte-identical `assignment` + `manifest`. All sorting uses strict `<`/`>` — never `localeCompare`. `runtimeStats` excluded.
+- **No silent fall-through:** unknown edge types throw. Missing structural-edge targets throw. No implicit edges inferred.
+- **Thin dependencies:** `packages/migration-segmenter/` depends on `@revbrain/migration-ir-contract` + `zod` only. No cross-package imports from `bb3-normalizer` — all algorithms (SCC, union-find, articulation) are local.
+- **All thresholds injectable** via `SegmenterOptions`, validated by Zod schema at entry.
+- **Content-addressable IDs:** length-prefixed streaming hash (`base64url`). `persistentId` uses the full root node ID (never truncated). (spec §6.2)
+- **Three edge categories:** every `IREdgeType` classified as strong / ordering / hazard. Unknown = hard error. (spec §4)
+
+### Branching strategy
+
+- Feature branch: `feat/segmenter` (Segmenter) or `feat/bb3-wave<N>` (BB-3)
+- Commits: one per task card, tagged with `Task: <TASK-ID>` in the commit body
+- Promotion: `feat/*` → `staging` → `main` via `/sync-branches`. Both `main` and `staging` run CI/CD; both must be green before the next task is picked up after a sync
 - Never commit directly to `main` or `staging`. Never force-push to either.

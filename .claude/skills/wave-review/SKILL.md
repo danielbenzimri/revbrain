@@ -1,11 +1,13 @@
 ---
 name: wave-review
-description: Self-reflective code review of recent BB-3 work. Checks architectural coherence, spec adherence, determinism invariants, test quality, and identifies refactor opportunities. Run every 5 tasks or at the end of each wave (Wave 1/2/3).
+description: Self-reflective code review of recent pipeline work (BB-3, Segmenter, or any future module). Checks architectural coherence, spec adherence, determinism invariants, test quality, and identifies refactor opportunities. Run every 5 tasks or at phase boundaries.
 ---
 
 # wave-review — Self-reflective review of recent work
 
-You are reviewing the last N BB-3 commits to catch drift before it compounds. This is NOT rubber-stamping — find real issues or explicitly say "nothing to fix".
+You are reviewing the last N commits on the current feature branch to catch drift before it compounds. This is NOT rubber-stamping — find real issues or explicitly say "nothing to fix".
+
+**Module detection:** same as `/task-next` — infer from branch name or ask. This determines which design spec and non-negotiables to check against.
 
 ## Step 1 — Scope the review
 
@@ -23,24 +25,35 @@ Default: last 5 commits on the current feature branch. If the user passed a diff
 - Are all §X.Y spec anchors actually honored?
 - For each non-negotiable on each card: satisfied in code? Check the card's acceptance checklist against the diff.
 
-### B. BB-3 invariants (determinism + RCA neutrality)
+### B. Pipeline invariants (module-specific)
 
-Invoke `/bb3-doctor` and attach its output to the review. Also manually check:
+Invoke `/bb3-doctor` and attach its output to the review. Then check the active module's invariants:
 
-- Any new `Date.now()` / `performance.now()` / `Math.random()` calls outside `runtimeStats`?
-- Any new `JSON.stringify` calls in identity/hash paths?
-- Any new RCA concept names (PricingProcedure, DecisionTable, CML, ContextDefinition, ConstraintModelLanguage)?
-- Any new `string[]` reference fields where `NodeRef[]` is the spec contract?
+**If BB-3 (normalizer):**
+
+- Any new `Date.now()` / `performance.now()` / `Math.random()` outside `runtimeStats`?
+- Any new `JSON.stringify` in identity/hash paths?
+- Any new RCA concept names (PricingProcedure, DecisionTable, CML, ContextDefinition)?
+- Any new `string[]` where `NodeRef[]` is the contract?
 - Any new wall-clock timeouts on parsers?
 - Any new imports in `@revbrain/migration-ir-contract` beyond `zod`?
 
+**If Segmenter:**
+
+- Any new `Date.now()` / `Math.random()` / `localeCompare` in segment-affecting code? (All sorting must use strict `<`/`>`)
+- Any cross-package imports from `bb3-normalizer`? (Thin-dependency rule — all algos must be local)
+- Any hardcoded thresholds instead of reading from `SegmenterOptions`?
+- Does the edge classification table still cover all `IREdgeType` values? (C9 check)
+- Any new edge types unclassified into strong/ordering/hazard?
+- Is hashing still length-prefixed + streaming? Any `JSON.stringify` in the ID path?
+
 ### C. Architectural coherence
 
-- Are new normalizers consistent with existing ones (same file layout, same return shape, same error handling)?
-- Are tests in the right location (unit vs integration vs golden)?
+- Are new modules consistent with existing ones (same file layout, same return shape, same error handling)?
+- Are tests in the right location (unit vs integration vs golden vs property)?
 - Are there patterns emerging that should be extracted into a helper? Only if used 3+ times — never prematurely.
 - Conversely, are there helpers created for single-use cases? Inline them.
-- Is error handling consistent? Quarantine for data issues, `BB3InputError` for input shape, `BB3InternalError` for bugs.
+- Is error handling consistent? For BB-3: quarantine for data issues, `BB3InputError` for shape, `BB3InternalError` for bugs. For Segmenter: `DanglingEdgeError`, `UnclassifiedEdgeTypeError`, `SegmenterInvariantError` for invariant violations.
 
 ### D. Test quality
 
@@ -96,7 +109,7 @@ Output format:
 
 - **RED**: stop and fix the issues, then re-run `/wave-review` once to confirm GREEN or YELLOW.
 - **YELLOW**: print suggestions, ask the user whether to address now or defer.
-- **GREEN**: ask whether to proceed with `/bb3-next` OR run `/sync-branches` if 5+ commits since last sync.
+- **GREEN**: ask whether to proceed with `/task-next` OR run `/sync-branches` if 5+ commits since last sync.
 
 ## Rules
 

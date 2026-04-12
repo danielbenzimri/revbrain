@@ -17,7 +17,7 @@ You are finalizing a unit of work. Your job is to prove the change is clean, com
 
 Run these from the repo root, in order:
 
-1. **bb3-doctor** — invoke the `/bb3-doctor` skill if ANY file under `packages/bb3-normalizer/`, `packages/migration-ir-contract/`, or `docs/MIGRATION-PLANNER-BB3*.md` is modified. This catches determinism and RCA-leakage regressions instantly.
+1. **pipeline-doctor** — invoke `/bb3-doctor` if ANY file under `packages/bb3-normalizer/`, `packages/migration-ir-contract/`, or `docs/MIGRATION-PLANNER-BB3*.md` is modified (catches BB-3 determinism + RCA-leakage). ALSO run the segmenter checks (C9 edge-classification coverage) if ANY file under `packages/migration-segmenter/` or `docs/MIGRATION-SEGMENTER*.md` is modified. Both sets run in under 5 seconds total.
 2. **format** — `pnpm format`. If this makes changes, re-stage them; they'll be part of the commit.
 3. **lint** — `pnpm lint`. Must pass clean.
 4. **test** — `pnpm test`. Must pass clean.
@@ -38,9 +38,9 @@ Only after all validation is green:
 2. Run `git log -5 --oneline` to match the repo's commit-message style.
 3. Stage ONLY the files relevant to the current task. NEVER use `git add -A` or `git add .`.
 4. Compose a commit message:
-   - First line: `<type>(<scope>): <summary under 70 chars>` (e.g. `feat(bb3): add identityHash`)
+   - First line: `<type>(<scope>): <summary under 70 chars>` (e.g. `feat(segmenter): SEG-1.3 — strong-edge grouping + SCC merge` or `feat(bb3): add identityHash`)
    - Body: 1–3 bullet points on the "why", not the "what"
-   - If this implements a BB-3 task card, include `Task: <TASK-ID>` and `Refs: docs/MIGRATION-PLANNER-BB3-DESIGN.md §<section>`
+   - If this implements a task card, include `Task: <TASK-ID>` and `Refs: <design-doc> §<section>` (e.g. `Task: SEG-1.3` / `Refs: docs/MIGRATION-SEGMENTER-DESIGN.md §5.1`)
    - Footer: `Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>`
 5. Commit via HEREDOC (never inline `-m` for multi-line).
 
@@ -62,8 +62,8 @@ Print a concise summary:
 Then suggest the next action:
 
 - If 5+ commits on this feat branch since last sync → suggest `/sync-branches`
-- If 5+ BB-3 task commits since last review → suggest `/wave-review`
-- Otherwise → suggest `/bb3-next`
+- If 5+ task commits since last review → suggest `/wave-review`
+- Otherwise → suggest `/task-next`
 
 ## What NOT to do
 

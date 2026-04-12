@@ -66,7 +66,7 @@ Only if staging CI AND CD are fully green.
 2. Optionally bring main back into feat so it stays current: ask the user first. If yes:
    - `git pull --rebase origin main`
    - `git push --force-with-lease` (safe variant, fails if someone else pushed)
-3. Re-run `/bb3-doctor` after the rebase to make sure nothing broke silently.
+3. Re-run `/bb3-doctor` after the rebase to make sure nothing broke silently (covers both BB-3 C1–C8 and Segmenter C9 checks).
 
 ## Step 5 — Report
 
