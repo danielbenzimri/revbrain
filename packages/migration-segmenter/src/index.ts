@@ -33,3 +33,27 @@ export {
   DEFAULT_AUTHORITY_FALLBACK,
   SIZE_HISTOGRAM_BUCKETS,
 } from '@revbrain/migration-ir-contract';
+
+// Public API
+export { segment } from './segment.ts';
+
+// Edge classification (useful for doctor checks + tests)
+export {
+  STRONG_EDGE_TYPES,
+  ORDERING_EDGE_TYPES,
+  HAZARD_EDGE_TYPES,
+  ALL_CLASSIFIED_EDGE_TYPES,
+  EXTERNAL_ALLOWED_EDGE_TYPES,
+  classifyEdgeType,
+  getOrderingDirection,
+} from './edge-classification.ts';
+
+// Errors
+export {
+  DanglingEdgeError,
+  DuplicateNodeIdError,
+  UnclassifiedEdgeTypeError,
+  IncompatibleSchemaError,
+  InvalidOptionsError,
+  SegmenterInvariantError,
+} from './errors.ts';
