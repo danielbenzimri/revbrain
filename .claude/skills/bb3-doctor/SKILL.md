@@ -92,6 +92,7 @@ C5 (string[] vs NodeRef[]):   [OK] clean | [FAIL] <file:line>
 C6 (wall-clock timeouts):     [OK] clean | [FAIL] <file:line>
 C7 (graph timing fields):     [OK] clean | [FAIL] <field>
 C8 (graph-structure invariants file): [OK] present | [FAIL] <missing content>
+C9 (segmenter classification coverage): [OK] covers all | [FAIL] <missing type>
 
 Verdict: CLEAN | DIRTY
 ```
@@ -103,6 +104,17 @@ Verdict: CLEAN | DIRTY
 
 ## Notes
 
-- This skill is designed to be called before BB-3 packages exist. If `packages/migration-ir-contract` or `packages/bb3-normalizer` don't exist yet, every check returns `[OK] clean` (no files to scan, no violations possible).
+- This skill is designed to be called before BB-3/Segmenter packages exist. If `packages/migration-ir-contract` or `packages/bb3-normalizer` or `packages/migration-segmenter` don't exist yet, every check for that package returns `[OK] clean`.
 - If a check starts taking >1 second, narrow its path scope before adding logic.
 - New invariants get added here before they get added to `/wave-review` — this is the fast lane.
+
+### C9 — Segmenter edge classification covers all IREdgeType values
+
+- **Required file:** `packages/migration-segmenter/__tests__/classification-coverage.test.ts`
+- **Must contain:**
+  - References to `STRONG_EDGE_TYPES`, `ORDERING_EDGE_TYPES`, `HAZARD_EDGE_TYPES`
+  - References to `PROJECTED_EDGE_TYPES`, `SYNTHETIC_EDGE_TYPES` (from the contract)
+  - An assertion that the union of the three segmenter sets covers all contract edge types
+- **Rationale:** If a new `IREdgeType` is added to the contract without updating the segmenter's classification table, IV4 (unknown edge type) will throw at runtime. This static check catches the gap at test time.
+- **Expected:** file exists and contains the required references.
+- **Spec:** docs/MIGRATION-SEGMENTER-DESIGN.md §4.4
