@@ -36,9 +36,7 @@ const args = Object.fromEntries(
 );
 
 if (!args.input || !args.output) {
-  console.error(
-    'Usage: node patch-collector-children.mjs --input=<path> --output=<path>'
-  );
+  console.error('Usage: node patch-collector-children.mjs --input=<path> --output=<path>');
   process.exit(1);
 }
 
@@ -120,9 +118,8 @@ const products = findings.filter((f) => f.artifactType === 'Product2');
 const bundleProducts = products.filter((p) => p.complexityLevel === 'medium');
 for (const p of bundleProducts) {
   const productCode =
-    p.evidenceRefs?.find(
-      (r) => r.value === 'Product2.ProductCode' && typeof r.label === 'string'
-    )?.label ??
+    p.evidenceRefs?.find((r) => r.value === 'Product2.ProductCode' && typeof r.label === 'string')
+      ?.label ??
     p.artifactId ??
     p.findingKey;
   push({
@@ -135,9 +132,7 @@ for (const p of bundleProducts) {
     sourceType: 'object',
     detected: true,
     notes: 'Required',
-    evidenceRefs: [
-      { type: 'field-ref', value: 'Product2.ProductCode', label: productCode },
-    ],
+    evidenceRefs: [{ type: 'field-ref', value: 'Product2.ProductCode', label: productCode }],
     schemaVersion: '1.0',
   });
   for (let i = 0; i < 2; i++) {
@@ -183,9 +178,7 @@ writeFileSync(args.output, JSON.stringify(raw, null, 2));
 
 console.log(`Injected ${added} synthetic collector-shape findings`);
 console.log(`  ${rules.length} price rules → ${rules.length * 3} pricing children`);
-console.log(
-  `  ${schedules.length} discount schedules → ${schedules.length * 3} tier findings`
-);
+console.log(`  ${schedules.length} discount schedules → ${schedules.length * 3} tier findings`);
 console.log(
   `  ${bundleProducts.length} bundle products → ${bundleProducts.length * 4} catalog children`
 );

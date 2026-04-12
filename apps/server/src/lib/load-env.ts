@@ -2,16 +2,12 @@
  * Environment loader for LOCAL server development
  *
  * Loads environment variables from the monorepo root:
- * - APP_ENV=local    → loads /.env.local    (mock mode, no external services)
- * - APP_ENV=real     → loads /.env.real     (mock data + real Salesforce OAuth)
- * - APP_ENV=local-db → loads /.env.local-db (mock auth + real staging DB + real SF)
- * - APP_ENV=stg      → loads /.env.stg      (local server against staging Supabase)
- * - APP_ENV=prod     → loads /.env.prod     (production — edge functions only)
+ * - APP_MODE=mock    → loads /.env + /.env.mock    (full mock mode)
+ * - APP_MODE=staging → loads /.env + /.env.staging (local server against staging Supabase)
  *
  * Commands:
- * - pnpm local    → APP_ENV=local    (full mock mode)
- * - pnpm local:db → APP_ENV=local-db (mock auth, staging DB, real SF)
- * - pnpm dev      → APP_ENV=stg      (local frontend+server, staging DB+auth)
+ * - pnpm dev     → APP_MODE=mock    (full mock mode)
+ * - pnpm dev:stg → APP_MODE=staging (local server, staging DB + auth)
  *
  * Note: STG and PROD edge functions inject env vars automatically.
  * This loader is only used when running the local Hono dev server.
@@ -27,20 +23,25 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const monorepoRoot = resolve(__dirname, '../../../..'); // apps/server/src/lib → root
 
 export function loadEnv(): void {
-  // Determine which env file to load (default to 'local' for local development)
-  const appEnv = process.env.APP_ENV || 'local';
-  const envFile = `.env.${appEnv}`;
-  const envPath = resolve(monorepoRoot, envFile);
+  const appMode = process.env.APP_MODE || 'mock';
 
-  if (existsSync(envPath)) {
-    const result = config({ path: envPath });
+  // Load base .env first (shared defaults)
+  const basePath = resolve(monorepoRoot, '.env');
+  if (existsSync(basePath)) {
+    config({ path: basePath });
+  }
+
+  // Load mode-specific .env.{mode} (overrides base)
+  const modePath = resolve(monorepoRoot, `.env.${appMode}`);
+  if (existsSync(modePath)) {
+    const result = config({ path: modePath, override: true });
     if (result.error) {
-      console.error(`Failed to load ${envFile}:`, result.error.message);
+      console.error(`Failed to load .env.${appMode}:`, result.error.message);
     } else {
-      console.log(`✓ Loaded environment: ${envFile} (from monorepo root)`);
+      console.log(`✓ Loaded environment: .env.${appMode} (from monorepo root)`);
     }
   } else {
-    console.warn(`⚠ No env file found: ${envFile} at ${envPath}`);
+    console.warn(`⚠ No env file found: .env.${appMode} at ${modePath}`);
   }
 }
 

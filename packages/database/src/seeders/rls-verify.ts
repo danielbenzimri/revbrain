@@ -66,8 +66,8 @@ export async function verifyRLS(options?: {
 
   try {
     // === Checks 1-4: Acme org_owner ===
-    console.log('  Authenticating as david@acme.com (Acme org_owner)...');
-    const acmeClient = await clientAs('david@acme.com');
+    console.log('  Authenticating as david@test.org (Acme org_owner)...');
+    const acmeClient = await clientAs('david@test.org');
 
     // Check 1: Acme org_owner can read Acme org
     const { data: acmeOrgs } = await acmeClient
@@ -104,8 +104,8 @@ export async function verifyRLS(options?: {
     await acmeClient.auth.signOut();
 
     // === Checks 5-6: Beta org_owner ===
-    console.log('  Authenticating as lisa@beta-ind.com (Beta org_owner)...');
-    const betaClient = await clientAs('lisa@beta-ind.com');
+    console.log('  Authenticating as lisa@test.org (Beta org_owner)...');
+    const betaClient = await clientAs('lisa@test.org');
 
     // Check 5: Beta org_owner can read Beta org
     const { data: betaOwnOrg } = await betaClient
@@ -161,7 +161,7 @@ export async function verifyRLS(options?: {
       auth: { autoRefreshToken: false, persistSession: false },
     });
     const { error: pendingError } = await pendingClient.auth.signInWithPassword({
-      email: 'pending@acme.com',
+      email: 'pending@test.org',
       password,
     });
     check(
@@ -172,7 +172,7 @@ export async function verifyRLS(options?: {
 
     // === Check 10: Ticket messages inherit tenant scoping ===
     console.log('  Verifying ticket message scoping...');
-    const acmeClient2 = await clientAs('david@acme.com');
+    const acmeClient2 = await clientAs('david@test.org');
     const { data: acmeTickets } = await acmeClient2
       .from('support_tickets')
       .select('id')

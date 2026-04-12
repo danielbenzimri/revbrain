@@ -1,6 +1,6 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "globalDependencies": ["**/.env.*local"],
+  "globalDependencies": ["**/.env.mock"],
   "pipeline": {
     "build": {
       "dependsOn": ["^build"],
@@ -9,19 +9,11 @@
     "lint": {
       "dependsOn": ["^lint"]
     },
-    "local": {
-      "cache": false,
-      "persistent": true
-    },
-    "local:real": {
-      "cache": false,
-      "persistent": true
-    },
-    "local:db": {
-      "cache": false,
-      "persistent": true
-    },
     "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "dev:stg": {
       "cache": false,
       "persistent": true
     },

@@ -5,14 +5,13 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
 
-// In mock auth mode (.env.local), default is 'offline'. In jwt mode, default is 'online'.
+// In mock auth mode (.env.mock), default is 'offline'. In jwt mode, default is 'online'.
 const expectedDefaultMode = import.meta.env.VITE_AUTH_MODE === 'mock' ? 'offline' : 'online';
 import {
   useServiceConfigStore,
   useAppMode,
   useIsOffline,
   useIsOnline,
-  useServiceTargets,
 } from './service-config-store';
 
 describe('useServiceConfigStore', () => {
@@ -28,13 +27,6 @@ describe('useServiceConfigStore', () => {
     it('should start with the expected default mode based on env', () => {
       const { result } = renderHook(() => useServiceConfigStore());
       expect(result.current.mode).toBe(expectedDefaultMode);
-    });
-
-    it('should have service targets defined', () => {
-      const { result } = renderHook(() => useServiceConfigStore());
-      expect(result.current.targets).toHaveProperty('server');
-      expect(result.current.targets).toHaveProperty('database');
-      expect(result.current.targets).toHaveProperty('storage');
     });
   });
 
@@ -64,91 +56,6 @@ describe('useServiceConfigStore', () => {
     });
   });
 
-  describe('setServerTarget', () => {
-    it('should set server target to remote', () => {
-      const { result } = renderHook(() => useServiceConfigStore());
-
-      act(() => {
-        result.current.setServerTarget('remote');
-      });
-
-      expect(result.current.targets.server).toBe('remote');
-    });
-
-    it('should set server target to local', () => {
-      const { result } = renderHook(() => useServiceConfigStore());
-
-      act(() => {
-        result.current.setServerTarget('local');
-      });
-
-      expect(result.current.targets.server).toBe('local');
-    });
-
-    it('should not affect other targets', () => {
-      const { result } = renderHook(() => useServiceConfigStore());
-      const originalDatabase = result.current.targets.database;
-      const originalStorage = result.current.targets.storage;
-
-      act(() => {
-        result.current.setServerTarget('remote');
-      });
-
-      expect(result.current.targets.database).toBe(originalDatabase);
-      expect(result.current.targets.storage).toBe(originalStorage);
-    });
-  });
-
-  describe('setDatabaseTarget', () => {
-    it('should set database target to remote', () => {
-      const { result } = renderHook(() => useServiceConfigStore());
-
-      act(() => {
-        result.current.setDatabaseTarget('remote');
-      });
-
-      expect(result.current.targets.database).toBe('remote');
-    });
-  });
-
-  describe('setStorageTarget', () => {
-    it('should set storage target to remote', () => {
-      const { result } = renderHook(() => useServiceConfigStore());
-
-      act(() => {
-        result.current.setStorageTarget('remote');
-      });
-
-      expect(result.current.targets.storage).toBe('remote');
-    });
-  });
-
-  describe('setAllTargets', () => {
-    it('should set all targets to remote', () => {
-      const { result } = renderHook(() => useServiceConfigStore());
-
-      act(() => {
-        result.current.setAllTargets('remote');
-      });
-
-      expect(result.current.targets.server).toBe('remote');
-      expect(result.current.targets.database).toBe('remote');
-      expect(result.current.targets.storage).toBe('remote');
-    });
-
-    it('should set all targets to local', () => {
-      const { result } = renderHook(() => useServiceConfigStore());
-
-      act(() => {
-        result.current.setAllTargets('local');
-      });
-
-      expect(result.current.targets.server).toBe('local');
-      expect(result.current.targets.database).toBe('local');
-      expect(result.current.targets.storage).toBe('local');
-    });
-  });
-
   describe('resetToDefaults', () => {
     it('should reset mode to default', () => {
       const { result } = renderHook(() => useServiceConfigStore());
@@ -162,21 +69,6 @@ describe('useServiceConfigStore', () => {
       });
 
       expect(result.current.mode).toBe(expectedDefaultMode);
-    });
-
-    it('should reset targets to defaults', () => {
-      const { result } = renderHook(() => useServiceConfigStore());
-
-      act(() => {
-        result.current.setAllTargets('remote');
-      });
-
-      act(() => {
-        result.current.resetToDefaults();
-      });
-
-      // After reset, all targets should match their default values
-      expect(result.current.targets).toBeDefined();
     });
   });
 });
@@ -227,15 +119,6 @@ describe('convenience hooks', () => {
 
       const { result } = renderHook(() => useIsOnline());
       expect(result.current).toBe(false);
-    });
-  });
-
-  describe('useServiceTargets', () => {
-    it('should return the current targets', () => {
-      const { result } = renderHook(() => useServiceTargets());
-      expect(result.current).toHaveProperty('server');
-      expect(result.current).toHaveProperty('database');
-      expect(result.current).toHaveProperty('storage');
     });
   });
 });

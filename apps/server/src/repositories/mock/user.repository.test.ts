@@ -14,7 +14,7 @@ describe('MockUserRepository', () => {
     it('returns user for existing ID', async () => {
       const user = await repo.findById(MOCK_IDS.USER_ACME_OWNER);
       expect(user).not.toBeNull();
-      expect(user!.email).toBe('david@acme.com');
+      expect(user!.email).toBe('david@test.org');
     });
 
     it('returns null for nonexistent ID', async () => {
@@ -87,7 +87,7 @@ describe('MockUserRepository', () => {
 
   describe('findByEmail', () => {
     it('returns user by email', async () => {
-      const user = await repo.findByEmail('sarah@acme.com');
+      const user = await repo.findByEmail('sarah@test.org');
       expect(user).not.toBeNull();
       expect(user!.role).toBe('admin');
     });

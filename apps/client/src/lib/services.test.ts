@@ -36,7 +36,7 @@ describe('Service Layer Verification (Matrix Test)', () => {
     });
 
     it('should successfully login mock user', async () => {
-      const result = await authAdapter.login('admin@revbrain.io');
+      const result = await authAdapter.login('admin@revbrain.ai');
       expect(result.user).toBeDefined();
       expect(result.session).toBeDefined();
       expect(result.user.role).toBe('system_admin');

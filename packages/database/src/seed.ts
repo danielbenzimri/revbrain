@@ -18,7 +18,7 @@ import { fileURLToPath } from 'node:url';
 // Load env from monorepo root: .env.stg by default (seeder needs real DB)
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const monorepoRoot = resolve(__dirname, '../../..'); // packages/database/src → root
-const envFile = process.env.APP_ENV === 'prod' ? '.env.prod' : '.env.stg';
+const envFile = process.env.APP_MODE === 'production' ? '.env.production' : '.env.staging';
 config({ path: resolve(monorepoRoot, envFile) });
 // Also load base .env as fallback
 config({ path: resolve(monorepoRoot, '.env') });

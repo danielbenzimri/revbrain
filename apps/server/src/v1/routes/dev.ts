@@ -704,7 +704,7 @@ if (!isProduction()) {
 // Excluded from OpenAPI — uses plain post(), not openapi()
 if (
   process.env.USE_MOCK_DATA === 'true' &&
-  (process.env.APP_ENV === 'local' || !process.env.APP_ENV)
+  (process.env.APP_MODE === 'mock' || !process.env.APP_MODE)
 ) {
   // Dynamic import to avoid loading mock modules in real mode
   import('../../mocks/index.ts').then(({ resetAllMockData }) => {

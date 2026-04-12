@@ -29,10 +29,10 @@ const envSchema = z.object({
     .enum(['development', 'production', 'test'])
     .default('development')
     .describe('Runtime environment'),
-  appEnv: z
-    .enum(['development', 'staging', 'production'])
+  appMode: z
+    .enum(['mock', 'staging', 'staging-remote', 'production'])
     .optional()
-    .describe('Explicit app environment (overrides NODE_ENV for Edge)'),
+    .describe('Application mode (overrides NODE_ENV for Edge)'),
 
   // Database
   databaseUrl: z.string().url().optional().describe('PostgreSQL connection string'),
@@ -151,7 +151,7 @@ let cachedConfig: ValidatedConfig | null = null;
 function loadEnvVars(): Record<string, string | undefined> {
   return {
     nodeEnv: getEnv('NODE_ENV'),
-    appEnv: getEnv('APP_ENV'),
+    appMode: getEnv('APP_MODE'),
     databaseUrl: getEnv('DATABASE_URL'),
     supabaseUrl: getEnv('SUPABASE_URL'),
     supabaseAnonKey: getEnv('SUPABASE_ANON_KEY'),
@@ -190,7 +190,7 @@ export function validateConfig(): ValidatedConfig {
     const errorMessage = `Environment validation failed:\n${errors}`;
 
     // In production, always throw
-    const isProduction = rawEnv.appEnv === 'production' || rawEnv.nodeEnv === 'production';
+    const isProduction = rawEnv.appMode === 'production' || rawEnv.nodeEnv === 'production';
     if (isProduction) {
       throw new Error(errorMessage);
     }
@@ -202,7 +202,7 @@ export function validateConfig(): ValidatedConfig {
   const env = parseResult.success ? parseResult.data : (rawEnv as unknown as EnvConfig);
 
   // Production-specific validation
-  const effectiveEnv = env.appEnv || env.nodeEnv;
+  const effectiveEnv = (env.appMode === 'production' ? 'production' : undefined) || env.nodeEnv;
   const isProduction = effectiveEnv === 'production';
 
   if (isProduction) {

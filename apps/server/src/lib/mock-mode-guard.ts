@@ -14,20 +14,15 @@
 export function validateMockModeConfig(env: Record<string, string | undefined>): void {
   const useMock = env.USE_MOCK_DATA === 'true';
   const mockAuth = env.AUTH_MODE === 'mock';
-  const appEnv = env.APP_ENV || '';
+  const appMode = env.APP_MODE || '';
 
-  if ((useMock || mockAuth) && ['production', 'staging'].includes(appEnv)) {
-    throw new Error('FATAL: Mock mode cannot be enabled in production or staging.');
+  if ((useMock || mockAuth) && ['production', 'staging'].includes(appMode)) {
+    throw new Error('FATAL: Mock mode cannot be enabled in staging or production.');
   }
 
-  // Allow hybrid mode: real DB + mock auth for local-db dev environment
-  // This lets developers test with staging DB without needing Supabase Auth
-  const isLocalDbMode = appEnv === 'local-db';
-
-  if (useMock !== mockAuth && !isLocalDbMode) {
+  if (useMock !== mockAuth) {
     throw new Error(
-      'FATAL: USE_MOCK_DATA=true requires AUTH_MODE=mock, and USE_MOCK_DATA=false requires AUTH_MODE=jwt. ' +
-        '(Use APP_ENV=local-db for real DB with mock auth.)'
+      'FATAL: USE_MOCK_DATA=true requires AUTH_MODE=mock, and USE_MOCK_DATA=false requires AUTH_MODE=jwt.'
     );
   }
 }

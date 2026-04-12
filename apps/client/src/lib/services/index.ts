@@ -34,22 +34,14 @@ let remoteAuthAdapter: RemoteAuthAdapter | null = null;
  * - Online mode: RemoteAPIAdapter (Hono local or Supabase Edge based on target)
  */
 export function getAPIAdapter(): APIAdapter {
-  const { mode, targets } = useServiceConfigStore.getState();
+  const { mode } = useServiceConfigStore.getState();
 
   if (mode === 'offline') {
     if (!localAPIAdapter) localAPIAdapter = new LocalAPIAdapter();
     return localAPIAdapter;
   } else {
     // Online mode - use remote adapter with configured URL
-    const envUrl = import.meta.env.VITE_API_URL;
-
-    // If we have an explicit remote URL in environment, prioritize it for dev account testing
-    const baseUrl =
-      envUrl && envUrl.startsWith('https')
-        ? envUrl
-        : targets.server === 'local'
-          ? 'http://localhost:3000'
-          : envUrl || 'https://YOUR_PROJECT.supabase.co/functions/v1';
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
     // Create new instance if base URL changed
     if (!remoteAPIAdapter || remoteAPIAdapterBaseUrl !== baseUrl) {

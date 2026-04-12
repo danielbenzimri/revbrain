@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { useShallow } from 'zustand/shallow';
 import { useAuthStore } from '@/stores/auth-store';
 import type { UserRole } from '@/types/auth';
-import { ROLE_DISPLAY_NAMES, ROLE_DESCRIPTIONS, isDev } from '@/types/auth';
+import { ROLE_DISPLAY_NAMES, ROLE_DESCRIPTIONS } from '@/types/auth';
 
 export default function LoginPage() {
   const { t, i18n } = useTranslation();
@@ -52,9 +52,47 @@ export default function LoginPage() {
     await login(email, password);
   };
 
-  const handleRoleSimulation = (role: UserRole) => {
-    simulateRole(role);
-    navigate(getRedirectPath(role));
+  const isMockMode = import.meta.env.VITE_AUTH_MODE === 'mock';
+  const personaLoginEnabled = import.meta.env.VITE_PERSONA_LOGIN_ENABLED === 'true';
+  const showPersonaPicker = isMockMode || personaLoginEnabled;
+
+  const handleRoleSimulation = async (role: UserRole) => {
+    if (isMockMode) {
+      simulateRole(role);
+      navigate(getRedirectPath(role));
+      return;
+    }
+
+    // Staging mode — request a server-issued session via /v1/dev/persona-login
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+      const res = await fetch(`${apiUrl}/v1/dev/persona-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role }),
+      });
+
+      if (!res.ok) return;
+
+      const { data } = await res.json();
+
+      // Import Supabase client dynamically to avoid pulling it in mock mode
+      const { createClient } = await import('@supabase/supabase-js');
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      if (!supabaseUrl || !supabaseKey) return;
+
+      const supabase = createClient(supabaseUrl, supabaseKey);
+      await supabase.auth.setSession({
+        access_token: data.accessToken,
+        refresh_token: data.refreshToken,
+      });
+
+      // The auth state change listener in auth-store will pick up the new session
+      navigate(getRedirectPath(role));
+    } catch {
+      // Silently fail — the persona login is a dev convenience, not critical
+    }
   };
 
   const toggleLanguage = () => {
@@ -219,7 +257,7 @@ export default function LoginPage() {
           </form>
 
           {/* Dev Mode: Role Simulation */}
-          {isDev && (
+          {showPersonaPicker && (
             <div className="border-t pt-6">
               <div className="text-center mb-3">
                 <span className="text-xs text-slate-400">{t('auth.simulateRole')}</span>

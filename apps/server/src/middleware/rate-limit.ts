@@ -188,7 +188,7 @@ export const inviteLimiter = rateLimiter({
  *
  * Key: User ID (authenticated required)
  */
-const isLocalList = process.env.APP_ENV === 'local' || process.env.NODE_ENV === 'development';
+const isLocalList = process.env.APP_MODE === 'mock' || process.env.NODE_ENV === 'development';
 export const listLimiter = rateLimiter({
   windowMs: 60 * 1000, // 1 minute
   limit: isLocalList ? 10_000 : 100,
@@ -215,7 +215,7 @@ export const listLimiter = rateLimiter({
  *
  * Key: User ID (admin authenticated required)
  */
-const isLocalEnv = process.env.APP_ENV === 'local' || process.env.NODE_ENV === 'development';
+const isLocalEnv = process.env.APP_MODE === 'mock' || process.env.NODE_ENV === 'development';
 export const adminLimiter = rateLimiter({
   windowMs: 60 * 60 * 1000, // 1 hour
   limit: isLocalEnv ? 10_000 : 10,

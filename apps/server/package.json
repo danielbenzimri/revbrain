@@ -10,10 +10,8 @@
     }
   },
   "scripts": {
-    "local": "APP_ENV=local USE_MOCK_DATA=true AUTH_MODE=mock NODE_OPTIONS='--max-old-space-size=8192' tsx watch src/dev.ts",
-    "local:real": "APP_ENV=real USE_MOCK_DATA=true AUTH_MODE=mock NODE_OPTIONS='--max-old-space-size=8192' tsx watch src/dev.ts",
-    "local:db": "APP_ENV=local-db USE_MOCK_DATA=false AUTH_MODE=mock NODE_OPTIONS='--max-old-space-size=8192' tsx watch src/dev.ts",
-    "dev": "APP_ENV=stg NODE_OPTIONS='--max-old-space-size=8192' tsx watch src/dev.ts",
+    "dev": "APP_MODE=mock NODE_OPTIONS='--max-old-space-size=8192' tsx watch src/dev.ts",
+    "dev:stg": "APP_MODE=staging NODE_OPTIONS='--max-old-space-size=8192' tsx watch src/dev.ts",
     "build": "NODE_OPTIONS='--max-old-space-size=8192' tsc",
     "lint": "NODE_OPTIONS='--max-old-space-size=8192' eslint . && tsc --noEmit",
     "test": "vitest run",

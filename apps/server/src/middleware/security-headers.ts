@@ -45,7 +45,7 @@ export const securityHeadersMiddleware = createMiddleware(async (c, next) => {
   );
 
   // HTTP Strict Transport Security
-  // Only set in production (based on NODE_ENV/APP_ENV, not client headers)
+  // Only set in production (based on NODE_ENV/APP_MODE, not client headers)
   // max-age=31536000 = 1 year, includeSubDomains for full coverage
   // SECURITY: Never use client-controlled headers (Host) for security decisions
   if (isProduction()) {

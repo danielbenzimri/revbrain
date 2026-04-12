@@ -16,7 +16,7 @@ type AnyJson = any;
 // Set mock mode env vars before importing app
 process.env.USE_MOCK_DATA = 'true';
 process.env.AUTH_MODE = 'mock';
-process.env.APP_ENV = 'local';
+process.env.APP_MODE = 'mock';
 
 // Dynamic import to ensure env vars are set before app initializes
 const { default: app } = await import('../index.ts');

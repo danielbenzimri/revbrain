@@ -4,7 +4,7 @@
  * Assessment" / "Re-Extract" button to kick off a REAL worker extraction
  * through the full server → worker → DB pipeline.
  *
- * The local server (APP_ENV=stg, NODE_ENV=development) will spawn
+ * The local server (APP_MODE=staging, NODE_ENV=development) will spawn
  * apps/worker/src/index.ts as a child process. Worker writes findings
  * to the staging DB, and the UI polls /assessment/status until it's done.
  */

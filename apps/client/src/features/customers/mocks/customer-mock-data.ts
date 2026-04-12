@@ -78,19 +78,19 @@ export const MOCK_CUSTOMERS: Customer[] = [
     },
     primaryContact: {
       name: 'John Smith',
-      email: 'john.smith@acme.com',
+      email: 'john.smith@test.org',
       phone: '+1 (415) 555-0123',
       role: 'VP Revenue Operations',
     },
     additionalContacts: [
       {
         name: 'Lisa Wang',
-        email: 'lisa.wang@acme.com',
+        email: 'lisa.wang@test.org',
         role: 'Salesforce Admin',
       },
       {
         name: 'Tom Davis',
-        email: 'tom.davis@acme.com',
+        email: 'tom.davis@test.org',
         role: 'CPQ Administrator',
       },
     ],

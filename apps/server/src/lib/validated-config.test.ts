@@ -37,10 +37,10 @@ describe('validated-config', () => {
       expect(config.isProduction).toBe(false);
     });
 
-    it('should use APP_ENV over NODE_ENV', () => {
+    it('should use APP_MODE over NODE_ENV', () => {
       setEnv({
         NODE_ENV: 'development',
-        APP_ENV: 'production',
+        APP_MODE: 'production',
         SUPABASE_URL: 'https://example.supabase.co',
         SUPABASE_ANON_KEY: 'anon-key',
         SUPABASE_SERVICE_ROLE_KEY: 'service-key',
@@ -134,7 +134,7 @@ describe('validated-config', () => {
 
     it('should throw in production when required vars are missing', () => {
       setEnv({
-        APP_ENV: 'production',
+        APP_MODE: 'production',
       });
 
       expect(() => validateConfig()).toThrow('Missing required environment variables');
@@ -142,7 +142,7 @@ describe('validated-config', () => {
 
     it('should not throw in production when all required vars are present', () => {
       setEnv({
-        APP_ENV: 'production',
+        APP_MODE: 'production',
         SUPABASE_URL: 'https://example.supabase.co',
         SUPABASE_ANON_KEY: 'anon-key',
         SUPABASE_SERVICE_ROLE_KEY: 'service-key',
