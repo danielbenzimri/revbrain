@@ -36,6 +36,14 @@ const CPQ_OBJECTS = [
   'OrderItem',
   'Contract',
   'Account',
+  // V8 P2-3: billing-namespace objects so billing triggers are
+  // captured when blng is installed. Without these, 3 custom
+  // billing triggers were silently dropped from the report.
+  'blng__Invoice__c',
+  'blng__CreditNote__c',
+  'blng__InvoiceRun__c',
+  'blng__FinancePeriod__c',
+  'ConsumptionSchedule',
 ];
 
 export class DependenciesCollector extends BaseCollector {
@@ -334,10 +342,12 @@ export class DependenciesCollector extends BaseCollector {
         this.signal
       );
 
+      // V8 P2-3: also match billing-namespace body refs (blng__,
+      // sbaa__) so billing triggers on custom objects are captured.
       const cpqTriggers = triggerResult.records.filter((t) => {
         const table = t.TableEnumOrId as string;
         const body = (t.Body as string) || '';
-        return CPQ_OBJECTS.some((o) => table === o) || /SBQQ__/.test(body);
+        return CPQ_OBJECTS.some((o) => table === o) || /SBQQ__|blng__|sbaa__/.test(body);
       });
 
       metrics.totalCustomTriggers = triggerResult.records.length;
