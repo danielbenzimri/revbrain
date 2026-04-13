@@ -1112,14 +1112,10 @@ export function assembleReport(
       })(),
       // Task 1.5: set to null when cross-reference unavailable (clean "Not extracted" row)
       optionAttachmentSummary: (() => {
-        const optCount =
-          _productOptions.length > 0
-            ? _productOptions.length
-            : (findings.find(
-                (f) =>
-                  f.artifactType === 'DataCount' &&
-                  f.artifactName?.toLowerCase().replace(/\s/g, '').includes('productoption')
-              )?.countValue ?? 0);
+        // V8: use the canonical productOptionCount (which prefers
+        // DataCount raw total) rather than re-deriving from filtered
+        // per-option findings. Keeps cross-section consistency.
+        const optCount = productOptionCount;
         const bundleCount = findings.filter(
           (f) => f.artifactType === 'Product2' && f.complexityLevel === 'medium'
         ).length;
@@ -3143,8 +3139,12 @@ function detectHotspots(
     });
   }
 
-  const apexCount = findings.filter((f) => f.artifactType === 'ApexClass').length;
-  const triggerCount = findings.filter((f) => f.artifactType === 'ApexTrigger').length;
+  // V8 cross-section consistency: use counts.apexClassCount (which
+  // already filters sidecar plugin findings) rather than re-counting
+  // from raw findings. Same for product options — use the canonical
+  // count that §2.3 and §6.6 use so all sections agree.
+  const apexCount = counts.apexClassCount;
+  const triggerCount = counts.triggerCount;
   if (apexCount > 20 || triggerCount > 3) {
     hotspots.push({
       name: 'Custom Code Dependencies',
@@ -3157,14 +3157,9 @@ function detectHotspots(
   const bundleHotspotCount = findings.filter(
     (f) => f.artifactType === 'Product2' && f.complexityLevel === 'medium'
   ).length;
-  const optHotspotCount =
-    findings.filter(
-      (f) => f.artifactType === 'ProductOption' || f.artifactType === 'SBQQ__ProductOption__c'
-    ).length ||
-    (findings.find(
-      (f) => f.artifactType === 'DataCount' && f.artifactName?.toLowerCase().includes('option')
-    )?.countValue ??
-      0);
+  // Use canonical productOptions count (which prefers DataCount raw
+  // total over filtered per-option findings).
+  const optHotspotCount = counts.productOptions;
   if (bundleHotspotCount > 50 || optHotspotCount > 200) {
     hotspots.push({
       name: 'Bundle & Option Configuration',
