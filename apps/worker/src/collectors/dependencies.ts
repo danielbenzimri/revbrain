@@ -99,7 +99,12 @@ export class DependenciesCollector extends BaseCollector {
       for (const cls of allClasses) {
         const body = (cls.Body as string) || '';
         const name = cls.Name as string;
-        const hasSbqq = /SBQQ__/.test(body);
+        // Match BOTH field-ref style (SBQQ__Quote__c) AND
+        // dot-notation style (SBQQ.TriggerControl, SBQQ.QuoteCalculatorPlugin).
+        // Also include sbaa (Advanced Approvals) and blng (Billing).
+        // Pre-fix: /SBQQ__/ missed 21 classes that use dot notation,
+        // causing the report to show 59 vs the UI validator's 80.
+        const hasSbqq = /SBQQ__|SBQQ\.|sbaa__|sbaa\.|blng__|blng\./.test(body);
         const hasTriggerControl = /SBQQ\.TriggerControl/.test(body);
         const hasCallout = /Http\s*\(|HttpRequest|fetch|WebServiceCallout/.test(body);
         // EXT-CC2 — detect @isTest annotation via the pure helper in
