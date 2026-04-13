@@ -545,7 +545,13 @@ export function assembleReport(
   const trends = get('TrendIndicator');
 
   // Code — handle both short and full SF API names
-  const apexClasses = get('ApexClass');
+  // V8 P1-4 + P2-7 assembler fallback: filter out sidecar plugin
+  // findings that have findingType starting with 'cpq_apex_plugin:'.
+  // These are duplicate entries (0-LOC) that inflate the count and
+  // create duplicate rows in §9.1. New extractions use the distinct
+  // 'ApexPluginInterface' artifactType, but existing data still has
+  // 'ApexClass' + findingType 'cpq_apex_plugin:*'.
+  const apexClasses = get('ApexClass').filter((f) => !f.findingKey?.includes('cpq_apex_plugin:'));
   // Third-party packaged Apex is emitted by the dependencies
   // collector under a DISTINCT artifactType (see EXT-CC4 fix on
   // 2026-04-11 / `docs/PDF-AND-GRAPH-DECISIONS.md` decision 2).
@@ -1257,7 +1263,22 @@ export function assembleReport(
           }
         }
 
-        for (const a of apexClasses) {
+        // V8 P2-7 fix: scan the dedicated ApexPluginInterface
+        // findings (was `apexClasses` before, which caused
+        // duplicates because sidecar findings also had
+        // artifactType: 'ApexClass').
+        const pluginInterfaceFindings = findings.filter(
+          (f) => f.artifactType === 'ApexPluginInterface'
+        );
+        // Also check canonical ApexClass findings whose notes
+        // contain the interface marker (for back-compat with
+        // any pre-fix extraction data that still uses the old
+        // artifactType).
+        const allPluginSources = [
+          ...pluginInterfaceFindings,
+          ...apexClasses.filter((a) => a.notes?.includes('Implements CPQ plugin interface:')),
+        ];
+        for (const a of allPluginSources) {
           const notes = a.notes ?? '';
           const ifaceMatch = notes.match(/Implements CPQ plugin interface: ([^,\n]+)/);
           if (!ifaceMatch) continue;
@@ -1979,13 +2000,21 @@ function assembleRelatedFunctionality(
     notes: namedCreds.length > 0 ? `${namedCreds.length} detected` : '',
   });
 
+  // V8 P2-4 fix: the underlying data source is PlatformEventChannel
+  // metadata (not Platform Event objects). Relabel from "CPQ-related"
+  // (which was never filtered) to the accurate count with correct
+  // terminology. Appendix A.2 already shows the raw number under
+  // "PlatformEventChannel" — this label must be consistent.
   const platformEvents = findings.filter(
     (f) => f.artifactType === 'PlatformEvent' || f.artifactType === 'PlatformEventChannel'
   );
   items.push({
     label: 'Platform Events',
     used: platformEvents.length > 0,
-    notes: platformEvents.length > 0 ? `${platformEvents.length} CPQ-related` : '',
+    notes:
+      platformEvents.length > 0
+        ? `${platformEvents.length} platform event channel(s) detected`
+        : '',
   });
 
   const apexCallouts = findings.filter((f) => f.artifactType === 'ApexCallout');
@@ -2263,7 +2292,8 @@ function buildFeatureUtilization(
   const cpDataCount =
     findings.find(
       (f) =>
-        f.artifactType === 'DataCount' && f.artifactName?.toLowerCase().includes('contractedprice')
+        f.artifactType === 'DataCount' &&
+        f.artifactName?.toLowerCase().replace(/\s/g, '').includes('contractedprice')
     )?.countValue ?? 0;
   const cpEffective = cpCount > 0 ? cpCount : cpDataCount > 0 ? cpDataCount : 0;
   // Task 2.7: ContractedPrice present means at least "Configured"
@@ -2938,14 +2968,27 @@ function buildDefaultKeyFindings(
     const qcpSettingFinding = settings.find(
       (s) => s.artifactName === 'Quote Calculator Plugin' || s.artifactName?.includes('QCP')
     );
+    // V8 P1-1 assembler fallback: priority chain for the configured
+    // QCP class name. Only sources 1 and 2 are trustworthy — the
+    // settings collector knows which script is actually configured.
+    // Source 3 (first CustomScript name) is WRONG when multiple
+    // scripts exist because it picks alphabetically, not by config.
+    //   1. evidenceRefs[0].label (new extraction with P1-1 fix)
+    //   2. notes "QCP class: <name>" (old extraction, when settings
+    //      collector successfully read the plugin field)
+    //   3. DO NOT fall back to first CustomScript name — it's
+    //      misleading. Instead, omit the name and say "detected".
     const configuredQcpClass = qcpSettingFinding?.evidenceRefs?.[0]?.label
       ? String(qcpSettingFinding.evidenceRefs[0].label)
       : null;
-    const scriptName =
-      configuredQcpClass ??
-      (qcpScripts.length > 0
-        ? qcpScripts[0].artifactName
-        : (qcpPlugin?.notes?.match(/class:\s*(\S+)/)?.[1] ?? ''));
+    const notesQcpClass =
+      qcpPlugin?.notes?.match(/QCP class:\s*([A-Za-z0-9_]+)/)?.[1] ??
+      qcpPlugin?.notes?.match(/class:\s*([A-Za-z0-9_]+)/)?.[1] ??
+      null;
+    // Only use a script name if we KNOW it's the configured one.
+    // When the settings collector failed to read the plugin field,
+    // we have no way to distinguish which of N scripts is active.
+    const scriptName = configuredQcpClass ?? notesQcpClass ?? '';
     const totalScripts = qcpScripts.length;
     const otherScriptsNote =
       totalScripts > 1

@@ -281,6 +281,38 @@ export function joinPluginActivation(
     const list = activationsByKey.get(match.findingKey) ?? [];
     list.push(path);
     activationsByKey.set(match.findingKey, list);
+
+    // V8 P2-5 fix: emit a PluginActivation finding for the ACTIVE
+    // case so the assembler's interfaceActivation slot table shows
+    // "active" instead of omitting the row entirely. Before this
+    // fix, only unset and orphaned slots were emitted — active
+    // slots were invisible in the §9.1b.3 table.
+    newFindings.push({
+      domain: 'settings',
+      collectorName: 'plugin-activation',
+      artifactType: 'PluginActivation',
+      artifactName: reg.label,
+      artifactId: path,
+      findingKey: `plugin-activation:active:${path}:${value}`,
+      sourceType: 'object',
+      detected: true,
+      riskLevel: 'high',
+      migrationRelevance: 'must-migrate',
+      notes: `${reg.label} is active — registered to '${value}' (matched Apex class found).`,
+      evidenceRefs: [
+        {
+          type: 'object-ref',
+          value: reg.interfaceName,
+          label: 'interfaceName',
+        },
+        {
+          type: 'field-ref',
+          value: path,
+          label: value, // The class name — NOT 'unset'
+        },
+      ],
+      schemaVersion: '1.0',
+    });
   }
 
   // Materialize the updated findings non-mutationally. Findings

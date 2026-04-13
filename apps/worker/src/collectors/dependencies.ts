@@ -200,21 +200,20 @@ export class DependenciesCollector extends BaseCollector {
           for (const iface of ifaces) {
             cpqPluginClassCount++;
             const mapping = CPQ_PLUGIN_INTERFACE_MAP[iface];
+            // V8 P1-4 + P2-7 fix: use a DISTINCT artifactType so
+            // these sidecar findings are NOT captured by
+            // `get('ApexClass')` in the assembler. Before this
+            // fix, each plugin class appeared twice in the §9.1
+            // table (once as the canonical entry with LOC, once
+            // as the 0-LOC sidecar) AND the duplicate inflated
+            // the apexClassCount metric by ~10-20%.
             findings.push(
               createFinding({
                 domain: 'dependency',
                 collector: 'dependencies',
-                artifactType: 'ApexClass',
+                artifactType: 'ApexPluginInterface',
                 artifactName: name,
                 artifactId: cls.Id as string,
-                // EXT-1.1 wave-3 staging fix — include the
-                // interface name in the findingType so a class
-                // implementing MULTIPLE plugin interfaces
-                // produces distinct findingKeys per interface.
-                // Pre-fix: the fixed `cpq_apex_plugin` string
-                // collided into one findingKey for each iface on
-                // the same class → BB-3 invariant I2 duplicate-
-                // key error against real staging.
                 findingType: `cpq_apex_plugin:${iface}`,
                 sourceType: 'tooling',
                 riskLevel: 'high',
