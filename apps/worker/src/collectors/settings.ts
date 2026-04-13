@@ -275,6 +275,124 @@ export class SettingsCollector extends BaseCollector {
       }
 
       // ================================================================
+      // Strategy 3b: Direct query of KNOWN CPQ custom settings.
+      // The Tooling API CustomObject entity does NOT return Custom
+      // Settings (they're a separate metadata type). When the
+      // discovery loop above found zero settings, directly query
+      // the well-known SBQQ__Plugin__c hierarchy custom setting
+      // which holds the configured QCP and other plugin slots.
+      // ================================================================
+      // Check if SBQQ__Plugin__c was found by the Tooling API
+      // discovery. If not (common — the Tooling API CustomObject
+      // entity is inconsistent about returning Custom Settings),
+      // add it directly.
+      const hasPluginSetting = settingObjects.some((s) => s.name === 'SBQQ__Plugin__c');
+      if (!hasPluginSetting) {
+        this.ctx.progress.updateSubstep('settings', 'direct_plugin_query');
+        const KNOWN_SETTINGS_OBJECTS = [
+          { name: 'SBQQ__Plugin__c', description: 'CPQ Plugin Configuration' },
+        ];
+        for (const ks of KNOWN_SETTINGS_OBJECTS) {
+          try {
+            const testResult = await this.ctx.restApi.query<Record<string, unknown>>(
+              `SELECT Id, SetupOwnerId FROM ${ks.name} LIMIT 1`,
+              this.signal
+            );
+            if (testResult.totalSize >= 0) {
+              settingObjects.push(ks);
+              this.log.info(
+                { setting: ks.name, records: testResult.totalSize },
+                'direct_settings_query_found'
+              );
+            }
+          } catch (err) {
+            this.log.warn(
+              { setting: ks.name, error: (err as Error).message },
+              'direct_settings_query_failed'
+            );
+          }
+        }
+
+        // Re-run extraction for the newly discovered settings
+        for (const setting of settingObjects) {
+          try {
+            let describe: DescribeResult | undefined;
+            try {
+              describe = this.ctx.describeCache.get(setting.name) as DescribeResult | undefined;
+              if (!describe) {
+                describe = await this.ctx.restApi.describe(setting.name, this.signal);
+                this.ctx.describeCache.set(setting.name, describe);
+              }
+            } catch {
+              /* describe failed — fall back to basic query */
+            }
+
+            const fieldNames = describe
+              ? describe.fields.map((f) => f.name).filter((n) => !SKIP_FIELDS.has(n))
+              : ['Id', 'SetupOwnerId', 'Name'];
+
+            const records = await this.ctx.restApi.queryAll<Record<string, unknown>>(
+              `SELECT ${fieldNames.join(', ')} FROM ${setting.name}`,
+              this.signal
+            );
+
+            const orgRecord = records.find((r) => {
+              const ownerId = r.SetupOwnerId as string;
+              return ownerId && ownerId.startsWith('00D');
+            });
+
+            if (orgRecord && describe) {
+              for (const field of describe.fields) {
+                if (SKIP_FIELDS.has(field.name)) continue;
+                const value = orgRecord[field.name];
+                if (value !== null && value !== undefined) {
+                  allSettingValues.set(`${setting.name}.${field.name}`, value);
+                }
+              }
+
+              for (const field of describe.fields) {
+                if (SKIP_FIELDS.has(field.name)) continue;
+                const match = KNOWN_SETTINGS.find((ks) => ks.pattern.test(field.name));
+                if (match) {
+                  const value = orgRecord[field.name];
+                  const displayValue = formatSettingValue(value, field.name);
+                  findings.push(
+                    createFinding({
+                      domain: 'settings',
+                      collector: 'settings',
+                      artifactType: 'CPQSettingValue',
+                      artifactName: match.label,
+                      artifactId: `${setting.name}.${field.name}`,
+                      sourceType: 'object',
+                      findingType: 'cpq_setting_value',
+                      riskLevel: 'info',
+                      rcaMappingComplexity: 'direct',
+                      rcaTargetConcept: 'Revenue Settings',
+                      migrationRelevance: 'should-migrate',
+                      notes: `${match.label}: ${displayValue}`,
+                      evidenceRefs: [
+                        {
+                          type: 'field-ref' as const,
+                          value: `${setting.name}.${field.name}`,
+                          label: displayValue,
+                        },
+                      ],
+                    })
+                  );
+                  metrics[`cpqSetting_${match.label.replace(/\s+/g, '_')}`] = displayValue;
+                }
+              }
+            }
+          } catch (err) {
+            this.log.warn(
+              { setting: setting.name, error: (err as Error).message },
+              'direct_setting_extraction_failed'
+            );
+          }
+        }
+      }
+
+      // ================================================================
       // Strategy 4: Infer settings from field Describes when no Custom Settings found
       // CPQ stores config via managed package internals — we detect from field defaults
       // ================================================================
