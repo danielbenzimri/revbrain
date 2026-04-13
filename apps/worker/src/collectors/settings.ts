@@ -293,23 +293,173 @@ export class SettingsCollector extends BaseCollector {
           { name: 'SBQQ__Plugin__c', description: 'CPQ Plugin Configuration' },
         ];
         for (const ks of KNOWN_SETTINGS_OBJECTS) {
+          // Try THREE approaches in order — protected hierarchy
+          // custom settings may fail on one path but succeed on
+          // another depending on the org's API version + permissions.
+          let found = false;
+
+          // Approach A: describe (works even when SOQL fails)
           try {
-            const testResult = await this.ctx.restApi.query<Record<string, unknown>>(
-              `SELECT Id, SetupOwnerId FROM ${ks.name} LIMIT 1`,
-              this.signal
+            const desc = await this.ctx.restApi.describe(ks.name, this.signal);
+            this.ctx.describeCache.set(ks.name, desc);
+            this.log.info(
+              { setting: ks.name, fields: desc.fields.length },
+              'direct_plugin_describe_success'
             );
-            if (testResult.totalSize >= 0) {
-              settingObjects.push(ks);
-              this.log.info(
-                { setting: ks.name, records: testResult.totalSize },
-                'direct_settings_query_found'
+            // Describe worked — try reading data via SOQL next
+            try {
+              const fieldNames = desc.fields.map((f) => f.name).filter((n) => !SKIP_FIELDS.has(n));
+              const records = await this.ctx.restApi.queryAll<Record<string, unknown>>(
+                `SELECT ${fieldNames.join(', ')} FROM ${ks.name}`,
+                this.signal
+              );
+              if (records.length > 0) {
+                settingObjects.push(ks);
+                found = true;
+                this.log.info(
+                  { setting: ks.name, records: records.length },
+                  'direct_settings_query_found'
+                );
+              }
+            } catch {
+              // SOQL failed even after successful describe —
+              // protected custom setting.  Try REST record read.
+            }
+          } catch {
+            // Describe failed — object doesn't exist or is invisible
+          }
+
+          // Approach B: REST record read via /sobjects/<name>/<orgId>
+          // bypasses SOQL entirely.
+          if (!found) {
+            const orgId = (this.ctx.describeCache.get('_orgId') as string) ?? '';
+            if (orgId) {
+              try {
+                const record = await (
+                  this.ctx.restApi as unknown as {
+                    client: {
+                      request: <T>(opts: {
+                        apiType: string;
+                        path: string;
+                        signal?: AbortSignal;
+                      }) => Promise<T>;
+                    };
+                    apiVersion: string;
+                  }
+                ).client.request<Record<string, unknown>>({
+                  apiType: 'rest',
+                  path: `/services/data/v62.0/sobjects/${ks.name}/${orgId}`,
+                  signal: this.signal,
+                });
+                if (record && typeof record === 'object') {
+                  // Inject as a synthetic "records" result so the
+                  // downstream extraction loop can process it.
+                  const desc = this.ctx.describeCache.get(ks.name) as DescribeResult | undefined;
+                  if (desc) {
+                    for (const field of desc.fields) {
+                      if (SKIP_FIELDS.has(field.name)) continue;
+                      const value = record[field.name];
+                      if (value !== null && value !== undefined) {
+                        allSettingValues.set(`${ks.name}.${field.name}`, value);
+                      }
+                      const match = KNOWN_SETTINGS.find((m) => m.pattern.test(field.name));
+                      if (match) {
+                        const displayValue = formatSettingValue(value, field.name);
+                        findings.push(
+                          createFinding({
+                            domain: 'settings',
+                            collector: 'settings',
+                            artifactType: 'CPQSettingValue',
+                            artifactName: match.label,
+                            artifactId: `${ks.name}.${field.name}`,
+                            sourceType: 'object',
+                            findingType: 'cpq_setting_value',
+                            riskLevel: 'info',
+                            rcaMappingComplexity: 'direct',
+                            rcaTargetConcept: 'Revenue Settings',
+                            migrationRelevance: 'should-migrate',
+                            notes: `${match.label}: ${displayValue}`,
+                            evidenceRefs: [
+                              {
+                                type: 'field-ref' as const,
+                                value: `${ks.name}.${field.name}`,
+                                label: displayValue,
+                              },
+                            ],
+                          })
+                        );
+                        metrics[`cpqSetting_${match.label.replace(/\s+/g, '_')}`] = displayValue;
+                      }
+                    }
+                    found = true;
+                    this.log.info(
+                      { setting: ks.name, fields: Object.keys(record).length },
+                      'direct_plugin_rest_record_read_success'
+                    );
+                  }
+                }
+              } catch (err) {
+                this.log.warn(
+                  { setting: ks.name, error: (err as Error).message },
+                  'direct_plugin_rest_record_read_failed'
+                );
+              }
+            }
+          }
+
+          // Approach C: Tooling API SOQL (different access rules
+          // from REST API SOQL — sometimes works when REST fails)
+          if (!found) {
+            try {
+              const toolingResult = await this.ctx.restApi.toolingQuery<Record<string, unknown>>(
+                `SELECT Id, SetupOwnerId, SBQQ__QuoteCalculatorPlugin__c FROM ${ks.name} WHERE SetupOwnerId = '${(this.ctx.describeCache.get('_orgId') as string) ?? ''}'`,
+                this.signal
+              );
+              if (toolingResult.totalSize > 0) {
+                const record = toolingResult.records[0]!;
+                const qcpValue = record.SBQQ__QuoteCalculatorPlugin__c;
+                if (qcpValue) {
+                  allSettingValues.set(`${ks.name}.SBQQ__QuoteCalculatorPlugin__c`, qcpValue);
+                  findings.push(
+                    createFinding({
+                      domain: 'settings',
+                      collector: 'settings',
+                      artifactType: 'CPQSettingValue',
+                      artifactName: 'Quote Calculator Plugin',
+                      artifactId: `${ks.name}.SBQQ__QuoteCalculatorPlugin__c`,
+                      sourceType: 'tooling',
+                      findingType: 'cpq_setting_value',
+                      riskLevel: 'high',
+                      rcaMappingComplexity: 'redesign',
+                      rcaTargetConcept: 'Revenue Settings',
+                      migrationRelevance: 'must-migrate',
+                      notes: `Quote Calculator Plugin: ${String(qcpValue)}`,
+                      evidenceRefs: [
+                        {
+                          type: 'field-ref' as const,
+                          value: `${ks.name}.SBQQ__QuoteCalculatorPlugin__c`,
+                          label: String(qcpValue),
+                        },
+                      ],
+                    })
+                  );
+                  found = true;
+                  this.log.info(
+                    { setting: ks.name, qcpValue: String(qcpValue) },
+                    'direct_plugin_tooling_soql_success'
+                  );
+                }
+              }
+            } catch (err) {
+              this.log.warn(
+                { setting: ks.name, error: (err as Error).message },
+                'direct_plugin_tooling_soql_failed'
               );
             }
-          } catch (err) {
-            this.log.warn(
-              { setting: ks.name, error: (err as Error).message },
-              'direct_settings_query_failed'
-            );
+          }
+
+          if (!found) {
+            this.log.warn({ setting: ks.name }, 'direct_plugin_all_approaches_failed');
           }
         }
 

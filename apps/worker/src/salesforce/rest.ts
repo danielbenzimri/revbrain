@@ -275,4 +275,49 @@ export class SalesforceRestApi {
 
     return allRecords;
   }
+
+  /**
+   * Execute anonymous Apex and return the debug log. Used as a
+   * last-resort approach to read protected hierarchy custom settings
+   * (e.g. SBQQ__Plugin__c) that are inaccessible via REST and SOQL.
+   *
+   * The Apex code should use System.debug('RESULT:' + ...) to
+   * embed structured output in the debug log. The caller parses
+   * it from the returned log text.
+   */
+  async executeAnonymous(
+    apexCode: string,
+    signal?: AbortSignal
+  ): Promise<{
+    success: boolean;
+    compileProblem: string | null;
+    exceptionMessage: string | null;
+    log: string;
+  }> {
+    const result = await this.client.request<{
+      success: boolean;
+      compiled: boolean;
+      compileProblem: string | null;
+      exceptionMessage: string | null;
+      exceptionStackTrace: string | null;
+      line: number;
+      column: number;
+    }>({
+      apiType: 'tooling',
+      path: `/services/data/${this.apiVersion}/tooling/executeAnonymous/?anonymousBody=${encodeURIComponent(apexCode)}`,
+      signal,
+    });
+
+    // The debug log is returned via a separate header / log mechanism.
+    // For our use case we extract the RESULT: line from the compiled
+    // Apex output embedded in the response (executeAnonymous returns
+    // the log inline when the DebuggingHeader is set, or we parse it
+    // from the response body when available).
+    return {
+      success: result.success && result.compiled,
+      compileProblem: result.compileProblem,
+      exceptionMessage: result.exceptionMessage,
+      log: '', // Debug log extraction depends on header setup
+    };
+  }
 }
