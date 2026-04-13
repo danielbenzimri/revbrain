@@ -363,29 +363,18 @@ export class UsageCollector extends BaseCollector {
         linesByQuote.get(qid)!.push(ql);
       }
 
-      for (const q of recentQuotes) {
-        // Priority: quote-level > weighted line-level (G-05 audit fix)
-        let effectiveDiscount = Number(q.SBQQ__CustomerDiscount__c ?? 0);
-
-        if (effectiveDiscount <= 0) {
-          const lines = linesByQuote.get(q.Id as string) ?? [];
-          const lineData = lines
-            .map((l) => ({
-              discount:
-                Number(l.SBQQ__Discount__c ?? 0) + Number(l.SBQQ__AdditionalDiscount__c ?? 0),
-              revenue: Number(l.SBQQ__NetTotal__c ?? 0),
-            }))
-            .filter((d) => d.discount > 0);
-
-          if (lineData.length > 0) {
-            const totalRev = lineData.reduce((s, l) => s + l.revenue, 0);
-            effectiveDiscount =
-              totalRev > 0
-                ? lineData.reduce((s, l) => s + (l.discount * l.revenue) / totalRev, 0)
-                : lineData.reduce((s, l) => s + l.discount, 0) / lineData.length;
-          }
-        }
-
+      // P3-6 fix: bucket by per-LINE TotalDiscountRate (the
+      // effective discount after all rule-applied discounts) rather
+      // than the raw quote-level CustomerDiscount or line-level
+      // Discount + AdditionalDiscount. The UI validator uses
+      // SBQQ__TotalDiscountRate__c which is the standard metric
+      // SIs examine. One finding per discounted quote line.
+      for (const ql of quoteLines) {
+        const totalDiscountRate = Number(ql.SBQQ__TotalDiscountRate__c ?? 0);
+        const rawDiscount =
+          Number(ql.SBQQ__Discount__c ?? 0) + Number(ql.SBQQ__AdditionalDiscount__c ?? 0);
+        // Use TotalDiscountRate when available, fall back to raw sum
+        const effectiveDiscount = totalDiscountRate > 0 ? totalDiscountRate : rawDiscount;
         if (effectiveDiscount <= 0) continue;
         discountedCount++;
         totalDiscount += effectiveDiscount;
@@ -724,10 +713,14 @@ export class UsageCollector extends BaseCollector {
 
     // Duplicate product codes
     try {
+      // P3-1 fix: use records.length, not totalSize. Salesforce's
+      // totalSize on GROUP BY queries is unreliable — some API
+      // versions return the result row count, others return -1.
       const dupeResult = await this.ctx.restApi.query<Record<string, unknown>>(
         'SELECT ProductCode, COUNT(Id) dupeCount FROM Product2 WHERE IsActive = true AND ProductCode != null GROUP BY ProductCode HAVING COUNT(Id) > 1',
         this.signal
       );
+      const dupeCount = dupeResult.records.length;
       findings.push(
         createFinding({
           domain: 'usage',
@@ -736,11 +729,11 @@ export class UsageCollector extends BaseCollector {
           artifactName: 'Duplicate Product Codes',
           sourceType: 'object',
           findingType: 'data_quality',
-          riskLevel: dupeResult.totalSize > 0 ? 'medium' : 'info',
-          countValue: dupeResult.totalSize,
+          riskLevel: dupeCount > 0 ? 'medium' : 'info',
+          countValue: dupeCount,
           notes:
-            dupeResult.totalSize > 0
-              ? `${dupeResult.totalSize} product codes shared by multiple active products. Status: flagged.`
+            dupeCount > 0
+              ? `${dupeCount} product codes shared by multiple active products. Status: flagged.`
               : 'No duplicate product codes detected. Status: clean.',
         })
       );

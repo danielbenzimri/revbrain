@@ -537,6 +537,28 @@ export class CatalogCollector extends BaseCollector {
       metrics.nestedBundleCount = nestedOptions.length;
       metrics.requiredOptions = options.filter((o) => o.SBQQ__Required__c === true).length;
 
+      // P3-2 fix: emit a DataCount finding for nested bundles so
+      // the assembler can display the correct count in §6.6.
+      // nestedOptions = options whose OptionalSKU is itself a
+      // bundle-capable product. The count of DISTINCT child bundles
+      // is the number of nested bundles the report should show.
+      const nestedBundleIds = new Set(
+        nestedOptions.map((o) => normalizeId(o.SBQQ__OptionalSKU__c as string))
+      );
+      if (nestedBundleIds.size > 0) {
+        findings.push(
+          createFinding({
+            domain: 'catalog',
+            collector: 'catalog',
+            artifactType: 'DataCount',
+            artifactName: 'Nested Bundles',
+            sourceType: 'object',
+            countValue: nestedBundleIds.size,
+            notes: `${nestedBundleIds.size} bundle-capable product(s) that also appear as options of other bundles`,
+          })
+        );
+      }
+
       // Store parent→option map using normalized IDs
       const optionMapData: Record<string, string[]> = {};
       for (const o of options) {
