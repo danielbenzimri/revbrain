@@ -1917,15 +1917,39 @@ function assembleRelatedFunctionality(
     (f) =>
       f.artifactType === 'DataCount' && f.artifactName?.toLowerCase().includes('experiencecloud')
   );
+  // V8 P1-3 round 3: the integrations collector's Network query
+  // may fail (describe cache miss, permissions). Cross-reference
+  // THREE independent signals:
+  //   1. ExperienceCloud finding with detected: true
+  //   2. DataCount finding for ExperienceCloud
+  //   3. InstalledPackage with "Community"/"Experience" in name +
+  //      multiple community Aura components (circumstantial but
+  //      overwhelming when 5+ community components exist alongside
+  //      a community package)
+  const communityPackage = findings.some(
+    (f) =>
+      f.artifactType === 'InstalledPackage' &&
+      (f.artifactName?.toLowerCase().includes('community') ||
+        f.artifactName?.toLowerCase().includes('experience'))
+  );
+  const communityComponents = findings.filter(
+    (f) =>
+      (f.artifactType === 'AuraDefinitionBundle' || f.artifactType === 'EmailTemplate') &&
+      f.artifactName?.toLowerCase().includes('community')
+  ).length;
   const expCloudDetected =
     (expCloud?.detected === true && (expCloud?.countValue ?? 0) > 0) ||
-    (expCloudDataCount?.countValue ?? 0) > 0;
+    (expCloudDataCount?.countValue ?? 0) > 0 ||
+    (communityPackage && communityComponents >= 3);
   items.push({
     label: 'Experience Cloud',
     used: expCloudDetected,
     notes: expCloudDetected
-      ? (expCloud?.notes ??
-        `${expCloudDataCount?.countValue ?? 0} Experience Cloud site(s) detected`)
+      ? expCloud?.detected === true
+        ? (expCloud?.notes ?? 'Experience Cloud detected')
+        : communityPackage
+          ? `Community package installed, ${communityComponents} community component(s) detected`
+          : `${expCloudDataCount?.countValue ?? 0} Experience Cloud site(s) detected`
       : cleanFailureProse(expCloud?.notes, 'Not detected'),
   });
 
@@ -2661,8 +2685,16 @@ function buildGlanceSections(
       },
       {
         label: 'Discount Schedules',
-        value: `~${count('DiscountSchedule', 'SBQQ__DiscountSchedule__c') || dataCount('DiscountSchedule')}`,
-        confidence: 'Estimated',
+        // V8 P2-6: per-record findings exist (22) AND DataCount
+        // confirms (22). Use the actual count without "~" prefix
+        // and set confidence to Confirmed when we have real data.
+        value: `${count('DiscountSchedule', 'SBQQ__DiscountSchedule__c') || dataCount('DiscountSchedule')}`,
+        confidence:
+          count('DiscountSchedule', 'SBQQ__DiscountSchedule__c') > 0
+            ? 'Confirmed'
+            : dataCount('DiscountSchedule') > 0
+              ? 'Estimated'
+              : 'Estimated',
       },
       {
         label: 'Custom Scripts (QCP)',
