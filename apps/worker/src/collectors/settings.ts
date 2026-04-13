@@ -568,6 +568,12 @@ export class SettingsCollector extends BaseCollector {
     };
 
     // 1. QCP
+    // V8 P1-1 fix: include the configured QCP class name in
+    // evidenceRefs so the assembler can read it without parsing
+    // the notes string. The assembler's priority chain is:
+    //   1. evidenceRefs[0].label  (this fix)
+    //   2. first CustomScript artifactName  (wrong fallback)
+    //   3. notes.match(/class:\s*(\S+)/)  (fragile)
     const qcpValue = findSettingValue(/CalculatorPlugin|QCP/i);
     plugins.push(
       createFinding({
@@ -583,6 +589,9 @@ export class SettingsCollector extends BaseCollector {
           ? `Active — QCP class: ${String(qcpValue)}. Custom JavaScript pricing logic injected into every calculation. This fundamentally changes the complexity profile.`
           : 'Not Configured — no custom JavaScript calculation injection detected. Pricing logic uses standard Price Rules.',
         rcaMappingComplexity: qcpValue ? 'redesign' : 'direct',
+        evidenceRefs: qcpValue
+          ? [{ type: 'field-ref' as const, value: 'SBQQ__Plugin__c.QCP', label: String(qcpValue) }]
+          : [],
       })
     );
 

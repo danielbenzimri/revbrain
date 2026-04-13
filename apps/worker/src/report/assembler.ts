@@ -721,14 +721,23 @@ export function assembleReport(
     (f) => f.complexityLevel === 'medium' // catalog sets medium for ConfigurationType products
   ).length;
 
+  // V8 P0 fix: prefer the DataCount finding (raw SOQL total) over
+  // the per-option findings count. Per-option findings may be fewer
+  // because the catalog collector skips options whose parent product
+  // isn't in the local product map. The headline metric must report
+  // the total number of option records in the org, not the filtered
+  // subset that has matched parents.
+  const rawOptionDataCount = findings.find(
+    (f) =>
+      f.artifactType === 'DataCount' &&
+      f.artifactName?.toLowerCase().replace(/\s/g, '').includes('productoption')
+  )?.countValue;
   const productOptionCount =
-    _productOptions.length > 0
-      ? _productOptions.length
-      : (findings.find(
-          (f) =>
-            f.artifactType === 'DataCount' &&
-            f.artifactName?.toLowerCase().replace(/\s/g, '').includes('productoption')
-        )?.countValue ?? 0);
+    rawOptionDataCount != null && rawOptionDataCount > 0
+      ? rawOptionDataCount
+      : _productOptions.length > 0
+        ? _productOptions.length
+        : 0;
 
   const productFamilySet = new Set(
     productFindings
@@ -1051,7 +1060,18 @@ export function assembleReport(
           inactive: 0,
           stale: 0,
         };
+        // V8 P2-2 fix: count inactive/stale BEFORE type counting,
+        // and only count types for ACTIVE rules. The template renders
+        // these counts as "N rules active" so they must exclude
+        // inactive rules. Previously inactive Alert was counted in
+        // both typeCounts.alert AND typeCounts.inactive, making the
+        // type sum = total instead of active.
         for (const r of productRules) {
+          const isInactive = r.usageLevel === 'dormant' || r.notes?.includes('Inactive');
+          if (isInactive) typeCounts.inactive++;
+          if (TECH_DEBT_PATTERNS.test(r.artifactName)) typeCounts.stale++;
+          // Only count type for active rules
+          if (isInactive) continue;
           const type = (
             r.evidenceRefs?.find((ref) => ref.label === 'Type')?.value ?? ''
           ).toLowerCase();
@@ -1059,8 +1079,6 @@ export function assembleReport(
           else if (type.includes('alert')) typeCounts.alert++;
           else if (type.includes('validation')) typeCounts.validation++;
           else if (type.includes('filter')) typeCounts.filter++;
-          if (r.usageLevel === 'dormant' || r.notes?.includes('Inactive')) typeCounts.inactive++;
-          if (TECH_DEBT_PATTERNS.test(r.artifactName)) typeCounts.stale++;
         }
         return typeCounts;
       })(),
@@ -1871,12 +1889,27 @@ function assembleRelatedFunctionality(
   };
 
   // Experience Cloud
+  // V8 P1-3 fix: cross-reference the ExperienceCloud finding with
+  // the platform metadata summary (Appendix A.2 DataCount). If
+  // the integrations collector failed to query the Network object
+  // (describe cache miss, permissions), but the discovery collector
+  // DID find ExperienceCloud records in its metadata count pass,
+  // trust the discovery count.
   const expCloud = findings.find((f) => f.artifactType === 'ExperienceCloud');
-  const expCloudDetected = expCloud?.detected === true && (expCloud?.countValue ?? 0) > 0;
+  const expCloudDataCount = findings.find(
+    (f) =>
+      f.artifactType === 'DataCount' && f.artifactName?.toLowerCase().includes('experiencecloud')
+  );
+  const expCloudDetected =
+    (expCloud?.detected === true && (expCloud?.countValue ?? 0) > 0) ||
+    (expCloudDataCount?.countValue ?? 0) > 0;
   items.push({
     label: 'Experience Cloud',
     used: expCloudDetected,
-    notes: cleanFailureProse(expCloud?.notes, 'Not detected'),
+    notes: expCloudDetected
+      ? (expCloud?.notes ??
+        `${expCloudDataCount?.countValue ?? 0} Experience Cloud site(s) detected`)
+      : cleanFailureProse(expCloud?.notes, 'Not detected'),
   });
 
   // Experience Cloud sites (nested)
@@ -1891,14 +1924,27 @@ function assembleRelatedFunctionality(
   }
 
   // Salesforce Billing
+  // V8 P1-2 fix: cross-reference the BillingDetection finding with
+  // Section 4.1's installed-packages list. The integrations
+  // collector's tooling query may fail silently (permissions,
+  // timeout), but the discovery collector always finds installed
+  // packages. If blng appears in installed packages, billing IS
+  // installed regardless of the BillingDetection finding.
   const billingPkg = findings.find(
     (f) => f.artifactType === 'BillingDetection' && f.artifactName === 'Salesforce Billing Package'
   );
-  const billingInstalled = billingPkg?.detected === true;
+  const blngInInstalledPackages = findings.some(
+    (f) =>
+      f.artifactType === 'InstalledPackage' &&
+      (f.artifactName?.toLowerCase().includes('billing') || f.notes?.includes('blng'))
+  );
+  const billingInstalled = billingPkg?.detected === true || blngInInstalledPackages;
   items.push({
     label: 'Salesforce Billing',
     used: billingInstalled,
-    notes: billingPkg?.notes ?? '',
+    notes: billingInstalled
+      ? billingPkg?.notes || 'Salesforce Billing (blng) package detected in installed packages'
+      : (billingPkg?.notes ?? ''),
   });
 
   const billingRules = findings.find(
@@ -2209,7 +2255,17 @@ function buildFeatureUtilization(
           : '',
   });
 
+  // V8 P2-1 fix: also check for the DataCount finding emitted by
+  // the pricing collector. The count() function only finds per-record
+  // findings (artifactType === 'ContractedPrice'|'SBQQ__ContractedPrice__c')
+  // but the pricing collector stores the count in a DataCount finding.
   const cpCount = count('ContractedPrice', 'SBQQ__ContractedPrice__c');
+  const cpDataCount =
+    findings.find(
+      (f) =>
+        f.artifactType === 'DataCount' && f.artifactName?.toLowerCase().includes('contractedprice')
+    )?.countValue ?? 0;
+  const cpEffective = cpCount > 0 ? cpCount : cpDataCount > 0 ? cpDataCount : 0;
   // Task 2.7: ContractedPrice present means at least "Configured"
   const cpConfigured = findings.some(
     (f) =>
@@ -2219,10 +2275,10 @@ function buildFeatureUtilization(
   );
   features.push({
     feature: 'Contracted Pricing',
-    status: cpCount > 0 ? 'Configured' : cpConfigured ? 'Configured' : 'Not Detected',
+    status: cpEffective > 0 ? 'Configured' : cpConfigured ? 'Configured' : 'Not Detected',
     detail:
-      cpCount > 0
-        ? `${cpCount} contracted prices detected.`
+      cpEffective > 0
+        ? `${cpEffective} contracted prices detected.`
         : cpConfigured
           ? 'ContractedPrice setting enabled but no records found.'
           : '',

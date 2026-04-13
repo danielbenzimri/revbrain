@@ -569,6 +569,23 @@ export class CatalogCollector extends BaseCollector {
         })
       );
 
+      // V8 P0 fix: emit a DataCount finding for the RAW option total
+      // (all SBQQ__ProductOption__c records from the SOQL query,
+      // including options whose parent isn't in the local product
+      // map). The per-option findings below skip orphaned options,
+      // but the report's headline count must reflect the full set.
+      findings.push(
+        createFinding({
+          domain: 'catalog',
+          collector: 'catalog',
+          artifactType: 'DataCount',
+          artifactName: 'ProductOption',
+          sourceType: 'object',
+          countValue: totalOptions,
+          notes: `${totalOptions} total SBQQ__ProductOption__c records in the org`,
+        })
+      );
+
       // Phase 4.1 — emit one finding per option so BB-3 produces
       // BundleOption nodes and Stage 4 parent-lookup can wire them
       // under BundleStructure.options. Normalizer reads parent code

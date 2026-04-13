@@ -589,6 +589,24 @@ export class PricingCollector extends BaseCollector {
       metrics.uniqueAccountsWithContractedPrices = new Set(
         prices.map((p) => p.SBQQ__Account__c as string)
       ).size;
+
+      // V8 P2-1 fix: emit a DataCount finding so the assembler's
+      // count() / dataCount() functions can find contracted prices.
+      // Without this, Feature Utilization says "no records found"
+      // even when 50 contracted price records exist.
+      if (prices.length > 0) {
+        findings.push(
+          createFinding({
+            domain: 'pricing',
+            collector: 'pricing',
+            artifactType: 'DataCount',
+            artifactName: 'ContractedPrice',
+            sourceType: 'object',
+            countValue: prices.length,
+            notes: `${prices.length} contracted price records detected (${metrics.activeContractedPrices} active, across ${metrics.uniqueAccountsWithContractedPrices} account(s))`,
+          })
+        );
+      }
     }
 
     // ================================================================
