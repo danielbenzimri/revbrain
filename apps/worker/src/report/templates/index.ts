@@ -170,6 +170,20 @@ function renderExecutiveSummary(data: ReportData): string {
     ${scoreBar('Technical Debt', scores.technicalDebt)}
     <p><em>Scores are directional indicators of relative complexity, not absolute measures.</em></p>
 
+    ${
+      data.complexityHotspots.length > 0
+        ? `
+    <h3>2.4 Complexity Hotspots (Summary)</h3>
+    <p><em>Top complexity areas identified — see Section 11 for full analysis.</em></p>
+    ${table(
+      ['Hotspot', 'Severity'],
+      data.complexityHotspots
+        .slice(0, 5)
+        .map((h) => [`<strong>${escapeHtml(h.name)}</strong>`, severity(h.severity)])
+    )}`
+        : ''
+    }
+
     <h3>2.3 Scoring Methodology</h3>
     ${table(
       ['Dimension', 'Weight', 'Score', 'Tier', 'Drivers'],
@@ -419,12 +433,15 @@ function renderDiscountSchedules(data: ReportData): string {
     <h3>6.5 Discount Schedules</h3>
     <p><em>${data.configurationDomain.discountScheduleTotalCount} total schedules: ${data.configurationDomain.discountScheduleUniqueCount} unique names. ${data.configurationDomain.discountScheduleDuplicateDetail || 'No duplicates detected.'}</em></p>
     ${table(
-      ['Schedule Name', 'Status'],
+      ['Schedule Name', 'Status', 'Cross Products', 'Cross Orders'],
       data.configurationDomain.discountScheduleAnalysis.map((d) => [
         escapeHtml(d.name),
         d.isDuplicate ? '<strong>⚠ Duplicate</strong>' : 'Unique',
+        d.crossProducts ? '<strong>Yes</strong>' : 'No',
+        d.crossOrders ? '<strong>Yes</strong>' : 'No',
       ])
     )}
+    ${data.configurationDomain.discountScheduleAnalysis.some((d) => d.crossProducts || d.crossOrders) ? '<p style="font-size:0.85em;color:#666;margin-top:4px;"><em>Cross Products/Orders = TRUE indicates discounts calculated across multiple records — adds complexity for RCA conversion.</em></p>' : ''}
   </div>`;
 }
 
@@ -974,6 +991,25 @@ function renderAppendixB(data: ReportData): string {
   <div class="page-break">
     <h2>Appendix B: CPQ Reports & Dashboards</h2>
     <p><em>${summary.total} CPQ reports detected. ${summary.runLast12Mo} run in the last 12 months.${summary.staleCount > 0 ? ` ${summary.staleCount} not run in over 2 years — potential reporting technical debt.` : ''}</em></p>
+    ${(() => {
+      // W2-7 (SI feedback): Report ownership summary by folder
+      const folderCounts = new Map<string, number>();
+      for (const r of data.appendixB) {
+        const folderMatch = r.description.match(/Folder:\s*([^—]+)/);
+        const folder = folderMatch ? folderMatch[1]!.trim() : 'Unknown';
+        folderCounts.set(folder, (folderCounts.get(folder) ?? 0) + 1);
+      }
+      if (folderCounts.size > 1) {
+        return `<h4>Report Folder Distribution</h4>
+    ${table(
+      ['Folder', 'Report Count'],
+      [...folderCounts.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .map(([folder, count]) => [escapeHtml(folder), String(count)])
+    )}`;
+      }
+      return '';
+    })()}
     ${table(
       ['Report', 'Description'],
       data.appendixB.map((r) => [
@@ -1110,11 +1146,18 @@ function renderBundlesDeepDive(data: ReportData): string {
       ? `<p style="font-size:11px;color:#718096;margin-top:4px;"><em>Bundle-capable = products with SBQQ__ConfigurationType__c set (Required or Allowed). Configured Bundles = bundle-capable products that have at least one active SBQQ__ProductOption__c child record. The difference (${dd.summary.bundleCapable - dd.summary.configuredBundles}) reflects bundle-capable products with no options currently attached.</em></p>`
       : '';
 
+  // W2-8 (SI feedback): Nested bundle methodology footnote
+  const nestedFootnote =
+    dd.summary.nestedBundles > 0
+      ? `<p style="font-size:11px;color:#718096;margin-top:4px;"><em>Nested Bundles = SBQQ__ProductOption__c records whose Optional SKU is itself a bundle-capable product. A nested bundle adds a layer of configuration depth — max nesting depth detected across the catalog is reported in the Bundle Configuration summary above.</em></p>`
+      : '';
+
   return `
   <div class="page-break">
     <h2>6.6 Bundles &amp; Options Deep Dive</h2>
     ${summaryBoxes}
     ${bundleFootnote}
+    ${nestedFootnote}
 
     ${renderCheckboxTable(
       dd.relatedObjectUtilization,

@@ -662,6 +662,21 @@ export class CatalogCollector extends BaseCollector {
       if (maxBundleDepth >= 3) {
         warnings.push('Bundle nesting depth ≥ 3 — complex migration to RCA Product Compositions');
       }
+
+      // W2-2 (SI feedback): Emit max nesting depth as a DataCount
+      if (maxBundleDepth > 0) {
+        findings.push(
+          createFinding({
+            domain: 'catalog',
+            collector: 'catalog',
+            artifactType: 'DataCount',
+            artifactName: 'Max Bundle Nesting Depth',
+            sourceType: 'object',
+            countValue: maxBundleDepth,
+            notes: `Maximum bundle nesting depth: ${maxBundleDepth} layer${maxBundleDepth > 1 ? 's' : ''}. Deeper nesting adds complexity for RCA Product Composition conversion.`,
+          })
+        );
+      }
     }
 
     // ================================================================

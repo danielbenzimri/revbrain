@@ -111,7 +111,12 @@ export interface ReportData {
     };
     activePriceRuleSummary: string;
     activeProductRuleSummary: string;
-    discountScheduleAnalysis: Array<{ name: string; isDuplicate: boolean }>;
+    discountScheduleAnalysis: Array<{
+      name: string;
+      isDuplicate: boolean;
+      crossProducts: boolean;
+      crossOrders: boolean;
+    }>;
     /** Total and unique discount schedule counts (Task 1.4) */
     discountScheduleTotalCount: number;
     discountScheduleUniqueCount: number;
@@ -1388,12 +1393,18 @@ export function assembleReport(
           object: t.notes?.match(/on (\w+)/)?.[1] ?? '',
           status: 'Active',
         })),
-        ...flows.map((f) => ({
-          name: f.artifactName,
-          type: 'Flow',
-          object: '',
-          status: 'Active',
-        })),
+        ...flows.map((f) => {
+          // W2-3 (SI feedback): Extract ProcessType from notes
+          // Notes format: "RecordTriggerFlow on SBQQ__Quote__c — N elements (complexity)"
+          const processType = f.notes?.split(' on ')[0] ?? 'Flow';
+          const triggerObject = f.notes?.match(/on (\S+)/)?.[1] ?? '';
+          return {
+            name: f.artifactName,
+            type: `Flow (${processType})`,
+            object: triggerObject,
+            status: 'Active',
+          };
+        }),
       ],
       validationRules: validationRules.map((v) => ({
         object: parseValidationObject(v.domain, v.artifactName),
@@ -3870,7 +3881,7 @@ function buildFieldCompleteness(findings: AssessmentFindingInput[]): Array<{
 
 function buildDiscountScheduleAnalysis(
   discountSchedules: AssessmentFindingInput[]
-): Array<{ name: string; isDuplicate: boolean }> {
+): Array<{ name: string; isDuplicate: boolean; crossProducts: boolean; crossOrders: boolean }> {
   const nameCounts = new Map<string, number>();
   for (const ds of discountSchedules) {
     nameCounts.set(ds.artifactName, (nameCounts.get(ds.artifactName) ?? 0) + 1);
@@ -3878,13 +3889,25 @@ function buildDiscountScheduleAnalysis(
 
   // Deduplicate for display — show unique names with duplicate flag
   const seen = new Set<string>();
-  const result: Array<{ name: string; isDuplicate: boolean }> = [];
+  const result: Array<{
+    name: string;
+    isDuplicate: boolean;
+    crossProducts: boolean;
+    crossOrders: boolean;
+  }> = [];
   for (const ds of discountSchedules) {
     if (!seen.has(ds.artifactName)) {
       seen.add(ds.artifactName);
+      // W2-1 (SI feedback): Extract Cross Products / Cross Orders from evidenceRefs
+      const crossProducts =
+        ds.evidenceRefs?.some((r) => r.value === 'CrossProducts' && r.label === 'true') ?? false;
+      const crossOrders =
+        ds.evidenceRefs?.some((r) => r.value === 'CrossOrders' && r.label === 'true') ?? false;
       result.push({
         name: ds.artifactName,
         isDuplicate: (nameCounts.get(ds.artifactName) ?? 0) > 1,
+        crossProducts,
+        crossOrders,
       });
     }
   }

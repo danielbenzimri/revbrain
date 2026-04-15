@@ -340,6 +340,8 @@ export class PricingCollector extends BaseCollector {
       }
 
       for (const s of schedules) {
+        const crossProducts = s.SBQQ__CrossProducts__c === true;
+        const crossOrders = s.SBQQ__CrossOrders__c === true;
         findings.push(
           createFinding({
             domain: 'pricing',
@@ -349,10 +351,19 @@ export class PricingCollector extends BaseCollector {
             artifactId: s.Id as string,
             findingType: 'discount_schedule',
             sourceType: 'object',
-            complexityLevel: 'medium',
+            // W2-1 (SI feedback): cross-product/cross-order increases complexity
+            complexityLevel: crossProducts || crossOrders ? 'high' : 'medium',
             migrationRelevance: 'must-migrate',
             rcaTargetConcept: 'PricingProcedureDiscountNode',
             rcaMappingComplexity: 'transform',
+            evidenceRefs: [
+              ...(crossProducts
+                ? [{ type: 'field-ref' as const, value: 'CrossProducts', label: 'true' }]
+                : []),
+              ...(crossOrders
+                ? [{ type: 'field-ref' as const, value: 'CrossOrders', label: 'true' }]
+                : []),
+            ],
           })
         );
       }
