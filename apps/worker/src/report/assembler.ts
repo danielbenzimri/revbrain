@@ -876,6 +876,14 @@ export function assembleReport(
     validationRuleCount: validationRules.length,
     apexClassCount: apexClasses.length,
     triggerCount: triggers.length,
+
+    // W2-5: Template sections + localizations
+    templateSectionCount:
+      findings.find((f) => f.artifactType === 'TemplateSection')?.countValue ??
+      findings.filter((f) => f.artifactType === 'TemplateContent').length,
+    localizationCount:
+      findings.find((f) => f.artifactType === 'DataCount' && f.artifactName === 'Localizations')
+        ?.countValue ?? 0,
   };
 
   // Low volume detection (A4: uses canonical activeUsers count)
@@ -2634,6 +2642,10 @@ export interface ReportCounts {
   validationRuleCount: number;
   apexClassCount: number;
   triggerCount: number;
+
+  // Templates & Localizations (W2-5)
+  templateSectionCount: number;
+  localizationCount: number;
 }
 
 function buildGlanceSections(

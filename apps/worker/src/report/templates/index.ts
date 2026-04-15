@@ -870,15 +870,24 @@ function renderApprovalsAndDocs(data: ReportData): string {
     <h3>6.7.2 CPQ Custom Action Buttons</h3>
     ${
       hasCustomActions
-        ? table(
-            ['Action', 'Type', 'Location', 'Status'],
-            customActions.map((a) => [
-              escapeHtml(a.name),
-              escapeHtml(a.type),
-              escapeHtml(a.location),
-              escapeHtml(a.status),
-            ])
-          )
+        ? (() => {
+            // W2-4 (SI feedback): Sort Active first, then by Location
+            const sorted = [...customActions].sort((a, b) => {
+              const aActive = a.status === 'Active' ? 0 : 1;
+              const bActive = b.status === 'Active' ? 0 : 1;
+              if (aActive !== bActive) return aActive - bActive;
+              return a.location < b.location ? -1 : a.location > b.location ? 1 : 0;
+            });
+            return table(
+              ['Action', 'Type', 'Location', 'Status'],
+              sorted.map((a) => [
+                escapeHtml(a.name),
+                escapeHtml(a.type),
+                escapeHtml(a.location),
+                escapeHtml(a.status),
+              ])
+            );
+          })()
         : '<p><em>No custom action buttons detected.</em></p>'
     }
 
@@ -909,6 +918,8 @@ function renderApprovalsAndDocs(data: ReportData): string {
           )
         : '<p><em>No quote templates detected.</em></p>'
     }
+
+    ${quoteTemplates.length > 0 ? `<p style="font-size:0.85em;color:#666;margin-top:4px;"><em>Template complexity: ${data.counts.templateSectionCount ?? 'N/A'} template section(s) across all templates. ${data.counts.localizationCount ?? 0} localization record(s) — ${(data.counts.localizationCount ?? 0) > 0 ? 'translations add replication complexity.' : 'no localizations detected.'}</em></p>` : ''}
 
     <h3>6.7.5 Document Generation</h3>
     <p>${documentGeneration.usableTemplateCount} usable quote template(s)${documentGeneration.totalTemplateRecords !== documentGeneration.usableTemplateCount ? ` (${documentGeneration.totalTemplateRecords} total SBQQ__QuoteTemplate__c records, ${documentGeneration.usableTemplateCount} usable after excluding test/synthetic)` : ''}. DocuSign integration: <strong>${documentGeneration.docuSignActive ? 'Active' : 'Not detected'}</strong>.</p>
@@ -1185,6 +1196,7 @@ function renderRelatedFunctionality(data: ReportData): string {
     <h2>10. Related Functionality Analysis</h2>
     ${renderBinaryCheckboxTable(rf.items, '10.1 Related Functionality Detection')}
     ${observationsList}
+    <p style="font-size:0.85em;color:#666;margin-top:8px;"><em>W2-9 Note: Experience Cloud detection is at the component level (LWC/Aura/VF components). Site-level status (Live vs Down) and site count were not assessed in the current extraction scope. If site-level detail is needed, query the Network object with an admin profile that has "Manage Experiences" permission.</em></p>
   </div>`;
 }
 
