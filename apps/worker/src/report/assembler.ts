@@ -931,14 +931,31 @@ export function assembleReport(
     packageSettings: {
       installedPackages: buildInstalledPackages(orgFp, findings),
       // A6: Remove "Package:" entries — they already appear in installedPackages section
-      coreSettings: settingValues
-        .filter((s) => !s.artifactName.startsWith('Package:'))
-        .map((s) => ({
-          setting: s.artifactName,
-          value: s.evidenceRefs?.[0]?.label ?? 'Unknown',
-          notes: s.notes ?? '',
-          confidence: 'Confirmed',
-        })),
+      coreSettings: (() => {
+        const settings = settingValues
+          .filter((s) => !s.artifactName.startsWith('Package:'))
+          .map((s) => ({
+            setting: s.artifactName,
+            value: s.evidenceRefs?.[0]?.label ?? 'Unknown',
+            notes: s.notes ?? '',
+            confidence: 'Confirmed',
+          }));
+        // W1-6 (SI feedback): Add Renewal Model if available from CPQ settings
+        const renewalSetting = settingValues.find(
+          (s) => s.artifactName === 'Renewal Model' || s.artifactName?.includes('Renewal')
+        );
+        if (!settings.some((s) => s.setting.includes('Renewal'))) {
+          settings.push({
+            setting: 'Renewal Model',
+            value: renewalSetting?.evidenceRefs?.[0]?.label ?? 'Not extracted',
+            notes:
+              renewalSetting?.notes ??
+              'Renewal model setting — in RCA, both Contract and Asset renewal types map to Asset-based renewals.',
+            confidence: renewalSetting ? 'Confirmed' : 'Partial',
+          });
+        }
+        return settings;
+      })(),
       plugins: plugins.map((p) => {
         // Override QCP status if CustomScript findings exist (settings collector may not
         // detect custom settings, but pricing collector finds SBQQ__CustomScript__c records)
@@ -3037,6 +3054,65 @@ function buildDefaultKeyFindings(
     });
   }
 
+  // W1-1 (SI feedback): License Utilization Gap — very low adoption signal
+  {
+    const userAdoption = findings.find((f) => f.artifactType === 'UserAdoption');
+    const cpqLicenses = Number(
+      userAdoption?.evidenceRefs?.find((r) => r.label === 'CPQ Licenses')?.value ?? 0
+    );
+    if (cpqLicenses > 0 && counts.activeUsers > 0) {
+      const ratio = cpqLicenses / counts.activeUsers;
+      if (ratio > 10 || counts.totalQuotes < 50) {
+        kf.push({
+          title: `${cpqLicenses} CPQ licenses provisioned with ${counts.activeUsers} active user${counts.activeUsers === 1 ? '' : 's'}`,
+          detail: `${cpqLicenses} CPQ licenses provisioned with ${counts.activeUsers} active user${counts.activeUsers === 1 ? '' : 's'} and ${counts.totalQuotes} quotes in the 90-day assessment window — indicating very low adoption. License utilization and user onboarding should be evaluated. Note: low transaction volume may underrepresent operational complexity signals derived from quoting patterns and discount behavior.`,
+          confidence: 'Confirmed',
+        });
+      }
+    }
+  }
+
+  // W1-2 (SI feedback): CPQ Flows as Complexity Signal
+  if (counts.flowCountCpqRelated > 5) {
+    kf.push({
+      title: `${counts.flowCountCpqRelated} flows reference CPQ objects`,
+      detail: `${counts.flowCountCpqRelated} flows reference CPQ objects — unusually high. Standard CPQ automation uses Price Rules and Product Rules; flow-based CPQ logic may indicate custom workarounds or non-standard patterns requiring review.`,
+      confidence: 'Confirmed',
+    });
+  }
+
+  // W1-3 (SI feedback): Related Functionality Ecosystem
+  {
+    const ecosystemParts: string[] = [];
+    const hasBilling = findings.some(
+      (f) =>
+        f.artifactType === 'InstalledPackage' &&
+        (f.artifactName?.includes('blng') || f.artifactName?.toLowerCase().includes('billing'))
+    );
+    const hasDocuSign = findings.some(
+      (f) =>
+        f.artifactType === 'InstalledPackage' &&
+        (f.artifactName?.includes('dfsle') || f.artifactName?.toLowerCase().includes('docusign'))
+    );
+    const hasTax = findings.some(
+      (f) =>
+        f.artifactType === 'TaxCalculator' ||
+        (f.artifactType === 'InstalledPackage' &&
+          (f.artifactName?.toLowerCase().includes('avalara') ||
+            f.artifactName?.toLowerCase().includes('tax')))
+    );
+    if (hasBilling) ecosystemParts.push('billing');
+    if (hasDocuSign) ecosystemParts.push('e-signature');
+    if (hasTax) ecosystemParts.push('tax calculation');
+    if (ecosystemParts.length >= 2) {
+      kf.push({
+        title: `Active integrations detected beyond core CPQ`,
+        detail: `Multiple active integrations detected beyond core CPQ — including ${ecosystemParts.join(', ')} — extending the quote-to-cash footprint and adding migration complexity.`,
+        confidence: 'Confirmed',
+      });
+    }
+  }
+
   const dormantProducts = counts.totalProducts - counts.activeProducts;
   if (counts.totalProducts > 0 && dormantProducts > counts.totalProducts * 0.2) {
     kf.push({
@@ -3067,7 +3143,7 @@ function buildDefaultKeyFindings(
   }
 
   // Apex/custom code density — use canonical count (A3)
-  if (counts.apexClassCount > 20 && kf.length < 5) {
+  if (counts.apexClassCount > 20 && kf.length < 7) {
     kf.push({
       title: `${counts.apexClassCount} Apex classes reference CPQ objects`,
       detail: `${counts.apexClassCount} Apex classes reference CPQ objects — indicating substantial custom code dependency beyond standard CPQ configuration.`,
@@ -3078,7 +3154,7 @@ function buildDefaultKeyFindings(
   // Ensure at least 3 findings with analytical observations
   // Task 2.4: synthesis with >=2 facts + 1 implication
   // A3: use counts.activeProducts with "active products" label; "X families with active products"
-  if (counts.totalProducts > 0 && kf.length < 5) {
+  if (counts.totalProducts > 0 && kf.length < 7) {
     const families = new Set(
       findings
         .filter((f) => f.artifactType === 'Product2')
@@ -3123,7 +3199,7 @@ function buildDefaultKeyFindings(
     });
   }
 
-  return kf.slice(0, 5);
+  return kf.slice(0, 7);
 }
 
 // ============================================================================

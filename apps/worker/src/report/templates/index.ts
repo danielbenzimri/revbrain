@@ -172,13 +172,18 @@ function renderExecutiveSummary(data: ReportData): string {
 
     <h3>2.3 Scoring Methodology</h3>
     ${table(
-      ['Dimension', 'Weight', 'Score', 'Drivers'],
-      data.executiveSummary.scoringMethodology.map((m) => [
-        escapeHtml(m.dimension),
-        `${m.weight}%`,
-        `${m.score}/100`,
-        `${escapeHtml(m.drivers)}<br/><em style="font-size:0.9em;color:#555;">${escapeHtml(m.rationale)}</em>`,
-      ])
+      ['Dimension', 'Weight', 'Score', 'Tier', 'Drivers'],
+      data.executiveSummary.scoringMethodology.map((m) => {
+        const tier =
+          m.score <= 25 ? 'Low' : m.score <= 50 ? 'Moderate' : m.score <= 75 ? 'High' : 'Very High';
+        return [
+          escapeHtml(m.dimension),
+          `${m.weight}%`,
+          `${m.score}/100`,
+          tier,
+          `${escapeHtml(m.drivers)}<br/><em style="font-size:0.9em;color:#555;">${escapeHtml(m.rationale)}</em>`,
+        ];
+      })
     )}
   </div>`;
 }
@@ -339,16 +344,28 @@ function renderPriceRules(data: ReportData): string {
     <h3>6.3 Price Rules</h3>
     <p><em>${escapeHtml(data.configurationDomain.activePriceRuleSummary)}</em></p>
     <p>${prs.active} of ${prs.total} rules active. ${prs.highComplexity} high-complexity (4+ eval events). ${prs.inactive} inactive rules${prs.stale > 0 ? `, ${prs.stale} stale/test flagged as technical debt` : ''}.</p>
-    ${table(
-      ['Rule', 'Description', 'Complexity', 'Status', 'Conf.'],
-      data.configurationDomain.priceRules.map((r) => [
-        escapeHtml(r.name),
-        escapeHtml(r.description),
-        severity(r.complexity),
-        escapeHtml(r.status),
-        badge(r.confidence),
-      ])
-    )}
+    ${(() => {
+      // W1-7 (SI feedback): Sort Active first (high→low complexity), then Inactive
+      const complexityRank: Record<string, number> = { high: 0, medium: 1, low: 2, '—': 3 };
+      const sorted = [...data.configurationDomain.priceRules].sort((a, b) => {
+        const aActive = a.status === 'Active' ? 0 : 1;
+        const bActive = b.status === 'Active' ? 0 : 1;
+        if (aActive !== bActive) return aActive - bActive;
+        const aCx = complexityRank[a.complexity.toLowerCase()] ?? 3;
+        const bCx = complexityRank[b.complexity.toLowerCase()] ?? 3;
+        return aCx - bCx;
+      });
+      return table(
+        ['Rule', 'Description', 'Complexity', 'Status', 'Conf.'],
+        sorted.map((r) => [
+          escapeHtml(r.name),
+          escapeHtml(r.description),
+          severity(r.complexity),
+          escapeHtml(r.status),
+          badge(r.confidence),
+        ])
+      );
+    })()}
   </div>`;
 }
 
@@ -359,17 +376,34 @@ function renderProductRules(data: ReportData): string {
     <h3>6.4 Product Rules</h3>
     <p><em>${escapeHtml(data.configurationDomain.activeProductRuleSummary)}</em></p>
     <p>${prodrs.selection} Selection, ${prodrs.alert} Alert, ${prodrs.validation} Validation, ${prodrs.filter} Filter rules active. ${prodrs.inactive} inactive${prodrs.stale > 0 ? `, ${prodrs.stale} stale/test flagged` : ''}.</p>
-    ${table(
-      ['Rule', 'Type', 'Description', 'Complexity', 'Status', 'Conf.'],
-      data.configurationDomain.productRules.map((r) => [
-        escapeHtml(r.name),
-        escapeHtml(r.type),
-        escapeHtml(r.description),
-        severity(r.complexity),
-        escapeHtml(r.status),
-        badge(r.confidence),
-      ])
-    )}
+    ${(() => {
+      // W1-8 (SI feedback): Sort Active by Type, then Inactive by Type
+      const typeOrder: Record<string, number> = {
+        Selection: 0,
+        Alert: 1,
+        Validation: 2,
+        Filter: 3,
+      };
+      const sorted = [...data.configurationDomain.productRules].sort((a, b) => {
+        const aActive = a.status === 'Active' ? 0 : 1;
+        const bActive = b.status === 'Active' ? 0 : 1;
+        if (aActive !== bActive) return aActive - bActive;
+        const aType = typeOrder[a.type] ?? 99;
+        const bType = typeOrder[b.type] ?? 99;
+        return aType - bType;
+      });
+      return table(
+        ['Rule', 'Type', 'Description', 'Complexity', 'Status', 'Conf.'],
+        sorted.map((r) => [
+          escapeHtml(r.name),
+          escapeHtml(r.type),
+          escapeHtml(r.description),
+          severity(r.complexity),
+          escapeHtml(r.status),
+          badge(r.confidence),
+        ])
+      );
+    })()}
     ${
       data.configurationDomain.productRules.some((r) => r.complexity === '—')
         ? `<p style="font-size:0.85em;color:#666;margin-top:4px;"><em>"—" in Complexity column = structural complexity not extracted. Requires condition/action scope analysis beyond current metadata extraction.</em></p>`
@@ -577,6 +611,19 @@ function renderCustomCode(data: ReportData): string {
     <h2>9. Custom Code & Automation Inventory</h2>
 
     <h3>9.1 Apex Classes Referencing SBQQ</h3>
+    ${(() => {
+      const testClasses = data.customCode.apexClasses.filter(
+        (a) => a.purpose === 'Apex test class'
+      );
+      const nonTestClasses = data.customCode.apexClasses.filter(
+        (a) => a.purpose !== 'Apex test class'
+      );
+      const testNote =
+        testClasses.length > 0
+          ? `<p><em>${data.customCode.apexClasses.length} Apex classes reference CPQ objects (${nonTestClasses.length} non-test + ${testClasses.length} test classes).</em></p>`
+          : `<p><em>${data.customCode.apexClasses.length} Apex classes reference CPQ objects.</em></p>`;
+      return testNote;
+    })()}
     ${table(
       ['Class Name', 'Lines', 'Purpose', 'Origin'],
       data.customCode.apexClasses.map((a) => [
@@ -586,6 +633,7 @@ function renderCustomCode(data: ReportData): string {
         escapeHtml(a.origin),
       ])
     )}
+    <p style="font-size:0.85em;color:#666;margin-top:4px;"><em>Methodology: Custom Apex classes whose source code contains references to the SBQQ namespace, identified via Salesforce Tooling API query. Includes both production code and test classes.</em></p>
 
     ${(() => {
       // §9.1a — Third-party (managed package) Apex summary.
@@ -881,16 +929,19 @@ function renderAppendixA(data: ReportData): string {
   const cpqObjects = data.appendixA.filter((a) => a.isCpqObject);
   const platformObjects = data.appendixA.filter((a) => !a.isCpqObject);
 
+  // W1-10 (SI feedback): removed Phase column — it risks being read
+  // as migration phasing, conflicting with the "no migration-readiness
+  // language" rule. Extraction order is an internal implementation
+  // detail, not useful to the SI reviewer.
   const renderTable = (items: typeof data.appendixA) =>
     table(
-      ['ID', 'Object(s)', 'API Name', 'Count', 'Complexity', 'Phase', 'Conf.'],
+      ['ID', 'Object(s)', 'API Name', 'Count', 'Complexity', 'Conf.'],
       items.map((a, i) => [
         String(i + 1),
         escapeHtml(a.objectName),
         `<code>${escapeHtml(a.apiName)}</code>`,
         String(a.count),
         severity(a.complexity),
-        a.phase ? escapeHtml(a.phase) : '—',
         badge(a.confidence),
       ])
     );
@@ -1011,7 +1062,7 @@ function renderProductDeepDive(data: ReportData): string {
 
     ${renderCheckboxTable(
       dd.fieldUtilization,
-      '6.2.1 Product Field Utilization',
+      '6.2.1 Product Segmentation',
       `% = products with field populated / ${dd.denominatorLabel}`
     )}
 

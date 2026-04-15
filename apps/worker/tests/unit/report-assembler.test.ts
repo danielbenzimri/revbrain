@@ -121,10 +121,14 @@ describe('assembleReport', () => {
     expect(report.executiveSummary.complexityScores.overall).toBeGreaterThan(0);
     expect(report.executiveSummary.complexityScores.configurationDepth).toBeGreaterThan(0);
 
-    // Settings
-    expect(report.packageSettings.coreSettings.length).toBe(1);
-    expect(report.packageSettings.coreSettings[0].setting).toBe('Quote Line Editor');
-    expect(report.packageSettings.coreSettings[0].value).toBe('Enabled');
+    // Settings — includes Renewal Model row (W1-6)
+    expect(report.packageSettings.coreSettings.length).toBeGreaterThanOrEqual(1);
+    expect(report.packageSettings.coreSettings[0]!.setting).toBe('Quote Line Editor');
+    expect(report.packageSettings.coreSettings[0]!.value).toBe('Enabled');
+    // W1-6: Renewal Model row always present
+    expect(report.packageSettings.coreSettings.some((s) => s.setting === 'Renewal Model')).toBe(
+      true
+    );
 
     // Plugins
     expect(report.packageSettings.plugins.length).toBe(2);
