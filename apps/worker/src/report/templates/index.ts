@@ -612,11 +612,11 @@ function renderCustomCode(data: ReportData): string {
 
     <h3>9.1 Apex Classes Referencing SBQQ</h3>
     ${(() => {
-      const testClasses = data.customCode.apexClasses.filter(
-        (a) => a.purpose === 'Apex test class'
+      const testClasses = data.customCode.apexClasses.filter((a) =>
+        a.purpose.toLowerCase().includes('test class')
       );
       const nonTestClasses = data.customCode.apexClasses.filter(
-        (a) => a.purpose !== 'Apex test class'
+        (a) => !a.purpose.toLowerCase().includes('test class')
       );
       const testNote =
         testClasses.length > 0
