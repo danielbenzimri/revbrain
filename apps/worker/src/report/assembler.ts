@@ -3076,7 +3076,7 @@ function buildDefaultKeyFindings(
   if (counts.flowCountCpqRelated > 5) {
     kf.push({
       title: `${counts.flowCountCpqRelated} flows reference CPQ objects`,
-      detail: `${counts.flowCountCpqRelated} flows reference CPQ objects — unusually high. Standard CPQ automation uses Price Rules and Product Rules; flow-based CPQ logic may indicate custom workarounds or non-standard patterns requiring review.`,
+      detail: `${counts.flowCountCpqRelated} flows reference CPQ objects — indicating non-standard automation patterns. Standard CPQ automation uses Price Rules and Product Rules; flow-based CPQ logic may indicate custom workarounds requiring review.`,
       confidence: 'Confirmed',
     });
   }
@@ -3107,7 +3107,7 @@ function buildDefaultKeyFindings(
     if (ecosystemParts.length >= 2) {
       kf.push({
         title: `Active integrations detected beyond core CPQ`,
-        detail: `Multiple active integrations detected beyond core CPQ — including ${ecosystemParts.join(', ')} — extending the quote-to-cash footprint and adding migration complexity.`,
+        detail: `Multiple active integrations detected beyond core CPQ (${ecosystemParts.join(', ')}) — adding migration complexity by extending the quote-to-cash footprint beyond core pricing and product configuration.`,
         confidence: 'Confirmed',
       });
     }
