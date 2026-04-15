@@ -665,7 +665,26 @@ export class DependenciesCollector extends BaseCollector {
 
       metrics.cpqPermissionSets = psResult.records.length;
 
+      // W2-6 (SI feedback): Query assignment counts for CPQ permission sets
+      let assignmentCounts = new Map<string, number>();
+      try {
+        const psIds = psResult.records.map((ps) => `'${ps.Id}'`).join(',');
+        if (psIds.length > 0) {
+          const assignResult = await this.ctx.restApi.query<Record<string, unknown>>(
+            `SELECT PermissionSetId, COUNT(Id) cnt FROM PermissionSetAssignment WHERE PermissionSetId IN (${psIds}) GROUP BY PermissionSetId`,
+            this.signal
+          );
+          for (const row of assignResult.records) {
+            assignmentCounts.set(row.PermissionSetId as string, row.cnt as number);
+          }
+        }
+      } catch (err) {
+        this.log.warn({ error: (err as Error).message }, 'permission_set_assignment_count_failed');
+        assignmentCounts = new Map();
+      }
+
       for (const ps of psResult.records) {
+        const assignCount = assignmentCounts.get(ps.Id as string) ?? 0;
         findings.push(
           createFinding({
             domain: 'dependency',
@@ -678,7 +697,8 @@ export class DependenciesCollector extends BaseCollector {
             riskLevel: 'info',
             complexityLevel: 'low',
             migrationRelevance: 'should-migrate',
-            notes: `${ps.IsCustom ? 'Custom' : 'Managed'} permission set${ps.NamespacePrefix ? ` (${ps.NamespacePrefix})` : ''}`,
+            countValue: assignCount,
+            notes: `${ps.IsCustom ? 'Custom' : 'Managed'} permission set${ps.NamespacePrefix ? ` (${ps.NamespacePrefix})` : ''}. ${assignCount} user${assignCount !== 1 ? 's' : ''} assigned.`,
           })
         );
       }

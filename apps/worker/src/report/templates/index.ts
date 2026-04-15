@@ -800,11 +800,12 @@ function renderCustomCode(data: ReportData): string {
         ? `
     <h3>9.4 CPQ Permission Sets</h3>
     ${table(
-      ['Permission Set', 'Type', 'Namespace'],
+      ['Permission Set', 'Type', 'Namespace', 'Assigned Users'],
       data.customCode.permissionSets.map((ps) => [
         escapeHtml(ps.name),
         escapeHtml(ps.type),
         escapeHtml(ps.namespace),
+        String(ps.assignedUsers),
       ])
     )}`
         : ''

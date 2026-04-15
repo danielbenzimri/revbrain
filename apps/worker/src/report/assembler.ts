@@ -225,7 +225,7 @@ export interface ReportData {
     };
     triggersFlows: Array<{ name: string; type: string; object: string; status: string }>;
     validationRules: Array<{ object: string; rule: string; status: string; complexity: string }>;
-    permissionSets: Array<{ name: string; type: string; namespace: string }>;
+    permissionSets: Array<{ name: string; type: string; namespace: string; assignedUsers: number }>;
   };
   approvalsAndDocs: {
     /** CPQ Custom Action buttons (SBQQ__CustomAction__c) — NOT approval rules */
@@ -1426,6 +1426,7 @@ export function assembleReport(
         name: ps.artifactName,
         type: ps.notes?.includes('Custom') ? 'Custom' : 'Managed',
         namespace: ps.notes?.match(/\((\w+)\)/)?.[1] ?? '',
+        assignedUsers: ps.countValue ?? 0,
       })),
     },
 
