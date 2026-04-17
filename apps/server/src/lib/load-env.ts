@@ -1,22 +1,21 @@
 /**
- * Environment loader for LOCAL server development
+ * Environment loader for LOCAL server development.
  *
  * Loads environment variables from the monorepo root:
- * - APP_ENV=local    → loads /.env.local    (mock mode, no external services)
- * - APP_ENV=real     → loads /.env.real     (mock data + real Salesforce OAuth)
- * - APP_ENV=local-db → loads /.env.local-db (mock auth + real staging DB + real SF)
- * - APP_ENV=stg      → loads /.env.stg      (local server against staging Supabase)
- * - APP_ENV=prod     → loads /.env.prod     (production — edge functions only)
+ *   - APP_MODE=mock      → loads .env + .env.mock    (offline, no external services)
+ *   - APP_MODE=staging   → loads .env + .env.staging  (local server, staging Supabase)
  *
  * Commands:
- * - pnpm local    → APP_ENV=local    (full mock mode)
- * - pnpm local:db → APP_ENV=local-db (mock auth, staging DB, real SF)
- * - pnpm dev      → APP_ENV=stg      (local frontend+server, staging DB+auth)
+ *   - pnpm dev      → APP_MODE=mock    (full offline mode, works after clone)
+ *   - pnpm dev:stg  → APP_MODE=staging (local server + staging DB/auth)
  *
- * Note: STG and PROD edge functions inject env vars automatically.
+ * The .env base file is always loaded first (shared defaults).
+ * Mode-specific file overrides anything in .env.
+ *
+ * STG and PROD edge functions inject env vars via the platform.
  * This loader is only used when running the local Hono dev server.
  *
- * Usage: Import this at the top of dev.ts (local server entry point)
+ * Usage: Import this at the top of dev.ts (local server entry point).
  */
 import { config } from 'dotenv';
 import { resolve, dirname } from 'node:path';
@@ -27,20 +26,36 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const monorepoRoot = resolve(__dirname, '../../../..'); // apps/server/src/lib → root
 
 export function loadEnv(): void {
-  // Determine which env file to load (default to 'local' for local development)
-  const appEnv = process.env.APP_ENV || 'local';
-  const envFile = `.env.${appEnv}`;
-  const envPath = resolve(monorepoRoot, envFile);
+  // APP_MODE replaces APP_ENV (env consolidation 2026-04-17).
+  // Fall back to APP_ENV for backwards compat during transition,
+  // then to 'mock' as the default.
+  const appMode = process.env.APP_MODE || process.env.APP_ENV || 'mock';
 
-  if (existsSync(envPath)) {
-    const result = config({ path: envPath });
-    if (result.error) {
-      console.error(`Failed to load ${envFile}:`, result.error.message);
-    } else {
-      console.log(`✓ Loaded environment: ${envFile} (from monorepo root)`);
-    }
+  // Backwards-compat mapping for old APP_ENV values
+  const modeMap: Record<string, string> = {
+    local: 'mock',
+    stg: 'staging',
+    real: 'mock', // local:real is removed — fall back to mock
+    'local-db': 'mock', // local:db is removed — fall back to mock
+    prod: 'staging', // prod env is platform-injected, not loaded locally
+  };
+  const resolvedMode = modeMap[appMode] ?? appMode;
+
+  // Always load the shared base .env first
+  const basePath = resolve(monorepoRoot, '.env');
+  if (existsSync(basePath)) {
+    config({ path: basePath });
+  }
+
+  // Then load the mode-specific file (overrides .env)
+  const modeFile = `.env.${resolvedMode}`;
+  const modePath = resolve(monorepoRoot, modeFile);
+
+  if (existsSync(modePath)) {
+    config({ path: modePath, override: true });
+    console.log(`✓ Loaded environment: .env + ${modeFile} (APP_MODE=${resolvedMode})`);
   } else {
-    console.warn(`⚠ No env file found: ${envFile} at ${envPath}`);
+    console.warn(`⚠ No env file found: ${modeFile} at ${modePath} (APP_MODE=${resolvedMode})`);
   }
 }
 

@@ -151,7 +151,7 @@ let cachedConfig: ValidatedConfig | null = null;
 function loadEnvVars(): Record<string, string | undefined> {
   return {
     nodeEnv: getEnv('NODE_ENV'),
-    appEnv: getEnv('APP_ENV'),
+    appEnv: getEnv('APP_MODE') || getEnv('APP_ENV'),
     databaseUrl: getEnv('DATABASE_URL'),
     supabaseUrl: getEnv('SUPABASE_URL'),
     supabaseAnonKey: getEnv('SUPABASE_ANON_KEY'),

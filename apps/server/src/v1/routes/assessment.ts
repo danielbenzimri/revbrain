@@ -57,7 +57,9 @@ async function getReportModules() {
 
 async function dispatchWorker(runId: string, connectionId: string): Promise<void> {
   const isLocal =
-    (getEnv('APP_ENV') || '').startsWith('local') || getEnv('NODE_ENV') === 'development';
+    (getEnv('APP_MODE') || getEnv('APP_ENV') || '') === 'mock' ||
+    (getEnv('APP_ENV') || '').startsWith('local') ||
+    getEnv('NODE_ENV') === 'development';
 
   if (isLocal) {
     dispatchWorkerLocally(runId, connectionId);

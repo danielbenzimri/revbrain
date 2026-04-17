@@ -9,9 +9,10 @@ RevBrain — multi-tenant SaaS for migrating Salesforce CPQ to Revenue Cloud Adv
 ## Quick Reference
 
 ```
-pnpm local          # Mock mode (offline dev)
-pnpm dev            # Against staging Supabase
-pnpm test           # All tests (889+)
+pnpm dev            # Mock mode (offline dev — works after clone)
+pnpm dev:stg        # Local server + staging Supabase
+pnpm dev:stg-remote # Client-only against deployed staging
+pnpm test           # All tests
 pnpm lint           # All packages
 pnpm db:seed        # Seed staging DB
 ```
@@ -49,7 +50,7 @@ pnpm db:seed        # Seed staging DB
 1. **All imports use `.ts` extensions** — required for Deno edge function compatibility
 2. **Zod schemas in contract package** — not in server or client
 3. **Mock repos follow real repo interface** — `ALLOWED_FILTERS`, `findMany`, `findById`, etc.
-4. **Env vars:** `.env.local` (mock), `.env.stg` (staging), `.env.prod` (production). Secrets are gitignored.
+4. **Env vars:** `.env.mock` (mock, committed — zero secrets), `.env.staging` (staging, gitignored), `.env.staging.remote` (staging-remote, gitignored). No `.env.local` (Vite reserved name). No `.env.prod` (production uses platform-injected vars).
 5. **API responses:** `{ success: true, data: ... }` or `{ success: false, error: { code, message } }`
 6. **CSS borders:** Always `border border-slate-200`, not just `border-slate-200`
 7. **Translations:** Every UI string in both `en/admin.json` and `he/admin.json`

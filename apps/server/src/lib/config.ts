@@ -11,19 +11,15 @@ import { getEnv } from './env.ts';
  * Check if running in production environment
  *
  * Priority:
- * 1. APP_ENV=production (explicit, recommended for Edge Functions)
+ * 1. APP_MODE=production or APP_ENV=production (explicit)
  * 2. NODE_ENV=production (Node.js standard)
  * 3. Falls back to false (assume development)
- *
- * Note: We no longer use DENO_DEPLOYMENT_ID because it's set for ALL
- * deployed Edge Functions (dev and prod), making it unsuitable for
- * distinguishing environments.
  */
 export function isProduction(): boolean {
-  // Check explicit APP_ENV first (works in both Deno and Node)
-  const appEnv = getEnv('APP_ENV');
-  if (appEnv) {
-    return appEnv === 'production';
+  // Check APP_MODE first (new), fall back to APP_ENV (compat)
+  const appMode = getEnv('APP_MODE') || getEnv('APP_ENV');
+  if (appMode) {
+    return appMode === 'production';
   }
 
   // Node.js environment check

@@ -2,22 +2,22 @@ import { describe, it, expect } from 'vitest';
 import { validateMockModeConfig, isMockMode } from './mock-mode-guard.ts';
 
 describe('validateMockModeConfig', () => {
-  it('allows local + mock mode', () => {
+  it('allows mock mode with APP_MODE=mock', () => {
     expect(() =>
       validateMockModeConfig({
         USE_MOCK_DATA: 'true',
         AUTH_MODE: 'mock',
-        APP_ENV: 'local',
+        APP_MODE: 'mock',
       })
     ).not.toThrow();
   });
 
-  it('allows local + real mode', () => {
+  it('allows real mode with APP_MODE=mock (local but jwt)', () => {
     expect(() =>
       validateMockModeConfig({
         USE_MOCK_DATA: 'false',
         AUTH_MODE: 'jwt',
-        APP_ENV: 'local',
+        APP_MODE: 'mock',
       })
     ).not.toThrow();
   });
@@ -26,62 +26,73 @@ describe('validateMockModeConfig', () => {
     expect(() => validateMockModeConfig({})).not.toThrow();
   });
 
-  it('rejects production + mock data', () => {
+  it('rejects staging + mock data (APP_MODE)', () => {
     expect(() =>
       validateMockModeConfig({
         USE_MOCK_DATA: 'true',
         AUTH_MODE: 'mock',
-        APP_ENV: 'production',
+        APP_MODE: 'staging',
       })
-    ).toThrow('FATAL: Mock mode cannot be enabled in production or staging.');
+    ).toThrow(/Mock mode cannot be enabled/);
   });
 
-  it('rejects staging + mock auth', () => {
+  it('rejects production + mock data (APP_MODE)', () => {
+    expect(() =>
+      validateMockModeConfig({
+        USE_MOCK_DATA: 'true',
+        AUTH_MODE: 'mock',
+        APP_MODE: 'production',
+      })
+    ).toThrow(/Mock mode cannot be enabled/);
+  });
+
+  it('backwards compat: rejects APP_ENV=staging', () => {
     expect(() =>
       validateMockModeConfig({
         USE_MOCK_DATA: 'true',
         AUTH_MODE: 'mock',
         APP_ENV: 'staging',
       })
-    ).toThrow('FATAL: Mock mode cannot be enabled in production or staging.');
+    ).toThrow(/Mock mode cannot be enabled/);
   });
 
-  it('rejects production + mock auth only', () => {
+  it('backwards compat: rejects APP_ENV=stg', () => {
     expect(() =>
       validateMockModeConfig({
+        USE_MOCK_DATA: 'true',
         AUTH_MODE: 'mock',
-        APP_ENV: 'production',
+        APP_ENV: 'stg',
       })
-    ).toThrow('FATAL: Mock mode cannot be enabled in production or staging.');
+    ).toThrow(/Mock mode cannot be enabled/);
   });
 
-  it('rejects USE_MOCK_DATA=true + AUTH_MODE=jwt (contradictory)', () => {
+  it('rejects contradictory USE_MOCK_DATA=true + AUTH_MODE=jwt', () => {
     expect(() =>
       validateMockModeConfig({
         USE_MOCK_DATA: 'true',
         AUTH_MODE: 'jwt',
-        APP_ENV: 'local',
+        APP_MODE: 'mock',
       })
-    ).toThrow('FATAL: USE_MOCK_DATA=true requires AUTH_MODE=mock');
+    ).toThrow(/USE_MOCK_DATA and AUTH_MODE must be consistent/);
   });
 
-  it('rejects USE_MOCK_DATA=false + AUTH_MODE=mock (contradictory)', () => {
+  it('rejects contradictory USE_MOCK_DATA=false + AUTH_MODE=mock', () => {
     expect(() =>
       validateMockModeConfig({
         USE_MOCK_DATA: 'false',
         AUTH_MODE: 'mock',
-        APP_ENV: 'local',
+        APP_MODE: 'mock',
       })
-    ).toThrow('FATAL: USE_MOCK_DATA=true requires AUTH_MODE=mock');
+    ).toThrow(/USE_MOCK_DATA and AUTH_MODE must be consistent/);
   });
 
   it('rejects USE_MOCK_DATA=true with no AUTH_MODE set', () => {
     expect(() =>
       validateMockModeConfig({
         USE_MOCK_DATA: 'true',
-        APP_ENV: 'local',
+        APP_MODE: 'mock',
       })
-    ).toThrow('FATAL: USE_MOCK_DATA=true requires AUTH_MODE=mock');
+    ).toThrow(/USE_MOCK_DATA and AUTH_MODE must be consistent/);
   });
 });
 
