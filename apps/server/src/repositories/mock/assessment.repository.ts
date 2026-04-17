@@ -6,7 +6,7 @@ import type {
   AssessmentRunStatus,
   FindManyOptions,
 } from '@revbrain/contract';
-import { SEED_ASSESSMENT_RUNS } from '@revbrain/seed-data';
+import { SEED_ASSESSMENT_RUNS, SEED_ASSESSMENT_FINDINGS } from '@revbrain/seed-data';
 import crypto from 'node:crypto';
 
 const ACTIVE_STATUSES: AssessmentRunStatus[] = [
@@ -23,7 +23,9 @@ const ACTIVE_STATUSES: AssessmentRunStatus[] = [
  */
 export class MockAssessmentRepository implements AssessmentRepository {
   private runs: AssessmentRunEntity[] = [...SEED_ASSESSMENT_RUNS.map((r) => ({ ...r }))];
-  private findings: AssessmentFindingEntity[] = [];
+  private findings: AssessmentFindingEntity[] = [
+    ...SEED_ASSESSMENT_FINDINGS.map((f) => ({ ...f })),
+  ];
 
   async createRun(data: CreateAssessmentRunInput): Promise<AssessmentRunEntity> {
     const run: AssessmentRunEntity = {
