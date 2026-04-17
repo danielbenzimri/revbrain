@@ -10,8 +10,8 @@
     }
   },
   "scripts": {
-    "dev": "APP_MODE=mock tsx watch src/dev.ts",
-    "dev:stg": "APP_MODE=staging tsx watch src/dev.ts",
+    "mock": "APP_MODE=mock tsx watch src/dev.ts",
+    "dev": "APP_MODE=staging tsx watch src/dev.ts",
     "build": "NODE_OPTIONS='--max-old-space-size=8192' tsc",
     "lint": "NODE_OPTIONS='--max-old-space-size=8192' eslint . && tsc --noEmit",
     "test": "vitest run",
