@@ -128,7 +128,21 @@ export const useAuthStore = create<AuthState>()((set) => ({
         return;
       }
 
+      // Password recovery flow — redirect to reset page, don't load dashboard
+      if (event === 'PASSWORD_RECOVERY') {
+        if (window.location.pathname !== '/reset-password') {
+          window.location.href = '/reset-password';
+        }
+        return;
+      }
+
       if (session) {
+        // On the reset-password page, don't load user — wait for PASSWORD_RECOVERY event
+        if (window.location.pathname === '/reset-password') {
+          set({ isLoading: false });
+          return;
+        }
+
         // Reload user details — DB profile is the source of truth for role
         try {
           const authUser = await adapter.getCurrentUser();

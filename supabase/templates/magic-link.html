@@ -102,7 +102,7 @@
                   <tr>
                     <td style="border-radius: 8px; background-color: #7c3aed">
                       <a
-                        href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=magiclink&redirect_to={{ .RedirectTo }}"
+                        href="{{ .ConfirmationURL }}"
                         target="_blank"
                         style="
                           display: inline-block;
@@ -132,8 +132,7 @@
                     line-height: 1.5;
                   "
                 >
-                  {{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash
-                  }}&type=magiclink&redirect_to={{ .RedirectTo }}
+                  {{ .ConfirmationURL }}
                 </p>
 
                 <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0" />
