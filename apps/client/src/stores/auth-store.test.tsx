@@ -12,6 +12,7 @@ const mockGetCurrentUser = vi.fn();
 const mockLogin = vi.fn();
 const mockLogout = vi.fn();
 const mockOnAuthStateChange = vi.fn();
+const mockGetMFAFactors = vi.fn();
 
 vi.mock('@/lib/services', () => ({
   getAuthAdapter: () => ({
@@ -20,6 +21,7 @@ vi.mock('@/lib/services', () => ({
     login: mockLogin,
     logout: mockLogout,
     onAuthStateChange: mockOnAuthStateChange,
+    getMFAFactors: mockGetMFAFactors,
   }),
 }));
 
@@ -43,11 +45,14 @@ vi.mock('@/lib/mock-data', () => ({
 describe('useAuthStore', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Default: no MFA enrolled
+    mockGetMFAFactors.mockResolvedValue([]);
     // Reset store state
     useAuthStore.setState({
       user: null,
       isLoading: false,
       error: null,
+      mfaPending: null,
     });
   });
 

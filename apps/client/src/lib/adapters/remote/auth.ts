@@ -1,4 +1,11 @@
-import type { AuthAdapter, AuthResult, Session, AuthUser } from '@/types/services';
+import type {
+  AuthAdapter,
+  AuthResult,
+  Session,
+  AuthUser,
+  MFAFactor,
+  MFAEnrollment,
+} from '@/types/services';
 import type { User, Session as SupabaseSession } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 
@@ -127,6 +134,51 @@ export class RemoteAuthAdapter implements AuthAdapter {
 
   async updatePassword(newPassword: string): Promise<void> {
     const { error } = await this.supabase.auth.updateUser({ password: newPassword });
+    if (error) throw error;
+  }
+
+  async getMFAFactors(): Promise<MFAFactor[]> {
+    const { data, error } = await this.supabase.auth.mfa.listFactors();
+    if (error) throw error;
+    return (data.totp || []).map((f) => ({
+      id: f.id,
+      friendlyName: f.friendly_name ?? undefined,
+      factorType: 'totp' as const,
+      status: f.status as 'verified' | 'unverified',
+      createdAt: f.created_at,
+    }));
+  }
+
+  async enrollMFA(): Promise<MFAEnrollment> {
+    const { data, error } = await this.supabase.auth.mfa.enroll({
+      factorType: 'totp',
+      friendlyName: 'Authenticator App',
+    });
+    if (error) throw error;
+    return {
+      factorId: data.id,
+      qrCode: data.totp.qr_code,
+      secret: data.totp.secret,
+      uri: data.totp.uri,
+    };
+  }
+
+  async challengeAndVerifyMFA(factorId: string, code: string): Promise<void> {
+    const { data: challenge, error: challengeError } = await this.supabase.auth.mfa.challenge({
+      factorId,
+    });
+    if (challengeError) throw challengeError;
+
+    const { error: verifyError } = await this.supabase.auth.mfa.verify({
+      factorId,
+      challengeId: challenge.id,
+      code,
+    });
+    if (verifyError) throw verifyError;
+  }
+
+  async unenrollMFA(factorId: string): Promise<void> {
+    const { error } = await this.supabase.auth.mfa.unenroll({ factorId });
     if (error) throw error;
   }
 

@@ -105,8 +105,29 @@ export interface AuthAdapter {
   resetPassword(email: string): Promise<void>;
   updatePassword(newPassword: string): Promise<void>;
 
+  // MFA
+  getMFAFactors(): Promise<MFAFactor[]>;
+  enrollMFA(): Promise<MFAEnrollment>;
+  challengeAndVerifyMFA(factorId: string, code: string): Promise<void>;
+  unenrollMFA(factorId: string): Promise<void>;
+
   // Events
   onAuthStateChange(callback: (event: string, session: Session | null) => void): () => void;
+}
+
+export interface MFAFactor {
+  id: string;
+  friendlyName?: string;
+  factorType: 'totp';
+  status: 'verified' | 'unverified';
+  createdAt: string;
+}
+
+export interface MFAEnrollment {
+  factorId: string;
+  qrCode: string; // data URI for QR code image
+  secret: string; // manual entry key
+  uri: string; // otpauth:// URI
 }
 
 export interface AuthResult {

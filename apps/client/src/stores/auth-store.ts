@@ -36,15 +36,22 @@ async function fetchDbUserProfile(accessToken: string): Promise<{
   }
 }
 
+interface MFAPendingState {
+  factorId: string;
+}
+
 interface AuthState {
   // State
   user: User | null;
   isLoading: boolean;
   error: string | null;
+  mfaPending: MFAPendingState | null;
 
   // Actions
   initialize: () => () => void; // Returns cleanup function
   login: (email: string, password: string) => Promise<void>;
+  verifyMFA: (code: string) => Promise<void>;
+  cancelMFA: () => Promise<void>;
   logout: () => Promise<void>;
   simulateRole: (role: UserRole) => void;
   clearError: () => void;
@@ -55,6 +62,7 @@ export const useAuthStore = create<AuthState>()((set) => ({
   user: null,
   isLoading: true,
   error: null,
+  mfaPending: null,
 
   // Initialize subscription
   initialize: () => {
@@ -149,13 +157,25 @@ export const useAuthStore = create<AuthState>()((set) => ({
 
   // Login action
   login: async (email: string, password: string) => {
-    set({ isLoading: true, error: null });
+    set({ isLoading: true, error: null, mfaPending: null });
 
     try {
       const adapter = getAuthAdapter();
-      // Login call only triggers side effect in adapter
-      // The onAuthStateChange listener will actually update the store
       await adapter.login(email, password);
+
+      // After successful password auth, check if user has MFA enrolled.
+      // If they do, we pause here and show the MFA challenge screen
+      // instead of letting onAuthStateChange navigate to the app.
+      const factors = await adapter.getMFAFactors();
+      const verifiedFactor = factors.find((f) => f.status === 'verified');
+
+      if (verifiedFactor) {
+        // User has MFA — hold navigation, show challenge screen
+        set({ isLoading: false, mfaPending: { factorId: verifiedFactor.id } });
+        return;
+      }
+
+      // No MFA — onAuthStateChange listener handles the rest
       set({ isLoading: false });
     } catch (error) {
       console.error('[Auth] Login error:', error);
@@ -163,6 +183,34 @@ export const useAuthStore = create<AuthState>()((set) => ({
         error: error instanceof Error ? error.message : 'שגיאה בהתחברות',
         isLoading: false,
       });
+    }
+  },
+
+  // MFA verification — called after user enters their 6-digit code
+  verifyMFA: async (code: string) => {
+    const { mfaPending } = useAuthStore.getState();
+    if (!mfaPending) return;
+
+    set({ isLoading: true, error: null });
+    try {
+      const adapter = getAuthAdapter();
+      await adapter.challengeAndVerifyMFA(mfaPending.factorId, code);
+      // Success — session is now AAL2. Clear MFA state.
+      // onAuthStateChange will fire and set the user.
+      set({ mfaPending: null, isLoading: false });
+    } catch {
+      set({ error: 'mfa_invalid_code', isLoading: false });
+    }
+  },
+
+  // Cancel MFA challenge — signs out and returns to login form
+  cancelMFA: async () => {
+    set({ mfaPending: null, error: null });
+    try {
+      const adapter = getAuthAdapter();
+      await adapter.logout();
+    } catch {
+      // Ignore
     }
   },
 

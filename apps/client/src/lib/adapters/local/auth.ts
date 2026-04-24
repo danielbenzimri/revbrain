@@ -1,4 +1,11 @@
-import type { AuthAdapter, AuthResult, Session, AuthUser } from '@/types/services';
+import type {
+  AuthAdapter,
+  AuthResult,
+  Session,
+  AuthUser,
+  MFAFactor,
+  MFAEnrollment,
+} from '@/types/services';
 import { MOCK_USERS } from '@/lib/mock-data';
 import type { UserRole } from '@/types/auth';
 
@@ -154,6 +161,34 @@ export class LocalAuthAdapter implements AuthAdapter {
       refreshToken: refreshToken.substring(0, 10),
     });
     return this.createSession(mockUser);
+  }
+
+  async getMFAFactors(): Promise<MFAFactor[]> {
+    await this.delay();
+    console.log('[LocalAuth] getMFAFactors() - simulated empty');
+    return [];
+  }
+
+  async enrollMFA(): Promise<MFAEnrollment> {
+    await this.delay();
+    console.log('[LocalAuth] enrollMFA() - simulated');
+    return {
+      factorId: 'mock-factor-id',
+      qrCode:
+        'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2VlZSIvPjx0ZXh0IHg9IjEwMCIgeT0iMTAwIiBmb250LXNpemU9IjE0IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSIgZmlsbD0iIzk5OSI+TW9jayBRUjwvdGV4dD48L3N2Zz4=',
+      secret: 'MOCK-SECRET-KEY-1234',
+      uri: 'otpauth://totp/RevBrain:mock@example.com?secret=MOCKSECRETKEY1234',
+    };
+  }
+
+  async challengeAndVerifyMFA(): Promise<void> {
+    await this.delay();
+    console.log('[LocalAuth] challengeAndVerifyMFA() - simulated success');
+  }
+
+  async unenrollMFA(): Promise<void> {
+    await this.delay();
+    console.log('[LocalAuth] unenrollMFA() - simulated');
   }
 
   onAuthStateChange(callback: (event: string, session: Session | null) => void): () => void {
