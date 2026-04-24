@@ -1,7 +1,7 @@
 # =============================================================================
 # CD - Continuous Deployment
 # =============================================================================
-# Runs on: Push to main or staging (after CI passes)
+# Runs on: Push to main or staging (after CI completes)
 # Purpose: Deploy backend (Supabase) + frontend (Vercel) + worker (Cloud Run)
 #
 # Flow:
@@ -28,22 +28,36 @@
 name: CD
 
 on:
-  workflow_run:
-    workflows: [CI]
-    types: [completed]
+  push:
     branches: [main, staging]
 
 concurrency:
-  group: cd-${{ github.event.workflow_run.head_branch }}
+  group: cd-${{ github.ref_name }}
   cancel-in-progress: false # Don't cancel in-progress deploys
 
 jobs:
+  # ---------------------------------------------------------------------------
+  # Wait for CI to pass before deploying
+  # ---------------------------------------------------------------------------
+  wait-for-ci:
+    name: Wait for CI
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Wait for CI workflow
+        uses: lewagon/wait-on-check-action@v1.3.4
+        with:
+          ref: ${{ github.sha }}
+          check-regexp: '^(Lint & Typecheck|Test|Build)$'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 10
+
   # ---------------------------------------------------------------------------
   # Deploy Backend (Supabase Edge Functions)
   # ---------------------------------------------------------------------------
   deploy-backend:
     name: Deploy Backend
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    needs: wait-for-ci
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
@@ -60,7 +74,7 @@ jobs:
 
       - name: Determine environment
         run: |
-          BRANCH="${{ github.event.workflow_run.head_branch }}"
+          BRANCH="${{ github.ref_name }}"
           if [ "$BRANCH" == "main" ]; then
             echo "PROJECT_ID=${{ secrets.SUPABASE_PROJECT_ID_PROD }}" >> $GITHUB_ENV
             echo "ENV_NAME=production" >> $GITHUB_ENV
@@ -96,7 +110,6 @@ jobs:
   # ---------------------------------------------------------------------------
   deploy-frontend:
     name: Deploy Frontend
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     needs: deploy-backend
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -122,7 +135,7 @@ jobs:
 
       - name: Determine Vercel project
         run: |
-          BRANCH="${{ github.event.workflow_run.head_branch }}"
+          BRANCH="${{ github.ref_name }}"
           if [ "$BRANCH" == "main" ]; then
             echo "VERCEL_PROJECT_ID=${{ secrets.VERCEL_PROJECT_ID_PROD }}" >> $GITHUB_ENV
             echo "VERCEL_ENV=production" >> $GITHUB_ENV
@@ -150,7 +163,7 @@ jobs:
   # ---------------------------------------------------------------------------
   deploy-worker:
     name: Deploy Worker
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    needs: wait-for-ci
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -161,7 +174,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.workflow_run.head_branch }}
+          ref: ${{ github.ref_name }}
           fetch-depth: 2
 
       - name: Detect worker changes
@@ -182,7 +195,7 @@ jobs:
       - name: Determine environment
         if: steps.changes.outputs.worker_changed == 'true'
         run: |
-          BRANCH="${{ github.event.workflow_run.head_branch }}"
+          BRANCH="${{ github.ref_name }}"
           if [ "$BRANCH" == "main" ]; then
             echo "GCP_PROJECT_ID=revbrain-prod" >> $GITHUB_ENV
             echo "GCP_WIF_PROVIDER=${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER_PROD }}" >> $GITHUB_ENV
