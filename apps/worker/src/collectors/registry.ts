@@ -69,6 +69,13 @@ export const COLLECTOR_REGISTRY: CollectorDefinition[] = [
     requires: ['discovery'],
     domain: 'order-lifecycle',
   },
+  {
+    name: 'transactional-objects',
+    tier: 'tier1',
+    timeoutMs: 15 * 60_000,
+    requires: ['discovery'],
+    domain: 'transactional-objects',
+  },
 
   // Tier 2 — optional (failure → completed_warnings, minor coverage gap)
   {

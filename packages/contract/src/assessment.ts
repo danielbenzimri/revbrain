@@ -27,6 +27,7 @@ export const AssessmentDomainSchema = z.enum([
   'order-lifecycle',
   'localization',
   'settings',
+  'transactional-objects',
 ]);
 export type AssessmentDomain = z.infer<typeof AssessmentDomainSchema>;
 

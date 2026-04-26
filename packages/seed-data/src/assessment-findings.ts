@@ -2006,4 +2006,509 @@ export const SEED_ASSESSMENT_FINDINGS: readonly AssessmentFindingEntity[] = [
     textValue: null,
     createdAt: new Date('2026-04-10T12:00:00Z'),
   },
+
+  // ============================================================================
+  // V11 — Transactional Object Metadata (Section 6.8 master table)
+  // ============================================================================
+  ...(
+    [
+      'Opportunity',
+      'OpportunityLineItem',
+      'SBQQ__Quote__c',
+      'SBQQ__QuoteLine__c',
+      'Order',
+      'OrderItem',
+      'Contract',
+      'SBQQ__Subscription__c',
+    ] as const
+  ).map((apiName, i) => {
+    const labels: Record<string, string> = {
+      Opportunity: 'Opportunity',
+      OpportunityLineItem: 'Opportunity Product',
+      SBQQ__Quote__c: 'Quote',
+      SBQQ__QuoteLine__c: 'Quote Line',
+      Order: 'Order',
+      OrderItem: 'Order Product',
+      Contract: 'Contract',
+      SBQQ__Subscription__c: 'Subscription',
+    };
+    const mockData: Record<
+      string,
+      {
+        pl: number;
+        btn: number;
+        fs: number;
+        rt: number;
+        vr: number;
+        cf: number;
+        mgd: number;
+        org: number;
+      }
+    > = {
+      Opportunity: { pl: 3, btn: 5, fs: 2, rt: 5, vr: 2, cf: 59, mgd: 14, org: 45 },
+      OpportunityLineItem: { pl: 2, btn: 3, fs: 1, rt: 0, vr: 1, cf: 28, mgd: 12, org: 16 },
+      SBQQ__Quote__c: { pl: 4, btn: 15, fs: 3, rt: 2, vr: 4, cf: 180, mgd: 150, org: 30 },
+      SBQQ__QuoteLine__c: { pl: 2, btn: 8, fs: 2, rt: 0, vr: 3, cf: 250, mgd: 220, org: 30 },
+      Order: { pl: 2, btn: 4, fs: 0, rt: 3, vr: 2, cf: 35, mgd: 10, org: 25 },
+      OrderItem: { pl: 1, btn: 2, fs: 0, rt: 0, vr: 1, cf: 22, mgd: 8, org: 14 },
+      Contract: { pl: 3, btn: 3, fs: 1, rt: 2, vr: 2, cf: 42, mgd: 18, org: 24 },
+      SBQQ__Subscription__c: { pl: 1, btn: 2, fs: 0, rt: 0, vr: 1, cf: 95, mgd: 85, org: 10 },
+    };
+    const d = mockData[apiName]!;
+    return {
+      id: `00000000-0000-4000-f000-000000000${100 + i}`,
+      runId: MOCK_IDS.ASSESSMENT_RUN_Q1,
+      domain: 'transactional-objects' as const,
+      collectorName: 'transactional-objects',
+      artifactType: 'TransactionalObjectMeta',
+      artifactName: labels[apiName]!,
+      artifactId: null,
+      findingKey: `transactional-objects:TransactionalObjectMeta:${apiName}:object_meta`,
+      sourceType: 'object' as const,
+      riskLevel: null,
+      complexityLevel: null,
+      migrationRelevance: null,
+      rcaTargetConcept: null,
+      rcaMappingComplexity: null,
+      evidenceRefs: [
+        { type: 'object-ref', value: apiName, label: 'API Name' },
+        { type: 'count', value: String(d.fs), label: 'Field Sets' },
+        { type: 'count', value: String(d.rt), label: 'Active Record Types' },
+        { type: 'count', value: String(d.cf), label: 'Custom Fields Total' },
+        { type: 'count', value: String(d.mgd), label: 'Custom Fields Managed' },
+        { type: 'count', value: String(d.org), label: 'Custom Fields Org-Owned' },
+      ],
+      notes: `${d.cf} total (${d.mgd} managed / ${d.org} org-owned)`,
+      countValue: null,
+      textValue: null,
+      createdAt: new Date('2026-04-10T12:00:00Z'),
+    } satisfies AssessmentFindingEntity;
+  }),
+
+  // V11 — Transactional Object Tooling (Page Layouts, Buttons/Links, Validation Rules)
+  ...(
+    [
+      'Opportunity',
+      'OpportunityLineItem',
+      'SBQQ__Quote__c',
+      'SBQQ__QuoteLine__c',
+      'Order',
+      'OrderItem',
+      'Contract',
+      'SBQQ__Subscription__c',
+    ] as const
+  ).map((apiName, i) => {
+    const labels: Record<string, string> = {
+      Opportunity: 'Opportunity',
+      OpportunityLineItem: 'Opportunity Product',
+      SBQQ__Quote__c: 'Quote',
+      SBQQ__QuoteLine__c: 'Quote Line',
+      Order: 'Order',
+      OrderItem: 'Order Product',
+      Contract: 'Contract',
+      SBQQ__Subscription__c: 'Subscription',
+    };
+    const mockData: Record<
+      string,
+      { pl: number; btn: number; wl: number; qa: number; vr: number }
+    > = {
+      Opportunity: { pl: 3, btn: 5, wl: 3, qa: 2, vr: 2 },
+      OpportunityLineItem: { pl: 2, btn: 3, wl: 2, qa: 1, vr: 1 },
+      SBQQ__Quote__c: { pl: 4, btn: 15, wl: 5, qa: 10, vr: 4 },
+      SBQQ__QuoteLine__c: { pl: 2, btn: 8, wl: 4, qa: 4, vr: 3 },
+      Order: { pl: 2, btn: 4, wl: 3, qa: 1, vr: 2 },
+      OrderItem: { pl: 1, btn: 2, wl: 1, qa: 1, vr: 1 },
+      Contract: { pl: 3, btn: 3, wl: 2, qa: 1, vr: 2 },
+      SBQQ__Subscription__c: { pl: 1, btn: 2, wl: 1, qa: 1, vr: 1 },
+    };
+    const d = mockData[apiName]!;
+    return {
+      id: `00000000-0000-4000-f000-000000000${110 + i}`,
+      runId: MOCK_IDS.ASSESSMENT_RUN_Q1,
+      domain: 'transactional-objects' as const,
+      collectorName: 'transactional-objects',
+      artifactType: 'TransactionalObjectTooling',
+      artifactName: labels[apiName]!,
+      artifactId: null,
+      findingKey: `transactional-objects:TransactionalObjectTooling:${apiName}:object_tooling`,
+      sourceType: 'tooling' as const,
+      riskLevel: null,
+      complexityLevel: null,
+      migrationRelevance: null,
+      rcaTargetConcept: null,
+      rcaMappingComplexity: null,
+      evidenceRefs: [
+        { type: 'object-ref', value: apiName, label: 'API Name' },
+        { type: 'count', value: String(d.pl), label: 'Page Layouts' },
+        { type: 'count', value: String(d.btn), label: 'Buttons/Links/Actions' },
+        { type: 'count', value: String(d.wl), label: 'WebLinks' },
+        { type: 'count', value: String(d.qa), label: 'QuickActions' },
+        { type: 'count', value: String(d.vr), label: 'Active Validation Rules' },
+      ],
+      notes: null,
+      countValue: null,
+      textValue: null,
+      createdAt: new Date('2026-04-10T12:00:00Z'),
+    } satisfies AssessmentFindingEntity;
+  }),
+
+  // V11 — DataCount findings for new transactional objects
+  ...(
+    [
+      { name: 'Opportunity', label: 'Opportunities (all)', count: 1250 },
+      { name: 'Opportunity_90d', label: 'Opportunities (90d)', count: 85 },
+      { name: 'OpportunityLineItem', label: 'Opportunity Products (all)', count: 4800 },
+      { name: 'Order', label: 'Orders (all)', count: 380 },
+      { name: 'Order_90d', label: 'Orders (90d)', count: 12 },
+      { name: 'OrderItem', label: 'Order Products (all)', count: 1450 },
+      { name: 'Contract', label: 'Contracts (all)', count: 220 },
+      { name: 'Contract_90d', label: 'Contracts (90d)', count: 8 },
+      { name: 'SBQQ__Subscription__c', label: 'Subscriptions (all)', count: 890 },
+      { name: 'SBQQ__QuoteLine__c_90d', label: 'Quote Lines (90d)', count: 73 },
+      { name: 'SBQQ__SummaryVariable__c', label: 'Summary Variables', count: 8 },
+      { name: 'SBQQ__SearchFilter__c', label: 'Search Filters', count: 3 },
+      { name: 'SBQQ__QuoteProcess__c', label: 'Quote Processes (Guided Selling)', count: 2 },
+      { name: 'SBQQ__ProcessInput__c', label: 'Process Inputs (Guided Selling)', count: 12 },
+      { name: 'SBQQ__LookupQuery__c', label: 'Lookup Queries', count: 5 },
+      { name: 'SBQQ__LookupData__c', label: 'Lookup Data', count: 15 },
+    ] as const
+  ).map(
+    (obj, i) =>
+      ({
+        id: `00000000-0000-4000-f000-000000000${120 + i}`,
+        runId: MOCK_IDS.ASSESSMENT_RUN_Q1,
+        domain: 'catalog' as const,
+        collectorName: 'discovery',
+        artifactType: 'DataCount',
+        artifactName: obj.label,
+        artifactId: null,
+        findingKey: `discovery:count_${obj.name}:global`,
+        sourceType: 'object' as const,
+        riskLevel: null,
+        complexityLevel: null,
+        migrationRelevance: null,
+        rcaTargetConcept: null,
+        rcaMappingComplexity: null,
+        evidenceRefs: [],
+        notes: 'Will use REST API',
+        countValue: obj.count,
+        textValue: null,
+        createdAt: new Date('2026-04-10T12:00:00Z'),
+      }) satisfies AssessmentFindingEntity
+  ),
+
+  // V11 — Contract classification detail
+  {
+    id: '00000000-0000-4000-f000-000000000140',
+    runId: MOCK_IDS.ASSESSMENT_RUN_Q1,
+    domain: 'order-lifecycle' as const,
+    collectorName: 'order-lifecycle',
+    artifactType: 'TransactionalObjectDetail',
+    artifactName: 'Contracts — Classification & Renewal',
+    artifactId: null,
+    findingKey: 'order-lifecycle:TransactionalObjectDetail:Contract:contract_classification',
+    sourceType: 'object' as const,
+    riskLevel: null,
+    complexityLevel: null,
+    migrationRelevance: null,
+    rcaTargetConcept: null,
+    rcaMappingComplexity: null,
+    evidenceRefs: [
+      { type: 'count', value: '220', label: 'Total Contracts (evaluated population)' },
+      { type: 'count', value: '85', label: 'Renewals' },
+      { type: 'count', value: '45', label: 'Amendments' },
+      { type: 'count', value: '90', label: 'New / Unclassified' },
+      { type: 'count', value: '72', label: 'Renewal Forecast = TRUE' },
+      { type: 'count', value: '58', label: 'Renewal Quoted = TRUE' },
+    ],
+    notes: 'Scope: all-time contracts assessed. Classification via explicit CPQ lineage fields.',
+    countValue: 220,
+    textValue: null,
+    createdAt: new Date('2026-04-10T12:00:00Z'),
+  },
+
+  // V11 — Subscription lifecycle detail
+  {
+    id: '00000000-0000-4000-f000-000000000141',
+    runId: MOCK_IDS.ASSESSMENT_RUN_Q1,
+    domain: 'order-lifecycle' as const,
+    collectorName: 'order-lifecycle',
+    artifactType: 'TransactionalObjectDetail',
+    artifactName: 'Subscriptions — Lifecycle Analysis',
+    artifactId: null,
+    findingKey:
+      'order-lifecycle:TransactionalObjectDetail:SBQQ__Subscription__c:subscription_lifecycle',
+    sourceType: 'object' as const,
+    riskLevel: null,
+    complexityLevel: null,
+    migrationRelevance: null,
+    rcaTargetConcept: null,
+    rcaMappingComplexity: null,
+    evidenceRefs: [
+      { type: 'count', value: '890', label: 'Total Subscriptions' },
+      { type: 'count', value: '125', label: 'Amended Subscriptions' },
+      { type: 'count', value: '210', label: 'Renewed Subscriptions' },
+      {
+        type: 'field-ref',
+        value: 'SBQQ__RevisedSubscription__c',
+        label: 'Renewed detection field',
+      },
+    ],
+    notes: 'All-time counts. Amended detected via SBQQ__RevisedSubscription__c.',
+    countValue: 890,
+    textValue: null,
+    createdAt: new Date('2026-04-10T12:00:00Z'),
+  },
+
+  // V11 — Orders detail
+  {
+    id: '00000000-0000-4000-f000-000000000142',
+    runId: MOCK_IDS.ASSESSMENT_RUN_Q1,
+    domain: 'order-lifecycle' as const,
+    collectorName: 'order-lifecycle',
+    artifactType: 'TransactionalObjectDetail',
+    artifactName: 'Orders — Quote Split Analysis',
+    artifactId: null,
+    findingKey: 'order-lifecycle:TransactionalObjectDetail:Order:orders_per_quote',
+    sourceType: 'object' as const,
+    riskLevel: null,
+    complexityLevel: null,
+    migrationRelevance: null,
+    rcaTargetConcept: null,
+    rcaMappingComplexity: null,
+    evidenceRefs: [
+      { type: 'count', value: '12', label: 'Orders in 90-day window' },
+      { type: 'count', value: '10', label: 'Ordered Quotes (Primary=TRUE, Ordered=TRUE)' },
+      { type: 'count', value: '1.2', label: 'Avg Orders per Ordered Quote' },
+    ],
+    notes: null,
+    countValue: 12,
+    textValue: null,
+    createdAt: new Date('2026-04-10T12:00:00Z'),
+  },
+
+  // V11 — OLI not contracted + billing signal
+  {
+    id: '00000000-0000-4000-f000-000000000143',
+    runId: MOCK_IDS.ASSESSMENT_RUN_Q1,
+    domain: 'order-lifecycle' as const,
+    collectorName: 'order-lifecycle',
+    artifactType: 'TransactionalObjectDetail',
+    artifactName: 'Order Products — Contracting Pattern',
+    artifactId: null,
+    findingKey: 'order-lifecycle:TransactionalObjectDetail:OrderItem:oli_contracting',
+    sourceType: 'object' as const,
+    riskLevel: null,
+    complexityLevel: null,
+    migrationRelevance: null,
+    rcaTargetConcept: null,
+    rcaMappingComplexity: null,
+    evidenceRefs: [{ type: 'count', value: '3', label: 'OLIs with Ordered=FALSE (90d)' }],
+    notes: null,
+    countValue: 3,
+    textValue: null,
+    createdAt: new Date('2026-04-10T12:00:00Z'),
+  },
+  {
+    id: '00000000-0000-4000-f000-000000000144',
+    runId: MOCK_IDS.ASSESSMENT_RUN_Q1,
+    domain: 'order-lifecycle' as const,
+    collectorName: 'order-lifecycle',
+    artifactType: 'TransactionalObjectDetail',
+    artifactName: 'Order Products — Billing Signal',
+    artifactId: null,
+    findingKey: 'order-lifecycle:TransactionalObjectDetail:OrderItem:oli_billing',
+    sourceType: 'object' as const,
+    riskLevel: null,
+    complexityLevel: null,
+    migrationRelevance: null,
+    rcaTargetConcept: null,
+    rcaMappingComplexity: null,
+    evidenceRefs: [],
+    notes: 'SF Billing fields (blng__) detected on OrderItem — indicates Salesforce Billing in use',
+    countValue: null,
+    textValue: null,
+    createdAt: new Date('2026-04-10T12:00:00Z'),
+  },
+
+  // V11 — Quote-per-Opportunity behavior
+  {
+    id: '00000000-0000-4000-f000-000000000145',
+    runId: MOCK_IDS.ASSESSMENT_RUN_Q1,
+    domain: 'usage' as const,
+    collectorName: 'usage',
+    artifactType: 'TransactionalObjectDetail',
+    artifactName: 'Quote-per-Opportunity Behavior',
+    artifactId: null,
+    findingKey: 'usage:TransactionalObjectDetail:SBQQ__Quote__c:quotes_per_opp',
+    sourceType: 'object' as const,
+    riskLevel: null,
+    complexityLevel: null,
+    migrationRelevance: null,
+    rcaTargetConcept: null,
+    rcaMappingComplexity: null,
+    evidenceRefs: [
+      { type: 'count', value: '18', label: 'Opps with quotes (90d)' },
+      { type: 'count', value: '23', label: 'Quotes in window' },
+      { type: 'count', value: '1.3', label: 'Avg quotes per Opp' },
+      { type: 'count', value: '5', label: 'Non-primary quotes' },
+      { type: 'count', value: '22%', label: 'Non-primary %' },
+    ],
+    notes: 'Avg 1.3 quotes/opp, 22% non-primary',
+    countValue: 18,
+    textValue: null,
+    createdAt: new Date('2026-04-10T12:00:00Z'),
+  },
+
+  // V11 — Opportunity SBQQ formula fields
+  {
+    id: '00000000-0000-4000-f000-000000000146',
+    runId: MOCK_IDS.ASSESSMENT_RUN_Q1,
+    domain: 'usage' as const,
+    collectorName: 'usage',
+    artifactType: 'TransactionalObjectDetail',
+    artifactName: 'Opportunity — SBQQ Formula Fields',
+    artifactId: null,
+    findingKey: 'usage:TransactionalObjectDetail:Opportunity:opp_sbqq_formulas',
+    sourceType: 'object' as const,
+    riskLevel: null,
+    complexityLevel: null,
+    migrationRelevance: null,
+    rcaTargetConcept: null,
+    rcaMappingComplexity: null,
+    evidenceRefs: [
+      { type: 'count', value: '3', label: 'Formula fields referencing SBQQ' },
+      { type: 'field-ref', value: 'CPQ_Total_Amount__c', label: 'Formula: CPQ Total Amount' },
+      {
+        type: 'field-ref',
+        value: 'Primary_Quote_Status__c',
+        label: 'Formula: Primary Quote Status',
+      },
+      { type: 'field-ref', value: 'Quote_Count__c', label: 'Formula: Quote Count' },
+    ],
+    notes: null,
+    countValue: 3,
+    textValue: null,
+    createdAt: new Date('2026-04-10T12:00:00Z'),
+  },
+
+  // V11 — Account Renewal Model distribution
+  {
+    id: '00000000-0000-4000-f000-000000000147',
+    runId: MOCK_IDS.ASSESSMENT_RUN_Q1,
+    domain: 'settings' as const,
+    collectorName: 'discovery',
+    artifactType: 'CPQCapabilityDetection',
+    artifactName: 'Account-Level Renewal Model Distribution',
+    artifactId: null,
+    findingKey: 'discovery:CPQCapabilityDetection:renewal_model_distribution:global',
+    sourceType: 'object' as const,
+    riskLevel: null,
+    complexityLevel: null,
+    migrationRelevance: null,
+    rcaTargetConcept: null,
+    rcaMappingComplexity: null,
+    evidenceRefs: [
+      { type: 'count', value: '145', label: 'Renewal Model: Contract Based' },
+      { type: 'count', value: '82', label: 'Renewal Model: Asset Based' },
+    ],
+    notes: 'Account renewal models: Contract Based (145), Asset Based (82)',
+    countValue: 2,
+    textValue: null,
+    createdAt: new Date('2026-04-10T12:00:00Z'),
+  },
+
+  // V11 — Special Field Usage (sample)
+  ...(
+    [
+      { field: 'SBQQ__AdditionalDiscountAmount__c', obj: 'SBQQ__Quote__c', count: 8 },
+      { field: 'SBQQ__PartnerDiscount__c', obj: 'SBQQ__Quote__c', count: 0 },
+      { field: 'SBQQ__AdditionalDiscount__c', obj: 'SBQQ__QuoteLine__c', count: 11 },
+      { field: 'SBQQ__SpecialPrice__c', obj: 'SBQQ__QuoteLine__c', count: 5 },
+    ] as const
+  ).map(
+    (sf, i) =>
+      ({
+        id: `00000000-0000-4000-f000-000000000${150 + i}`,
+        runId: MOCK_IDS.ASSESSMENT_RUN_Q1,
+        domain: 'transactional-objects' as const,
+        collectorName: 'transactional-objects',
+        artifactType: 'SpecialFieldUsage',
+        artifactName: sf.field,
+        artifactId: null,
+        findingKey: `transactional-objects:SpecialFieldUsage:${sf.obj}:${sf.field}`,
+        sourceType: 'object' as const,
+        riskLevel: null,
+        complexityLevel: null,
+        migrationRelevance: null,
+        rcaTargetConcept: null,
+        rcaMappingComplexity: null,
+        evidenceRefs: [
+          { type: 'field-ref', value: sf.field, label: 'Special Field' },
+          { type: 'object-ref', value: sf.obj, label: 'Object' },
+          { type: 'count', value: String(sf.count), label: 'Records with field populated' },
+        ],
+        notes: null,
+        countValue: sf.count,
+        textValue: null,
+        createdAt: new Date('2026-04-10T12:00:00Z'),
+      }) satisfies AssessmentFindingEntity
+  ),
+
+  // V11 — Twin Field Detection (sample)
+  {
+    id: '00000000-0000-4000-f000-000000000160',
+    runId: MOCK_IDS.ASSESSMENT_RUN_Q1,
+    domain: 'transactional-objects' as const,
+    collectorName: 'transactional-objects',
+    artifactType: 'TwinFieldDetection',
+    artifactName: 'Twin Fields: SBQQ__Quote__c ↔ Order',
+    artifactId: null,
+    findingKey: 'transactional-objects:TwinFieldDetection:SBQQ__Quote__c:Order:twin_fields',
+    sourceType: 'inferred' as const,
+    riskLevel: null,
+    complexityLevel: null,
+    migrationRelevance: null,
+    rcaTargetConcept: null,
+    rcaMappingComplexity: null,
+    evidenceRefs: [
+      { type: 'object-ref', value: 'SBQQ__Quote__c', label: 'Object A' },
+      { type: 'object-ref', value: 'Order', label: 'Object B' },
+      { type: 'count', value: '4', label: 'Twin Field Count' },
+      { type: 'field-ref', value: 'Custom_Status__c', label: 'Twin Field Example' },
+      { type: 'field-ref', value: 'Billing_Frequency__c', label: 'Twin Field Example' },
+    ],
+    notes:
+      '4 org-owned custom fields with matching API names across SBQQ__Quote__c and Order. Detection method: API name convention matching.',
+    countValue: 4,
+    textValue: null,
+    createdAt: new Date('2026-04-10T12:00:00Z'),
+  },
+  {
+    id: '00000000-0000-4000-f000-000000000161',
+    runId: MOCK_IDS.ASSESSMENT_RUN_Q1,
+    domain: 'transactional-objects' as const,
+    collectorName: 'transactional-objects',
+    artifactType: 'TwinFieldDetection',
+    artifactName: 'Twin Fields: SBQQ__QuoteLine__c ↔ OrderItem',
+    artifactId: null,
+    findingKey: 'transactional-objects:TwinFieldDetection:SBQQ__QuoteLine__c:OrderItem:twin_fields',
+    sourceType: 'inferred' as const,
+    riskLevel: null,
+    complexityLevel: null,
+    migrationRelevance: null,
+    rcaTargetConcept: null,
+    rcaMappingComplexity: null,
+    evidenceRefs: [
+      { type: 'object-ref', value: 'SBQQ__QuoteLine__c', label: 'Object A' },
+      { type: 'object-ref', value: 'OrderItem', label: 'Object B' },
+      { type: 'count', value: '6', label: 'Twin Field Count' },
+      { type: 'field-ref', value: 'Twinned_Discount__c', label: 'Twin Field Example' },
+    ],
+    notes:
+      '6 org-owned custom fields with matching API names across SBQQ__QuoteLine__c and OrderItem. Detection method: API name convention matching.',
+    countValue: 6,
+    textValue: null,
+    createdAt: new Date('2026-04-10T12:00:00Z'),
+  },
 ];

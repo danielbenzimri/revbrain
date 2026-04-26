@@ -265,6 +265,121 @@ export class UsageCollector extends BaseCollector {
     }
 
     // ================================================================
+    // V11 §6.8.1/6.8.2: Opportunity + OpportunityLineItem counts
+    // ================================================================
+    this.ctx.progress.updateSubstep('usage', 'v11-opportunities');
+    try {
+      const oppTotal = await this.ctx.restApi.query<Record<string, unknown>>(
+        'SELECT COUNT() FROM Opportunity',
+        this.signal
+      );
+      metrics.totalOpportunities = oppTotal.totalSize;
+    } catch {
+      metrics.totalOpportunities = -1;
+    }
+
+    try {
+      const oliTotal = await this.ctx.restApi.query<Record<string, unknown>>(
+        'SELECT COUNT() FROM OpportunityLineItem',
+        this.signal
+      );
+      metrics.totalOpportunityLineItems = oliTotal.totalSize;
+    } catch {
+      metrics.totalOpportunityLineItems = -1;
+    }
+
+    // V11 §6.8.3.4: Quote-per-Opportunity behavior (90-day window)
+    if (recentQuotes.length > 0) {
+      try {
+        // Count distinct opportunities with quotes in window
+        const oppWithQuotes = await this.ctx.restApi.query<Record<string, unknown>>(
+          'SELECT SBQQ__Opportunity2__c FROM SBQQ__Quote__c WHERE CreatedDate >= LAST_N_DAYS:90 AND SBQQ__Opportunity2__c != null GROUP BY SBQQ__Opportunity2__c',
+          this.signal
+        );
+        const oppCount = oppWithQuotes.totalSize;
+
+        if (oppCount > 0) {
+          const avgQuotesPerOpp = Math.round((recentQuotes.length / oppCount) * 10) / 10;
+
+          // Non-primary quotes
+          const nonPrimaryQuotes = recentQuotes.filter((q) => q.SBQQ__Primary__c === false).length;
+          const nonPrimaryPct = Math.round((nonPrimaryQuotes / recentQuotes.length) * 100);
+
+          findings.push(
+            createFinding({
+              domain: 'usage',
+              collector: 'usage',
+              artifactType: 'TransactionalObjectDetail',
+              artifactName: 'Quote-per-Opportunity Behavior',
+              sourceType: 'object',
+              metricName: 'quotes_per_opp',
+              scope: 'SBQQ__Quote__c',
+              detected: true,
+              countValue: oppCount,
+              evidenceRefs: [
+                { type: 'count', value: String(oppCount), label: 'Opps with quotes (90d)' },
+                { type: 'count', value: String(recentQuotes.length), label: 'Quotes in window' },
+                { type: 'count', value: String(avgQuotesPerOpp), label: 'Avg quotes per Opp' },
+                { type: 'count', value: String(nonPrimaryQuotes), label: 'Non-primary quotes' },
+                { type: 'count', value: `${nonPrimaryPct}%`, label: 'Non-primary %' },
+              ],
+              notes:
+                oppCount > 5
+                  ? `Avg ${avgQuotesPerOpp} quotes/opp, ${nonPrimaryPct}% non-primary`
+                  : 'Behavior not confidently classified — window has ≤5 opportunities with quotes',
+            })
+          );
+
+          metrics.avgQuotesPerOpp = avgQuotesPerOpp;
+          metrics.nonPrimaryQuotePct = nonPrimaryPct;
+        }
+      } catch {
+        // Opp linkage query failed — non-blocking
+      }
+    }
+
+    // V11 §6.8.1: Formula fields on Opportunity referencing SBQQ
+    try {
+      const oppDescribe = this.ctx.describeCache.get('Opportunity') as DescribeResult | undefined;
+      if (oppDescribe) {
+        const sbqqFormulas = oppDescribe.fields.filter(
+          (f) => f.calculatedFormula && f.calculatedFormula.includes('SBQQ__')
+        );
+        if (sbqqFormulas.length > 0) {
+          findings.push(
+            createFinding({
+              domain: 'usage',
+              collector: 'usage',
+              artifactType: 'TransactionalObjectDetail',
+              artifactName: 'Opportunity — SBQQ Formula Fields',
+              sourceType: 'object',
+              metricName: 'opp_sbqq_formulas',
+              scope: 'Opportunity',
+              detected: true,
+              countValue: sbqqFormulas.length,
+              evidenceRefs: [
+                {
+                  type: 'count',
+                  value: String(sbqqFormulas.length),
+                  label: 'Formula fields referencing SBQQ',
+                },
+                // allow-slice: capping evidence refs to 10 formula examples — not a truncation concern
+                ...sbqqFormulas.slice(0, 10).map((f) => ({
+                  type: 'field-ref' as const,
+                  value: f.name,
+                  label: `Formula: ${f.label}`,
+                })),
+              ],
+            })
+          );
+        }
+        metrics.oppSbqqFormulaCount = sbqqFormulas.length;
+      }
+    } catch {
+      // Non-blocking
+    }
+
+    // ================================================================
     // G-04: User Behavior by Role
     // ================================================================
     if (recentQuotes.length > 0) {

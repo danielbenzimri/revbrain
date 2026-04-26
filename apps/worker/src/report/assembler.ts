@@ -275,6 +275,11 @@ export interface ReportData {
   bundlesDeepDive: BundlesDeepDive | null;
   relatedFunctionality: RelatedFunctionality | null;
   objectConfiguration: ObjectConfiguration[] | null;
+
+  // V11 — Transactional Object Assessment + Additional CPQ Functionality
+  transactionalObjectAssessment: TransactionalObjectAssessment | null;
+  additionalCPQFunctionality: AdditionalCPQFunctionality | null;
+  appendixA3: AppendixA3Row[] | null;
 }
 
 /** Object Configuration data (Appendix E) — T2 conditional, null if absent */
@@ -489,6 +494,118 @@ export interface AssembleReportOptions {
    * should be caught by the `lint-report-discipline.mjs` guard.
    */
   assessmentTimestamp?: string;
+}
+
+// ============================================================================
+// V11 — Section 6.8: Transactional Object Assessment
+// ============================================================================
+
+export interface TransactionalObjectRow {
+  objectLabel: string;
+  apiName: string;
+  pageLayouts: number | null;
+  pageLayoutFallback: boolean;
+  buttonsLinksActions: number | null;
+  fieldSets: number | null;
+  activeRecordTypes: number | null;
+  activeValidationRules: number | null;
+  customFieldsTotal: number | null;
+  customFieldsManaged: number | null;
+  customFieldsOrg: number | null;
+  notes: string[];
+}
+
+export interface TransactionalObjectDetailSection {
+  label: string;
+  apiName: string;
+  observations: Array<{ label: string; value: string; notes: string }>;
+}
+
+export interface TransactionalObjectAssessment {
+  masterTable: TransactionalObjectRow[];
+  details: TransactionalObjectDetailSection[];
+}
+
+// ============================================================================
+// V11 — Section 6.9: Additional CPQ Functionality
+// ============================================================================
+
+export interface CPQCapabilityRow {
+  functionality: string;
+  detected: boolean;
+  evidenceType: string;
+  countScope: string;
+  complexityNote: string;
+  confidence: string;
+}
+
+export interface TwinFieldDetail {
+  totalCount: number;
+  objectPairs: Array<{
+    objectA: string;
+    objectB: string;
+    count: number;
+    examples: string[];
+  }>;
+  detectionMethod: string;
+  confidence: string;
+}
+
+export interface SpecialFieldDetail {
+  fields: Array<{
+    fieldName: string;
+    object: string;
+    purpose: string;
+    populationCount: number;
+    confidence: string;
+  }>;
+}
+
+export interface LookupQueryDetail {
+  totalQueries: number;
+  queryNames: string[];
+  customSourceObjects: string[];
+  activeInactiveSplit: string;
+}
+
+export interface RenewalAutomationDetail {
+  flows: Array<{
+    name: string;
+    triggerObject: string;
+    evidenceType: string;
+    confidence: string;
+  }>;
+}
+
+export interface ObjectLimitsRow {
+  objectLabel: string;
+  apiName: string;
+  limits: Array<{
+    category: string;
+    usage: number | null;
+    limit: number | null;
+    percentUsed: string;
+  }>;
+}
+
+export interface AdditionalCPQFunctionality {
+  capabilities: CPQCapabilityRow[];
+  twinFieldDetail: TwinFieldDetail | null;
+  specialFieldDetail: SpecialFieldDetail | null;
+  lookupQueryDetail: LookupQueryDetail | null;
+  renewalAutomationDetail: RenewalAutomationDetail | null;
+  objectLimitsPercent: ObjectLimitsRow[] | null;
+}
+
+// ============================================================================
+// V11 — Appendix A.3: Transactional Record Counts
+// ============================================================================
+
+export interface AppendixA3Row {
+  objectLabel: string;
+  apiName: string;
+  totalCount: number | null;
+  windowCount: number | null;
 }
 
 export function assembleReport(
@@ -1537,6 +1654,11 @@ export function assembleReport(
     bundlesDeepDive: assembleBundlesDeepDive(findings, reportCounts),
     relatedFunctionality: assembleRelatedFunctionality(findings),
     objectConfiguration: assembleObjectConfiguration(findings),
+
+    // V11 — Transactional Object Assessment + Additional CPQ Functionality
+    transactionalObjectAssessment: assembleTransactionalObjectAssessment(findings),
+    additionalCPQFunctionality: assembleAdditionalCPQFunctionality(findings),
+    appendixA3: assembleAppendixA3(findings),
   };
 }
 
@@ -2484,6 +2606,8 @@ export type SectionKey =
   | '6.5'
   | '6.6'
   | '6.7'
+  | '6.8'
+  | '6.9'
   | '7'
   | '8'
   | '9'
@@ -2520,6 +2644,8 @@ export const SECTION_RENDER_RULES: Record<SectionKey, SectionConfig> = {
   '6.5': { tier: 'T1', predicate: () => true },
   '6.6': { tier: 'T2', predicate: (data) => data.bundlesDeepDive != null },
   '6.7': { tier: 'T1', predicate: () => true },
+  '6.8': { tier: 'T2', predicate: (data) => data.transactionalObjectAssessment != null },
+  '6.9': { tier: 'T2', predicate: (data) => data.additionalCPQFunctionality != null },
   '7': { tier: 'T1', predicate: () => true },
   '8': { tier: 'T1', predicate: () => true },
   '9': { tier: 'T1', predicate: () => true },
@@ -3223,6 +3349,77 @@ function buildDefaultKeyFindings(
     });
   }
 
+  // ----------------------------------------------------------------
+  // V11 3D-1: Key Finding candidates from Sections 6.8 / 6.9
+  // Cap: at most 1–2 new findings promoted. Non-displacing.
+  // ----------------------------------------------------------------
+  const v11Candidates: Array<{
+    title: string;
+    detail: string;
+    confidence: string;
+    weight: number;
+  }> = [];
+
+  // Candidate 1: Heavy object footprint (≥3 objects with >100 custom fields)
+  const metaFindings = findings.filter((f) => f.artifactType === 'TransactionalObjectMeta');
+  const heavyObjects = metaFindings.filter((f) => {
+    const refs = safeRefs(f);
+    const total = Number(refs.find((r) => r.label === 'Custom Fields Total')?.value ?? 0);
+    return total > 100;
+  });
+  if (heavyObjects.length >= 3) {
+    v11Candidates.push({
+      title: `Heavy customization across ${heavyObjects.length} transactional objects`,
+      detail: `${heavyObjects.length} transactional objects have >100 custom fields — indicating significant field-level complexity in the quote-to-cash pipeline that requires mapping.`,
+      confidence: 'Confirmed',
+      weight: 3,
+    });
+  }
+
+  // Candidate 5: Contract mix anomaly (Amendments >30% of classified contracts)
+  const contractDetail = findings.find(
+    (f) =>
+      f.artifactType === 'TransactionalObjectDetail' &&
+      f.artifactName?.includes('Contracts — Classification')
+  );
+  if (contractDetail) {
+    const refs = safeRefs(contractDetail);
+    const renewals = Number(refs.find((r) => r.label === 'Renewals')?.value ?? 0);
+    const amendments = Number(refs.find((r) => r.label === 'Amendments')?.value ?? 0);
+    const classified = renewals + amendments;
+    if (classified > 0 && amendments / classified > 0.3) {
+      v11Candidates.push({
+        title: `Contract amendments represent ${Math.round((amendments / classified) * 100)}% of classified contracts`,
+        detail: `${amendments} amendments among ${classified} classified contracts — high amendment rate adds mid-term modification complexity to the migration.`,
+        confidence: 'Confirmed',
+        weight: 2,
+      });
+    }
+  }
+
+  // Candidate 6: Lookup queries with custom objects
+  const lqCount = findings.filter(
+    (f) => f.artifactType === 'DataCount' && f.findingKey?.includes('LookupQuery')
+  );
+  if (lqCount.some((f) => (f.countValue ?? 0) > 0)) {
+    v11Candidates.push({
+      title: 'Lookup Queries reference external data sources',
+      detail: `Lookup Queries detected — external data injected into pricing/product rules requires data-structure replication in RCA.`,
+      confidence: 'Confirmed',
+      weight: 1,
+    });
+  }
+
+  // Sort by weight, take top 2, append (non-displacing)
+  v11Candidates.sort((a, b) => b.weight - a.weight);
+  const promoted = v11Candidates.slice(0, 2);
+  for (const c of promoted) {
+    if (kf.length < 9) {
+      kf.push({ title: c.title, detail: c.detail, confidence: c.confidence });
+    }
+  }
+
+  // allow-slice: capping key findings to top 7 for executive summary display
   return kf.slice(0, 7);
 }
 
@@ -4040,4 +4237,518 @@ function buildProductCatalog(
         : '0%',
     confidence: 'Confirmed',
   }));
+}
+
+// ============================================================================
+// V11 — Transactional Object Assessment (Section 6.8)
+// ============================================================================
+
+const V11_OBJECTS = [
+  { label: 'Opportunity', apiName: 'Opportunity' },
+  { label: 'Opportunity Product', apiName: 'OpportunityLineItem' },
+  { label: 'Quote', apiName: 'SBQQ__Quote__c' },
+  { label: 'Quote Line', apiName: 'SBQQ__QuoteLine__c' },
+  { label: 'Order', apiName: 'Order' },
+  { label: 'Order Product', apiName: 'OrderItem' },
+  { label: 'Contract', apiName: 'Contract' },
+  { label: 'Subscription', apiName: 'SBQQ__Subscription__c' },
+] as const;
+
+function assembleTransactionalObjectAssessment(
+  findings: AssessmentFindingInput[]
+): TransactionalObjectAssessment | null {
+  const metaFindings = findings.filter((f) => f.artifactType === 'TransactionalObjectMeta');
+  const toolingFindings = findings.filter((f) => f.artifactType === 'TransactionalObjectTooling');
+  const detailFindings = findings.filter((f) => f.artifactType === 'TransactionalObjectDetail');
+
+  if (metaFindings.length === 0 && toolingFindings.length === 0) return null;
+
+  const masterTable: TransactionalObjectRow[] = V11_OBJECTS.map((obj) => {
+    const meta = metaFindings.find((f) => {
+      const refs = safeRefs(f);
+      return refs.some(
+        (r) => r.value === obj.apiName && (r.label === 'API Name' || r.type === 'object-ref')
+      );
+    });
+    const tooling = toolingFindings.find((f) => {
+      const refs = safeRefs(f);
+      return refs.some(
+        (r) => r.value === obj.apiName && (r.label === 'API Name' || r.type === 'object-ref')
+      );
+    });
+
+    const getRef = (finding: AssessmentFindingInput | undefined, label: string): number | null => {
+      if (!finding) return null;
+      const refs = safeRefs(finding);
+      const ref = refs.find((r) => r.label === label);
+      if (!ref) return null;
+      const val = Number(ref.value);
+      return val === -1 ? null : val;
+    };
+
+    const pageLayouts = getRef(tooling, 'Page Layouts');
+    const buttonsLinksActions = getRef(tooling, 'Buttons/Links/Actions');
+    const fieldSets = getRef(meta, 'Field Sets');
+    const activeRecordTypes = getRef(meta, 'Active Record Types');
+    const activeValidationRules = getRef(tooling, 'Active Validation Rules');
+    const customFieldsTotal = getRef(meta, 'Custom Fields Total');
+    const customFieldsManaged = getRef(meta, 'Custom Fields Managed');
+    const customFieldsOrg = getRef(meta, 'Custom Fields Org-Owned');
+
+    const notes: string[] = [];
+    if (pageLayouts != null && pageLayouts > 5) {
+      notes.push(`Page Layouts > 5 (${pageLayouts})`);
+    }
+    if (customFieldsTotal != null && customFieldsManaged != null && customFieldsOrg != null) {
+      notes.push(
+        `${customFieldsTotal} total (${customFieldsManaged} managed / ${customFieldsOrg} org-owned)`
+      );
+    }
+    if (
+      customFieldsTotal != null &&
+      customFieldsManaged != null &&
+      customFieldsTotal > 0 &&
+      customFieldsManaged / customFieldsTotal > 0.3
+    ) {
+      notes.push('Managed-heavy (>30%)');
+    }
+
+    return {
+      objectLabel: obj.label,
+      apiName: obj.apiName,
+      pageLayouts,
+      pageLayoutFallback: false,
+      buttonsLinksActions,
+      fieldSets,
+      activeRecordTypes,
+      activeValidationRules,
+      customFieldsTotal,
+      customFieldsManaged,
+      customFieldsOrg,
+      notes,
+    };
+  });
+
+  // Build detail sections from TransactionalObjectDetail findings
+  // Match by findingKey scope (most reliable) or by explicit object label in artifactName
+  const DETAIL_LABEL_MAP: Record<string, string[]> = {
+    Opportunity: ['Opportunity — SBQQ Formula', 'Quote-per-Opportunity'],
+    OpportunityLineItem: [],
+    SBQQ__Quote__c: ['Quote-per-Opportunity', 'Guided Selling', 'Quote Line Group', 'Ordered By'],
+    SBQQ__QuoteLine__c: [],
+    Order: ['Orders — Quote Split'],
+    OrderItem: ['Order Products — Contracting', 'Order Products — Billing'],
+    Contract: ['Contracts — Classification'],
+    SBQQ__Subscription__c: ['Subscriptions — Lifecycle'],
+  };
+
+  const details: TransactionalObjectDetailSection[] = [];
+  for (const obj of V11_OBJECTS) {
+    const patterns = DETAIL_LABEL_MAP[obj.apiName] ?? [];
+    const objDetails = detailFindings.filter((f) => {
+      // Priority 1: findingKey contains the object's apiName as scope
+      if (f.findingKey?.includes(`:${obj.apiName}:`)) return true;
+      // Priority 2: artifactName matches one of the known patterns for this object
+      return patterns.some((p) => (f.artifactName ?? '').includes(p));
+    });
+
+    if (objDetails.length > 0) {
+      const observations: Array<{ label: string; value: string; notes: string }> = [];
+      for (const d of objDetails) {
+        const refs = safeRefs(d);
+        for (const ref of refs) {
+          if (ref.type === 'count' && ref.label && ref.value) {
+            observations.push({
+              label: String(ref.label),
+              value: String(ref.value),
+              notes: d.notes ?? '',
+            });
+          }
+        }
+      }
+      details.push({ label: obj.label, apiName: obj.apiName, observations });
+    }
+  }
+
+  return { masterTable, details };
+}
+
+// ============================================================================
+// V11 — Additional CPQ Functionality (Section 6.9)
+// ============================================================================
+
+function assembleAdditionalCPQFunctionality(
+  findings: AssessmentFindingInput[]
+): AdditionalCPQFunctionality | null {
+  const dataCountFindings = findings.filter((f) => f.artifactType === 'DataCount');
+  const capabilityFindings = findings.filter((f) => f.artifactType === 'CPQCapabilityDetection');
+  const specialFieldFindings = findings.filter((f) => f.artifactType === 'SpecialFieldUsage');
+  const twinFieldFindings = findings.filter((f) => f.artifactType === 'TwinFieldDetection');
+
+  const getCount = (name: string): number | null => {
+    const f = dataCountFindings.find(
+      (d) => d.findingKey?.includes(name) || d.artifactName === name
+    );
+    return f?.countValue ?? null;
+  };
+
+  const summaryVars = getCount('SBQQ__SummaryVariable__c') ?? getCount('Summary Variables');
+  const searchFilters = getCount('SBQQ__SearchFilter__c') ?? getCount('Search Filters');
+  const quoteProcesses =
+    getCount('SBQQ__QuoteProcess__c') ?? getCount('Quote Processes (Guided Selling)');
+  const processInputs =
+    getCount('SBQQ__ProcessInput__c') ?? getCount('Process Inputs (Guided Selling)');
+  const lookupQueries = getCount('SBQQ__LookupQuery__c') ?? getCount('Lookup Queries');
+  const lookupData = getCount('SBQQ__LookupData__c') ?? getCount('Lookup Data');
+  const contractedPrices = getCount('SBQQ__ContractedPrice__c') ?? getCount('Contracted Prices');
+
+  // Only build if we have any data
+  const hasAnyData =
+    summaryVars != null ||
+    searchFilters != null ||
+    quoteProcesses != null ||
+    lookupQueries != null ||
+    specialFieldFindings.length > 0 ||
+    twinFieldFindings.length > 0 ||
+    capabilityFindings.length > 0;
+
+  if (!hasAnyData) return null;
+
+  // Renewal model from capability detection finding
+  const renewalModelFinding = capabilityFindings.find(
+    (f) => f.artifactName === 'Account-Level Renewal Model Distribution'
+  );
+
+  // Custom actions — cross-ref to 6.7.2
+  const customActionFindings = findings.filter(
+    (f) => f.artifactType === 'CustomAction' || f.artifactType === 'CpqCustomAction'
+  );
+
+  const totalTwinFields = twinFieldFindings.reduce((sum, f) => sum + (f.countValue ?? 0), 0);
+  const specialFieldsDetected = specialFieldFindings.filter((f) => (f.countValue ?? 0) > 0);
+
+  const capabilities: CPQCapabilityRow[] = [
+    {
+      functionality: 'Summary Variables',
+      detected: (summaryVars ?? 0) > 0,
+      evidenceType: 'Config',
+      countScope: summaryVars != null ? `${summaryVars} records` : 'Not assessed',
+      complexityNote:
+        (summaryVars ?? 0) > 0
+          ? 'Aggregate calculations across quote lines — map to RCA pricing procedures'
+          : '—',
+      confidence: summaryVars != null ? '★★★' : '—',
+    },
+    {
+      functionality: 'Search Filters',
+      detected: (searchFilters ?? 0) > 0,
+      evidenceType: 'Config',
+      countScope: searchFilters != null ? `${searchFilters} records` : 'Not assessed',
+      complexityNote:
+        (searchFilters ?? 0) > 0 ? 'Product search scoping — low migration complexity' : '—',
+      confidence: searchFilters != null ? '★★★' : '—',
+    },
+    {
+      functionality: 'Guided Selling (Quote Processes)',
+      detected: (quoteProcesses ?? 0) > 0,
+      evidenceType: 'Config + Usage',
+      countScope:
+        quoteProcesses != null
+          ? `${quoteProcesses} processes, ${processInputs ?? 0} inputs`
+          : 'Not assessed',
+      complexityNote:
+        (quoteProcesses ?? 0) > 0 ? 'Guided product selection — requires RCA flow redesign' : '—',
+      confidence: quoteProcesses != null ? '★★★' : '—',
+    },
+    {
+      functionality: 'Contracted Pricing',
+      detected: (contractedPrices ?? 0) > 0,
+      evidenceType: 'Config + Usage',
+      countScope: contractedPrices != null ? `${contractedPrices} records` : 'Not assessed',
+      complexityNote:
+        (contractedPrices ?? 0) > 0
+          ? 'Per-account negotiated prices — maps to RCA contracted pricing'
+          : '—',
+      confidence: contractedPrices != null ? '★★★' : '—',
+    },
+    {
+      functionality: 'Account-Level Renewal Model Distribution',
+      detected: renewalModelFinding != null && (renewalModelFinding.countValue ?? 0) > 0,
+      evidenceType: 'Usage',
+      countScope: renewalModelFinding
+        ? `${renewalModelFinding.countValue ?? 0} distinct models`
+        : 'Not assessed',
+      complexityNote:
+        renewalModelFinding && (renewalModelFinding.countValue ?? 0) > 0
+          ? 'Multiple renewal models in use — each maps differently to RCA'
+          : '—',
+      confidence: renewalModelFinding ? '★★★' : '—',
+    },
+    {
+      functionality: 'Lookup Queries & Lookup Data',
+      detected: (lookupQueries ?? 0) > 0,
+      evidenceType: 'Config + Derived',
+      countScope:
+        lookupQueries != null
+          ? `${lookupQueries} queries, ${lookupData ?? 0} data records`
+          : 'Not assessed',
+      complexityNote:
+        (lookupQueries ?? 0) > 0
+          ? 'External data in rules — requires data structure replication in RCA'
+          : '—',
+      confidence: lookupQueries != null ? '★★' : '—',
+    },
+    {
+      functionality: 'Account Renewal Automation',
+      detected: false, // Populated in Wave 3B via flow filter
+      evidenceType: 'Config + Derived',
+      countScope: 'See Section 9.2',
+      complexityNote: 'Flows on Contract/Subscription filtered for renewal evidence',
+      confidence: '★★',
+    },
+    {
+      functionality: 'Custom Actions',
+      detected: customActionFindings.length > 0,
+      evidenceType: 'Config',
+      countScope: `${customActionFindings.length} actions — see Section 6.7.2`,
+      complexityNote:
+        customActionFindings.length > 0 ? 'Custom CPQ buttons — see Section 6.7.2 for detail' : '—',
+      confidence: '★★★',
+    },
+    {
+      functionality: 'Special Fields',
+      detected: specialFieldsDetected.length > 0,
+      evidenceType: 'Usage',
+      countScope: `${specialFieldsDetected.length} fields populated on Quote/Quote Line`,
+      complexityNote:
+        specialFieldsDetected.length > 0
+          ? 'Pricing manipulation fields — adds complexity in CPQ and RCA translation'
+          : '—',
+      confidence: specialFieldsDetected.length > 0 ? '★★★' : '—',
+    },
+    {
+      functionality: 'Twin Fields',
+      detected: totalTwinFields > 0,
+      evidenceType: 'Derived',
+      countScope: `${totalTwinFields} across ${twinFieldFindings.length} object pairs`,
+      complexityNote:
+        totalTwinFields > 0 ? 'Cross-object field synchronization patterns requiring mapping' : '—',
+      confidence: totalTwinFields > 0 ? '★★' : '—',
+    },
+  ];
+
+  // --- 6.9.1 Twin Field Detail ---
+  let twinFieldDetail: TwinFieldDetail | null = null;
+  if (twinFieldFindings.length > 0) {
+    twinFieldDetail = {
+      totalCount: totalTwinFields,
+      objectPairs: twinFieldFindings.map((f) => {
+        const refs = safeRefs(f);
+        const objA = String(refs.find((r) => r.label === 'Object A')?.value ?? '');
+        const objB = String(refs.find((r) => r.label === 'Object B')?.value ?? '');
+        const examples = refs
+          .filter((r) => r.label === 'Twin Field Example' || r.type === 'field-ref')
+          .map((r) => String(r.value))
+          .filter((v) => v !== objA && v !== objB);
+        return {
+          objectA: objA,
+          objectB: objB,
+          count: f.countValue ?? 0,
+          examples,
+        };
+      }),
+      detectionMethod: 'API name convention matching across related object pairs',
+      confidence: '★★',
+    };
+  }
+
+  // --- 6.9.2 Special Fields Detail ---
+  let specialFieldDetail: SpecialFieldDetail | null = null;
+  if (specialFieldFindings.length > 0) {
+    const SPECIAL_FIELD_PURPOSES: Record<string, string> = {
+      SBQQ__AdditionalDiscountAmount__c: 'Additional discount amount applied at quote level',
+      SBQQ__DistributorDiscount__c: 'Distributor discount percentage',
+      SBQQ__PartnerDiscount__c: 'Partner discount percentage',
+      SBQQ__CustomerDiscount__c: 'Customer-specific discount percentage',
+      SBQQ__CustomerAmount__c: 'Customer-specified target amount',
+      SBQQ__MarkupRate__c: 'Markup rate applied to cost-based pricing',
+      SBQQ__AdditionalDiscount__c: 'Additional per-line discount percentage',
+      SBQQ__SpecialPrice__c: 'Override price set by user or external system',
+      SBQQ__SpecialPriceType__c: 'Type of special price override (Custom, Contracted, etc.)',
+      SBQQ__UpliftAmount__c: 'Uplift amount for renewal pricing',
+      SBQQ__Uplift__c: 'Uplift percentage for renewal pricing',
+      SBQQ__MarkupAmount__c: 'Markup amount on cost-based pricing',
+    };
+    // Deduplicate by field+object, keeping the entry with highest population count
+    const sfMap = new Map<string, { fieldName: string; object: string; populationCount: number }>();
+    for (const f of specialFieldFindings) {
+      const refs = safeRefs(f);
+      const fieldName = String(refs.find((r) => r.type === 'field-ref')?.value ?? f.artifactName);
+      const object = String(refs.find((r) => r.type === 'object-ref')?.value ?? '');
+      const key = `${fieldName}:${object}`;
+      const existing = sfMap.get(key);
+      const popCount = f.countValue ?? 0;
+      if (!existing || popCount > existing.populationCount) {
+        sfMap.set(key, { fieldName, object, populationCount: popCount });
+      }
+    }
+    specialFieldDetail = {
+      fields: [...sfMap.values()].map((sf) => ({
+        fieldName: sf.fieldName,
+        object: sf.object,
+        purpose: SPECIAL_FIELD_PURPOSES[sf.fieldName] ?? 'Pricing behavior manipulation',
+        populationCount: sf.populationCount,
+        confidence: '★★★',
+      })),
+    };
+  }
+
+  // --- 6.9.3 Lookup Queries & Data Detail ---
+  let lookupQueryDetail: LookupQueryDetail | null = null;
+  if ((lookupQueries ?? 0) > 0) {
+    // Scan for LookupQuery names from findings
+    const lqFindings = findings.filter(
+      (f) => f.artifactType === 'SBQQ__LookupQuery__c' || f.artifactName?.includes('Lookup Quer')
+    );
+    const queryNames = lqFindings
+      .map((f) => f.artifactName)
+      .filter(Boolean)
+      .filter((n) => !n.includes('(all)') && !n.includes('Lookup Queries'));
+
+    // Scan PriceRule/ProductRule findings for custom lookup-source objects
+    const ruleFindings = findings.filter(
+      (f) => f.artifactType === 'SBQQ__PriceRule__c' || f.artifactType === 'SBQQ__ProductRule__c'
+    );
+    const customObjects = new Set<string>();
+    for (const rule of ruleFindings) {
+      const refs = safeRefs(rule);
+      for (const ref of refs) {
+        if (ref.label === 'Lookup Object' || ref.label === 'LookupObject') {
+          const val = String(ref.value);
+          if (val.endsWith('__c') && !val.startsWith('SBQQ__')) {
+            customObjects.add(val);
+          }
+        }
+      }
+    }
+
+    lookupQueryDetail = {
+      totalQueries: lookupQueries ?? 0,
+      queryNames:
+        queryNames.length > 0
+          ? queryNames
+          : [`${lookupQueries} total (names not individually extracted)`],
+      customSourceObjects: [...customObjects],
+      activeInactiveSplit: `${lookupQueries} total (active/inactive split unavailable)`,
+    };
+  }
+
+  // --- 6.9.4 Account Renewal Automation Detail ---
+  const flowFindings = findings.filter((f) => f.artifactType === 'Flow');
+  const renewalFlows = flowFindings.filter((f) => {
+    const refs = safeRefs(f);
+    const triggerObj = String(
+      refs.find((r) => r.label === 'Object' || r.label === 'TriggerType')?.value ?? ''
+    );
+    const name = f.artifactName ?? '';
+    const isContractOrSub =
+      triggerObj === 'Contract' ||
+      triggerObj === 'SBQQ__Subscription__c' ||
+      name.toLowerCase().includes('contract') ||
+      name.toLowerCase().includes('subscription');
+    const hasRenewalEvidence = /renewal|renew|auto[_-]?renew/i.test(name);
+    return isContractOrSub && hasRenewalEvidence;
+  });
+
+  let renewalAutomationDetail: RenewalAutomationDetail | null = null;
+  if (renewalFlows.length > 0) {
+    renewalAutomationDetail = {
+      flows: renewalFlows.map((f) => ({
+        name: f.artifactName ?? 'Unknown',
+        triggerObject: String(safeRefs(f).find((r) => r.label === 'Object')?.value ?? 'Inferred'),
+        evidenceType: /renewal|renew/i.test(f.artifactName ?? '') ? 'Name pattern' : 'Field use',
+        confidence: /renewal|renew/i.test(f.artifactName ?? '') ? '★★' : '★★★',
+      })),
+    };
+  }
+
+  return {
+    capabilities,
+    twinFieldDetail,
+    specialFieldDetail,
+    lookupQueryDetail,
+    renewalAutomationDetail,
+    objectLimitsPercent: null, // Populated when Object Limits collector runs
+  };
+}
+
+// ============================================================================
+// V11 — Appendix A.3: Transactional Record Counts
+// ============================================================================
+
+function assembleAppendixA3(findings: AssessmentFindingInput[]): AppendixA3Row[] | null {
+  const dataCountFindings = findings.filter((f) => f.artifactType === 'DataCount');
+
+  const getCount = (name: string): number | null => {
+    const f = dataCountFindings.find(
+      (d) => d.findingKey?.includes(`count_${name}`) || d.artifactName === name
+    );
+    return f?.countValue ?? null;
+  };
+
+  const rows: AppendixA3Row[] = [
+    {
+      objectLabel: 'Opportunity',
+      apiName: 'Opportunity',
+      totalCount: getCount('Opportunity') ?? getCount('Opportunities (all)'),
+      windowCount: getCount('Opportunity_90d') ?? getCount('Opportunities (90d)'),
+    },
+    {
+      objectLabel: 'Opportunity Product',
+      apiName: 'OpportunityLineItem',
+      totalCount: getCount('OpportunityLineItem') ?? getCount('Opportunity Products (all)'),
+      windowCount: null,
+    },
+    {
+      objectLabel: 'Quote',
+      apiName: 'SBQQ__Quote__c',
+      totalCount: getCount('SBQQ__Quote__c') ?? getCount('Quotes (all)'),
+      windowCount: getCount('SBQQ__Quote__c_90d') ?? getCount('Quotes (90d)'),
+    },
+    {
+      objectLabel: 'Quote Line',
+      apiName: 'SBQQ__QuoteLine__c',
+      totalCount: getCount('SBQQ__QuoteLine__c') ?? getCount('Quote Lines (all)'),
+      windowCount: getCount('SBQQ__QuoteLine__c_90d') ?? getCount('Quote Lines (90d)'),
+    },
+    {
+      objectLabel: 'Order',
+      apiName: 'Order',
+      totalCount: getCount('Order') ?? getCount('Orders (all)'),
+      windowCount: getCount('Order_90d') ?? getCount('Orders (90d)'),
+    },
+    {
+      objectLabel: 'Order Product',
+      apiName: 'OrderItem',
+      totalCount: getCount('OrderItem') ?? getCount('Order Products (all)'),
+      windowCount: null,
+    },
+    {
+      objectLabel: 'Contract',
+      apiName: 'Contract',
+      totalCount: getCount('Contract') ?? getCount('Contracts (all)'),
+      windowCount: getCount('Contract_90d') ?? getCount('Contracts (90d)'),
+    },
+    {
+      objectLabel: 'Subscription',
+      apiName: 'SBQQ__Subscription__c',
+      totalCount: getCount('SBQQ__Subscription__c') ?? getCount('Subscriptions (all)'),
+      windowCount: null,
+    },
+  ];
+
+  // Only return if we have any data
+  if (rows.every((r) => r.totalCount == null && r.windowCount == null)) return null;
+
+  return rows;
 }

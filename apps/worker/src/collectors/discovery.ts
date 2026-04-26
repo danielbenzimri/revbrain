@@ -115,6 +115,88 @@ const COUNT_OBJECTS = [
     soql: 'SELECT COUNT() FROM SBQQ__Localization__c',
   },
   { name: 'Pricebook2', label: 'Pricebooks', soql: 'SELECT COUNT() FROM Pricebook2' },
+  // V11 §6.9 — Additional CPQ functionality counts
+  {
+    name: 'SBQQ__SummaryVariable__c',
+    label: 'Summary Variables',
+    soql: 'SELECT COUNT() FROM SBQQ__SummaryVariable__c',
+  },
+  {
+    name: 'SBQQ__SearchFilter__c',
+    label: 'Search Filters',
+    soql: 'SELECT COUNT() FROM SBQQ__SearchFilter__c',
+  },
+  {
+    name: 'SBQQ__QuoteProcess__c',
+    label: 'Quote Processes (Guided Selling)',
+    soql: 'SELECT COUNT() FROM SBQQ__QuoteProcess__c',
+  },
+  {
+    name: 'SBQQ__ProcessInput__c',
+    label: 'Process Inputs (Guided Selling)',
+    soql: 'SELECT COUNT() FROM SBQQ__ProcessInput__c',
+  },
+  {
+    name: 'SBQQ__LookupQuery__c',
+    label: 'Lookup Queries',
+    soql: 'SELECT COUNT() FROM SBQQ__LookupQuery__c',
+  },
+  {
+    name: 'SBQQ__LookupData__c',
+    label: 'Lookup Data',
+    soql: 'SELECT COUNT() FROM SBQQ__LookupData__c',
+  },
+  // V11 §6.8 / A.3 — Transactional object counts
+  {
+    name: 'Opportunity',
+    label: 'Opportunities (all)',
+    soql: 'SELECT COUNT() FROM Opportunity',
+  },
+  {
+    name: 'Opportunity_90d',
+    label: 'Opportunities (90d)',
+    soql: 'SELECT COUNT() FROM Opportunity WHERE CreatedDate >= LAST_N_DAYS:90',
+  },
+  {
+    name: 'OpportunityLineItem',
+    label: 'Opportunity Products (all)',
+    soql: 'SELECT COUNT() FROM OpportunityLineItem',
+  },
+  {
+    name: 'SBQQ__QuoteLine__c_90d',
+    label: 'Quote Lines (90d)',
+    soql: 'SELECT COUNT() FROM SBQQ__QuoteLine__c WHERE CreatedDate >= LAST_N_DAYS:90',
+  },
+  {
+    name: 'Order',
+    label: 'Orders (all)',
+    soql: 'SELECT COUNT() FROM Order',
+  },
+  {
+    name: 'Order_90d',
+    label: 'Orders (90d)',
+    soql: 'SELECT COUNT() FROM Order WHERE CreatedDate >= LAST_N_DAYS:90',
+  },
+  {
+    name: 'OrderItem',
+    label: 'Order Products (all)',
+    soql: 'SELECT COUNT() FROM OrderItem',
+  },
+  {
+    name: 'Contract',
+    label: 'Contracts (all)',
+    soql: 'SELECT COUNT() FROM Contract',
+  },
+  {
+    name: 'Contract_90d',
+    label: 'Contracts (90d)',
+    soql: 'SELECT COUNT() FROM Contract WHERE CreatedDate >= LAST_N_DAYS:90',
+  },
+  {
+    name: 'SBQQ__Subscription__c',
+    label: 'Subscriptions (all)',
+    soql: 'SELECT COUNT() FROM SBQQ__Subscription__c',
+  },
 ];
 
 export class DiscoveryCollector extends BaseCollector {
@@ -289,6 +371,39 @@ export class DiscoveryCollector extends BaseCollector {
         totalCustomFields += fields.filter(
           (f) => f.custom && !f.name.startsWith('SBQQ__') && !f.name.startsWith('sbaa__')
         ).length;
+      }
+    }
+
+    // V11: Also describe standard transactional objects needed by
+    // the transactional-objects collector (Section 6.8 master table).
+    // These are not in REQUIRED_CPQ_OBJECTS but are essential for
+    // page layout, field set, record type, and custom field analysis.
+    const V11_STANDARD_OBJECTS = [
+      'Opportunity',
+      'OpportunityLineItem',
+      'Order',
+      'OrderItem',
+      'Contract',
+      'Account',
+    ];
+    const v11ObjectsToDescribe = V11_STANDARD_OBJECTS.filter((o) => !this.ctx.describeCache.has(o));
+    if (v11ObjectsToDescribe.length > 0) {
+      try {
+        const v11Describes = await this.ctx.restApi.describeMultiple(
+          v11ObjectsToDescribe,
+          this.signal
+        );
+        for (const [objectName, describe] of v11Describes) {
+          if (describe) {
+            this.ctx.describeCache.set(objectName, describe);
+            const fields = describe.fields || [];
+            totalFields += fields.length;
+            totalCustomFields += fields.filter((f) => f.custom).length;
+          }
+        }
+      } catch (err) {
+        this.log.warn({ error: (err as Error).message }, 'v11_standard_describes_failed');
+        warnings.push('V11: Could not describe standard transactional objects');
       }
     }
 
@@ -787,6 +902,60 @@ export class DiscoveryCollector extends BaseCollector {
         );
         warnings.push(`G-11: Could not sample ${objectName} — ${(err as Error).message}`);
       }
+    }
+
+    // ================================================================
+    // V11 §6.9 Row 5: Account-Level Renewal Model Distribution
+    // ================================================================
+    this.ctx.progress.updateSubstep('discovery', 'renewal_model');
+
+    try {
+      const accountDescribe = this.ctx.describeCache.get('Account') as DescribeResult | undefined;
+      const hasRenewalModel = accountDescribe?.fields.some(
+        (f) => f.name === 'SBQQ__RenewalModel__c'
+      );
+
+      if (hasRenewalModel) {
+        const renewalResult = await this.ctx.restApi.query<{
+          SBQQ__RenewalModel__c: string | null;
+          expr0: number;
+        }>(
+          'SELECT SBQQ__RenewalModel__c, COUNT(Id) FROM Account WHERE SBQQ__RenewalModel__c != null GROUP BY SBQQ__RenewalModel__c',
+          this.signal
+        );
+
+        const distribution = renewalResult.records.map((r) => ({
+          model: String(r.SBQQ__RenewalModel__c ?? 'null'),
+          count: r.expr0,
+        }));
+
+        findings.push(
+          createFinding({
+            domain: 'settings',
+            collector: 'discovery',
+            artifactType: 'CPQCapabilityDetection',
+            artifactName: 'Account-Level Renewal Model Distribution',
+            sourceType: 'object',
+            metricName: 'renewal_model_distribution',
+            scope: 'global',
+            detected: distribution.length > 0,
+            countValue: renewalResult.totalSize,
+            evidenceRefs: distribution.map((d) => ({
+              type: 'count' as const,
+              value: String(d.count),
+              label: `Renewal Model: ${d.model}`,
+            })),
+            notes:
+              distribution.length > 0
+                ? `Account renewal models: ${distribution.map((d) => `${d.model} (${d.count})`).join(', ')}`
+                : 'No accounts with renewal model set',
+          })
+        );
+        metrics.accountRenewalModelDistinct = distribution.length;
+      }
+    } catch (err) {
+      this.log.warn({ error: (err as Error).message }, 'renewal_model_query_failed');
+      warnings.push('V11: Account renewal model distribution query failed');
     }
 
     const coverage = Math.round((presentObjects.length / REQUIRED_CPQ_OBJECTS.length) * 100);

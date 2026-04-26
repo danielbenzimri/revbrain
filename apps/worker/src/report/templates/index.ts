@@ -8,7 +8,7 @@
  *          feature utilization, expanded scope, active filtering, coverage)
  */
 
-import type { ReportData } from '../assembler.ts';
+import type { ReportData, AdditionalCPQFunctionality } from '../assembler.ts';
 import { isSectionEnabled } from '../assembler.ts';
 import { reportStyles } from './styles.ts';
 import { escapeHtml, badge, scoreBar, severity, table } from './partials/helpers.ts';
@@ -42,6 +42,8 @@ export function renderReport(data: ReportData): string {
   ${renderDiscountSchedules(data)}
   ${isSectionEnabled('6.6', data) ? renderBundlesDeepDive(data) : ''}
   ${renderApprovalsAndDocs(data)}
+  ${isSectionEnabled('6.8', data) ? renderTransactionalObjects(data) : ''}
+  ${isSectionEnabled('6.9', data) ? renderAdditionalCPQFunctionality(data) : ''}
   ${renderUsage(data)}
   ${renderDataQuality(data)}
   ${renderCustomCode(data)}
@@ -199,6 +201,13 @@ function renderExecutiveSummary(data: ReportData): string {
         ];
       })
     )}
+    <p style="font-size: 10px; color: #718096; margin-top: 8px;">
+      <em>V11 note: The following data drivers from Sections 6.8–6.9 are candidates for future scoring-model recalibration
+      (no current scores affected): Configuration Depth — transactional object page layout and field counts, twin field density,
+      custom record types on transactional objects; Customization Level — Summary Variables count, Search Filters count,
+      Lookup Queries count; Pricing Logic — Special Fields usage depth, Contracted Pricing per-account depth;
+      Technical Debt — dormant transactional objects (high layout count + low record count).</em>
+    </p>
   </div>`;
 }
 
@@ -989,6 +998,8 @@ function renderAppendixA(data: ReportData): string {
     ${renderTable(platformObjects)}`
         : ''
     }
+
+    ${renderAppendixA3(data)}
   </div>`;
 }
 
@@ -1228,4 +1239,275 @@ function renderAppendixE(data: ReportData): string {
     <p><em>Metadata-level configuration for CPQ-related objects.</em></p>
     ${objectSections}
   </div>`;
+}
+
+// ============================================================================
+// V11 Section 6.8: Transactional Object Assessment
+// ============================================================================
+
+function renderTransactionalObjects(data: ReportData): string {
+  const assessment = data.transactionalObjectAssessment;
+  if (!assessment) return '';
+
+  // Global Display Contract helper
+  const displayValue = (val: number | null): string => {
+    if (val == null) return 'Not assessed';
+    return String(val);
+  };
+
+  // Master table
+  const masterRows = assessment.masterTable.map((row) => [
+    `<strong>${escapeHtml(row.objectLabel)}</strong><br><code style="font-size: 9px; color: #718096;">${escapeHtml(row.apiName)}</code>`,
+    displayValue(row.pageLayouts),
+    displayValue(row.buttonsLinksActions),
+    displayValue(row.fieldSets),
+    displayValue(row.activeRecordTypes),
+    displayValue(row.activeValidationRules),
+    row.customFieldsTotal != null ? `${row.customFieldsTotal}` : 'Not assessed',
+    row.notes.length > 0
+      ? `<span style="font-size: 10px;">${row.notes.map((n) => escapeHtml(n)).join('<br>')}</span>`
+      : '—',
+  ]);
+
+  // Detail subsections
+  const detailSections = assessment.details
+    .map((detail, i) => {
+      if (detail.observations.length === 0) return '';
+
+      // Deduplicate observations by label and apply Global Display Contract
+      const seen = new Set<string>();
+      const deduped = detail.observations.filter((obs) => {
+        if (seen.has(obs.label)) return false;
+        seen.add(obs.label);
+        return true;
+      });
+      const obsRows = deduped.map((obs) => {
+        // Global Display Contract: -1 = not computed / zero denominator
+        const displayVal =
+          obs.value === '-1' ? 'Not observed in 90-day window' : escapeHtml(obs.value);
+        // Truncate repeated notes — show only once per subsection
+        const noteText =
+          obs.notes && obs.notes.length > 120 ? obs.notes.substring(0, 120) + '…' : obs.notes;
+        return [
+          escapeHtml(obs.label),
+          displayVal,
+          noteText ? `<span style="font-size: 10px;">${escapeHtml(noteText)}</span>` : '—',
+        ];
+      });
+
+      return `
+    <h4>6.8.${i + 1} ${escapeHtml(detail.label)}</h4>
+    ${table(['Metric', 'Value', 'Notes'], obsRows)}`;
+    })
+    .filter(Boolean)
+    .join('\n');
+
+  return `
+  <div class="page-break">
+    <h2>6.8 Transactional Object Assessment</h2>
+    <p><em>Metadata analysis of the 8 transactional objects in the quote-to-cash pipeline.
+    This section assesses page layouts, custom buttons/links, field sets, record types,
+    validation rules, and custom fields across Opportunity through Subscription.</em></p>
+
+    <table style="font-size: 11px; table-layout: fixed; width: 100%;">
+      <colgroup>
+        <col style="width: 130px;">
+        <col style="width: 35px;">
+        <col style="width: 50px;">
+        <col style="width: 35px;">
+        <col style="width: 35px;">
+        <col style="width: 35px;">
+        <col style="width: 55px;">
+        <col>
+      </colgroup>
+      <thead>
+        <tr>
+          <th>Object</th>
+          <th>PL</th>
+          <th>Btn/Lnk</th>
+          <th>FS</th>
+          <th>RT</th>
+          <th>VR</th>
+          <th>Custom Fields</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${masterRows.map((row) => `<tr>${row.map((c) => `<td>${c}</td>`).join('')}</tr>`).join('\n')}
+      </tbody>
+    </table>
+
+    <p style="font-size: 10px; color: #718096; margin-top: 4px;">
+      <em>PL = Page Layouts, Btn/Lnk = Buttons/Links/Actions (custom only), FS = Field Sets,
+      RT = Active Record Types, VR = Active Validation Rules.
+      Complexity threshold: Page Layouts &gt; 5 flagged.</em>
+    </p>
+
+    ${detailSections}
+  </div>`;
+}
+
+// ============================================================================
+// V11 Section 6.9: Additional CPQ Functionality
+// ============================================================================
+
+function renderAdditionalCPQFunctionality(data: ReportData): string {
+  const cpqFunc = data.additionalCPQFunctionality;
+  if (!cpqFunc) return '';
+
+  const capabilityRows = cpqFunc.capabilities.map((cap) => [
+    `<strong>${escapeHtml(cap.functionality)}</strong>`,
+    cap.detected
+      ? '<span style="color: #27ae60; font-weight: 600;">Yes</span>'
+      : '<span style="color: #718096;">No</span>',
+    escapeHtml(cap.evidenceType),
+    escapeHtml(cap.countScope),
+    `<span style="font-size: 10px;">${escapeHtml(cap.complexityNote)}</span>`,
+    cap.confidence,
+  ]);
+
+  return `
+  <div class="page-break">
+    <h2>6.9 Additional CPQ Functionality</h2>
+    <p><em>Detection of additional CPQ capabilities beyond core configuration objects.
+    Each capability is assessed for presence, evidence type, and migration complexity impact.</em></p>
+
+    <table style="font-size: 11px;">
+      <thead>
+        <tr>
+          <th>Functionality</th>
+          <th>Detected</th>
+          <th>Evidence</th>
+          <th>Count / Scope</th>
+          <th>Complexity Note</th>
+          <th>Conf.</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${capabilityRows.map((row) => `<tr>${row.map((c) => `<td>${c}</td>`).join('')}</tr>`).join('\n')}
+      </tbody>
+    </table>
+
+    <p style="font-size: 10px; color: #718096; margin-top: 4px;">
+      <em>Evidence Type: Config = metadata/config records exist; Usage = records populated in window;
+      Derived = inferred from related metadata. Confidence: ★★★ Confirmed / ★★ Estimated / ★ Partial.</em>
+    </p>
+
+    ${renderTwinFieldDetail(cpqFunc)}
+    ${renderSpecialFieldDetail(cpqFunc)}
+    ${renderLookupQueryDetail(cpqFunc)}
+    ${renderRenewalAutomationDetail(cpqFunc)}
+  </div>`;
+}
+
+// ============================================================================
+// V11 Section 6.9.1–6.9.4: Detail Subsections
+// ============================================================================
+
+function renderTwinFieldDetail(cpqFunc: AdditionalCPQFunctionality): string {
+  const detail = cpqFunc.twinFieldDetail;
+  if (!detail || detail.totalCount === 0) return '';
+
+  const rows = detail.objectPairs.map((pair) => [
+    escapeHtml(pair.objectA),
+    escapeHtml(pair.objectB),
+    String(pair.count),
+    pair.examples.length > 0
+      ? pair.examples.map((e) => `<code>${escapeHtml(e)}</code>`).join(', ')
+      : '—',
+  ]);
+
+  return `
+    <h3>6.9.1 Twin Field Usage (Cross-Object)</h3>
+    <p><em>${detail.totalCount} twin fields detected across ${detail.objectPairs.length} object pair(s).
+    Detection method: ${escapeHtml(detail.detectionMethod)}. Confidence: ${detail.confidence}.</em></p>
+    ${table(['Object A', 'Object B', 'Count', 'Examples (up to 3)'], rows)}
+    <p style="font-size: 10px; color: #718096; margin-top: 4px;">
+      <em>Twin fields are org-owned custom fields with matching API names across related object pairs,
+      suggesting cross-object data synchronization patterns that require mapping in RCA.</em>
+    </p>`;
+}
+
+function renderSpecialFieldDetail(cpqFunc: AdditionalCPQFunctionality): string {
+  const detail = cpqFunc.specialFieldDetail;
+  if (!detail || detail.fields.length === 0) return '';
+
+  const rows = detail.fields.map((f) => [
+    `<code>${escapeHtml(f.fieldName)}</code>`,
+    escapeHtml(f.object),
+    escapeHtml(f.purpose),
+    String(f.populationCount),
+    f.confidence,
+  ]);
+
+  return `
+    <h3>6.9.2 Special Fields Detected</h3>
+    <p><em>Special Fields manipulate the OOB CPQ pricing model. Each adds complexity in CPQ and in the
+    translation to RCA. Scope: Quote + Quote Line objects.</em></p>
+    ${table(['Field Name', 'Object', 'Purpose', 'Pop. Count', 'Conf.'], rows)}`;
+}
+
+function renderLookupQueryDetail(cpqFunc: AdditionalCPQFunctionality): string {
+  const detail = cpqFunc.lookupQueryDetail;
+  if (!detail) return '';
+
+  return `
+    <h3>6.9.3 Lookup Queries &amp; Lookup Data</h3>
+    <p><strong>Lookup Queries:</strong> ${escapeHtml(detail.activeInactiveSplit)}</p>
+    ${detail.queryNames.length > 0 ? `<p>Names: ${detail.queryNames.map((n) => escapeHtml(n)).join(', ')}</p>` : ''}
+    ${
+      detail.customSourceObjects.length > 0
+        ? `<p><strong>Custom Lookup-Source Objects:</strong> ${detail.customSourceObjects.map((o) => `<code>${escapeHtml(o)}</code>`).join(', ')}</p>
+         <p style="font-size: 10px; color: #718096;"><em>Custom objects used as lookup sources require data-structure replication in RCA.</em></p>`
+        : '<p><em>No custom lookup-source objects detected in Price Rule / Product Rule configurations.</em></p>'
+    }`;
+}
+
+function renderRenewalAutomationDetail(cpqFunc: AdditionalCPQFunctionality): string {
+  const detail = cpqFunc.renewalAutomationDetail;
+  if (!detail || detail.flows.length === 0) return '';
+
+  const rows = detail.flows.map((f) => [
+    escapeHtml(f.name),
+    escapeHtml(f.triggerObject),
+    escapeHtml(f.evidenceType),
+    f.confidence,
+  ]);
+
+  return `
+    <h3>6.9.4 Account Renewal Automation</h3>
+    <p><em>Flows on Contract or Subscription objects with explicit renewal evidence.
+    See Section 9.2 for full flow inventory.</em></p>
+    ${table(['Flow Name', 'Trigger Object', 'Evidence', 'Conf.'], rows)}
+    <p style="font-size: 10px; color: #718096; margin-top: 4px;">
+      <em>Only flows with confirmed renewal intent are included. Generic Contract/Subscription flows without
+      explicit renewal logic are excluded per V11 exclusion rule.</em>
+    </p>`;
+}
+
+// ============================================================================
+// V11 Appendix A.3: Transactional Record Counts
+// ============================================================================
+
+function renderAppendixA3(data: ReportData): string {
+  if (!data.appendixA3 || data.appendixA3.length === 0) return '';
+
+  const displayCount = (val: number | null): string => {
+    if (val == null) return 'Not assessed';
+    return val.toLocaleString();
+  };
+
+  const rows = data.appendixA3.map((row) => [
+    `${escapeHtml(row.objectLabel)}<br><code style="font-size: 9px; color: #718096;">${escapeHtml(row.apiName)}</code>`,
+    displayCount(row.totalCount),
+    displayCount(row.windowCount),
+  ]);
+
+  return `
+    <h3 style="margin-top: 24px;">A.3 Transactional Record Counts</h3>
+    <p><em>Raw record counts per transactional object. 90-day window matches the assessment period used in the report body.</em></p>
+    ${table(['Object', 'Total Record Count', '90-Day Window Count'], rows)}
+    <p style="font-size: 10px; color: #718096; margin-top: 4px;">
+      <em>Counts are raw, not deduped by parent or filtered by status. "Not assessed" = extraction could not compute the count.</em>
+    </p>`;
 }

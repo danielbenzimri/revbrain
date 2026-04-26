@@ -24,6 +24,7 @@ import { DependenciesCollector } from './collectors/dependencies.ts';
 import { CustomizationsCollector } from './collectors/customizations.ts';
 import { SettingsCollector } from './collectors/settings.ts';
 import { OrderLifecycleCollector } from './collectors/order-lifecycle.ts';
+import { TransactionalObjectsCollector } from './collectors/transactional-objects.ts';
 import { TemplatesCollector } from './collectors/templates.ts';
 import { ApprovalsCollector } from './collectors/approvals.ts';
 import { IntegrationsCollector } from './collectors/integrations.ts';
@@ -200,6 +201,7 @@ export async function runPipeline(ctx: CollectorContext): Promise<PipelineResult
     new CustomizationsCollector(ctx),
     new SettingsCollector(ctx),
     new OrderLifecycleCollector(ctx),
+    new TransactionalObjectsCollector(ctx),
   ];
 
   const tier2Collectors = [

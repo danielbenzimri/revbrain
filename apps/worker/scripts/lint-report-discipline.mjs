@@ -71,11 +71,7 @@ const violations = [];
 
 function isCommentOrDocline(line) {
   const trimmed = line.trim();
-  return (
-    trimmed.startsWith('//') ||
-    trimmed.startsWith('*') ||
-    trimmed.startsWith('/*')
-  );
+  return trimmed.startsWith('//') || trimmed.startsWith('*') || trimmed.startsWith('/*');
 }
 
 function scan(file, rules) {

@@ -25,6 +25,7 @@ import { LocalizationCollector } from '../src/collectors/localization.ts';
 // EXT-1.7 + EXT-2.x — new collectors added by feat/extraction-coverage
 import { ComponentsCollector } from '../src/collectors/components.ts';
 import { Tier2InventoriesCollector } from '../src/collectors/tier2-inventories.ts';
+import { TransactionalObjectsCollector } from '../src/collectors/transactional-objects.ts';
 // EXT-1.2 + EXT-CC1 — post-processing helpers
 import { joinPluginActivation } from '../src/normalize/plugin-activation.ts';
 import { introspectFls, type FieldPermissionsRow } from '../src/salesforce/fls-introspect.ts';
@@ -247,6 +248,7 @@ async function main() {
     ['Customizations', new CustomizationsCollector(ctx)],
     ['Settings', new SettingsCollector(ctx)],
     ['Order Lifecycle', new OrderLifecycleCollector(ctx)],
+    ['Transactional Objects (V11)', new TransactionalObjectsCollector(ctx)],
     ['Templates', new TemplatesCollector(ctx)],
     ['Approvals', new ApprovalsCollector(ctx)],
     ['Integrations', new IntegrationsCollector(ctx)],
