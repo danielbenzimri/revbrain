@@ -1,5 +1,5 @@
 {
-  "installCommand": "cd ../.. && pnpm install",
+  "installCommand": "cd ../.. && pnpm install --ignore-scripts",
   "buildCommand": "cd ../.. && pnpm --filter client build",
   "outputDirectory": "dist",
   "rewrites": [{ "source": "/((?!assets/).*)", "destination": "/index.html" }]
