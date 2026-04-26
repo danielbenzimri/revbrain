@@ -3,6 +3,7 @@
 .env.*
 !.env.example
 !.env.mock
+!.env.demo
 
 # Dependencies
 node_modules/

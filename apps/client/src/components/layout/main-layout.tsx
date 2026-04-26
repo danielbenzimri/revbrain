@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { ServicePanel } from '@/components/dev/service-panel';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { ImpersonationBanner } from './ImpersonationBanner';
+import { DemoBadge } from './DemoBadge';
 import { startBackgroundPreload, startBackgroundDataPreload } from '@/lib/route-prefetch';
 
 export default function MainLayout() {
@@ -44,6 +45,7 @@ export default function MainLayout() {
         {/* Dev Mode: Service Config Panel */}
         <ServicePanel />
       </div>
+      <DemoBadge />
     </div>
   );
 }

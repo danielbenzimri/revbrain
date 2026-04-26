@@ -8,7 +8,20 @@
  * Two valid states only:
  *   - { USE_MOCK_DATA=true,  AUTH_MODE=mock } → mock mode
  *   - { USE_MOCK_DATA=false, AUTH_MODE=jwt }  → real mode
+ *
+ * Edge function overrides: Supabase secrets are project-wide, so edge
+ * functions like demo-api set globalThis.__envOverrides to force mock
+ * mode without modifying Deno.env or process.env.
  */
+
+/** Read an env var, respecting globalThis.__envOverrides */
+function readEnv(env: Record<string, string | undefined>, key: string): string | undefined {
+  const overrides = (globalThis as Record<string, unknown>).__envOverrides as
+    | Record<string, string>
+    | undefined;
+  if (overrides && key in overrides) return overrides[key];
+  return env[key];
+}
 
 /**
  * Validates that mock mode configuration is consistent and safe.
@@ -17,10 +30,9 @@
  * - USE_MOCK_DATA and AUTH_MODE are contradictory
  */
 export function validateMockModeConfig(env: Record<string, string | undefined>): void {
-  const useMock = env.USE_MOCK_DATA === 'true';
-  const mockAuth = env.AUTH_MODE === 'mock';
-  // APP_MODE replaces APP_ENV. Fall back for backwards compat.
-  const appMode = env.APP_MODE || env.APP_ENV || '';
+  const useMock = readEnv(env, 'USE_MOCK_DATA') === 'true';
+  const mockAuth = readEnv(env, 'AUTH_MODE') === 'mock';
+  const appMode = readEnv(env, 'APP_MODE') || readEnv(env, 'APP_ENV') || '';
 
   if ((useMock || mockAuth) && ['staging', 'production', 'prod', 'stg'].includes(appMode)) {
     throw new Error(
@@ -42,5 +54,5 @@ export function validateMockModeConfig(env: Record<string, string | undefined>):
  * Returns true if the server is running in mock mode.
  */
 export function isMockMode(env: Record<string, string | undefined>): boolean {
-  return env.USE_MOCK_DATA === 'true';
+  return readEnv(env, 'USE_MOCK_DATA') === 'true';
 }

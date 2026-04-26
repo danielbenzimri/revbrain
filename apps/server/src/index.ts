@@ -61,6 +61,7 @@ function getCorsOrigins(): string[] {
         'https://revbrain.ai',
         'https://revbrain-client.vercel.app', // Legacy — remove after transition
         'https://revbrain-client-staging.vercel.app', // Legacy — remove after transition
+        'https://demo.revbrain.ai',
         'http://localhost:5173',
         'http://localhost:5174',
         'http://localhost:5175',
