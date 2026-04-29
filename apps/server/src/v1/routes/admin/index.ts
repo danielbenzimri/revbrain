@@ -13,6 +13,7 @@ import { adminJobsRouter } from './jobs.ts';
 import { adminOverridesRouter } from './overrides.ts';
 import { adminImpersonateRouter } from './impersonate.ts';
 import { adminNotificationsRouter } from './notifications.ts';
+import { adminPartnersRouter } from './partners.ts';
 import { requireMFA } from '../../../middleware/mfa-check.ts';
 import type { AppEnv } from '../../../types/index.ts';
 
@@ -100,5 +101,6 @@ adminRouter.route('/jobs', adminJobsRouter);
 adminRouter.route('/', adminOverridesRouter);
 adminRouter.route('/', adminImpersonateRouter);
 adminRouter.route('/notifications', adminNotificationsRouter);
+adminRouter.route('/partners', adminPartnersRouter);
 
 export { adminRouter };
