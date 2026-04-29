@@ -14,6 +14,7 @@ import { adminOverridesRouter } from './overrides.ts';
 import { adminImpersonateRouter } from './impersonate.ts';
 import { adminNotificationsRouter } from './notifications.ts';
 import { adminPartnersRouter } from './partners.ts';
+import { adminFeeAgreementsRouter, adminBillingCronRouter } from './fee-agreements.ts';
 import { requireMFA } from '../../../middleware/mfa-check.ts';
 import type { AppEnv } from '../../../types/index.ts';
 
@@ -102,5 +103,7 @@ adminRouter.route('/', adminOverridesRouter);
 adminRouter.route('/', adminImpersonateRouter);
 adminRouter.route('/notifications', adminNotificationsRouter);
 adminRouter.route('/partners', adminPartnersRouter);
+adminRouter.route('/fee-agreements', adminFeeAgreementsRouter);
+adminRouter.route('/billing-cron', adminBillingCronRouter);
 
 export { adminRouter };
