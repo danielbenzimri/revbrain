@@ -56,6 +56,7 @@ export function Sidebar({ className }: SidebarProps) {
     { nameKey: 'nav.admin.dashboard', href: '/admin', icon: LayoutDashboard }, // Distinct admin dashboard
     { nameKey: 'nav.admin.tenants', href: '/admin/tenants', icon: Building2 }, // Manage Tenants
     { nameKey: 'nav.admin.users', href: '/admin/users', icon: Users }, // Global User Management
+    { nameKey: 'nav.admin.partners', href: '/admin/partners', icon: Users }, // SI Partners
     // Pricing and Coupons hidden — dormant for SI billing model (see SI-BILLING-SPEC.md §12.1.4)
     // { nameKey: 'nav.admin.pricing', href: '/admin/pricing', icon: CreditCard },
     // { nameKey: 'nav.admin.coupons', href: '/admin/coupons', icon: Tag },

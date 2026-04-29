@@ -508,5 +508,17 @@
   },
   "billing": {
     "dormantBanner": "Subscription plans are for future end-client billing. SI partners are billed per-project via fee agreements."
+  },
+  "partners": {
+    "title": "Partners",
+    "subtitle": "Manage SI partner organizations and fee agreements",
+    "empty": "No SI partners yet. Partners appear here when an organization is registered as an SI partner.",
+    "colName": "Partner Name",
+    "colTier": "Tier",
+    "colProjects": "Projects",
+    "colFeesPaid": "Fees Paid",
+    "feesPaid": "Fees paid",
+    "projectsCompleted": "Projects completed",
+    "overrideActive": "Tier override active"
   }
 }

@@ -1,3 +1,4 @@
+// DORMANT: Tests for subscription-based billing model. Skipped for SI billing.
 import { test, expect } from '@playwright/test';
 import { apiFetch, MOCK_IDS } from '../fixtures/admin-helpers';
 
@@ -5,7 +6,7 @@ import { apiFetch, MOCK_IDS } from '../fixtures/admin-helpers';
  * Tests 58-62: Billing & Refunds (API-level)
  */
 
-test.describe('Billing & Refunds', () => {
+test.describe.skip('Billing & Refunds', () => {
   // These are API-only tests — no billing UI page exists in admin yet.
 
   test('58 — view payment details', async () => {

@@ -1,3 +1,4 @@
+// DORMANT: Tests for subscription-based billing model. Skipped for SI billing.
 import { test, expect } from './fixtures/auth';
 
 /**
@@ -5,7 +6,7 @@ import { test, expect } from './fixtures/auth';
  * Tests TC-3.1 through TC-3.4
  */
 
-test.describe('Billing Page UI', () => {
+test.describe.skip('Billing Page UI', () => {
   /**
    * Helper to navigate to billing page via sidebar
    */
@@ -28,7 +29,7 @@ test.describe('Billing Page UI', () => {
     }
   }
 
-  test.describe('TC-3.1: Billing Interval Toggle', () => {
+  test.describe.skip('TC-3.1: Billing Interval Toggle', () => {
     test('monthly/yearly toggle works correctly', async ({ authenticatedPage }) => {
       await navigateToBilling(authenticatedPage);
       await authenticatedPage.waitForLoadState('networkidle');
@@ -107,7 +108,7 @@ test.describe('Billing Page UI', () => {
     });
   });
 
-  test.describe('TC-3.2: Usage Dashboard Display', () => {
+  test.describe.skip('TC-3.2: Usage Dashboard Display', () => {
     test('usage dashboard shows resource usage', async ({ authenticatedPage }) => {
       await navigateToBilling(authenticatedPage);
       await authenticatedPage.waitForLoadState('networkidle');
@@ -155,7 +156,7 @@ test.describe('Billing Page UI', () => {
     });
   });
 
-  test.describe('TC-3.3: Trial Countdown Badge', () => {
+  test.describe.skip('TC-3.3: Trial Countdown Badge', () => {
     test('trial countdown shows for trialing subscriptions', async ({ authenticatedPage }) => {
       await navigateToBilling(authenticatedPage);
       await authenticatedPage.waitForLoadState('networkidle');
@@ -188,7 +189,7 @@ test.describe('Billing Page UI', () => {
     });
   });
 
-  test.describe('TC-3.4: Upgrade Prompt', () => {
+  test.describe.skip('TC-3.4: Upgrade Prompt', () => {
     test('upgrade prompt appears when approaching limits', async ({ authenticatedPage }) => {
       await navigateToBilling(authenticatedPage);
       await authenticatedPage.waitForLoadState('networkidle');
@@ -243,7 +244,7 @@ test.describe('Billing Page UI', () => {
     });
   });
 
-  test.describe('Current Plan Display', () => {
+  test.describe.skip('Current Plan Display', () => {
     test('billing page shows current plan information', async ({ authenticatedPage }) => {
       await navigateToBilling(authenticatedPage);
       await authenticatedPage.waitForLoadState('networkidle');
@@ -286,7 +287,7 @@ test.describe('Billing Page UI', () => {
     });
   });
 
-  test.describe('Payment History', () => {
+  test.describe.skip('Payment History', () => {
     test('payment history is shown for subscribed users', async ({ authenticatedPage }) => {
       await navigateToBilling(authenticatedPage);
       await authenticatedPage.waitForLoadState('networkidle');

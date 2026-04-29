@@ -3,10 +3,10 @@ import type {
   FeeAgreementEntity,
   CreateFeeAgreementInput,
   UpdateFeeAgreementInput,
-  FindManyOptions,
+  // FindManyOptions - not used in this repo
 } from '@revbrain/contract';
 import { mockFeeAgreements, mockProjects } from '../../mocks/index.ts';
-import { generateId, applyPagination, applySorting } from './helpers.ts';
+import { generateId } from './helpers.ts';
 
 const ACTIVE_STATUSES = [
   'draft',

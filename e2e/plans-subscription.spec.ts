@@ -1,3 +1,4 @@
+// DORMANT: Tests for subscription-based billing model. Skipped for SI billing.
 import { test, expect } from './fixtures/auth';
 import { navigate, selectors } from './fixtures/test-utils';
 
@@ -16,8 +17,8 @@ import { navigate, selectors } from './fixtures/test-utils';
  * - Cancel/downgrade tests verify UI but don't confirm
  */
 
-test.describe('Plans Display', () => {
-  test.describe('Plan Cards', () => {
+test.describe.skip('Plans Display', () => {
+  test.describe.skip('Plan Cards', () => {
     test('shows all available plans with pricing', async ({ authenticatedPage }) => {
       await navigate.toBilling(authenticatedPage);
 
@@ -90,7 +91,7 @@ test.describe('Plans Display', () => {
     });
   });
 
-  test.describe('Plan Comparison', () => {
+  test.describe.skip('Plan Comparison', () => {
     test('can compare plans side by side', async ({ authenticatedPage }) => {
       await navigate.toBilling(authenticatedPage);
 
@@ -122,7 +123,7 @@ test.describe('Plans Display', () => {
   });
 });
 
-test.describe('Subscription Status', () => {
+test.describe.skip('Subscription Status', () => {
   test('shows subscription status badge', async ({ authenticatedPage }) => {
     await navigate.toBilling(authenticatedPage);
     await authenticatedPage.waitForTimeout(2000);
@@ -185,7 +186,7 @@ test.describe('Subscription Status', () => {
   });
 });
 
-test.describe('Upgrade Flow', () => {
+test.describe.skip('Upgrade Flow', () => {
   test('upgrade button opens plan selection', async ({ authenticatedPage }) => {
     await navigate.toBilling(authenticatedPage);
     await authenticatedPage.waitForTimeout(2000);
@@ -255,7 +256,7 @@ test.describe('Upgrade Flow', () => {
   });
 });
 
-test.describe('Downgrade Flow', () => {
+test.describe.skip('Downgrade Flow', () => {
   test('downgrade shows warning about feature loss', async ({ authenticatedPage }) => {
     await navigate.toBilling(authenticatedPage);
     await authenticatedPage.waitForTimeout(2000);
@@ -314,7 +315,7 @@ test.describe('Downgrade Flow', () => {
   });
 });
 
-test.describe('Stripe Integration', () => {
+test.describe.skip('Stripe Integration', () => {
   test('subscribe button initiates Stripe checkout', async ({ authenticatedPage }) => {
     await navigate.toBilling(authenticatedPage);
     await authenticatedPage.waitForTimeout(2000);
@@ -366,7 +367,7 @@ test.describe('Stripe Integration', () => {
   });
 });
 
-test.describe('Trial Period', () => {
+test.describe.skip('Trial Period', () => {
   test('trial users see countdown and payment prompt', async ({ authenticatedPage }) => {
     await navigate.toBilling(authenticatedPage);
     await authenticatedPage.waitForTimeout(2000);
@@ -401,7 +402,7 @@ test.describe('Trial Period', () => {
   });
 });
 
-test.describe('Cancel Subscription', () => {
+test.describe.skip('Cancel Subscription', () => {
   test('cancel option requires confirmation', async ({ authenticatedPage }) => {
     await navigate.toBilling(authenticatedPage);
     await authenticatedPage.waitForTimeout(2000);

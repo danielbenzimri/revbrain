@@ -31,6 +31,7 @@ export const routeLazyImports: Record<string, () => Promise<any>> = {
   '/admin/users': () => import('@/features/admin/pages/AdminUserListPage'),
   '/admin/coupons': () => import('@/features/admin/pages/CouponListPage'),
   '/admin/audit': () => import('@/features/admin/pages/AuditLogPage'),
+  '/admin/partners': () => import('@/features/admin/pages/PartnersPage'),
   '/project/overview': () => import('@/features/projects/pages/workspace/OverviewPage'),
   '/project/cpq-explorer': () => import('@/features/projects/pages/workspace/CpqExplorerPage'),
   '/project/assessment': () => import('@/features/projects/pages/workspace/AssessmentPage'),

@@ -1,3 +1,4 @@
+// DORMANT: Tests for subscription-based billing model. Skipped for SI billing.
 import { test, expect } from './fixtures/auth';
 import { navigate } from './fixtures/test-utils';
 import type { Page } from '@playwright/test';
@@ -21,7 +22,7 @@ async function hasActiveSubscription(page: Page): Promise<boolean> {
   return currentPlan.isVisible({ timeout: 5000 }).catch(() => false);
 }
 
-test.describe('Billing Limits - Warning States', () => {
+test.describe.skip('Billing Limits - Warning States', () => {
   test('shows warning when approaching user limit (>80%)', async ({ authenticatedPage }) => {
     await navigate.toBilling(authenticatedPage);
     await authenticatedPage.waitForTimeout(2000);
@@ -99,7 +100,7 @@ test.describe('Billing Limits - Warning States', () => {
   });
 });
 
-test.describe('Billing Limits - Plan Features', () => {
+test.describe.skip('Billing Limits - Plan Features', () => {
   test('free tier shows limited features', async ({ authenticatedPage }) => {
     await navigate.toBilling(authenticatedPage);
     await authenticatedPage.waitForTimeout(2000);
@@ -168,7 +169,7 @@ test.describe('Billing Limits - Plan Features', () => {
   });
 });
 
-test.describe('Billing Limits - Trial Behavior', () => {
+test.describe.skip('Billing Limits - Trial Behavior', () => {
   test('trial users see countdown and payment prompt', async ({ authenticatedPage }) => {
     await navigate.toBilling(authenticatedPage);
     await authenticatedPage.waitForTimeout(2000);
@@ -230,7 +231,7 @@ test.describe('Billing Limits - Trial Behavior', () => {
   });
 });
 
-test.describe('Billing Limits - Coupon & Discounts', () => {
+test.describe.skip('Billing Limits - Coupon & Discounts', () => {
   test('discount is reflected in pricing display', async ({ authenticatedPage }) => {
     await navigate.toBilling(authenticatedPage);
     await authenticatedPage.waitForTimeout(2000);
@@ -267,7 +268,7 @@ test.describe('Billing Limits - Coupon & Discounts', () => {
   });
 });
 
-test.describe('Billing Limits - Past Due Handling', () => {
+test.describe.skip('Billing Limits - Past Due Handling', () => {
   test('past due status shows payment action required', async ({ authenticatedPage }) => {
     await navigate.toBilling(authenticatedPage);
     await authenticatedPage.waitForTimeout(2000);
@@ -302,7 +303,7 @@ test.describe('Billing Limits - Past Due Handling', () => {
   });
 });
 
-test.describe('Billing Limits - Downgrade Warnings', () => {
+test.describe.skip('Billing Limits - Downgrade Warnings', () => {
   test('downgrade shows feature loss warning', async ({ authenticatedPage }) => {
     await navigate.toBilling(authenticatedPage);
     await authenticatedPage.waitForTimeout(2000);

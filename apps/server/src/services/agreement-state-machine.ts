@@ -8,7 +8,7 @@
  */
 
 import type { FeeAgreementEntity, FeeMilestoneEntity } from '@revbrain/contract';
-import { calculateMigrationFee, generateDefaultBrackets, type Bracket } from './fee-calculator.ts';
+import { calculateMigrationFee, type Bracket } from './fee-calculator.ts';
 
 // ============================================================================
 // TYPES
@@ -299,7 +299,7 @@ function handleComputeMigrationTerms(payload: ComputeTermsPayload): ComputedTerm
   };
 }
 
-function handleApproveMigration(agreement: FeeAgreementEntity): AgreementUpdate {
+function handleApproveMigration(_agreement: FeeAgreementEntity): AgreementUpdate {
   // Admin approves >$500K value — generates terms, stays for SI acceptance
   // Route handler will compute fee and generate milestones
   return {
@@ -308,7 +308,7 @@ function handleApproveMigration(agreement: FeeAgreementEntity): AgreementUpdate 
   };
 }
 
-function handleRequestRevision(agreement: FeeAgreementEntity): AgreementUpdate {
+function handleRequestRevision(_agreement: FeeAgreementEntity): AgreementUpdate {
   return {
     status: 'active_assessment',
     declaredProjectValue: null,
@@ -317,7 +317,7 @@ function handleRequestRevision(agreement: FeeAgreementEntity): AgreementUpdate {
 }
 
 function handleAcceptMigration(
-  agreement: FeeAgreementEntity,
+  _agreement: FeeAgreementEntity,
   payload: AcceptMigrationPayload
 ): AgreementUpdate {
   return {
