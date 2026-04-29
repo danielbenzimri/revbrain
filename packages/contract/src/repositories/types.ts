@@ -340,6 +340,109 @@ export interface FeeAgreementRepository {
 }
 
 // ============================================================
+// FEE AGREEMENT TIER (SI Billing)
+// ============================================================
+
+export interface FeeAgreementTierEntity {
+  id: string;
+  feeAgreementId: string;
+  bracketCeiling: number | null;
+  rateBps: number;
+  sortOrder: number;
+  createdAt: Date;
+}
+
+export interface CreateFeeAgreementTierInput {
+  feeAgreementId: string;
+  bracketCeiling: number | null;
+  rateBps: number;
+  sortOrder: number;
+}
+
+export interface FeeAgreementTierRepository {
+  findByAgreementId(feeAgreementId: string): Promise<FeeAgreementTierEntity[]>;
+  createMany(data: CreateFeeAgreementTierInput[]): Promise<FeeAgreementTierEntity[]>;
+  deleteByAgreementId(feeAgreementId: string): Promise<boolean>;
+}
+
+// ============================================================
+// FEE MILESTONE (SI Billing)
+// ============================================================
+
+export interface FeeMilestoneEntity {
+  id: string;
+  feeAgreementId: string;
+  name: string;
+  phase: string;
+  triggerType: string;
+  percentageBps: number | null;
+  amount: number;
+  status: string;
+  paidVia: string;
+  requestReason: string | null;
+  requestedBy: string | null;
+  requestedAt: Date | null;
+  rejectionReason: string | null;
+  completedBy: string | null;
+  completedAt: Date | null;
+  completionEvidence: string | null;
+  stripeInvoiceId: string | null;
+  stripeInvoiceUrl: string | null;
+  stripePaymentIntentId: string | null;
+  invoicedAt: Date | null;
+  paidAt: Date | null;
+  overdueAt: Date | null;
+  overdueReminderSentDay1At: Date | null;
+  overdueReminderSentDay7At: Date | null;
+  overdueReminderSentDay14At: Date | null;
+  sortOrder: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CreateFeeMilestoneInput {
+  feeAgreementId: string;
+  name: string;
+  phase: string;
+  triggerType: string;
+  percentageBps?: number | null;
+  amount: number;
+  status?: string;
+  paidVia?: string;
+  sortOrder: number;
+}
+
+export interface UpdateFeeMilestoneInput {
+  status?: string;
+  paidVia?: string;
+  requestReason?: string | null;
+  requestedBy?: string | null;
+  requestedAt?: Date | null;
+  rejectionReason?: string | null;
+  completedBy?: string | null;
+  completedAt?: Date | null;
+  completionEvidence?: string | null;
+  stripeInvoiceId?: string | null;
+  stripeInvoiceUrl?: string | null;
+  stripePaymentIntentId?: string | null;
+  invoicedAt?: Date | null;
+  paidAt?: Date | null;
+  overdueAt?: Date | null;
+  overdueReminderSentDay1At?: Date | null;
+  overdueReminderSentDay7At?: Date | null;
+  overdueReminderSentDay14At?: Date | null;
+}
+
+export interface FeeMilestoneRepository {
+  findByAgreementId(feeAgreementId: string): Promise<FeeMilestoneEntity[]>;
+  findById(id: string): Promise<FeeMilestoneEntity | null>;
+  create(data: CreateFeeMilestoneInput): Promise<FeeMilestoneEntity>;
+  createMany(data: CreateFeeMilestoneInput[]): Promise<FeeMilestoneEntity[]>;
+  update(id: string, data: UpdateFeeMilestoneInput): Promise<FeeMilestoneEntity | null>;
+  updateStatus(id: string, status: string): Promise<FeeMilestoneEntity | null>;
+}
+
+// ============================================================
 // PLAN REPOSITORY
 // ============================================================
 

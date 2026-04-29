@@ -206,6 +206,37 @@ export const createFeeAgreementSchema = z
 // are defined in ./repositories/types.ts (following existing pattern)
 
 // ============================================================================
+// FEE MILESTONE ENUMS & SCHEMAS (SI Billing)
+// ============================================================================
+
+export const MILESTONE_PHASES = ['assessment', 'migration'] as const;
+export type MilestonePhase = (typeof MILESTONE_PHASES)[number];
+export const milestonePhaseSchema = z.enum(MILESTONE_PHASES);
+
+export const MILESTONE_TRIGGER_TYPES = ['automatic', 'admin_approved'] as const;
+export type MilestoneTriggerType = (typeof MILESTONE_TRIGGER_TYPES)[number];
+export const milestoneTriggerTypeSchema = z.enum(MILESTONE_TRIGGER_TYPES);
+
+export const MILESTONE_STATUSES = [
+  'pending',
+  'requested',
+  'completed',
+  'invoiced',
+  'paid',
+  'overdue',
+  'voided',
+] as const;
+export type MilestoneStatus = (typeof MILESTONE_STATUSES)[number];
+export const milestoneStatusSchema = z.enum(MILESTONE_STATUSES);
+
+export const PAID_VIA_OPTIONS = ['stripe_invoice', 'carried_credit'] as const;
+export type PaidVia = (typeof PAID_VIA_OPTIONS)[number];
+export const paidViaSchema = z.enum(PAID_VIA_OPTIONS);
+
+// FeeMilestoneEntity, FeeAgreementTierEntity, and repository interfaces
+// are defined in ./repositories/types.ts (following existing pattern)
+
+// ============================================================================
 // AUTH SCHEMAS & ROLE DEFINITIONS
 // ============================================================================
 

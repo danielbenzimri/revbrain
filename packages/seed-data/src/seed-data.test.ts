@@ -22,6 +22,13 @@ import {
   PAYMENT_TERMS,
   assessmentCloseReasonSchema,
   createFeeAgreementSchema,
+  milestonePhaseSchema,
+  MILESTONE_PHASES,
+  milestoneStatusSchema,
+  MILESTONE_STATUSES,
+  milestoneTriggerTypeSchema,
+  paidViaSchema,
+  PAID_VIA_OPTIONS,
 } from '@revbrain/contract';
 
 describe('Seed Data Package', () => {
@@ -342,6 +349,43 @@ describe('Seed Data Package', () => {
         assessmentFee: -100,
       });
       expect(result2.success).toBe(false);
+    });
+  });
+
+  describe('FeeMilestone & Tier validation (P1.4)', () => {
+    it('milestonePhaseSchema accepts assessment and migration', () => {
+      expect(MILESTONE_PHASES).toHaveLength(2);
+      for (const p of MILESTONE_PHASES) {
+        expect(milestonePhaseSchema.safeParse(p).success).toBe(true);
+      }
+      expect(milestonePhaseSchema.safeParse('unknown').success).toBe(false);
+    });
+
+    it('milestoneStatusSchema has exactly 7 values', () => {
+      expect(MILESTONE_STATUSES).toHaveLength(7);
+      expect(MILESTONE_STATUSES).toContain('pending');
+      expect(MILESTONE_STATUSES).toContain('requested');
+      expect(MILESTONE_STATUSES).toContain('completed');
+      expect(MILESTONE_STATUSES).toContain('invoiced');
+      expect(MILESTONE_STATUSES).toContain('paid');
+      expect(MILESTONE_STATUSES).toContain('overdue');
+      expect(MILESTONE_STATUSES).toContain('voided');
+      for (const s of MILESTONE_STATUSES) {
+        expect(milestoneStatusSchema.safeParse(s).success).toBe(true);
+      }
+    });
+
+    it('milestoneTriggerTypeSchema accepts valid values', () => {
+      expect(milestoneTriggerTypeSchema.safeParse('automatic').success).toBe(true);
+      expect(milestoneTriggerTypeSchema.safeParse('admin_approved').success).toBe(true);
+      expect(milestoneTriggerTypeSchema.safeParse('self_service').success).toBe(false);
+    });
+
+    it('paidViaSchema accepts stripe_invoice and carried_credit', () => {
+      expect(PAID_VIA_OPTIONS).toHaveLength(2);
+      expect(paidViaSchema.safeParse('stripe_invoice').success).toBe(true);
+      expect(paidViaSchema.safeParse('carried_credit').success).toBe(true);
+      expect(paidViaSchema.safeParse('manual').success).toBe(false);
     });
   });
 });

@@ -239,6 +239,102 @@ export type FeeAgreement = typeof feeAgreements.$inferSelect;
 export type NewFeeAgreement = typeof feeAgreements.$inferInsert;
 
 // ============================================================================
+// FEE AGREEMENT TIERS TABLE (SI Billing)
+// ============================================================================
+/**
+ * Rate brackets for fee agreements. Normalized table (not JSONB).
+ * Each agreement has 2-4 tiers defining the tiered percentage rate.
+ */
+export const feeAgreementTiers = pgTable('fee_agreement_tiers', {
+  id: uuid('id').primaryKey().defaultRandom(),
+
+  feeAgreementId: uuid('fee_agreement_id')
+    .notNull()
+    .references(() => feeAgreements.id, { onDelete: 'cascade' }),
+
+  // Bracket ceiling in cents (null = unlimited, i.e. final bracket)
+  bracketCeiling: bigint('bracket_ceiling', { mode: 'number' }),
+
+  // Rate in basis points (e.g. 800 = 8.00%)
+  rateBps: integer('rate_bps').notNull(),
+
+  // Gap numbering for ordering (100, 200, 300...)
+  sortOrder: integer('sort_order').notNull().default(100),
+
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+export type FeeAgreementTier = typeof feeAgreementTiers.$inferSelect;
+export type NewFeeAgreementTier = typeof feeAgreementTiers.$inferInsert;
+
+// ============================================================================
+// FEE MILESTONES TABLE (SI Billing)
+// ============================================================================
+/**
+ * Billing milestones for fee agreements.
+ * Phase 1 (assessment): M1 only. Phase 2 (migration): M2-M4.
+ */
+export const feeMilestones = pgTable('fee_milestones', {
+  id: uuid('id').primaryKey().defaultRandom(),
+
+  feeAgreementId: uuid('fee_agreement_id')
+    .notNull()
+    .references(() => feeAgreements.id),
+
+  name: varchar('name', { length: 100 }).notNull(),
+  phase: varchar('phase', { length: 20 }).notNull(), // assessment | migration
+  triggerType: varchar('trigger_type', { length: 20 }).notNull(), // automatic | admin_approved
+
+  // Amount
+  percentageBps: integer('percentage_bps'), // nullable for assessment (flat fee)
+  amount: bigint('amount', { mode: 'number' }).notNull(), // cents
+
+  // Status lifecycle
+  status: varchar('status', { length: 20 }).notNull().default('pending'),
+
+  // Payment source
+  paidVia: varchar('paid_via', { length: 20 }).notNull().default('stripe_invoice'), // stripe_invoice | carried_credit
+
+  // SI completion request
+  requestReason: text('request_reason'),
+  requestedBy: uuid('requested_by').references((): any => users.id),
+  requestedAt: timestamp('requested_at', { withTimezone: true }),
+
+  // Admin rejection
+  rejectionReason: text('rejection_reason'),
+
+  // Completion
+  completedBy: uuid('completed_by').references((): any => users.id),
+  completedAt: timestamp('completed_at', { withTimezone: true }),
+  completionEvidence: text('completion_evidence'),
+
+  // Stripe references
+  stripeInvoiceId: text('stripe_invoice_id'),
+  stripeInvoiceUrl: text('stripe_invoice_url'),
+  stripePaymentIntentId: text('stripe_payment_intent_id'),
+
+  // Timestamps
+  invoicedAt: timestamp('invoiced_at', { withTimezone: true }),
+  paidAt: timestamp('paid_at', { withTimezone: true }),
+  overdueAt: timestamp('overdue_at', { withTimezone: true }),
+
+  // Overdue reminder deduplication timestamps
+  overdueReminderSentDay1At: timestamp('overdue_reminder_sent_day1_at', { withTimezone: true }),
+  overdueReminderSentDay7At: timestamp('overdue_reminder_sent_day7_at', { withTimezone: true }),
+  overdueReminderSentDay14At: timestamp('overdue_reminder_sent_day14_at', { withTimezone: true }),
+
+  // Ordering
+  sortOrder: integer('sort_order').notNull().default(100),
+
+  // Audit
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+export type FeeMilestone = typeof feeMilestones.$inferSelect;
+export type NewFeeMilestone = typeof feeMilestones.$inferInsert;
+
+// ============================================================================
 // USERS TABLE
 // ============================================================================
 /**
