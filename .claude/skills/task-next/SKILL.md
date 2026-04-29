@@ -12,17 +12,16 @@ You are starting a new implementation task. This skill works for ANY pipeline mo
 Determine the active module from (in priority order):
 
 1. **User argument** — if the user passed a module name or task ID (e.g. `/task-next segmenter` or `/task-next SEG-1.3`), use that.
-2. **Branch name** — if the branch contains `segmenter` → Segmenter. If `bb3` → BB-3 Normalizer.
+2. **Branch name** — if the branch contains `segmenter` → Segmenter. If `bb3` → BB-3 Normalizer. If `billing` or `si-billing` → SI Billing.
 3. **Ask** — if ambiguous, ask which module.
 
 **Module registry:**
 
-| Module              | Task doc                              | Design spec                            | Package paths                                                                          | Non-negotiables source                   |
-| ------------------- | ------------------------------------- | -------------------------------------- | -------------------------------------------------------------------------------------- | ---------------------------------------- |
-| **Segmenter**       | `docs/MIGRATION-SEGMENTER-TASKS.md`   | `docs/MIGRATION-SEGMENTER-DESIGN.md`   | `packages/migration-segmenter/`, `packages/migration-ir-contract/src/types/segment.ts` | Task doc "Non-negotiables" section       |
-| **BB-3 Normalizer** | `docs/MIGRATION-PLANNER-BB3-TASKS.md` | `docs/MIGRATION-PLANNER-BB3-DESIGN.md` | `packages/bb3-normalizer/`, `packages/migration-ir-contract/`                          | CLAUDE.md "BB-3 non-negotiables" section |
-
-Future modules: add a row to this table.
+| Module              | Task doc                              | Design spec                            | Package paths                                                                                                                                                                                        | Non-negotiables source                                              |
+| ------------------- | ------------------------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| **Segmenter**       | `docs/MIGRATION-SEGMENTER-TASKS.md`   | `docs/MIGRATION-SEGMENTER-DESIGN.md`   | `packages/migration-segmenter/`, `packages/migration-ir-contract/src/types/segment.ts`                                                                                                               | Task doc "Non-negotiables" section                                  |
+| **BB-3 Normalizer** | `docs/MIGRATION-PLANNER-BB3-TASKS.md` | `docs/MIGRATION-PLANNER-BB3-DESIGN.md` | `packages/bb3-normalizer/`, `packages/migration-ir-contract/`                                                                                                                                        | CLAUDE.md "BB-3 non-negotiables" section                            |
+| **SI Billing**      | `docs/SI-BILLING-TASKS.md`            | `docs/SI-BILLING-SPEC.md`              | `packages/database/`, `packages/contract/`, `packages/seed-data/`, `apps/server/src/services/`, `apps/server/src/v1/routes/`, `apps/client/src/features/billing/`, `apps/client/src/features/admin/` | Task doc "Non-negotiables" + "Key design decisions" in Ground Rules |
 
 ## Step 1 — Pick the task
 
@@ -94,6 +93,17 @@ After confirmation:
 - **NodeRef, not string[]** for node references.
 - **No wall-clock timeouts** on parsers.
 - **Contract package stays thin.**
+
+### SI Billing invariants (from SI-BILLING-TASKS.md Ground Rules)
+
+- **State machine is pure (no I/O):** agreement + milestone state machines validate and return updates. Route handlers do persistence, Stripe, and email.
+- **Acceptance + Stripe is atomic:** if Stripe invoice creation fails during acceptance, the entire operation rolls back. No "accepted but no invoice" state.
+- **≤$500K compute-only:** `proceed-migration` for ≤$500K returns computed terms without persisting. Value, SOW, and milestones persist only on `accept-migration`.
+- **Assessment fee IS the floor:** no separate `floor_amount`. All monetary math in integer cents + integer bps. No floating point.
+- **`paid_via` guards:** milestones with `paid_via = carried_credit` MUST NOT create Stripe invoices. Reconciliation excludes them from cash sums.
+- **Immutable accepted terms:** once accepted, an agreement's `assessment_terms_snapshot` and `migration_terms_snapshot` are never modified. Amendments create a new version.
+- **Overdue reminder dedupe:** per-milestone timestamps prevent duplicate sends.
+- **i18n:** every UI string in both `en/*.json` and `he/*.json`. Use `start-*`/`end-*` CSS, never `left-*`/`right-*`.
 
 ## Step 6 — Task is done when...
 

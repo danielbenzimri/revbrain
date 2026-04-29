@@ -47,6 +47,17 @@ Invoke `/bb3-doctor` and attach its output to the review. Then check the active 
 - Any new edge types unclassified into strong/ordering/hazard?
 - Is hashing still length-prefixed + streaming? Any `JSON.stringify` in the ID path?
 
+**If SI Billing:**
+
+- Any floating-point math (`parseFloat`, `toFixed`, division producing decimals) in fee calculation or milestone amount code? All math must be integer cents + integer bps.
+- Any `JSON.stringify` in terms snapshot hash paths? Must use `canonicalJson()`.
+- Any Stripe invoice creation without checking `paid_via !== 'carried_credit'`?
+- Is the state machine pure? Any DB reads/writes, Stripe calls, or email sends inside `agreement-state-machine.ts` or `milestone-state-machine.ts`? Those belong in route handlers.
+- Is acceptance + Stripe atomic? Any code path where agreement status changes but Stripe invoice creation is in a separate try/catch that doesn't rollback?
+- Any `declared_project_value` being set while status is `active_assessment`? Violates invariant.
+- Are all UI strings in both `en/*.json` and `he/*.json`? Any `left-*`/`right-*` CSS instead of `start-*`/`end-*`?
+- Are overdue reminder timestamps checked before sending (dedupe)?
+
 ### C. Architectural coherence
 
 - Are new modules consistent with existing ones (same file layout, same return shape, same error handling)?

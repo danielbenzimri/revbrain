@@ -97,10 +97,11 @@ The migration planner pipeline (Connect → Extract → Normalize → Segment �
 
 ### Module registry
 
-| Module               | Design spec                                                             | Task doc                                                              | Package                         | Branch prefix    |
-| -------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------- | ------------------------------- | ---------------- |
-| **Normalize (BB-3)** | [MIGRATION-PLANNER-BB3-DESIGN.md](docs/MIGRATION-PLANNER-BB3-DESIGN.md) | [MIGRATION-PLANNER-BB3-TASKS.md](docs/MIGRATION-PLANNER-BB3-TASKS.md) | `packages/bb3-normalizer/`      | `feat/bb3-*`     |
-| **Segment**          | [MIGRATION-SEGMENTER-DESIGN.md](docs/MIGRATION-SEGMENTER-DESIGN.md)     | [MIGRATION-SEGMENTER-TASKS.md](docs/MIGRATION-SEGMENTER-TASKS.md)     | `packages/migration-segmenter/` | `feat/segmenter` |
+| Module               | Design spec                                                             | Task doc                                                              | Package                                                                    | Branch prefix     |
+| -------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------- | -------------------------------------------------------------------------- | ----------------- |
+| **Normalize (BB-3)** | [MIGRATION-PLANNER-BB3-DESIGN.md](docs/MIGRATION-PLANNER-BB3-DESIGN.md) | [MIGRATION-PLANNER-BB3-TASKS.md](docs/MIGRATION-PLANNER-BB3-TASKS.md) | `packages/bb3-normalizer/`                                                 | `feat/bb3-*`      |
+| **Segment**          | [MIGRATION-SEGMENTER-DESIGN.md](docs/MIGRATION-SEGMENTER-DESIGN.md)     | [MIGRATION-SEGMENTER-TASKS.md](docs/MIGRATION-SEGMENTER-TASKS.md)     | `packages/migration-segmenter/`                                            | `feat/segmenter`  |
+| **SI Billing**       | [SI-BILLING-SPEC.md](docs/SI-BILLING-SPEC.md)                           | [SI-BILLING-TASKS.md](docs/SI-BILLING-TASKS.md)                       | `packages/database/`, `packages/contract/`, `apps/server/`, `apps/client/` | `feat/si-billing` |
 
 ### BB-3 non-negotiables (enforced by `/bb3-doctor` C1–C8)
 
@@ -120,9 +121,20 @@ The migration planner pipeline (Connect → Extract → Normalize → Segment �
 - **Content-addressable IDs:** length-prefixed streaming hash (`base64url`). `persistentId` uses the full root node ID (never truncated). (spec §6.2)
 - **Three edge categories:** every `IREdgeType` classified as strong / ordering / hazard. Unknown = hard error. (spec §4)
 
+### SI Billing non-negotiables (enforced by `/ship-it` + `/wave-review`)
+
+- **Integer math only:** all monetary amounts in cents (bigint), all rates in basis points (integer). No `parseFloat`, `toFixed`, or floating-point division in fee calculation paths.
+- **State machine is pure:** `agreement-state-machine.ts` and `milestone-state-machine.ts` validate transitions and return state updates. No I/O (DB, Stripe, email) inside these services — route handlers do persistence.
+- **Acceptance + Stripe is atomic:** if Stripe invoice creation fails during acceptance, the entire operation rolls back. No "accepted but no invoice" state.
+- **`paid_via` guard:** milestones with `paid_via = 'carried_credit'` MUST NOT create Stripe invoices. Reconciliation excludes them from cash sums.
+- **Immutable snapshots:** `assessment_terms_snapshot` and `migration_terms_snapshot` are never modified after acceptance. `canonicalJson()` for hashing. Amendments create new agreement versions.
+- **≤$500K compute-only:** `proceed-migration` for ≤$500K returns computed terms without persisting. Persist only on `accept-migration`.
+- **Assessment fee IS the floor:** no separate `floor_amount` field.
+- **i18n:** every UI string in both `en/*.json` and `he/*.json`. Use `start-*`/`end-*` CSS, never `left-*`/`right-*`.
+
 ### Branching strategy
 
-- Feature branch: `feat/segmenter` (Segmenter) or `feat/bb3-wave<N>` (BB-3)
+- Feature branch: `feat/segmenter` (Segmenter), `feat/bb3-wave<N>` (BB-3), or `feat/si-billing` (SI Billing)
 - Commits: one per task card, tagged with `Task: <TASK-ID>` in the commit body
 - Promotion: `feat/*` → `staging` → `main` via `/sync-branches`. Both `main` and `staging` run CI/CD; both must be green before the next task is picked up after a sync
 - Never commit directly to `main` or `staging`. Never force-push to either.

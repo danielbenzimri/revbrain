@@ -17,7 +17,7 @@ You are finalizing a unit of work. Your job is to prove the change is clean, com
 
 Run these from the repo root, in order:
 
-1. **pipeline-doctor** — invoke `/bb3-doctor` if ANY file under `packages/bb3-normalizer/`, `packages/migration-ir-contract/`, or `docs/MIGRATION-PLANNER-BB3*.md` is modified (catches BB-3 determinism + RCA-leakage). ALSO run the segmenter checks (C9 edge-classification coverage) if ANY file under `packages/migration-segmenter/` or `docs/MIGRATION-SEGMENTER*.md` is modified. Both sets run in under 5 seconds total.
+1. **pipeline-doctor** — invoke `/bb3-doctor` if ANY file under `packages/bb3-normalizer/`, `packages/migration-ir-contract/`, or `docs/MIGRATION-PLANNER-BB3*.md` is modified. ALSO run segmenter checks (C9) if files under `packages/migration-segmenter/` or `docs/MIGRATION-SEGMENTER*.md` are modified. **If SI Billing files are touched** (`apps/server/src/services/fee-*`, `**/agreement-*`, `**/milestone-*`, `**/partner.*`, `**/reconciliation*`, `**/overdue*`, `**/project-billing*`, `apps/server/src/v1/routes/admin/fee-agreements*`), run quick grep checks: (a) no `parseFloat`/`toFixed` in fee calc paths — all math must be integer cents+bps, (b) no `JSON.stringify` in snapshot hash paths — must use `canonicalJson`, (c) every `createMilestoneInvoice` call is guarded by `paid_via !== 'carried_credit'` check. All checks run in under 5 seconds total.
 2. **format** — `pnpm format`. If this makes changes, re-stage them; they'll be part of the commit.
 3. **lint** — `pnpm lint`. Must pass clean.
 4. **test** — `pnpm test`. Must pass clean.
