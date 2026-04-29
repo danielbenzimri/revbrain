@@ -505,5 +505,8 @@
     "markAllRead": "Mark all as read",
     "markRead": "Mark as read",
     "unread": "unread"
+  },
+  "billing": {
+    "dormantBanner": "Subscription plans are for future end-client billing. SI partners are billed per-project via fee agreements."
   }
 }

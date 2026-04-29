@@ -9,10 +9,8 @@ import {
   HelpCircle,
   Building2,
   Users,
-  CreditCard,
   LifeBuoy,
   ScrollText,
-  Tag,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
@@ -58,8 +56,9 @@ export function Sidebar({ className }: SidebarProps) {
     { nameKey: 'nav.admin.dashboard', href: '/admin', icon: LayoutDashboard }, // Distinct admin dashboard
     { nameKey: 'nav.admin.tenants', href: '/admin/tenants', icon: Building2 }, // Manage Tenants
     { nameKey: 'nav.admin.users', href: '/admin/users', icon: Users }, // Global User Management
-    { nameKey: 'nav.admin.pricing', href: '/admin/pricing', icon: CreditCard }, // Pricing Plans
-    { nameKey: 'nav.admin.coupons', href: '/admin/coupons', icon: Tag }, // Coupons & Promotions
+    // Pricing and Coupons hidden — dormant for SI billing model (see SI-BILLING-SPEC.md §12.1.4)
+    // { nameKey: 'nav.admin.pricing', href: '/admin/pricing', icon: CreditCard },
+    // { nameKey: 'nav.admin.coupons', href: '/admin/coupons', icon: Tag },
     { nameKey: 'nav.admin.support', href: '/admin/support', icon: LifeBuoy }, // Support
     { nameKey: 'nav.admin.audit', href: '/admin/audit', icon: ScrollText }, // Audit Log
     { nameKey: 'nav.settings', href: '/settings', icon: Settings },

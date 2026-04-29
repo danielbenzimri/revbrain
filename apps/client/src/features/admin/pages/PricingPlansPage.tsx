@@ -6,6 +6,18 @@ import { PlanEditorDrawer } from '../components/PlanEditorDrawer';
 import type { Plan } from '@revbrain/contract';
 import { usePlans, useCreatePlan, useUpdatePlan, useDeletePlan } from '../hooks';
 
+function DormantBanner() {
+  const { t } = useTranslation();
+  return (
+    <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
+      {t(
+        'admin.billing.dormantBanner',
+        'Subscription plans are for future end-client billing. SI partners are billed per-project via fee agreements.'
+      )}
+    </div>
+  );
+}
+
 export default function PricingPlansPage() {
   const { t } = useTranslation();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -94,6 +106,7 @@ export default function PricingPlansPage() {
 
   return (
     <div className="p-6 space-y-8">
+      <DormantBanner />
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">{t('admin.pricing.title')}</h1>
