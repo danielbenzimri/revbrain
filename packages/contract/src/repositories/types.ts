@@ -201,6 +201,55 @@ export interface OrganizationWithPlan extends OrganizationEntity {
 }
 
 // ============================================================
+// PARTNER PROFILE (SI Billing)
+// ============================================================
+
+export interface PartnerProfileEntity {
+  id: string;
+  organizationId: string;
+  tier: string;
+  cumulativeFeesPaid: number;
+  completedProjectCount: number;
+  tierOverride: string | null;
+  tierOverrideReason: string | null;
+  tierOverrideSetBy: string | null;
+  tierOverrideSetAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CreatePartnerProfileInput {
+  organizationId: string;
+  tier?: string;
+  cumulativeFeesPaid?: number;
+  completedProjectCount?: number;
+}
+
+export interface UpdatePartnerProfileInput {
+  tier?: string;
+  cumulativeFeesPaid?: number;
+  completedProjectCount?: number;
+  tierOverride?: string | null;
+  tierOverrideReason?: string | null;
+  tierOverrideSetBy?: string | null;
+  tierOverrideSetAt?: Date | null;
+}
+
+export interface PartnerProfileRepository {
+  findById(id: string): Promise<PartnerProfileEntity | null>;
+  findByOrgId(organizationId: string): Promise<PartnerProfileEntity | null>;
+  findMany(options?: FindManyOptions): Promise<PartnerProfileEntity[]>;
+  create(data: CreatePartnerProfileInput): Promise<PartnerProfileEntity>;
+  update(id: string, data: UpdatePartnerProfileInput): Promise<PartnerProfileEntity | null>;
+  updateCumulativeFees(
+    id: string,
+    cumulativeFeesPaid: number,
+    completedProjectCount: number
+  ): Promise<PartnerProfileEntity | null>;
+  count(filter?: Record<string, unknown>): Promise<number>;
+}
+
+// ============================================================
 // PLAN REPOSITORY
 // ============================================================
 

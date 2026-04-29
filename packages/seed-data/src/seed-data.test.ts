@@ -11,7 +11,7 @@ import {
   SEED_COUPONS,
   SEED_TENANT_OVERRIDES,
 } from './index.ts';
-import { orgTypeSchema, ORG_TYPES } from '@revbrain/contract';
+import { orgTypeSchema, ORG_TYPES, partnerTierSchema, PARTNER_TIERS } from '@revbrain/contract';
 
 describe('Seed Data Package', () => {
   describe('MOCK_IDS', () => {
@@ -239,6 +239,29 @@ describe('Seed Data Package', () => {
       for (const org of SEED_ORGANIZATIONS) {
         expect(org).toHaveProperty('billingContactEmail');
       }
+    });
+  });
+
+  describe('PartnerTier validation (P1.2)', () => {
+    it('partnerTierSchema accepts valid tiers', () => {
+      for (const t of PARTNER_TIERS) {
+        expect(partnerTierSchema.safeParse(t).success).toBe(true);
+      }
+    });
+
+    it('partnerTierSchema rejects invalid tiers', () => {
+      expect(partnerTierSchema.safeParse('bronze').success).toBe(false);
+      expect(partnerTierSchema.safeParse('').success).toBe(false);
+      expect(partnerTierSchema.safeParse(123).success).toBe(false);
+      expect(partnerTierSchema.safeParse(null).success).toBe(false);
+    });
+
+    it('PARTNER_TIERS has exactly 4 values', () => {
+      expect(PARTNER_TIERS).toHaveLength(4);
+      expect(PARTNER_TIERS).toContain('standard');
+      expect(PARTNER_TIERS).toContain('silver');
+      expect(PARTNER_TIERS).toContain('gold');
+      expect(PARTNER_TIERS).toContain('platinum');
     });
   });
 });

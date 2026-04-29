@@ -78,6 +78,49 @@ export type OrgType = (typeof ORG_TYPES)[number];
 export const orgTypeSchema = z.enum(ORG_TYPES);
 
 // ============================================================================
+// PARTNER TIERS (SI Billing)
+// ============================================================================
+
+export const PARTNER_TIERS = ['standard', 'silver', 'gold', 'platinum'] as const;
+export type PartnerTier = (typeof PARTNER_TIERS)[number];
+
+export const partnerTierSchema = z.enum(PARTNER_TIERS);
+
+export const partnerProfileSchema = z.object({
+  id: z.string().uuid(),
+  organizationId: z.string().uuid(),
+  tier: partnerTierSchema,
+  cumulativeFeesPaid: z.number().int().nonnegative(),
+  completedProjectCount: z.number().int().nonnegative(),
+  tierOverride: partnerTierSchema.nullable().optional(),
+  tierOverrideReason: z.string().nullable().optional(),
+  tierOverrideSetBy: z.string().uuid().nullable().optional(),
+  tierOverrideSetAt: z.date().nullable().optional(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+});
+
+export const createPartnerProfileSchema = z.object({
+  organizationId: z.string().uuid(),
+  tier: partnerTierSchema.optional().default('standard'),
+  cumulativeFeesPaid: z.number().int().nonnegative().optional().default(0),
+  completedProjectCount: z.number().int().nonnegative().optional().default(0),
+});
+
+export const updatePartnerProfileSchema = z.object({
+  tier: partnerTierSchema.optional(),
+  cumulativeFeesPaid: z.number().int().nonnegative().optional(),
+  completedProjectCount: z.number().int().nonnegative().optional(),
+  tierOverride: partnerTierSchema.nullable().optional(),
+  tierOverrideReason: z.string().nullable().optional(),
+  tierOverrideSetBy: z.string().uuid().nullable().optional(),
+  tierOverrideSetAt: z.date().nullable().optional(),
+});
+
+// PartnerProfileEntity, CreatePartnerProfileInput, UpdatePartnerProfileInput
+// are defined in ./repositories/types.ts (following existing pattern)
+
+// ============================================================================
 // AUTH SCHEMAS & ROLE DEFINITIONS
 // ============================================================================
 

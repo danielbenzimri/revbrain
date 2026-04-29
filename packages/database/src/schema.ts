@@ -123,6 +123,43 @@ export type Organization = typeof organizations.$inferSelect;
 export type NewOrganization = typeof organizations.$inferInsert;
 
 // ============================================================================
+// PARTNER PROFILES TABLE (SI Billing)
+// ============================================================================
+/**
+ * Partner profiles for SI billing. 1:1 with organizations (for si_partner orgs).
+ * Tracks tier, cumulative fees paid, and admin override state.
+ */
+export const partnerProfiles = pgTable('partner_profiles', {
+  id: uuid('id').primaryKey().defaultRandom(),
+
+  // 1:1 with organization
+  organizationId: uuid('organization_id')
+    .notNull()
+    .unique()
+    .references(() => organizations.id),
+
+  // Computed tier (from cumulative fees paid)
+  tier: varchar('tier', { length: 20 }).notNull().default('standard'), // standard | silver | gold | platinum
+
+  // Denormalized counters (reconciled nightly)
+  cumulativeFeesPaid: bigint('cumulative_fees_paid', { mode: 'number' }).notNull().default(0), // cents
+  completedProjectCount: integer('completed_project_count').notNull().default(0),
+
+  // Admin tier override (implementation addition — persists through recalculation)
+  tierOverride: varchar('tier_override', { length: 20 }), // nullable — same enum as tier
+  tierOverrideReason: text('tier_override_reason'),
+  tierOverrideSetBy: uuid('tier_override_set_by').references(() => users.id),
+  tierOverrideSetAt: timestamp('tier_override_set_at', { withTimezone: true }),
+
+  // Audit
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+export type PartnerProfile = typeof partnerProfiles.$inferSelect;
+export type NewPartnerProfile = typeof partnerProfiles.$inferInsert;
+
+// ============================================================================
 // USERS TABLE
 // ============================================================================
 /**
