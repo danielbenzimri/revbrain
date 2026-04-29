@@ -34,3 +34,9 @@ export {
   SEED_SALESFORCE_CONNECTIONS,
   SEED_SALESFORCE_CONNECTION_SECRETS,
 } from './salesforce-connections.ts';
+
+// SI Billing seed data
+export { SEED_PARTNER_PROFILES } from './partner-profiles.ts';
+export { SEED_FEE_AGREEMENTS } from './fee-agreements.ts';
+export { SEED_FEE_AGREEMENT_TIERS } from './fee-agreement-tiers.ts';
+export { SEED_FEE_MILESTONES } from './fee-milestones.ts';

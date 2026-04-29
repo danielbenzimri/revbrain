@@ -10,6 +10,10 @@ import {
   SEED_TICKET_MESSAGES,
   SEED_COUPONS,
   SEED_TENANT_OVERRIDES,
+  SEED_PARTNER_PROFILES,
+  SEED_FEE_AGREEMENTS,
+  SEED_FEE_AGREEMENT_TIERS,
+  SEED_FEE_MILESTONES,
 } from './index.ts';
 import {
   orgTypeSchema,
@@ -386,6 +390,81 @@ describe('Seed Data Package', () => {
       expect(paidViaSchema.safeParse('stripe_invoice').success).toBe(true);
       expect(paidViaSchema.safeParse('carried_credit').success).toBe(true);
       expect(paidViaSchema.safeParse('manual').success).toBe(false);
+    });
+  });
+
+  describe('SI Billing seed data (P1.5)', () => {
+    it('has 2 partner profiles', () => {
+      expect(SEED_PARTNER_PROFILES).toHaveLength(2);
+    });
+
+    it('has 4 fee agreements (draft, active_assessment, active_migration, assessment_complete)', () => {
+      expect(SEED_FEE_AGREEMENTS).toHaveLength(4);
+      const statuses = SEED_FEE_AGREEMENTS.map((a) => a.status);
+      expect(statuses).toContain('draft');
+      expect(statuses).toContain('active_assessment');
+      expect(statuses).toContain('active_migration');
+      expect(statuses).toContain('assessment_complete');
+    });
+
+    it('has 12 fee agreement tiers (3 per agreement)', () => {
+      expect(SEED_FEE_AGREEMENT_TIERS).toHaveLength(12);
+    });
+
+    it('partner profiles reference existing organizations', () => {
+      const orgIds = new Set(SEED_ORGANIZATIONS.map((o) => o.id));
+      for (const pp of SEED_PARTNER_PROFILES) {
+        expect(
+          orgIds.has(pp.organizationId),
+          `partner profile references org ${pp.organizationId}`
+        ).toBe(true);
+      }
+    });
+
+    it('fee agreements reference existing projects', () => {
+      const projectIds = new Set(SEED_PROJECTS.map((p) => p.id));
+      for (const fa of SEED_FEE_AGREEMENTS) {
+        expect(projectIds.has(fa.projectId), `agreement references project ${fa.projectId}`).toBe(
+          true
+        );
+      }
+    });
+
+    it('migration agreement amounts are internally consistent ($3M → $145K → $130K)', () => {
+      const migration = SEED_FEE_AGREEMENTS.find((a) => a.status === 'active_migration');
+      expect(migration).toBeDefined();
+      if (!migration) return;
+
+      // $3M project: $500K*8% + $1.5M*5% + $1M*3% = $40K + $75K + $30K = $145K
+      expect(migration.calculatedTotalFee).toBe(14500000);
+      expect(migration.calculatedRemainingFee).toBe(14500000 - migration.assessmentFee);
+
+      // Milestones sum to remaining fee
+      const milestones = SEED_FEE_MILESTONES.filter(
+        (m) => m.feeAgreementId === migration.id && m.phase === 'migration'
+      );
+      const milestoneSum = milestones.reduce((sum, m) => sum + m.amount, 0);
+      expect(milestoneSum).toBe(migration.calculatedRemainingFee);
+    });
+
+    it('assessment_complete agreement has M1 paid and no migration milestones', () => {
+      const complete = SEED_FEE_AGREEMENTS.find((a) => a.status === 'assessment_complete');
+      expect(complete).toBeDefined();
+      if (!complete) return;
+
+      const milestones = SEED_FEE_MILESTONES.filter((m) => m.feeAgreementId === complete.id);
+      expect(milestones).toHaveLength(1);
+      expect(milestones[0].phase).toBe('assessment');
+      expect(milestones[0].status).toBe('paid');
+    });
+
+    it('draft agreement has no milestones', () => {
+      const draft = SEED_FEE_AGREEMENTS.find((a) => a.status === 'draft');
+      expect(draft).toBeDefined();
+      if (!draft) return;
+
+      const milestones = SEED_FEE_MILESTONES.filter((m) => m.feeAgreementId === draft.id);
+      expect(milestones).toHaveLength(0);
     });
   });
 });
