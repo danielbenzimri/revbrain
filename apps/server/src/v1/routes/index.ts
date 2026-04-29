@@ -6,6 +6,7 @@ import { orgRouter } from './org.ts';
 import { plansRouter } from './plans.ts';
 import { usersRouter } from './users.ts';
 import { billingRouter } from './billing.ts';
+import { siBillingRouter } from './si-billing.ts';
 import { leadsRouter } from './leads.ts';
 import { supportRouter } from './support.ts';
 import { webhooksRouter } from './webhooks.ts';
@@ -43,8 +44,11 @@ v1Router.route('/org', orgRouter);
 // Plans routes (Public/Admin)
 v1Router.route('/plans', plansRouter);
 
-// Billing routes (subscription management)
+// Billing routes (subscription management — dormant for SI billing)
 v1Router.route('/billing', billingRouter);
+
+// SI Billing routes (assessment + migration model)
+v1Router.route('/billing', siBillingRouter);
 
 // Leads routes (public contact form)
 v1Router.route('/leads', leadsRouter);
