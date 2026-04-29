@@ -1,6 +1,6 @@
 {
-  "title": "חיוב ומנוי",
-  "subtitle": "ניהול המנוי, אמצעי תשלום וחשבוניות",
+  "title": "חיוב וחשבוניות",
+  "subtitle": "סקירת חיוב שותפים",
   "errorLoading": "נכשל בטעינת מידע החיוב",
   "currentPlan": "תוכנית נוכחית",
   "noSubscription": "אין מנוי פעיל",
@@ -118,5 +118,19 @@
     "successMessage": "קיבלנו את פנייתך. אחד ממומחי הארגונים שלנו ייצור איתך קשר תוך יום עסקים אחד.",
     "calendlyPrompt": "רוצה לדלג על ההמתנה? קבע הדגמה ישירות!",
     "scheduleDemo": "קבע הדגמה"
-  }
+  },
+  "feesPaid": "עמלות ששולמו",
+  "projectsCompleted": "פרויקטים שהושלמו",
+  "active": "פעילים",
+  "emptyPartner": "שותף סטנדרטי. אין פרויקטים עדיין.",
+  "activeProjects": "פרויקטים פעילים",
+  "assessmentInProgress": "הערכה בתהליך — עמלת מיגרציה תיקבע",
+  "paid": "שולם",
+  "recentInvoices": "חשבוניות אחרונות",
+  "milestone": "אבן דרך",
+  "amount": "סכום",
+  "billingSummary": "סיכום חיוב",
+  "totalInvoiced": "חויב",
+  "totalPaid": "שולם",
+  "outstanding": "יתרה"
 }

@@ -1,6 +1,6 @@
 {
-  "title": "Billing & Subscription",
-  "subtitle": "Manage your subscription, payment methods, and invoices",
+  "title": "Billing & Invoices",
+  "subtitle": "Your partner billing overview",
   "errorLoading": "Failed to load billing information",
   "currentPlan": "Current Plan",
   "noSubscription": "No active subscription",
@@ -118,5 +118,19 @@
     "successMessage": "We've received your inquiry. One of our enterprise specialists will be in touch within 1 business day.",
     "calendlyPrompt": "Want to skip the wait? Schedule a demo directly!",
     "scheduleDemo": "Schedule a Demo"
-  }
+  },
+  "feesPaid": "Fees paid to date",
+  "projectsCompleted": "Projects completed",
+  "active": "Active",
+  "emptyPartner": "Standard Partner. No projects yet. Billing appears here once a fee agreement is created.",
+  "activeProjects": "Active Projects",
+  "assessmentInProgress": "Assessment in progress — migration fee TBD",
+  "paid": "Paid",
+  "recentInvoices": "Recent Invoices",
+  "milestone": "Milestone",
+  "amount": "Amount",
+  "billingSummary": "Billing Summary",
+  "totalInvoiced": "Invoiced",
+  "totalPaid": "Paid",
+  "outstanding": "Outstanding"
 }
