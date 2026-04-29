@@ -948,6 +948,11 @@ export interface Repositories {
   salesforceConnectionLogs: SalesforceConnectionLogRepository;
   assessmentRuns: AssessmentRepository;
   assessmentIRGraphs: AssessmentIRRepository;
+  // SI Billing
+  partnerProfiles: PartnerProfileRepository;
+  feeAgreements: FeeAgreementRepository;
+  feeAgreementTiers: FeeAgreementTierRepository;
+  feeMilestones: FeeMilestoneRepository;
 }
 
 // ============================================================

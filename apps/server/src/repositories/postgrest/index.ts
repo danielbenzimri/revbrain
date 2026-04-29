@@ -21,6 +21,11 @@ import { PostgRESTSalesforceConnectionLogRepository } from './salesforce-connect
 import { PostgRESTOauthPendingFlowRepository } from './oauth-pending-flow.repository.ts';
 import { PostgRESTAssessmentRepository } from './assessment.repository.ts';
 import { PostgRESTAssessmentIRRepository } from './assessment-ir.repository.ts';
+// SI Billing: using mock repos as temporary stubs until P2.6 implements postgrest versions
+import { MockPartnerProfileRepository } from '../mock/partner-profile.repository.ts';
+import { MockFeeAgreementRepository } from '../mock/fee-agreement.repository.ts';
+import { MockFeeAgreementTierRepository } from '../mock/fee-agreement-tier.repository.ts';
+import { MockFeeMilestoneRepository } from '../mock/fee-milestone.repository.ts';
 
 // Re-export individual repositories
 export { PostgRESTUserRepository } from './user.repository.ts';
@@ -53,5 +58,10 @@ export function createPostgRESTRepositories(supabase: SupabaseClient): Repositor
     salesforceConnectionLogs: new PostgRESTSalesforceConnectionLogRepository(supabase),
     assessmentRuns: new PostgRESTAssessmentRepository(supabase),
     assessmentIRGraphs: new PostgRESTAssessmentIRRepository(supabase),
+    // SI Billing: mock stubs until P2.6 implements postgrest versions
+    partnerProfiles: new MockPartnerProfileRepository(),
+    feeAgreements: new MockFeeAgreementRepository(),
+    feeAgreementTiers: new MockFeeAgreementTierRepository(),
+    feeMilestones: new MockFeeMilestoneRepository(),
   };
 }

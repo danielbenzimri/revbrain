@@ -19,6 +19,11 @@ import { DrizzleOauthPendingFlowRepository } from './oauth-pending-flow.reposito
 import { DrizzleSalesforceConnectionLogRepository } from './salesforce-connection-log.repository.ts';
 import { DrizzleAssessmentRepository } from './assessment.repository.ts';
 import { DrizzleAssessmentIRRepository } from './assessment-ir.repository.ts';
+// SI Billing: using mock repos as temporary stubs until P2.6 implements drizzle versions
+import { MockPartnerProfileRepository } from '../mock/partner-profile.repository.ts';
+import { MockFeeAgreementRepository } from '../mock/fee-agreement.repository.ts';
+import { MockFeeAgreementTierRepository } from '../mock/fee-agreement-tier.repository.ts';
+import { MockFeeMilestoneRepository } from '../mock/fee-milestone.repository.ts';
 export type { DrizzleDB } from '@revbrain/database';
 
 // Re-export individual repositories
@@ -55,6 +60,11 @@ export function createDrizzleRepositories(dbOrTx?: DrizzleDB): Repositories {
     salesforceConnectionLogs: new DrizzleSalesforceConnectionLogRepository(instance),
     assessmentRuns: new DrizzleAssessmentRepository(instance),
     assessmentIRGraphs: new DrizzleAssessmentIRRepository(instance),
+    // SI Billing: mock stubs until P2.6 implements drizzle versions
+    partnerProfiles: new MockPartnerProfileRepository(),
+    feeAgreements: new MockFeeAgreementRepository(),
+    feeAgreementTiers: new MockFeeAgreementTierRepository(),
+    feeMilestones: new MockFeeMilestoneRepository(),
   };
 }
 

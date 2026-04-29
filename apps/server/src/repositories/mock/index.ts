@@ -19,6 +19,10 @@ import { MockOauthPendingFlowRepository } from './oauth-pending-flow.repository.
 import { MockSalesforceConnectionLogRepository } from './salesforce-connection-log.repository.ts';
 import { MockAssessmentRepository } from './assessment.repository.ts';
 import { MockAssessmentIRRepository } from './assessment-ir.repository.ts';
+import { MockPartnerProfileRepository } from './partner-profile.repository.ts';
+import { MockFeeAgreementRepository } from './fee-agreement.repository.ts';
+import { MockFeeAgreementTierRepository } from './fee-agreement-tier.repository.ts';
+import { MockFeeMilestoneRepository } from './fee-milestone.repository.ts';
 
 export { resetAllMockData as resetMockData } from '../../mocks/index.ts';
 export { MockTicketRepository } from './ticket.repository.ts';
@@ -43,6 +47,11 @@ export function createMockRepositories(): Repositories {
     salesforceConnectionLogs: new MockSalesforceConnectionLogRepository(),
     assessmentRuns: new MockAssessmentRepository(),
     assessmentIRGraphs: new MockAssessmentIRRepository(),
+    // SI Billing
+    partnerProfiles: new MockPartnerProfileRepository(),
+    feeAgreements: new MockFeeAgreementRepository(),
+    feeAgreementTiers: new MockFeeAgreementTierRepository(),
+    feeMilestones: new MockFeeMilestoneRepository(),
   };
 }
 

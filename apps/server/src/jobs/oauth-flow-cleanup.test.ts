@@ -23,6 +23,10 @@ function createMockRepos(cleanupResult: number): Repositories {
     salesforceConnectionLogs: {} as never,
     assessmentRuns: {} as never,
     assessmentIRGraphs: {} as never,
+    partnerProfiles: {} as never,
+    feeAgreements: {} as never,
+    feeAgreementTiers: {} as never,
+    feeMilestones: {} as never,
   };
 }
 
