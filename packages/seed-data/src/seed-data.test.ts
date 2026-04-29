@@ -11,7 +11,18 @@ import {
   SEED_COUPONS,
   SEED_TENANT_OVERRIDES,
 } from './index.ts';
-import { orgTypeSchema, ORG_TYPES, partnerTierSchema, PARTNER_TIERS } from '@revbrain/contract';
+import {
+  orgTypeSchema,
+  ORG_TYPES,
+  partnerTierSchema,
+  PARTNER_TIERS,
+  feeAgreementStatusSchema,
+  FEE_AGREEMENT_STATUSES,
+  paymentTermsSchema,
+  PAYMENT_TERMS,
+  assessmentCloseReasonSchema,
+  createFeeAgreementSchema,
+} from '@revbrain/contract';
 
 describe('Seed Data Package', () => {
   describe('MOCK_IDS', () => {
@@ -262,6 +273,75 @@ describe('Seed Data Package', () => {
       expect(PARTNER_TIERS).toContain('silver');
       expect(PARTNER_TIERS).toContain('gold');
       expect(PARTNER_TIERS).toContain('platinum');
+    });
+  });
+
+  describe('FeeAgreement validation (P1.3)', () => {
+    it('feeAgreementStatusSchema accepts all 8 valid statuses', () => {
+      expect(FEE_AGREEMENT_STATUSES).toHaveLength(8);
+      for (const s of FEE_AGREEMENT_STATUSES) {
+        expect(feeAgreementStatusSchema.safeParse(s).success).toBe(true);
+      }
+    });
+
+    it('feeAgreementStatusSchema rejects invalid statuses', () => {
+      expect(feeAgreementStatusSchema.safeParse('active').success).toBe(false);
+      expect(feeAgreementStatusSchema.safeParse('pending').success).toBe(false);
+    });
+
+    it('paymentTermsSchema accepts valid values and rejects invalid', () => {
+      for (const t of PAYMENT_TERMS) {
+        expect(paymentTermsSchema.safeParse(t).success).toBe(true);
+      }
+      expect(paymentTermsSchema.safeParse('net_45').success).toBe(false);
+      expect(paymentTermsSchema.safeParse(30).success).toBe(false);
+    });
+
+    it('assessmentCloseReasonSchema accepts valid values', () => {
+      expect(assessmentCloseReasonSchema.safeParse('budget').success).toBe(true);
+      expect(assessmentCloseReasonSchema.safeParse('competitor').success).toBe(true);
+      expect(assessmentCloseReasonSchema.safeParse('invalid_reason').success).toBe(false);
+    });
+
+    it('createFeeAgreementSchema rejects cap < assessment_fee', () => {
+      const result = createFeeAgreementSchema.safeParse({
+        projectId: '00000000-0000-4000-8000-000000000001',
+        assessmentFee: 1500000, // $15K
+        capAmount: 1000000, // $10K — less than assessment fee
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it('createFeeAgreementSchema accepts cap >= assessment_fee', () => {
+      const result = createFeeAgreementSchema.safeParse({
+        projectId: '00000000-0000-4000-8000-000000000001',
+        assessmentFee: 1500000,
+        capAmount: 1500000, // equal
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it('createFeeAgreementSchema accepts null cap', () => {
+      const result = createFeeAgreementSchema.safeParse({
+        projectId: '00000000-0000-4000-8000-000000000001',
+        assessmentFee: 1500000,
+        capAmount: null,
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it('createFeeAgreementSchema rejects assessment_fee <= 0', () => {
+      const result = createFeeAgreementSchema.safeParse({
+        projectId: '00000000-0000-4000-8000-000000000001',
+        assessmentFee: 0,
+      });
+      expect(result.success).toBe(false);
+
+      const result2 = createFeeAgreementSchema.safeParse({
+        projectId: '00000000-0000-4000-8000-000000000001',
+        assessmentFee: -100,
+      });
+      expect(result2.success).toBe(false);
     });
   });
 });

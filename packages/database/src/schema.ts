@@ -160,6 +160,85 @@ export type PartnerProfile = typeof partnerProfiles.$inferSelect;
 export type NewPartnerProfile = typeof partnerProfiles.$inferInsert;
 
 // ============================================================================
+// FEE AGREEMENTS TABLE (SI Billing)
+// ============================================================================
+/**
+ * Fee agreements for SI billing. Two-phase model: assessment fee + migration percentage.
+ * Each project has at most one active agreement (amendments create new versions).
+ */
+export const feeAgreements = pgTable('fee_agreements', {
+  id: uuid('id').primaryKey().defaultRandom(),
+
+  // Link to project (many versions possible via amendments)
+  projectId: uuid('project_id')
+    .notNull()
+    .references(() => projects.id),
+
+  // Amendment chain
+  supersedesAgreementId: uuid('supersedes_agreement_id'), // self-ref FK added in migration SQL
+  version: integer('version').notNull().default(1),
+
+  // Lifecycle status
+  status: varchar('status', { length: 30 }).notNull().default('draft'),
+
+  // Assessment fee (flat, IS the floor)
+  assessmentFee: bigint('assessment_fee', { mode: 'number' }).notNull(),
+
+  // Migration-phase fields (nullable until migration transition)
+  declaredProjectValue: bigint('declared_project_value', { mode: 'number' }),
+  capAmount: bigint('cap_amount', { mode: 'number' }),
+  calculatedTotalFee: bigint('calculated_total_fee', { mode: 'number' }),
+  calculatedRemainingFee: bigint('calculated_remaining_fee', { mode: 'number' }),
+
+  // Amendment credit carry-forward
+  carriedCreditAmount: bigint('carried_credit_amount', { mode: 'number' }).notNull().default(0),
+  carriedCreditSourceAgreementId: uuid('carried_credit_source_agreement_id'),
+
+  // Payment terms
+  paymentTerms: varchar('payment_terms', { length: 20 }).notNull().default('net_30'),
+  currency: varchar('currency', { length: 3 }).notNull().default('usd'),
+
+  // Created by (admin)
+  createdBy: uuid('created_by').references((): any => users.id),
+
+  // Assessment acceptance
+  assessmentTermsSnapshot: jsonb('assessment_terms_snapshot'),
+  assessmentTermsSnapshotHash: text('assessment_terms_snapshot_hash'),
+  acceptedBy: uuid('accepted_by').references((): any => users.id),
+  acceptedAt: timestamp('accepted_at', { withTimezone: true }),
+  acceptedFromIp: text('accepted_from_ip'),
+
+  // SOW (uploaded at migration transition)
+  sowFileId: text('sow_file_id'),
+
+  // Migration acceptance
+  migrationTermsSnapshot: jsonb('migration_terms_snapshot'),
+  migrationTermsSnapshotHash: text('migration_terms_snapshot_hash'),
+  migrationAcceptedBy: uuid('migration_accepted_by').references((): any => users.id),
+  migrationAcceptedAt: timestamp('migration_accepted_at', { withTimezone: true }),
+  migrationAcceptedFromIp: text('migration_accepted_from_ip'),
+
+  // Assessment-only closure
+  assessmentCloseReason: varchar('assessment_close_reason', { length: 30 }),
+  assessmentCloseNotes: text('assessment_close_notes'),
+
+  // Cancellation
+  cancelledBy: uuid('cancelled_by').references((): any => users.id),
+  cancellationReason: text('cancellation_reason'),
+  cancelledAt: timestamp('cancelled_at', { withTimezone: true }),
+
+  // Completion
+  completedAt: timestamp('completed_at', { withTimezone: true }),
+
+  // Audit
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+export type FeeAgreement = typeof feeAgreements.$inferSelect;
+export type NewFeeAgreement = typeof feeAgreements.$inferInsert;
+
+// ============================================================================
 // USERS TABLE
 // ============================================================================
 /**

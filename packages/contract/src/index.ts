@@ -121,6 +121,91 @@ export const updatePartnerProfileSchema = z.object({
 // are defined in ./repositories/types.ts (following existing pattern)
 
 // ============================================================================
+// FEE AGREEMENT ENUMS & SCHEMAS (SI Billing)
+// ============================================================================
+
+export const FEE_AGREEMENT_STATUSES = [
+  'draft',
+  'active_assessment',
+  'migration_pending_review',
+  'active_migration',
+  'complete',
+  'assessment_complete',
+  'cancelled',
+  'archived',
+] as const;
+export type FeeAgreementStatus = (typeof FEE_AGREEMENT_STATUSES)[number];
+export const feeAgreementStatusSchema = z.enum(FEE_AGREEMENT_STATUSES);
+
+export const PAYMENT_TERMS = ['due_on_receipt', 'net_15', 'net_30', 'net_60'] as const;
+export type PaymentTerms = (typeof PAYMENT_TERMS)[number];
+export const paymentTermsSchema = z.enum(PAYMENT_TERMS);
+
+export const ASSESSMENT_CLOSE_REASONS = [
+  'client_did_not_proceed',
+  'budget',
+  'timeline',
+  'competitor',
+  'other',
+] as const;
+export type AssessmentCloseReason = (typeof ASSESSMENT_CLOSE_REASONS)[number];
+export const assessmentCloseReasonSchema = z.enum(ASSESSMENT_CLOSE_REASONS);
+
+export const feeAgreementSchema = z.object({
+  id: z.string().uuid(),
+  projectId: z.string().uuid(),
+  supersedesAgreementId: z.string().uuid().nullable().optional(),
+  version: z.number().int().positive(),
+  status: feeAgreementStatusSchema,
+  assessmentFee: z.number().int().positive(),
+  declaredProjectValue: z.number().int().positive().nullable().optional(),
+  capAmount: z.number().int().positive().nullable().optional(),
+  calculatedTotalFee: z.number().int().nonnegative().nullable().optional(),
+  calculatedRemainingFee: z.number().int().nonnegative().nullable().optional(),
+  carriedCreditAmount: z.number().int().nonnegative(),
+  carriedCreditSourceAgreementId: z.string().uuid().nullable().optional(),
+  paymentTerms: paymentTermsSchema,
+  currency: z.string().length(3),
+  createdBy: z.string().uuid().nullable().optional(),
+  assessmentTermsSnapshot: z.unknown().nullable().optional(),
+  assessmentTermsSnapshotHash: z.string().nullable().optional(),
+  acceptedBy: z.string().uuid().nullable().optional(),
+  acceptedAt: z.date().nullable().optional(),
+  acceptedFromIp: z.string().nullable().optional(),
+  sowFileId: z.string().nullable().optional(),
+  migrationTermsSnapshot: z.unknown().nullable().optional(),
+  migrationTermsSnapshotHash: z.string().nullable().optional(),
+  migrationAcceptedBy: z.string().uuid().nullable().optional(),
+  migrationAcceptedAt: z.date().nullable().optional(),
+  migrationAcceptedFromIp: z.string().nullable().optional(),
+  assessmentCloseReason: assessmentCloseReasonSchema.nullable().optional(),
+  assessmentCloseNotes: z.string().nullable().optional(),
+  cancelledBy: z.string().uuid().nullable().optional(),
+  cancellationReason: z.string().nullable().optional(),
+  cancelledAt: z.date().nullable().optional(),
+  completedAt: z.date().nullable().optional(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+});
+
+/** Validates cap >= assessment_fee at the schema level */
+export const createFeeAgreementSchema = z
+  .object({
+    projectId: z.string().uuid(),
+    assessmentFee: z.number().int().positive().default(1500000), // $15,000 in cents
+    paymentTerms: paymentTermsSchema.default('net_30'),
+    capAmount: z.number().int().positive().nullable().optional(),
+    createdBy: z.string().uuid().optional(),
+  })
+  .refine((data) => !data.capAmount || data.capAmount >= data.assessmentFee, {
+    message: 'Cap amount must be >= assessment fee',
+    path: ['capAmount'],
+  });
+
+// FeeAgreementEntity, CreateFeeAgreementInput, UpdateFeeAgreementInput
+// are defined in ./repositories/types.ts (following existing pattern)
+
+// ============================================================================
 // AUTH SCHEMAS & ROLE DEFINITIONS
 // ============================================================================
 

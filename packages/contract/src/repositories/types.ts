@@ -250,6 +250,96 @@ export interface PartnerProfileRepository {
 }
 
 // ============================================================
+// FEE AGREEMENT (SI Billing)
+// ============================================================
+
+export interface FeeAgreementEntity {
+  id: string;
+  projectId: string;
+  supersedesAgreementId: string | null;
+  version: number;
+  status: string;
+  assessmentFee: number;
+  declaredProjectValue: number | null;
+  capAmount: number | null;
+  calculatedTotalFee: number | null;
+  calculatedRemainingFee: number | null;
+  carriedCreditAmount: number;
+  carriedCreditSourceAgreementId: string | null;
+  paymentTerms: string;
+  currency: string;
+  createdBy: string | null;
+  assessmentTermsSnapshot: unknown | null;
+  assessmentTermsSnapshotHash: string | null;
+  acceptedBy: string | null;
+  acceptedAt: Date | null;
+  acceptedFromIp: string | null;
+  sowFileId: string | null;
+  migrationTermsSnapshot: unknown | null;
+  migrationTermsSnapshotHash: string | null;
+  migrationAcceptedBy: string | null;
+  migrationAcceptedAt: Date | null;
+  migrationAcceptedFromIp: string | null;
+  assessmentCloseReason: string | null;
+  assessmentCloseNotes: string | null;
+  cancelledBy: string | null;
+  cancellationReason: string | null;
+  cancelledAt: Date | null;
+  completedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CreateFeeAgreementInput {
+  projectId: string;
+  assessmentFee: number;
+  paymentTerms?: string;
+  capAmount?: number | null;
+  createdBy?: string;
+  supersedesAgreementId?: string | null;
+  version?: number;
+  carriedCreditAmount?: number;
+  carriedCreditSourceAgreementId?: string | null;
+}
+
+export interface UpdateFeeAgreementInput {
+  status?: string;
+  assessmentFee?: number;
+  declaredProjectValue?: number | null;
+  capAmount?: number | null;
+  calculatedTotalFee?: number | null;
+  calculatedRemainingFee?: number | null;
+  paymentTerms?: string;
+  assessmentTermsSnapshot?: unknown | null;
+  assessmentTermsSnapshotHash?: string | null;
+  acceptedBy?: string | null;
+  acceptedAt?: Date | null;
+  acceptedFromIp?: string | null;
+  sowFileId?: string | null;
+  migrationTermsSnapshot?: unknown | null;
+  migrationTermsSnapshotHash?: string | null;
+  migrationAcceptedBy?: string | null;
+  migrationAcceptedAt?: Date | null;
+  migrationAcceptedFromIp?: string | null;
+  assessmentCloseReason?: string | null;
+  assessmentCloseNotes?: string | null;
+  cancelledBy?: string | null;
+  cancellationReason?: string | null;
+  cancelledAt?: Date | null;
+  completedAt?: Date | null;
+}
+
+export interface FeeAgreementRepository {
+  findById(id: string): Promise<FeeAgreementEntity | null>;
+  findByProjectId(projectId: string): Promise<FeeAgreementEntity[]>;
+  findActiveByProjectId(projectId: string): Promise<FeeAgreementEntity | null>;
+  findByOrgId(organizationId: string): Promise<FeeAgreementEntity[]>;
+  create(data: CreateFeeAgreementInput): Promise<FeeAgreementEntity>;
+  update(id: string, data: UpdateFeeAgreementInput): Promise<FeeAgreementEntity | null>;
+  count(filter?: Record<string, unknown>): Promise<number>;
+}
+
+// ============================================================
 // PLAN REPOSITORY
 // ============================================================
 
