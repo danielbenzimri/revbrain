@@ -1,3 +1,4 @@
+// DORMANT: This template is for the future end-client subscription model. Not used by SI billing.
 /**
  * Payment Failed email template.
  * Sent when a payment attempt fails via Stripe webhook.

@@ -1,3 +1,4 @@
+// DORMANT: This template is for the future end-client subscription model. Not used by SI billing.
 /**
  * Trial Ended email template.
  * Sent when a user's trial has expired.

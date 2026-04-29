@@ -1,3 +1,4 @@
+// DORMANT: This template is for the future end-client subscription model. Not used by SI billing.
 /**
  * Subscription Changed email template.
  * Sent when a subscription is upgraded, downgraded, canceled, or reactivated.
