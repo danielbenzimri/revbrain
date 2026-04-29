@@ -47,9 +47,11 @@ export class DrizzleOrganizationRepository implements OrganizationRepository {
         name: data.name,
         slug: data.slug,
         type: 'organization', // Legacy column — org type distinction removed
+        orgType: data.orgType ?? 'si_partner',
         seatLimit: data.seatLimit ?? 5,
         seatUsed: 0,
         planId: data.planId ?? null,
+        billingContactEmail: data.billingContactEmail ?? null,
         isActive: true,
         createdBy: data.createdBy ?? null,
       })
@@ -63,8 +65,11 @@ export class DrizzleOrganizationRepository implements OrganizationRepository {
     if (data.name !== undefined) updateData.name = data.name;
     if (data.slug !== undefined) updateData.slug = data.slug;
     if (data.type !== undefined) updateData.type = data.type;
+    if (data.orgType !== undefined) updateData.orgType = data.orgType;
     if (data.seatLimit !== undefined) updateData.seatLimit = data.seatLimit;
     if (data.planId !== undefined) updateData.planId = data.planId;
+    if (data.billingContactEmail !== undefined)
+      updateData.billingContactEmail = data.billingContactEmail;
     if (data.isActive !== undefined) updateData.isActive = data.isActive;
 
     const [org] = await this.db
@@ -257,10 +262,12 @@ export class DrizzleOrganizationRepository implements OrganizationRepository {
       name: row.name,
       slug: row.slug,
       type: row.type,
+      orgType: row.orgType,
       seatLimit: row.seatLimit,
       seatUsed: row.seatUsed,
       storageUsedBytes: row.storageUsedBytes,
       planId: row.planId,
+      billingContactEmail: row.billingContactEmail,
       isActive: row.isActive,
       createdAt: row.createdAt,
       createdBy: row.createdBy,

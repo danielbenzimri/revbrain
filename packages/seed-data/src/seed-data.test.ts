@@ -11,6 +11,7 @@ import {
   SEED_COUPONS,
   SEED_TENANT_OVERRIDES,
 } from './index.ts';
+import { orgTypeSchema, ORG_TYPES } from '@revbrain/contract';
 
 describe('Seed Data Package', () => {
   describe('MOCK_IDS', () => {
@@ -207,6 +208,36 @@ describe('Seed Data Package', () => {
           messages.length,
           `ticket ${ticket.ticketNumber} has no messages`
         ).toBeGreaterThanOrEqual(1);
+      }
+    });
+  });
+
+  describe('OrgType validation (P1.1)', () => {
+    it('orgTypeSchema accepts valid org types', () => {
+      for (const t of ORG_TYPES) {
+        expect(orgTypeSchema.safeParse(t).success).toBe(true);
+      }
+    });
+
+    it('orgTypeSchema rejects invalid org types', () => {
+      expect(orgTypeSchema.safeParse('invalid').success).toBe(false);
+      expect(orgTypeSchema.safeParse('').success).toBe(false);
+      expect(orgTypeSchema.safeParse(123).success).toBe(false);
+      expect(orgTypeSchema.safeParse(null).success).toBe(false);
+    });
+
+    it('all seed organizations have valid orgType', () => {
+      for (const org of SEED_ORGANIZATIONS) {
+        expect(
+          orgTypeSchema.safeParse(org.orgType).success,
+          `org ${org.name} has invalid orgType: ${org.orgType}`
+        ).toBe(true);
+      }
+    });
+
+    it('all seed organizations have billingContactEmail field', () => {
+      for (const org of SEED_ORGANIZATIONS) {
+        expect(org).toHaveProperty('billingContactEmail');
       }
     });
   });

@@ -29,8 +29,10 @@ export class PostgRESTOrganizationRepository implements OrganizationRepository {
       name: data.name,
       slug: data.slug,
       type: data.type ?? 'business',
+      orgType: data.orgType ?? 'si_partner',
       seatLimit: data.seatLimit ?? 5,
       planId: data.planId ?? null,
+      billingContactEmail: data.billingContactEmail ?? null,
       createdBy: data.createdBy ?? null,
     });
   }

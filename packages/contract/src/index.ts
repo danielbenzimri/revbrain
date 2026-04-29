@@ -63,6 +63,21 @@ export const ErrorCodes = {
 } as const;
 
 // ============================================================================
+// ORGANIZATION TYPE
+// ============================================================================
+
+/**
+ * Organization types for SI billing model.
+ * - si_partner: System Integrator partner (billed per-project)
+ * - end_client: Future end-client (billed via subscription — not yet implemented)
+ * - internal: RevBrain staff
+ */
+export const ORG_TYPES = ['si_partner', 'end_client', 'internal'] as const;
+export type OrgType = (typeof ORG_TYPES)[number];
+
+export const orgTypeSchema = z.enum(ORG_TYPES);
+
+// ============================================================================
 // AUTH SCHEMAS & ROLE DEFINITIONS
 // ============================================================================
 

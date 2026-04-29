@@ -92,6 +92,12 @@ export const organizations = pgTable('organizations', {
   // Type determines which roles are available
   type: varchar('type', { length: 50 }).notNull(), // 'business' | 'individual'
 
+  // SI Billing: organization type (si_partner | end_client | internal)
+  orgType: varchar('org_type', { length: 20 }).notNull().default('si_partner'),
+
+  // Billing contact email (for invoice delivery)
+  billingContactEmail: text('billing_contact_email'),
+
   // Seat management
   seatLimit: integer('seat_limit').notNull().default(5),
   seatUsed: integer('seat_used').notNull().default(0),

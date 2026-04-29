@@ -161,8 +161,10 @@ export interface CreateOrganizationInput {
   name: string;
   slug: string;
   type?: string;
+  orgType?: string;
   seatLimit?: number;
   planId?: string | null;
+  billingContactEmail?: string | null;
   createdBy?: string | null;
 }
 
@@ -170,8 +172,10 @@ export interface UpdateOrganizationInput {
   name?: string;
   slug?: string;
   type?: string;
+  orgType?: string;
   seatLimit?: number;
   planId?: string | null;
+  billingContactEmail?: string | null;
   isActive?: boolean;
 }
 
@@ -180,10 +184,12 @@ export interface OrganizationEntity {
   name: string;
   slug: string;
   type: string;
+  orgType: string;
   seatLimit: number;
   seatUsed: number;
   storageUsedBytes: number;
   planId: string | null;
+  billingContactEmail: string | null;
   isActive: boolean;
   createdAt: Date;
   updatedAt?: Date;
