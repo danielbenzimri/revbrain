@@ -20,6 +20,10 @@ import {
 } from '../../services/agreement-state-machine.ts';
 import { transitionMilestone } from '../../services/milestone-state-machine.ts';
 import { calculateMigrationFee, generateDefaultBrackets } from '../../services/fee-calculator.ts';
+import {
+  createMilestoneInvoice,
+  createPortalSession,
+} from '../../services/project-billing.service.ts';
 import { buildAuditContext } from './admin/utils/audit-context.ts';
 import type { AppEnv } from '../../types/index.ts';
 
@@ -166,16 +170,37 @@ siBillingRouter.openapi(
 
     await repos.feeAgreements.update(id, update);
 
-    // Create M1 milestone (auto-invoiced)
-    await repos.feeMilestones.create({
+    // Create M1 milestone
+    const m1 = await repos.feeMilestones.create({
       feeAgreementId: id,
       name: 'Assessment fee',
       phase: 'assessment',
       triggerType: 'automatic',
       amount: agreement.assessmentFee,
-      status: 'invoiced', // Auto-invoiced on activation
+      status: 'pending',
       sortOrder: 100,
     });
+
+    // Create Stripe invoice for M1 (atomic — if this fails, the acceptance should ideally rollback)
+    const user = c.get('user') as { id: string; organizationId: string };
+    const org = await repos.organizations.findById(user.organizationId);
+    if (org) {
+      try {
+        const updatedAgreement = await repos.feeAgreements.findById(id);
+        if (updatedAgreement) {
+          await createMilestoneInvoice(repos, m1, updatedAgreement, org);
+        }
+      } catch (error) {
+        // Stripe failure — rollback acceptance
+        await repos.feeAgreements.update(id, { status: 'draft' });
+        await repos.feeMilestones.updateStatus(m1.id, 'voided');
+        throw new AppError(
+          ErrorCodes.INTERNAL_SERVER_ERROR,
+          'Invoice creation failed. Please try again.',
+          500
+        );
+      }
+    }
 
     await repos.auditLogs.create({
       userId: audit.actorId,
@@ -483,7 +508,7 @@ siBillingRouter.openapi(
 
     // Generate migration milestones if remaining > 0
     if (feeResult.remainingFee > 0) {
-      await repos.feeMilestones.createMany(
+      const createdMilestones = await repos.feeMilestones.createMany(
         feeResult.milestones.map((m, i) => ({
           feeAgreementId: id,
           name: m.name,
@@ -491,10 +516,38 @@ siBillingRouter.openapi(
           triggerType: i === 0 ? 'automatic' : 'admin_approved',
           percentageBps: m.percentageBps,
           amount: m.amount,
-          status: i === 0 ? 'invoiced' : 'pending', // M2 auto-invoiced
+          status: 'pending',
           sortOrder: (i + 2) * 100,
         }))
       );
+
+      // Create Stripe invoice for M2 (first migration milestone)
+      const user = c.get('user') as { id: string; organizationId: string };
+      const org = await repos.organizations.findById(user.organizationId);
+      if (org && createdMilestones.length > 0) {
+        const updatedAgreement = await repos.feeAgreements.findById(id);
+        if (updatedAgreement) {
+          try {
+            await createMilestoneInvoice(repos, createdMilestones[0], updatedAgreement, org);
+          } catch (error) {
+            // Stripe failure — rollback migration acceptance
+            await repos.feeAgreements.update(id, {
+              status: agreement.status,
+              declaredProjectValue: agreement.declaredProjectValue,
+              calculatedTotalFee: agreement.calculatedTotalFee,
+              calculatedRemainingFee: agreement.calculatedRemainingFee,
+            });
+            for (const ms of createdMilestones) {
+              await repos.feeMilestones.updateStatus(ms.id, 'voided');
+            }
+            throw new AppError(
+              ErrorCodes.INTERNAL_SERVER_ERROR,
+              'Invoice creation failed. Please try again.',
+              500
+            );
+          }
+        }
+      }
     }
 
     await repos.auditLogs.create({
@@ -514,6 +567,44 @@ siBillingRouter.openapi(
       success: true,
       data: { totalFee: feeResult.totalFee, remainingFee: feeResult.remainingFee },
     });
+  }
+);
+
+/**
+ * POST /v1/billing/portal — Create Stripe Customer Portal session
+ */
+siBillingRouter.openapi(
+  createRoute({
+    method: 'post',
+    path: '/portal',
+    middleware: routeMiddleware(authMiddleware),
+    request: {
+      body: {
+        content: {
+          'application/json': {
+            schema: z.object({
+              returnUrl: z.string().url().optional(),
+            }),
+          },
+        },
+      },
+    },
+    responses: { 200: { description: 'Portal session URL' } },
+  }),
+  async (c) => {
+    const repos = c.var.repos;
+    const user = c.get('user') as { id: string; organizationId: string };
+    const body = await c.req.json().catch(() => ({}));
+
+    const org = await repos.organizations.findById(user.organizationId);
+    if (!org) {
+      throw new AppError(ErrorCodes.NOT_FOUND, 'Organization not found', 404);
+    }
+
+    const returnUrl = body.returnUrl || `${c.req.url.split('/v1')[0]}/billing`;
+    const result = await createPortalSession(repos, org, returnUrl);
+
+    return c.json({ success: true, data: result });
   }
 );
 
