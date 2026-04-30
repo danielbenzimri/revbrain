@@ -23,6 +23,14 @@ import {
   AlertTriangle,
   Check,
   X,
+  Table2,
+  Puzzle,
+  Zap,
+  Shield,
+  FileText,
+  Building2,
+  ShieldCheck,
+  ArrowLeftRight,
 } from 'lucide-react';
 import type { AssessmentData } from '../../mocks/assessment-mock-data';
 
@@ -553,6 +561,379 @@ function RelatedFunctionalityCard({
 }
 
 // ---------------------------------------------------------------------------
+// Section 6.8: Transactional Object Assessment
+// ---------------------------------------------------------------------------
+
+function TransactionalObjectsCard({
+  data,
+}: {
+  data: NonNullable<AssessmentData['transactionalObjects']>;
+}) {
+  const totalCustomFields = data.reduce((sum, o) => sum + o.customFields, 0);
+  return (
+    <Card
+      icon={<Table2 size={16} />}
+      title="Transactional Object Assessment"
+      subtitle={`${data.length} objects · ${totalCustomFields} total custom fields`}
+      fullWidth
+    >
+      <div className="overflow-x-auto">
+        <table className="w-full text-xs">
+          <thead>
+            <tr className="border-b border-slate-200 text-slate-500">
+              <th className="text-start py-1.5 font-medium">Object</th>
+              <th className="py-1.5 font-medium text-center w-10">PL</th>
+              <th className="py-1.5 font-medium text-center w-14">Btn/Lnk</th>
+              <th className="py-1.5 font-medium text-center w-10">FS</th>
+              <th className="py-1.5 font-medium text-center w-10">RT</th>
+              <th className="py-1.5 font-medium text-center w-10">VR</th>
+              <th className="py-1.5 font-medium text-center w-20">Custom Fields</th>
+              <th className="text-start py-1.5 font-medium ps-4">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((row, i) => (
+              <tr key={i} className="border-b border-slate-50">
+                <td className="py-1.5">
+                  <div className="font-medium text-slate-700">{row.object}</div>
+                  <div className="text-[10px] text-slate-400 font-mono">{row.apiName}</div>
+                </td>
+                <td className="py-1.5 text-center tabular-nums text-slate-700">
+                  {row.pageLayouts}
+                </td>
+                <td className="py-1.5 text-center tabular-nums text-slate-700">
+                  {row.buttonsLinks}
+                </td>
+                <td className="py-1.5 text-center tabular-nums text-slate-700">{row.fieldSets}</td>
+                <td className="py-1.5 text-center tabular-nums text-slate-700">
+                  {row.recordTypes}
+                </td>
+                <td className="py-1.5 text-center tabular-nums text-slate-700">
+                  {row.validationRules}
+                </td>
+                <td className="py-1.5 text-center tabular-nums font-semibold text-slate-900">
+                  {row.customFields}
+                </td>
+                <td className="py-1.5 ps-4 text-[10px] text-slate-500">{row.notes}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="text-[10px] text-slate-400 italic mt-2">
+        PL = Page Layouts, Btn/Lnk = Buttons/Links/Actions, FS = Field Sets, RT = Record Types, VR =
+        Validation Rules
+      </p>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Section 6.9: Additional CPQ Functionality (SI-validated — preserve depth)
+// ---------------------------------------------------------------------------
+
+function AdditionalFunctionalityCard({
+  data,
+}: {
+  data: NonNullable<AssessmentData['additionalFunctionality']>;
+}) {
+  const detectedCount = data.filter((d) => d.detected).length;
+  return (
+    <Card
+      icon={<Puzzle size={16} />}
+      title="Additional CPQ Functionality"
+      subtitle={`${detectedCount} of ${data.length} capabilities detected`}
+      fullWidth
+    >
+      <div className="overflow-x-auto">
+        <table className="w-full text-xs">
+          <thead>
+            <tr className="border-b border-slate-200 text-slate-500">
+              <th className="text-start py-1.5 font-medium">Functionality</th>
+              <th className="py-1.5 font-medium text-center w-20">Detected</th>
+              <th className="text-start py-1.5 font-medium w-24">Evidence</th>
+              <th className="text-start py-1.5 font-medium w-32">Count / Scope</th>
+              <th className="text-start py-1.5 font-medium">Complexity Note</th>
+              <th className="py-1.5 font-medium text-center w-24">Confidence</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((row, i) => (
+              <tr key={i} className="border-b border-slate-50">
+                <td className="py-1.5 font-medium text-slate-700">{row.functionality}</td>
+                <td className="py-1.5 text-center">
+                  {row.detected ? (
+                    <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">
+                      <Check size={10} /> Yes
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-medium text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded">
+                      No
+                    </span>
+                  )}
+                </td>
+                <td className="py-1.5 text-[10px] text-slate-500">{row.evidence}</td>
+                <td className="py-1.5 text-[10px] text-slate-600 tabular-nums">{row.countScope}</td>
+                <td className="py-1.5 text-[10px] text-slate-500">{row.complexityNote}</td>
+                <td className="py-1.5 text-center">
+                  {row.confidence === 'Confirmed' && (
+                    <span className="text-[10px] font-medium text-emerald-700">
+                      &#9733;&#9733;&#9733;
+                    </span>
+                  )}
+                  {row.confidence === 'Estimated' && (
+                    <span className="text-[10px] font-medium text-amber-600">&#9733;&#9733;</span>
+                  )}
+                  {row.confidence === 'Partial' && (
+                    <span className="text-[10px] font-medium text-slate-400">&#9733;</span>
+                  )}
+                  {!row.confidence && <span className="text-[10px] text-slate-300">—</span>}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Section 6.9.2: Special Fields + 6.9.1: Twin Fields
+// ---------------------------------------------------------------------------
+
+function SpecialFieldsCard({
+  specialFields,
+  twinFieldPairs,
+}: {
+  specialFields: NonNullable<AssessmentData['specialFields']>;
+  twinFieldPairs?: AssessmentData['twinFieldPairs'];
+}) {
+  return (
+    <Card icon={<Zap size={16} />} title="Special & Twin Fields" fullWidth>
+      {/* Special Fields */}
+      <h4 className="text-xs font-semibold text-slate-700 mb-2">Special Fields Detected</h4>
+      <p className="text-[10px] text-slate-500 mb-2 italic">
+        Special Fields manipulate the OOB CPQ pricing model. Each adds complexity in CPQ and in the
+        translation to RCA.
+      </p>
+      <table className="w-full text-xs mb-4">
+        <thead>
+          <tr className="border-b border-slate-200 text-slate-500">
+            <th className="text-start py-1.5 font-medium">Field Name</th>
+            <th className="text-start py-1.5 font-medium">Object</th>
+            <th className="text-start py-1.5 font-medium">Purpose</th>
+            <th className="text-end py-1.5 font-medium w-20">Pop. Count</th>
+            <th className="py-1.5 font-medium text-center w-20">Conf.</th>
+          </tr>
+        </thead>
+        <tbody>
+          {specialFields.map((sf, i) => (
+            <tr key={i} className="border-b border-slate-50">
+              <td className="py-1.5 font-mono text-[10px] text-violet-700">{sf.fieldName}</td>
+              <td className="py-1.5 font-mono text-[10px] text-slate-500">{sf.object}</td>
+              <td className="py-1.5 text-slate-600">{sf.purpose}</td>
+              <td className="py-1.5 text-end tabular-nums text-slate-900">{sf.populatedCount}</td>
+              <td className="py-1.5 text-center text-[10px] font-medium text-emerald-700">
+                {sf.confidence === 'Confirmed' ? '\u2605\u2605\u2605' : sf.confidence}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      {/* Twin Fields */}
+      {twinFieldPairs && twinFieldPairs.length > 0 && (
+        <>
+          <h4 className="text-xs font-semibold text-slate-700 mb-2 flex items-center gap-1.5">
+            <ArrowLeftRight size={12} className="text-slate-400" />
+            Twin Field Usage (Cross-Object)
+          </h4>
+          <p className="text-[10px] text-slate-500 mb-2 italic">
+            {twinFieldPairs.reduce((sum, p) => sum + p.count, 0)} twin fields across{' '}
+            {twinFieldPairs.length} object pair(s). Cross-object data synchronization patterns
+            requiring mapping.
+          </p>
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="border-b border-slate-200 text-slate-500">
+                <th className="text-start py-1.5 font-medium">Object A</th>
+                <th className="text-start py-1.5 font-medium">Object B</th>
+                <th className="text-end py-1.5 font-medium w-16">Count</th>
+                <th className="text-start py-1.5 font-medium ps-4">Examples</th>
+              </tr>
+            </thead>
+            <tbody>
+              {twinFieldPairs.map((pair, i) => (
+                <tr key={i} className="border-b border-slate-50">
+                  <td className="py-1.5 font-mono text-[10px] text-slate-700">{pair.objectA}</td>
+                  <td className="py-1.5 font-mono text-[10px] text-slate-700">{pair.objectB}</td>
+                  <td className="py-1.5 text-end tabular-nums font-semibold text-slate-900">
+                    {pair.count}
+                  </td>
+                  <td className="py-1.5 ps-4 text-[10px] text-slate-500 font-mono">
+                    {pair.examples}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </>
+      )}
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Section 6.7.1: Advanced Approval Rules
+// ---------------------------------------------------------------------------
+
+function ApprovalRulesCard({ data }: { data: NonNullable<AssessmentData['approvalRules']> }) {
+  return (
+    <Card icon={<Shield size={16} />} title={`Advanced Approval Rules (${data.length})`}>
+      <div className="max-h-64 overflow-y-auto">
+        <table className="w-full text-xs">
+          <thead>
+            <tr className="border-b border-slate-100 text-slate-500">
+              <th className="text-start py-1 font-medium">Rule Name</th>
+              <th className="text-start py-1 font-medium">Target Object</th>
+              <th className="text-center py-1 font-medium w-16">Conds</th>
+              <th className="text-end py-1 font-medium w-16">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((rule, i) => (
+              <tr key={i} className="border-b border-slate-50">
+                <td className="py-1 text-slate-700">{rule.name}</td>
+                <td className="py-1 text-slate-500 font-mono text-[10px]">{rule.targetObject}</td>
+                <td className="py-1 text-center tabular-nums text-slate-700">{rule.conditions}</td>
+                <td className="py-1 text-end">
+                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700">
+                    {rule.status}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Section 6.7.4: Quote Templates
+// ---------------------------------------------------------------------------
+
+function QuoteTemplatesCard({ data }: { data: NonNullable<AssessmentData['quoteTemplates']> }) {
+  return (
+    <Card icon={<FileText size={16} />} title={`Quote Templates (${data.length})`}>
+      <table className="w-full text-xs">
+        <thead>
+          <tr className="border-b border-slate-100 text-slate-500">
+            <th className="text-start py-1 font-medium">Template</th>
+            <th className="text-center py-1 font-medium w-16">Default</th>
+            <th className="text-end py-1 font-medium">Last Modified</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.map((tmpl, i) => (
+            <tr key={i} className="border-b border-slate-50">
+              <td className="py-1 text-slate-700">{tmpl.name}</td>
+              <td className="py-1 text-center">{tmpl.isDefault ? 'Yes' : 'No'}</td>
+              <td className="py-1 text-end text-slate-500">{tmpl.lastModified}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Org Environment Summary
+// ---------------------------------------------------------------------------
+
+function OrgEnvironmentCard({ data }: { data: NonNullable<AssessmentData['orgEnvironment']> }) {
+  const rows = [
+    { label: 'Org ID', value: data.orgId },
+    { label: 'Environment', value: data.environmentType },
+    { label: 'Organization', value: data.orgName },
+    { label: 'Edition', value: data.orgEdition },
+    { label: 'Time Zone', value: data.timeZone },
+    { label: 'Currency', value: data.currencyStatus },
+    { label: 'CPQ Version', value: data.cpqVersion },
+    { label: 'Adv. Approvals', value: data.advApprovalsVersion },
+  ];
+  return (
+    <Card icon={<Building2 size={16} />} title="Org Environment">
+      <div className="space-y-1.5">
+        {rows.map((row) => (
+          <div key={row.label} className="flex items-center justify-between text-xs">
+            <span className="text-slate-500">{row.label}</span>
+            <span className="font-medium text-slate-900 font-mono text-[10px] text-end max-w-[60%] truncate">
+              {row.value}
+            </span>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Extraction Confidence (Appendix D)
+// ---------------------------------------------------------------------------
+
+function ExtractionConfidenceCard({
+  data,
+}: {
+  data: NonNullable<AssessmentData['extractionConfidence']>;
+}) {
+  const confirmedCount = data.filter((d) => d.level === 'Confirmed').length;
+  return (
+    <Card
+      icon={<ShieldCheck size={16} />}
+      title="Extraction Coverage"
+      subtitle={`${confirmedCount} of ${data.length} categories fully confirmed`}
+    >
+      <div className="max-h-64 overflow-y-auto">
+        <table className="w-full text-xs">
+          <thead>
+            <tr className="border-b border-slate-100 text-slate-500">
+              <th className="text-start py-1 font-medium">Category</th>
+              <th className="text-center py-1 font-medium w-20">Coverage</th>
+              <th className="text-start py-1 font-medium ps-3">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((row, i) => (
+              <tr key={i} className="border-b border-slate-50">
+                <td className="py-1 text-slate-700">{row.category}</td>
+                <td className="py-1 text-center">
+                  <span
+                    className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
+                      row.level === 'Confirmed'
+                        ? 'bg-emerald-50 text-emerald-700'
+                        : row.level === 'Partial'
+                          ? 'bg-amber-50 text-amber-700'
+                          : 'bg-slate-100 text-slate-600'
+                    }`}
+                  >
+                    {row.level}
+                  </span>
+                </td>
+                <td className="py-1 ps-3 text-[10px] text-slate-500">{row.notes}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Main export — renders all PDF-parity sections
 // ---------------------------------------------------------------------------
 
@@ -576,7 +957,13 @@ export default function PdfParitySections({ assessment }: PdfParitySectionsProps
     assessment.bundlesDeepDive ||
     assessment.relatedFunctionality ||
     assessment.quotingActivity ||
-    (assessment.installedPackages?.length ?? 0) > 0;
+    (assessment.installedPackages?.length ?? 0) > 0 ||
+    (assessment.transactionalObjects?.length ?? 0) > 0 ||
+    (assessment.additionalFunctionality?.length ?? 0) > 0 ||
+    (assessment.specialFields?.length ?? 0) > 0 ||
+    (assessment.approvalRules?.length ?? 0) > 0 ||
+    assessment.orgEnvironment ||
+    (assessment.extractionConfidence?.length ?? 0) > 0;
   if (!hasAny) return null;
 
   return (
@@ -668,6 +1055,46 @@ export default function PdfParitySections({ assessment }: PdfParitySectionsProps
               })()}
             </Card>
           </div>
+        </div>
+      )}
+
+      {/* Transactional Objects + Additional Functionality */}
+      {(assessment.transactionalObjects?.length ?? 0) > 0 && (
+        <TransactionalObjectsCard data={assessment.transactionalObjects!} />
+      )}
+
+      {(assessment.additionalFunctionality?.length ?? 0) > 0 && (
+        <AdditionalFunctionalityCard data={assessment.additionalFunctionality!} />
+      )}
+
+      {/* Special Fields + Twin Fields */}
+      {(assessment.specialFields?.length ?? 0) > 0 && (
+        <SpecialFieldsCard
+          specialFields={assessment.specialFields!}
+          twinFieldPairs={assessment.twinFieldPairs}
+        />
+      )}
+
+      {/* Approval Rules + Quote Templates (side by side) */}
+      {((assessment.approvalRules?.length ?? 0) > 0 ||
+        (assessment.quoteTemplates?.length ?? 0) > 0) && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {(assessment.approvalRules?.length ?? 0) > 0 && (
+            <ApprovalRulesCard data={assessment.approvalRules!} />
+          )}
+          {(assessment.quoteTemplates?.length ?? 0) > 0 && (
+            <QuoteTemplatesCard data={assessment.quoteTemplates!} />
+          )}
+        </div>
+      )}
+
+      {/* Org Environment + Extraction Confidence (side by side) */}
+      {(assessment.orgEnvironment || (assessment.extractionConfidence?.length ?? 0) > 0) && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {assessment.orgEnvironment && <OrgEnvironmentCard data={assessment.orgEnvironment} />}
+          {(assessment.extractionConfidence?.length ?? 0) > 0 && (
+            <ExtractionConfidenceCard data={assessment.extractionConfidence!} />
+          )}
         </div>
       )}
     </>

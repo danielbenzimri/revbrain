@@ -121,10 +121,24 @@ function main() {
 
   const raw = JSON.parse(readFileSync(inputPath, 'utf-8'));
   const findings = raw.findings as any[];
-  const metadata = raw.metadata;
-  const collectors = raw.collectors;
+  const metadata = raw.metadata ?? {};
+  const collectors = raw.collectors ?? {};
 
-  console.log(`Input: ${findings.length} findings from ${metadata.instanceUrl}`);
+  // Ensure evidenceRefs is always an array (DB export may stringify it)
+  for (const f of findings) {
+    if (f.evidenceRefs && !Array.isArray(f.evidenceRefs)) {
+      try {
+        f.evidenceRefs = typeof f.evidenceRefs === 'string' ? JSON.parse(f.evidenceRefs) : [];
+      } catch {
+        f.evidenceRefs = [];
+      }
+    }
+    if (!f.evidenceRefs) f.evidenceRefs = [];
+  }
+
+  console.log(
+    `Input: ${findings.length} findings from ${metadata?.instanceUrl ?? 'staging DB export'}`
+  );
 
   // Group findings by UI domain
   const domainFindings = new Map<DomainId, any[]>();
@@ -181,7 +195,7 @@ function main() {
           aiDescription: f.textValue
             ? `Source code: ${(f.textValue as string).slice(0, 200)}...`
             : f.notes || 'Extracted from Salesforce CPQ configuration.',
-          dependencies: (f.evidenceRefs || [])
+          dependencies: (Array.isArray(f.evidenceRefs) ? f.evidenceRefs : [])
             .flatMap((r: any) => r.referencedObjects || [])
             .slice(0, 5),
           isActive: f.migrationRelevance !== 'optional',
@@ -225,7 +239,7 @@ function main() {
 
     // Build insights from collector warnings + metrics
     const insights: string[] = [];
-    for (const [collectorName, cData] of Object.entries(collectors)) {
+    for (const [collectorName, cData] of Object.entries(collectors || {})) {
       const cd = cData as any;
       if (
         DOMAIN_MAPPING[collectorName] === id ||

@@ -438,6 +438,72 @@ export interface AssessmentData {
     items: Array<{ label: string; used: boolean; notes: string; isNested?: boolean }>;
     observations: string[];
   };
+  /** Section 6.8: Transactional Object Assessment */
+  transactionalObjects?: Array<{
+    object: string;
+    apiName: string;
+    pageLayouts: number;
+    buttonsLinks: number;
+    fieldSets: number;
+    recordTypes: number;
+    validationRules: number;
+    customFields: number;
+    notes: string;
+  }>;
+  /** Section 6.9: Additional CPQ Functionality */
+  additionalFunctionality?: Array<{
+    functionality: string;
+    detected: boolean;
+    evidence: string;
+    countScope: string;
+    complexityNote: string;
+    confidence: string;
+  }>;
+  /** Section 6.9.2: Special Fields */
+  specialFields?: Array<{
+    fieldName: string;
+    object: string;
+    purpose: string;
+    populatedCount: number;
+    confidence: string;
+  }>;
+  /** Section 6.9.1: Twin Fields (cross-object) */
+  twinFieldPairs?: Array<{
+    objectA: string;
+    objectB: string;
+    count: number;
+    examples: string;
+  }>;
+  /** Section 6.7.1: Advanced Approval Rules */
+  approvalRules?: Array<{
+    name: string;
+    targetObject: string;
+    conditions: number;
+    status: string;
+  }>;
+  /** Section 6.7.4: Quote Templates */
+  quoteTemplates?: Array<{
+    name: string;
+    isDefault: boolean;
+    lastModified: string;
+  }>;
+  /** Extraction Confidence (Appendix D) */
+  extractionConfidence?: Array<{
+    category: string;
+    level: string;
+    notes: string;
+  }>;
+  /** Org Environment Summary */
+  orgEnvironment?: {
+    orgId: string;
+    environmentType: string;
+    orgName: string;
+    orgEdition: string;
+    timeZone: string;
+    currencyStatus: string;
+    cpqVersion: string;
+    advApprovalsVersion: string;
+  };
 }
 
 // ---------------------------------------------------------------------------

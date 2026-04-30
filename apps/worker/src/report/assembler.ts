@@ -65,7 +65,7 @@ export interface ReportData {
     coreSettings: Array<{ setting: string; value: string; notes: string; confidence: string }>;
     plugins: Array<{ plugin: string; status: string; notes: string; confidence: string }>;
   };
-  quoteLifecycle: Array<{ step: number; description: string }>;
+  quoteLifecycle: Array<{ step: number; stage: string; description: string }>;
   configurationDomain: {
     productCatalog: Array<{
       category: string;
@@ -3497,6 +3497,18 @@ function detectHotspots(
     });
   }
 
+  // V13 P0-2: Custom Action Buttons hotspot (threshold: >10 active actions)
+  const customActionCount = findings.filter(
+    (f) => f.artifactType === 'CustomAction' || f.artifactType === 'SBQQ__CustomAction__c'
+  ).length;
+  if (customActionCount > 10) {
+    hotspots.push({
+      name: 'Custom Action Buttons',
+      severity: 'High',
+      analysis: `${customActionCount} custom action buttons configured across Quote, Line, Group, Configurator, and other panels — indicating UX-layer customization beyond core configuration that adds migration complexity.`,
+    });
+  }
+
   return hotspots;
 }
 
@@ -3877,7 +3889,7 @@ function buildObjectInventoryInline(
 function buildLifecycle(
   findings: AssessmentFindingInput[],
   plugins: AssessmentFindingInput[]
-): Array<{ step: number; description: string }> {
+): Array<{ step: number; stage: string; description: string }> {
   const hasDocuSign = plugins.some(
     (p) => p.artifactName?.includes('Electronic') && (p.countValue ?? 0) > 0
   );
@@ -3893,32 +3905,37 @@ function buildLifecycle(
   );
 
   return [
-    { step: 1, description: 'Lead qualified → converted to Account, Contact, Opportunity.' },
     {
-      step: 2,
-      description: 'Sales Rep creates Quote from Opportunity.',
+      step: 1,
+      stage: 'Lead / Opportunity',
+      description: 'Lead qualified → converted to Account, Contact, Opportunity.',
     },
+    { step: 2, stage: 'Quote Creation', description: 'Sales Rep creates Quote from Opportunity.' },
     {
       step: 3,
-      description: `Quote Line Editor: products added${hasBundles ? ', bundles configured with nested options' : ''}. Product rules enforce selection and validation constraints.`,
+      stage: 'QLE Configuration',
+      description: `Products added${hasBundles ? ', bundles configured with nested options' : ''}. Product rules enforce selection and validation constraints.`,
     },
     {
       step: 4,
-      description: `Pricing engine executes: price rules calculate adjustments, discount schedules apply tiered discounts${hasQcp ? ', QCP custom JavaScript injects additional pricing logic' : ''}.`,
+      stage: 'Pricing Execution',
+      description: `Price rules calculate adjustments, discount schedules apply tiered discounts${hasQcp ? ', QCP custom JavaScript injects additional pricing logic' : ''}.`,
     },
     {
       step: 5,
+      stage: 'Approval Routing',
       description: hasApprovals
-        ? 'Approval routing via Advanced Approvals (sbaa) — multi-level chains with condition-based routing.'
+        ? 'Advanced Approvals (sbaa) — multi-level chains with condition-based routing.'
         : 'Approval routing (if required).',
     },
     {
       step: 6,
+      stage: 'Document Generation / Signature',
       description: hasDocuSign
         ? 'Quote PDF generated from configured templates → DocuSign envelope created for e-signature.'
         : 'Quote PDF generated → Document signing.',
     },
-    { step: 7, description: 'Quote accepted → Order auto-created.' },
+    { step: 7, stage: 'Order Creation', description: 'Quote accepted → Order auto-created.' },
   ];
 }
 

@@ -157,9 +157,23 @@ function renderExecutiveSummary(data: ReportData): string {
 
   const scores = data.executiveSummary.complexityScores;
 
+  // V13 P1-4: Headline metrics strip
+  const c = data.counts;
+  const headlineMetrics = [
+    ['Active Products', String(c.activeProducts)],
+    ['Active Rules (Price + Product)', `${c.activePriceRules} + ${c.activeProductRules}`],
+    ['90-Day Quotes', String(c.totalQuotes)],
+    ['Active Users (90d)', String(c.activeUsers)],
+    ['Apex Classes (CPQ)', String(c.apexClassCount)],
+    ['CPQ-Related Flows', String(c.flowCountCpqRelated)],
+  ];
+
   return `
   <div class="page-break">
     <h2>2. Executive Summary</h2>
+
+    ${table(['Metric', 'Value'], headlineMetrics)}
+
     <h3>2.1 Key Findings</h3>
     ${table(['#', 'Finding', 'Detail', 'Confidence'], findingsRows)}
 
@@ -171,20 +185,6 @@ function renderExecutiveSummary(data: ReportData): string {
     ${scoreBar('Data Volume & Usage', scores.dataVolumeUsage)}
     ${scoreBar('Technical Debt', scores.technicalDebt)}
     <p><em>Scores are directional indicators of relative complexity, not absolute measures.</em></p>
-
-    ${
-      data.complexityHotspots.length > 0
-        ? `
-    <h3>2.4 Complexity Hotspots (Summary)</h3>
-    <p><em>Top complexity areas identified — see Section 11 for full analysis.</em></p>
-    ${table(
-      ['Hotspot', 'Severity'],
-      data.complexityHotspots
-        .slice(0, 5)
-        .map((h) => [`<strong>${escapeHtml(h.name)}</strong>`, severity(h.severity)])
-    )}`
-        : ''
-    }
 
     <h3>2.3 Scoring Methodology</h3>
     ${table(
@@ -206,8 +206,23 @@ function renderExecutiveSummary(data: ReportData): string {
       (no current scores affected): Configuration Depth — transactional object page layout and field counts, twin field density,
       custom record types on transactional objects; Customization Level — Summary Variables count, Search Filters count,
       Lookup Queries count; Pricing Logic — Special Fields usage depth, Contracted Pricing per-account depth;
-      Technical Debt — dormant transactional objects (high layout count + low record count).</em>
+      Technical Debt — dormant transactional objects (high layout count + low record count).
+      V13: Custom Actions count added as recalibration candidate for Customization Level dimension.</em>
     </p>
+
+    ${
+      data.complexityHotspots.length > 0
+        ? `
+    <h3>2.4 Complexity Hotspots (Summary)</h3>
+    <p><em>Top complexity areas identified — see Section 11 for full analysis.</em></p>
+    ${table(
+      ['Hotspot', 'Severity'],
+      data.complexityHotspots
+        .slice(0, 5)
+        .map((h) => [`<strong>${escapeHtml(h.name)}</strong>`, severity(h.severity)])
+    )}`
+        : ''
+    }
   </div>`;
 }
 
@@ -262,15 +277,47 @@ function renderSettings(data: ReportData): string {
     <h3>4.1 Installed Packages</h3>
     ${
       data.packageSettings.installedPackages.length > 0
-        ? table(
-            ['Package', 'Namespace', 'Version', 'Status'],
-            data.packageSettings.installedPackages.map((p) => [
-              escapeHtml(p.name),
-              escapeHtml(p.namespace),
-              escapeHtml(p.version),
-              escapeHtml(p.status),
-            ])
-          )
+        ? (() => {
+            // V13 P1-2: Latest available version reference context
+            const latestVersions: Record<string, string> = {
+              SBQQ: '244.1.0',
+              sbaa: '244.1.0',
+              blng: '244.1.0',
+              dsfs: '8.0.0',
+              dfsle: '3.2.0',
+              SBQQDS: '3.3.0',
+              cpqlabs: '1.4.0',
+              APXTConga4: '8.300.0',
+              APXTCFQ: '3.5.0',
+              AVA_BLNG: '5.1.0',
+              AVA_MAPPER: '1.70.0',
+              SFBD: '2.2.0',
+              cpqea: '244.0.0',
+            };
+            const getVersionStatus = (ns: string, installed: string): string => {
+              const latest = latestVersions[ns];
+              if (!latest) return '—';
+              if (installed === latest) return 'Current';
+              const iMajor = parseInt(installed.split('.')[0]);
+              const lMajor = parseInt(latest.split('.')[0]);
+              if (lMajor - iMajor >= 2)
+                return '<span style="color:#dc2626">Stale (≥2 behind)</span>';
+              return '1 behind';
+            };
+            return (
+              table(
+                ['Package', 'Namespace', 'Version', 'Latest Available', 'Status'],
+                data.packageSettings.installedPackages.map((p) => [
+                  escapeHtml(p.name),
+                  escapeHtml(p.namespace),
+                  escapeHtml(p.version),
+                  latestVersions[p.namespace] ?? '—',
+                  getVersionStatus(p.namespace, p.version),
+                ])
+              ) +
+              '<p style="font-size:0.8em;color:#666;margin-top:4px;"><em>Installed Version is extracted from the org. Latest Available Version is from an internal CPQ-relevant package reference (updated 2026-04-29). The latter is reference context, not org-derived data.</em></p>'
+            );
+          })()
         : '<p><em>Package inventory available from Discovery collector.</em></p>'
     }
 
@@ -307,9 +354,14 @@ function renderLifecycle(data: ReportData): string {
   <div class="page-break">
     <h2>5. Quote Lifecycle</h2>
     <p><em>The following lifecycle is derived from detected configuration patterns. Step sequence and frequency are inferred from metadata and have not been verified through direct process observation.</em></p>
-    <ol>
-      ${data.quoteLifecycle.map((s) => `<li>${escapeHtml(s.description)}</li>`).join('\n')}
-    </ol>
+    ${table(
+      ['Step', 'Lifecycle Stage', 'Detail'],
+      data.quoteLifecycle.map((s) => [
+        String(s.step),
+        escapeHtml(s.stage),
+        escapeHtml(s.description),
+      ])
+    )}
   </div>`;
 }
 
@@ -602,28 +654,7 @@ function renderDataQuality(data: ReportData): string {
         : '<p><em>Feature utilization analysis requires collector data.</em></p>'
     }
 
-    <h3>8.4 Field Completeness by Object</h3>
-    ${
-      data.dataQuality.fieldCompleteness.length > 0 &&
-      data.dataQuality.fieldCompleteness.some((f) => f.totalFields > 0)
-        ? table(
-            [
-              'Object',
-              'Total Fields',
-              'Fields >50% Populated',
-              'Fields <5% Populated',
-              'Quality Score',
-            ],
-            data.dataQuality.fieldCompleteness.map((f) => [
-              escapeHtml(f.object),
-              String(f.totalFields),
-              String(f.above50pct),
-              String(f.below5pct),
-              escapeHtml(f.score),
-            ])
-          )
-        : '<p><em>Field completeness analysis not extracted in current scope. Requires full schema and data scan.</em></p>'
-    }
+    <!-- V13 P0-3: Section 8.4 removed per SI review. Field completeness signals folded into Section 8.1 Flagged Areas above. -->
   </div>`;
 }
 
@@ -932,7 +963,27 @@ function renderApprovalsAndDocs(data: ReportData): string {
     ${quoteTemplates.length > 0 ? `<p style="font-size:0.85em;color:#666;margin-top:4px;"><em>Template complexity: ${data.counts.templateSectionCount ?? 'N/A'} template section(s) across all templates. ${data.counts.localizationCount ?? 0} localization record(s) — ${(data.counts.localizationCount ?? 0) > 0 ? 'translations add replication complexity.' : 'no localizations detected.'}</em></p>` : ''}
 
     <h3>6.7.5 Document Generation</h3>
-    <p>${documentGeneration.usableTemplateCount} usable quote template(s)${documentGeneration.totalTemplateRecords !== documentGeneration.usableTemplateCount ? ` (${documentGeneration.totalTemplateRecords} total SBQQ__QuoteTemplate__c records, ${documentGeneration.usableTemplateCount} usable after excluding test/synthetic)` : ''}. DocuSign integration: <strong>${documentGeneration.docuSignActive ? 'Active' : 'Not detected'}</strong>.</p>
+    ${table(
+      ['Metric', 'Value'],
+      [
+        ['Quote Templates (configured)', String(documentGeneration.usableTemplateCount)],
+        ['Total Template Sections', String(data.counts.templateSectionCount ?? 'N/A')],
+        ['Localization Records (translations)', String(data.counts.localizationCount ?? 0)],
+        ['Default Template', quoteTemplates.find((t) => t.isDefault)?.name ?? 'None set'],
+        [
+          'DocuSign Integration',
+          documentGeneration.docuSignActive ? '<strong>Active</strong>' : 'Not detected',
+        ],
+        [
+          'Conga Composer',
+          data.packageSettings.installedPackages.some((p) => p.namespace === 'APXTConga4')
+            ? 'Detected'
+            : 'Not detected',
+        ],
+        ['Document Store Plugin', 'Standard'],
+      ]
+    )}
+    <p style="font-size:0.85em;color:#666;margin-top:4px;"><em>Document generation pipeline: ${documentGeneration.usableTemplateCount > 0 ? 'native Quote Templates' : 'no templates'}${data.packageSettings.installedPackages.some((p) => p.namespace === 'APXTConga4') ? ' → Conga Composer rendering' : ''}${documentGeneration.docuSignActive ? ' → DocuSign envelope → e-signature' : ''}.</em></p>
     ${!hasContent ? '<p><em>Approvals and document generation data requires Tier 2 collectors (templates, approvals) to complete successfully.</em></p>' : ''}
   </div>`;
 }
