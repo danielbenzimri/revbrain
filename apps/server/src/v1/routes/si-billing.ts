@@ -27,6 +27,20 @@ import {
 import { buildAuditContext } from './admin/utils/audit-context.ts';
 import type { AppEnv } from '../../types/index.ts';
 
+/**
+ * Compute a deterministic SHA-256 hash of a JSON-serializable object.
+ * Keys are sorted to ensure deterministic output (canonicalJson for billing).
+ */
+async function hashSnapshot(data: unknown): Promise<string> {
+  const sorted = JSON.stringify(data, Object.keys(data as Record<string, unknown>).sort());
+  const encoded = new TextEncoder().encode(sorted);
+  const digest = await crypto.subtle.digest('SHA-256', encoded);
+  const hex = Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+  return `sha256-${hex}`;
+}
+
 const siBillingRouter = new OpenAPIHono<AppEnv>();
 
 /**
@@ -159,7 +173,7 @@ siBillingRouter.openapi(
       assessmentFee: agreement.assessmentFee,
       paymentTerms: agreement.paymentTerms,
     };
-    const snapshotHash = `sha256-${Date.now()}`; // Simplified — real impl uses canonicalJson
+    const snapshotHash = await hashSnapshot(snapshot);
 
     const update = transition(agreement, 'ACCEPT_ASSESSMENT', {
       acceptedBy: audit.actorId ?? '',
@@ -497,7 +511,7 @@ siBillingRouter.openapi(
       migrationAcceptedBy: audit.actorId ?? '',
       migrationAcceptedFromIp: audit.ipAddress ?? '',
       migrationTermsSnapshot: migrationSnapshot,
-      migrationTermsSnapshotHash: `sha256-${Date.now()}`,
+      migrationTermsSnapshotHash: await hashSnapshot(migrationSnapshot),
       declaredProjectValue: body.declaredProjectValue,
       sowFileId: body.sowFileId ?? agreement.sowFileId ?? '',
       calculatedTotalFee: feeResult.totalFee,

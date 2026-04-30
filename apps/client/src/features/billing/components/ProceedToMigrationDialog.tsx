@@ -46,7 +46,11 @@ export function ProceedToMigrationDialog({
   const [fileError, setFileError] = useState<string | null>(null);
   const [showPendingReview, setShowPendingReview] = useState(false);
 
-  const valueCents = Math.round(parseFloat(valueDollars || '0') * 100);
+  // Integer math: split on decimal, combine whole dollars and cents
+  const parts = (valueDollars || '0').split('.');
+  const dollars = parseInt(parts[0], 10) || 0;
+  const centsPart = parts[1] ? parseInt(parts[1].padEnd(2, '0').slice(0, 2), 10) : 0;
+  const valueCents = dollars * 100 + centsPart;
   const isSmallDeal = valueCents <= SMALL_DEAL_THRESHOLD_CENTS;
   const isValid = valueCents > 0;
 
