@@ -23,6 +23,7 @@ const DashboardPage = lazy(routeLazyImports['/']);
 const ProjectsPage = lazy(routeLazyImports['/projects']);
 const CustomersPage = lazy(routeLazyImports['/customers']);
 const BillingPage = lazy(routeLazyImports['/billing']);
+const AgreementReviewPage = lazy(routeLazyImports['/billing/agreements/:id/review']);
 const SettingsPage = lazy(routeLazyImports['/settings']);
 const ProfilePage = lazy(routeLazyImports['/settings/profile']);
 const SecurityPage = lazy(routeLazyImports['/settings/security']);
@@ -131,11 +132,24 @@ const router = createBrowserRouter([
       },
       {
         path: 'billing',
-        element: (
-          <Suspense fallback={<BillingSkeleton />}>
-            <BillingPage />
-          </Suspense>
-        ),
+        children: [
+          {
+            index: true,
+            element: (
+              <Suspense fallback={<BillingSkeleton />}>
+                <BillingPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: 'agreements/:id/review',
+            element: (
+              <Suspense fallback={<PageSkeleton />}>
+                <AgreementReviewPage />
+              </Suspense>
+            ),
+          },
+        ],
       },
       {
         path: 'users',
