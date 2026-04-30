@@ -161,5 +161,26 @@
     "cancel": "ביטול",
     "notFound": "ההסכם לא נמצא.",
     "backToBilling": "חזרה לחיוב"
+  },
+  "projectBilling": {
+    "feeAgreement": "הסכם עמלות",
+    "assessmentFee": "עמלת הערכה",
+    "terms": "תנאים",
+    "milestones": "אבני דרך",
+    "milestoneStatus": {
+      "paid": "שולם",
+      "invoiced": "חויב",
+      "overdue": "באיחור",
+      "pending": "ממתין",
+      "pending_approval": "ממתין לאישור"
+    },
+    "waitingForPayment": "ממתין לתשלום",
+    "nextStep": "שלב הבא",
+    "nextStepMessage": "כשהלקוח חותם על ה-SOW, המשך להגדרת חיוב מיגרציה.",
+    "proceedToMigration": "המשך למיגרציה",
+    "closeAssessment": "סגור כהערכה בלבד",
+    "underReview": "בבדיקה",
+    "pendingReviewMessage": "ערך המיגרציה של {{amount}} בבדיקת מנהל. נשלח לך מייל כשהתנאים יהיו מוכנים לקבלה.",
+    "emptyState": "פרטי חיוב יופיעו כאן לאחר הגדרת הסכם עמלות."
   }
 }

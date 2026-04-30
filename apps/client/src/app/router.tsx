@@ -56,6 +56,7 @@ const ArtifactsPage = lazy(routeLazyImports['/project/artifacts']);
 const DocsPage = lazy(routeLazyImports['/project/docs']);
 const UsersPage = lazy(routeLazyImports['/project/users']);
 const ProjectSettingsPage = lazy(routeLazyImports['/project/settings']);
+const ProjectBillingPage = lazy(routeLazyImports['/project/billing']);
 
 const router = createBrowserRouter([
   {
@@ -417,6 +418,14 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<WorkspaceSkeleton />}>
             <UsersPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'billing',
+        element: (
+          <Suspense fallback={<WorkspaceSkeleton />}>
+            <ProjectBillingPage />
           </Suspense>
         ),
       },

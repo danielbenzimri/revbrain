@@ -46,4 +46,5 @@ export const routeLazyImports: Record<string, () => Promise<any>> = {
   '/project/docs': () => import('@/features/projects/pages/workspace/DocsPage'),
   '/project/users': () => import('@/features/projects/pages/workspace/UsersPage'),
   '/project/settings': () => import('@/features/projects/pages/workspace/ProjectSettingsPage'),
+  '/project/billing': () => import('@/features/projects/pages/workspace/ProjectBillingPage'),
 };

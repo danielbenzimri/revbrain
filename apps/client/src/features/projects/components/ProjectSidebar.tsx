@@ -16,6 +16,7 @@ import {
   Users,
   Activity,
   FileArchive,
+  CreditCard,
   Settings,
   Lock,
   Bell,
@@ -367,6 +368,12 @@ export function ProjectSidebar({
           labelKey: 'workspace.sidebar.artifacts',
           icon: FileArchive,
           path: 'artifacts',
+        },
+        {
+          id: 'billing',
+          labelKey: 'workspace.sidebar.billing',
+          icon: CreditCard,
+          path: 'billing',
         },
         {
           id: 'settings',

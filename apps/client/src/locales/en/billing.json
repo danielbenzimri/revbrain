@@ -161,5 +161,26 @@
     "cancel": "Cancel",
     "notFound": "Agreement not found.",
     "backToBilling": "Back to Billing"
+  },
+  "projectBilling": {
+    "feeAgreement": "Fee Agreement",
+    "assessmentFee": "Assessment Fee",
+    "terms": "Terms",
+    "milestones": "Milestones",
+    "milestoneStatus": {
+      "paid": "Paid",
+      "invoiced": "Invoiced",
+      "overdue": "Overdue",
+      "pending": "Pending",
+      "pending_approval": "Pending Approval"
+    },
+    "waitingForPayment": "Waiting for payment",
+    "nextStep": "Next Step",
+    "nextStepMessage": "When your client signs the SOW, proceed to set up migration billing.",
+    "proceedToMigration": "Proceed to Migration",
+    "closeAssessment": "Close as Assessment Only",
+    "underReview": "Under Review",
+    "pendingReviewMessage": "Your migration value of {{amount}} is under admin review. We'll email you when terms are ready to accept.",
+    "emptyState": "Billing details will appear here once a fee agreement is set up."
   }
 }
