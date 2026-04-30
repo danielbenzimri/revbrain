@@ -519,6 +519,8 @@
     "colFeesPaid": "Fees Paid",
     "feesPaid": "Fees paid",
     "projectsCompleted": "Projects completed",
-    "overrideActive": "Tier override active"
+    "overrideActive": "Tier override active",
+    "billingContact": "Billing Contact",
+    "noBillingContact": "Not set"
   }
 }

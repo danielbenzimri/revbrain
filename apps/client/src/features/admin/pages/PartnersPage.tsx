@@ -8,7 +8,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Users, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { usePartners, type PartnerProfile } from '../hooks/use-partners';
+import { usePartners, usePartnerDetail, type PartnerProfile } from '../hooks/use-partners';
 
 function formatCurrency(cents: number): string {
   return new Intl.NumberFormat('en-US', {
@@ -32,6 +32,22 @@ function TierBadge({ tier }: { tier: string }) {
     >
       {tier.charAt(0).toUpperCase() + tier.slice(1)}
     </span>
+  );
+}
+
+function PartnerBillingContact({ partnerId }: { partnerId: string }) {
+  const { t } = useTranslation();
+  const { data } = usePartnerDetail(partnerId);
+
+  return (
+    <div className="mb-6 p-4 bg-slate-50 rounded-lg">
+      <p className="text-sm font-medium text-slate-700 mb-1">
+        {t('admin.partners.billingContact', 'Billing Contact')}
+      </p>
+      <p className="text-sm text-slate-600" data-testid="partner-billing-contact">
+        {data?.billingContactEmail ?? t('admin.partners.noBillingContact', 'Not set')}
+      </p>
+    </div>
   );
 }
 
@@ -154,6 +170,9 @@ export default function PartnersPage() {
               {selectedPartner.completedProjectCount}
             </p>
           </div>
+
+          {/* Billing Contact (read-only, fetched from detail) */}
+          <PartnerBillingContact partnerId={selectedPartner.id} />
 
           {/* Override Section */}
           {selectedPartner.tierOverride && (

@@ -3,6 +3,7 @@
   "subtitle": "הגדרות המערכת והעדפות אישיות",
   "tabs": {
     "profile": "פרופיל",
+    "organization": "ארגון",
     "security": "אבטחה",
     "account": "חשבון"
   },
@@ -50,6 +51,15 @@
     "mfaSuccess": "אימות דו-שלבי הופעל בהצלחה.",
     "mfaVerifyFailed": "קוד שגוי. אנא בדוק את אפליקציית האימות ונסה שוב.",
     "mfaCancel": "בטל הגדרה"
+  },
+  "organization": {
+    "name": "שם הארגון",
+    "billingContactEmail": "אימייל איש קשר לחיוב",
+    "billingContactHint": "חשבוניות והתראות חיוב יישלחו לכתובת אימייל זו.",
+    "invalidEmail": "נא להזין כתובת אימייל תקינה.",
+    "saved": "הגדרות הארגון נשמרו בהצלחה",
+    "saveFailed": "שגיאה בשמירת הגדרות הארגון",
+    "save": "שמור שינויים"
   },
   "account": {
     "dangerZone": "אזור מסוכן",

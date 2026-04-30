@@ -272,4 +272,133 @@ orgRouter.openapi(
   }
 );
 
+// ============================================================================
+// GET ORG SETTINGS
+// ============================================================================
+
+orgRouter.openapi(
+  createRoute({
+    method: 'get',
+    path: '/settings',
+    tags: ['Organization'],
+    summary: 'Get Organization Settings',
+    description: "Returns the authenticated user's organization settings (name, billing contact).",
+    middleware: routeMiddleware(authMiddleware, listLimiter),
+    responses: {
+      200: {
+        content: {
+          'application/json': {
+            schema: z.object({
+              success: z.boolean(),
+              data: z.object({
+                id: z.string().uuid(),
+                name: z.string(),
+                billingContactEmail: z.string().nullable(),
+              }),
+            }),
+          },
+        },
+        description: 'Organization settings',
+      },
+    },
+  }),
+  async (c) => {
+    const actor = c.get('user');
+    if (!actor) {
+      throw new AppError(ErrorCodes.UNAUTHORIZED, 'Authentication required', 401);
+    }
+
+    const org = await c.var.repos.organizations.findById(actor.organizationId);
+    if (!org) {
+      throw new AppError(ErrorCodes.NOT_FOUND, 'Organization not found', 404);
+    }
+
+    return c.json({
+      success: true,
+      data: {
+        id: org.id,
+        name: org.name,
+        billingContactEmail: org.billingContactEmail,
+      },
+    });
+  }
+);
+
+// ============================================================================
+// UPDATE ORG SETTINGS (billing contact)
+// ============================================================================
+
+orgRouter.openapi(
+  createRoute({
+    method: 'patch',
+    path: '/settings',
+    tags: ['Organization'],
+    summary: 'Update Organization Settings',
+    description:
+      'Updates billing contact email for the organization. Requires org_owner or admin role.',
+    middleware: routeMiddleware(
+      authMiddleware,
+      requireRole('org_owner', 'org_owner', 'system_admin'),
+      inviteLimiter
+    ),
+    request: {
+      body: {
+        content: {
+          'application/json': {
+            schema: z.object({
+              billingContactEmail: z.string().email().nullable(),
+            }),
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        content: {
+          'application/json': {
+            schema: z.object({
+              success: z.boolean(),
+              data: z.object({
+                id: z.string().uuid(),
+                name: z.string(),
+                billingContactEmail: z.string().nullable(),
+              }),
+            }),
+          },
+        },
+        description: 'Organization settings updated',
+      },
+    },
+  }),
+  async (c) => {
+    const actor = c.get('user');
+    if (!actor) {
+      throw new AppError(ErrorCodes.UNAUTHORIZED, 'Authentication required', 401);
+    }
+
+    const input = c.req.valid('json');
+    const ctx: RequestContext = {
+      actorId: actor.id,
+      actorEmail: actor.email,
+      ipAddress: getClientIpOrNull(c),
+      userAgent: c.req.header('user-agent') || null,
+    };
+
+    const updated = await c.var.services.organizations.updateTenant(
+      actor.organizationId,
+      { billingContactEmail: input.billingContactEmail },
+      ctx
+    );
+
+    return c.json({
+      success: true,
+      data: {
+        id: updated.id,
+        name: updated.name,
+        billingContactEmail: updated.billingContactEmail,
+      },
+    });
+  }
+);
+
 export { orgRouter };

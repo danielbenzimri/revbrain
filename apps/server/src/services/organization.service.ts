@@ -91,6 +91,7 @@ export class OrganizationService {
           seatLimit: existing.seatLimit,
           isActive: existing.isActive,
           planId: existing.planId,
+          billingContactEmail: existing.billingContactEmail,
         },
       },
       ipAddress: ctx.ipAddress,

@@ -63,11 +63,15 @@ adminPartnersRouter.openapi(
     // Get active agreements for billing summary
     const agreements = await repos.feeAgreements.findByOrgId(profile.organizationId);
 
+    // Get org details for billing contact
+    const org = await repos.organizations.findById(profile.organizationId);
+
     return c.json({
       success: true,
       data: {
         profile,
         agreements,
+        billingContactEmail: org?.billingContactEmail ?? null,
       },
     });
   }

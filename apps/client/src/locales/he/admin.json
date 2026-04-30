@@ -519,6 +519,8 @@
     "colFeesPaid": "עמלות ששולמו",
     "feesPaid": "עמלות ששולמו",
     "projectsCompleted": "פרויקטים שהושלמו",
-    "overrideActive": "דריסת דרגה פעילה"
+    "overrideActive": "דריסת דרגה פעילה",
+    "billingContact": "איש קשר לחיוב",
+    "noBillingContact": "לא הוגדר"
   }
 }

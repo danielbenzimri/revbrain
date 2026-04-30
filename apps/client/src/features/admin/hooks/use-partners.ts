@@ -44,7 +44,11 @@ export function usePartnerDetail(id: string) {
       const headers = await getAuthHeaders();
       const res = await fetch(`${apiUrl}/v1/admin/partners/${id}`, { headers });
       const json = await res.json();
-      return json.data as { profile: PartnerProfile; agreements: unknown[] };
+      return json.data as {
+        profile: PartnerProfile;
+        agreements: unknown[];
+        billingContactEmail: string | null;
+      };
     },
     enabled: !!id,
   });

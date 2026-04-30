@@ -1,9 +1,10 @@
 import { useTranslation } from 'react-i18next';
 import { NavLink, Outlet, Navigate, useLocation } from 'react-router-dom';
-import { User, Shield, AlertTriangle } from 'lucide-react';
+import { User, Shield, AlertTriangle, Building2 } from 'lucide-react';
 
 const tabs = [
   { path: '/settings/profile', labelKey: 'settings.tabs.profile', icon: User },
+  { path: '/settings/organization', labelKey: 'settings.tabs.organization', icon: Building2 },
   { path: '/settings/security', labelKey: 'settings.tabs.security', icon: Shield },
   { path: '/settings/account', labelKey: 'settings.tabs.account', icon: AlertTriangle },
 ];

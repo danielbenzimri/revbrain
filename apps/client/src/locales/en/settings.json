@@ -3,6 +3,7 @@
   "subtitle": "System settings and personal preferences",
   "tabs": {
     "profile": "Profile",
+    "organization": "Organization",
     "security": "Security",
     "account": "Account"
   },
@@ -50,6 +51,15 @@
     "mfaSuccess": "Two-factor authentication has been enabled successfully.",
     "mfaVerifyFailed": "Invalid code. Please check your authenticator app and try again.",
     "mfaCancel": "Cancel Setup"
+  },
+  "organization": {
+    "name": "Organization Name",
+    "billingContactEmail": "Billing Contact Email",
+    "billingContactHint": "Invoices and billing notifications will be sent to this email address.",
+    "invalidEmail": "Please enter a valid email address.",
+    "saved": "Organization settings saved successfully",
+    "saveFailed": "Failed to save organization settings",
+    "save": "Save Changes"
   },
   "account": {
     "dangerZone": "Danger Zone",

@@ -26,6 +26,7 @@ const BillingPage = lazy(routeLazyImports['/billing']);
 const SettingsPage = lazy(routeLazyImports['/settings']);
 const ProfilePage = lazy(routeLazyImports['/settings/profile']);
 const SecurityPage = lazy(routeLazyImports['/settings/security']);
+const OrganizationPage = lazy(routeLazyImports['/settings/organization']);
 const AccountPage = lazy(routeLazyImports['/settings/account']);
 const HelpPage = lazy(routeLazyImports['/help']);
 const OnboardOrganizationPage = lazy(routeLazyImports['/admin/tenants/onboard']);
@@ -270,6 +271,14 @@ const router = createBrowserRouter([
             element: (
               <Suspense fallback={<PageSkeleton />}>
                 <ProfilePage />
+              </Suspense>
+            ),
+          },
+          {
+            path: 'organization',
+            element: (
+              <Suspense fallback={<PageSkeleton />}>
+                <OrganizationPage />
               </Suspense>
             ),
           },
