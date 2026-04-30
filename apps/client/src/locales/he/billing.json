@@ -240,5 +240,10 @@
     "notesPlaceholder": "הקשר נוסף...",
     "confirm": "סגור הערכה",
     "failed": "הסגירה נכשלה. נסה שוב."
+  },
+  "overdue": {
+    "singleInvoice": "חשבונית אחת באיחור",
+    "multipleInvoices": "{{count}} חשבוניות באיחור",
+    "projectsBlocked": "יציר�� פרויקטים חדשים חסומה עד להסדרת חשבוניות באיחור."
   }
 }

@@ -240,5 +240,10 @@
     "notesPlaceholder": "Any additional context...",
     "confirm": "Close Assessment",
     "failed": "Failed to close. Please try again."
+  },
+  "overdue": {
+    "singleInvoice": "1 overdue invoice",
+    "multipleInvoices": "{{count}} overdue invoices",
+    "projectsBlocked": "New project creation is blocked until overdue invoices are resolved."
   }
 }
