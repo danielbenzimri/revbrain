@@ -162,6 +162,23 @@
     "notFound": "ההסכם לא נמצא.",
     "backToBilling": "חזרה לחיוב"
   },
+  "reviewB": {
+    "title": "סקירת תנאי מיגרציה",
+    "projectValue": "ערך הפרויקט",
+    "feeBreakdown": "פירוט עמלות",
+    "above": "מעל {{amount}}",
+    "totalFee": "סך עמלה",
+    "assessmentPaid": "הערכה ששולמה",
+    "remaining": "יתרה",
+    "migrationSchedule": "לוח זמנים למיגרציה",
+    "zeroFeeNotice": "לא יופקו חשבוניות נוספות לפרויקט זה. עמלת ההערכה מכסה את כל ההתקשרות.",
+    "attestation": "אני מאשר/ת שהערך המוצהר של {{amount}} מייצג במדויק את הערך הכולל של התקשרות המיגרציה.",
+    "acceptStart": "קבל והתחל מיגרציה",
+    "acceptConfirm": "קבל ואשר מיגרציה",
+    "invoiceNotice": "חשבונית בסך {{amount}} תופק מיידית.",
+    "acceptedTitle": "המיגרציה החלה!",
+    "acceptedMessage": "המיגרציה שלך פעילה כעת. מעביר..."
+  },
   "projectBilling": {
     "feeAgreement": "הסכם עמלות",
     "assessmentFee": "עמלת הערכה",

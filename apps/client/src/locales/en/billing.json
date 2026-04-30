@@ -162,6 +162,23 @@
     "notFound": "Agreement not found.",
     "backToBilling": "Back to Billing"
   },
+  "reviewB": {
+    "title": "Review Migration Terms",
+    "projectValue": "Project Value",
+    "feeBreakdown": "Fee Breakdown",
+    "above": "Above {{amount}}",
+    "totalFee": "Total Fee",
+    "assessmentPaid": "Assessment Paid",
+    "remaining": "Remaining",
+    "migrationSchedule": "Migration Schedule",
+    "zeroFeeNotice": "No additional invoices will be issued for this project. Your assessment fee covers the full engagement.",
+    "attestation": "I confirm the declared value of {{amount}} accurately represents the total migration engagement value.",
+    "acceptStart": "Accept & Start Migration",
+    "acceptConfirm": "Accept & Confirm Migration",
+    "invoiceNotice": "An invoice for {{amount}} will be generated immediately.",
+    "acceptedTitle": "Migration Started!",
+    "acceptedMessage": "Your migration is now active. Redirecting..."
+  },
   "projectBilling": {
     "feeAgreement": "Fee Agreement",
     "assessmentFee": "Assessment Fee",
