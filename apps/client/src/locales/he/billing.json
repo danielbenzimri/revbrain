@@ -198,7 +198,13 @@
     "closeAssessment": "סגור כהערכה בלבד",
     "underReview": "בבדיקה",
     "pendingReviewMessage": "ערך המיגרציה של {{amount}} בבדיקת מנהל. נשלח לך מייל כשהתנאים יהיו מוכנים לקבלה.",
-    "emptyState": "פרטי חיוב יופיעו כאן לאחר הגדרת הסכם עמלות."
+    "emptyState": "פרטי חיוב יופיעו כאן לאחר הגדרת הסכם עמלות.",
+    "phaseAssessment": "שלב 1: הערכה",
+    "phaseMigration": "שלב 2: מיגרציה",
+    "requestCompletion": "בקש השלמה",
+    "requestNote": "הערה (אופציונלי)...",
+    "confirm": "אשר",
+    "paymentProgress": "התקדמות תשלום"
   },
   "proceedMigration": {
     "title": "המשך למיגרציה",
@@ -217,5 +223,22 @@
     "underReviewTitle": "בבדיקת מנהל",
     "underReviewMessage": "ערך הפרויקט המוצהר של {{amount}} בבדיקת הצוות שלנו. נשלח לך מייל כשתנאי המיגרציה יהיו מוכנים לקבלה.",
     "understood": "הבנתי"
+  },
+  "closeAssessment": {
+    "title": "סגור כהערכה בלבד",
+    "description": "פעולה זו תסגור את הפרויקט כהערכה בלבד. לא יחולו עמלות מיגרציה.",
+    "reason": "סיבה",
+    "selectReason": "בחר סיבה...",
+    "reasons": {
+      "client_not_proceeding": "הלקוח לא ממשיך למיגרציה",
+      "budget_constraints": "מגבלות תקציב",
+      "timeline_mismatch": "חוסר התאמה בלוח הזמנים",
+      "competitive_solution": "בחר בפתרון מתחרה",
+      "other": "אחר"
+    },
+    "notes": "הערות נוספות (אופציונלי)",
+    "notesPlaceholder": "הקשר נוסף...",
+    "confirm": "סגור הערכה",
+    "failed": "הסגירה נכשלה. נסה שוב."
   }
 }

@@ -198,7 +198,13 @@
     "closeAssessment": "Close as Assessment Only",
     "underReview": "Under Review",
     "pendingReviewMessage": "Your migration value of {{amount}} is under admin review. We'll email you when terms are ready to accept.",
-    "emptyState": "Billing details will appear here once a fee agreement is set up."
+    "emptyState": "Billing details will appear here once a fee agreement is set up.",
+    "phaseAssessment": "Phase 1: Assessment",
+    "phaseMigration": "Phase 2: Migration",
+    "requestCompletion": "Request Completion",
+    "requestNote": "Optional note...",
+    "confirm": "Confirm",
+    "paymentProgress": "Payment Progress"
   },
   "proceedMigration": {
     "title": "Proceed to Migration",
@@ -217,5 +223,22 @@
     "underReviewTitle": "Under Admin Review",
     "underReviewMessage": "Your declared project value of {{amount}} is being reviewed by our team. We'll email you when migration terms are ready to accept.",
     "understood": "Understood"
+  },
+  "closeAssessment": {
+    "title": "Close as Assessment Only",
+    "description": "This will close the project as assessment-only. No migration fees will apply.",
+    "reason": "Reason",
+    "selectReason": "Select a reason...",
+    "reasons": {
+      "client_not_proceeding": "Client not proceeding with migration",
+      "budget_constraints": "Budget constraints",
+      "timeline_mismatch": "Timeline mismatch",
+      "competitive_solution": "Chose a competitive solution",
+      "other": "Other"
+    },
+    "notes": "Additional Notes (optional)",
+    "notesPlaceholder": "Any additional context...",
+    "confirm": "Close Assessment",
+    "failed": "Failed to close. Please try again."
   }
 }

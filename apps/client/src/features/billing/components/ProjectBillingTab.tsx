@@ -14,11 +14,13 @@ import { Button } from '@/components/ui/button';
 import {
   useBillingAgreements,
   useBillingAgreementDetail,
+  useRequestMilestoneComplete,
   formatCurrency,
   type BillingMilestone,
 } from '../hooks/use-partner-billing';
 import { WaitingForPaymentCallout } from './WaitingForPaymentCallout';
 import { ProceedToMigrationDialog } from './ProceedToMigrationDialog';
+import { AssessmentCloseDialog } from './AssessmentCloseDialog';
 
 function MilestoneStatusIcon({ status }: { status: string }) {
   if (status === 'paid') return <Check className="h-4 w-4 text-green-500" />;
@@ -59,6 +61,7 @@ function AssessmentBillingView({
 }) {
   const { t } = useTranslation('billing');
   const [showProceedDialog, setShowProceedDialog] = useState(false);
+  const [showCloseDialog, setShowCloseDialog] = useState(false);
 
   const m1 = milestones.find((m) => m.phase === 'assessment' && m.sortOrder === 1);
   const isM1Paid = m1?.status === 'paid';
@@ -159,7 +162,11 @@ function AssessmentBillingView({
               {t('projectBilling.proceedToMigration', 'Proceed to Migration')}
             </Button>
             {!hasSubmittedValue && (
-              <Button variant="outline" data-testid="close-assessment-btn">
+              <Button
+                variant="outline"
+                onClick={() => setShowCloseDialog(true)}
+                data-testid="close-assessment-btn"
+              >
                 {t('projectBilling.closeAssessment', 'Close as Assessment Only')}
               </Button>
             )}
@@ -174,6 +181,187 @@ function AssessmentBillingView({
           onClose={() => setShowProceedDialog(false)}
         />
       )}
+
+      {/* Assessment Close Dialog */}
+      {showCloseDialog && (
+        <AssessmentCloseDialog
+          agreementId={agreement.id}
+          onClose={() => setShowCloseDialog(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+function MigrationBillingView({
+  agreement,
+  milestones,
+}: {
+  agreement: {
+    id: string;
+    status: string;
+    assessmentFee: number;
+    declaredProjectValue: number | null;
+    calculatedTotalFee: number | null;
+    calculatedRemainingFee: number | null;
+    paymentTerms: string;
+  };
+  milestones: BillingMilestone[];
+}) {
+  const { t } = useTranslation('billing');
+  const requestComplete = useRequestMilestoneComplete();
+  const [requestingId, setRequestingId] = useState<string | null>(null);
+  const [requestNote, setRequestNote] = useState('');
+
+  const totalFee = agreement.calculatedTotalFee ?? 0;
+  const assessmentMilestones = milestones
+    .filter((m) => m.phase === 'assessment')
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+  const migrationMilestones = milestones
+    .filter((m) => m.phase === 'migration')
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+  const paidAmount = milestones
+    .filter((m) => m.status === 'paid')
+    .reduce((sum, m) => sum + m.amount, 0);
+  const progress = totalFee > 0 ? Math.min((paidAmount / totalFee) * 100, 100) : 0;
+
+  const handleRequestComplete = async (milestoneId: string) => {
+    try {
+      await requestComplete.mutateAsync({ id: milestoneId, reason: requestNote || undefined });
+      setRequestingId(null);
+      setRequestNote('');
+    } catch {
+      // handled by mutation
+    }
+  };
+
+  return (
+    <div className="space-y-4" data-testid="project-billing-migration">
+      {/* Agreement Summary */}
+      <div className="bg-white border border-slate-200 rounded-xl p-5">
+        <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">
+          {t('projectBilling.feeAgreement', 'Fee Agreement')}
+        </h3>
+        <div className="flex items-center gap-4 flex-wrap text-sm">
+          <span className="text-slate-700">
+            {t('reviewB.projectValue', 'Project Value')}:{' '}
+            <strong>{formatCurrency(agreement.declaredProjectValue ?? 0)}</strong>
+          </span>
+          <span className="text-slate-700">
+            {t('reviewB.totalFee', 'Total Fee')}: <strong>{formatCurrency(totalFee)}</strong>
+          </span>
+          <span className="text-slate-500">
+            {t('projectBilling.terms', 'Terms')}: {agreement.paymentTerms}
+          </span>
+        </div>
+      </div>
+
+      {/* Phase 1: Assessment */}
+      <div className="bg-white border border-slate-200 rounded-xl p-5">
+        <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">
+          {t('projectBilling.phaseAssessment', 'Phase 1: Assessment')}
+        </h3>
+        {assessmentMilestones.map((ms) => (
+          <div
+            key={ms.id}
+            className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0"
+          >
+            <div className="flex items-center gap-3">
+              <MilestoneStatusIcon status={ms.status} />
+              <span className="text-sm text-slate-700">{ms.name}</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium text-slate-900">
+                {formatCurrency(ms.amount)}
+              </span>
+              <MilestoneStatusBadge status={ms.status} />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Phase 2: Migration */}
+      <div className="bg-white border border-slate-200 rounded-xl p-5">
+        <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">
+          {t('projectBilling.phaseMigration', 'Phase 2: Migration')}
+        </h3>
+        {migrationMilestones.map((ms) => (
+          <div key={ms.id} className="py-2 border-b border-slate-100 last:border-0">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <MilestoneStatusIcon status={ms.status} />
+                <span className="text-sm text-slate-700">{ms.name}</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium text-slate-900">
+                  {formatCurrency(ms.amount)}
+                </span>
+                <MilestoneStatusBadge status={ms.status} />
+              </div>
+            </div>
+            {/* Request Completion for pending milestones */}
+            {ms.status === 'pending' && (
+              <div className="ms-7 mt-2">
+                {requestingId === ms.id ? (
+                  <div className="flex gap-2 items-end">
+                    <input
+                      type="text"
+                      value={requestNote}
+                      onChange={(e) => setRequestNote(e.target.value)}
+                      placeholder={t('projectBilling.requestNote', 'Optional note...')}
+                      className="flex-1 px-3 py-1.5 border border-slate-300 rounded-lg text-sm"
+                      data-testid={`request-note-${ms.id}`}
+                    />
+                    <Button
+                      size="sm"
+                      onClick={() => handleRequestComplete(ms.id)}
+                      disabled={requestComplete.isPending}
+                      className="bg-violet-500 hover:bg-violet-600 text-white"
+                      data-testid={`confirm-request-${ms.id}`}
+                    >
+                      {t('projectBilling.confirm', 'Confirm')}
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => setRequestingId(null)}>
+                      {t('proceedMigration.cancel', 'Cancel')}
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setRequestingId(ms.id)}
+                    data-testid={`request-complete-${ms.id}`}
+                  >
+                    {t('projectBilling.requestCompletion', 'Request Completion')}
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Payment Progress */}
+      <div
+        className="bg-white border border-slate-200 rounded-xl p-5"
+        data-testid="payment-progress"
+      >
+        <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">
+          {t('projectBilling.paymentProgress', 'Payment Progress')}
+        </h3>
+        <div className="flex justify-between text-sm text-slate-600 mb-2">
+          <span>{formatCurrency(paidAmount)}</span>
+          <span>
+            {formatCurrency(totalFee)} ({Math.round(progress)}%)
+          </span>
+        </div>
+        <div className="w-full bg-slate-100 rounded-full h-3">
+          <div
+            className="bg-violet-500 h-3 rounded-full transition-all"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      </div>
     </div>
   );
 }
@@ -214,6 +402,13 @@ export default function ProjectBillingTab({ projectId }: { projectId: string }) 
         </p>
       </div>
     );
+  }
+
+  const isMigration =
+    detail.agreement.status === 'active_migration' || detail.agreement.status === 'complete';
+
+  if (isMigration) {
+    return <MigrationBillingView agreement={detail.agreement} milestones={detail.milestones} />;
   }
 
   return <AssessmentBillingView agreement={detail.agreement} milestones={detail.milestones} />;
