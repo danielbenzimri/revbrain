@@ -159,6 +159,13 @@ export const requireActiveSubscription = () => {
       return;
     }
 
+    // Skip for SI partners — they use agreement-based billing, not subscriptions
+    const org = await c.var.repos.organizations.findById(user.organizationId);
+    if (org?.type === 'si_partner') {
+      await next();
+      return;
+    }
+
     // Get subscription status from usage stats
     const limitsService = c.var.services.limits;
     const stats = await limitsService.getUsageStats(user.organizationId);

@@ -60,6 +60,10 @@ export const ErrorCodes = {
   FEATURE_NOT_AVAILABLE: 'FEATURE_NOT_AVAILABLE',
   SUBSCRIPTION_REQUIRED: 'SUBSCRIPTION_REQUIRED',
   SUBSCRIPTION_PAST_DUE: 'SUBSCRIPTION_PAST_DUE',
+  // SI Billing entitlement errors
+  AGREEMENT_REQUIRED: 'AGREEMENT_REQUIRED',
+  PAYMENT_REQUIRED: 'PAYMENT_REQUIRED',
+  MIGRATION_REQUIRED: 'MIGRATION_REQUIRED',
 } as const;
 
 // ============================================================================

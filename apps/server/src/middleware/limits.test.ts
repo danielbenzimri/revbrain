@@ -46,6 +46,11 @@ describe('Limits Middleware', () => {
         organizationId: 'org-123',
       });
       c.set('services', { limits: mockLimitsService });
+      c.set('repos', {
+        organizations: {
+          findById: vi.fn().mockResolvedValue({ id: 'org-123', type: 'end_client' }),
+        },
+      });
       await next();
     });
 
