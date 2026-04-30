@@ -182,5 +182,23 @@
     "underReview": "בבדיקה",
     "pendingReviewMessage": "ערך המיגרציה של {{amount}} בבדיקת מנהל. נשלח לך מייל כשהתנאים יהיו מוכנים לקבלה.",
     "emptyState": "פרטי חיוב יופיעו כאן לאחר הגדרת הסכם עמלות."
+  },
+  "proceedMigration": {
+    "title": "המשך למיגרציה",
+    "declaredValue": "ערך פרויקט מוצהר (דולר)",
+    "smallDealHint": "התנאים יחושבו מיידית.",
+    "largeDealHint": "ערכים מעל $500,000 דורשים בדיקת מנהל.",
+    "sowUpload": "העלאת SOW (אופציונלי)",
+    "dropzoneText": "לחץ להעלאת PDF, DOCX או תמונה",
+    "maxSize": "עד 25MB",
+    "invalidFileType": "רק קבצי PDF, DOCX ותמונות מותרים.",
+    "fileTooLarge": "הקובץ חייב להיות מתחת ל-25MB.",
+    "submitFailed": "השליחה נכשלה. נסה שוב.",
+    "cancel": "ביטול",
+    "reviewTerms": "סקור תנאים",
+    "submitForReview": "שלח לבדיקה",
+    "underReviewTitle": "בבדיקת מנהל",
+    "underReviewMessage": "ערך הפרויקט המוצהר של {{amount}} בבדיקת הצוות שלנו. נשלח לך מייל כשתנאי המיגרציה יהיו מוכנים לקבלה.",
+    "understood": "הבנתי"
   }
 }

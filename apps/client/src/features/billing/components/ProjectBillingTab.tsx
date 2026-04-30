@@ -7,9 +7,9 @@
  * Task: P4.3
  * Refs: SI-BILLING-SPEC.md §12.2.2
  */
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Loader2, Check, Clock, CircleDot } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import {
   useBillingAgreements,
@@ -18,6 +18,7 @@ import {
   type BillingMilestone,
 } from '../hooks/use-partner-billing';
 import { WaitingForPaymentCallout } from './WaitingForPaymentCallout';
+import { ProceedToMigrationDialog } from './ProceedToMigrationDialog';
 
 function MilestoneStatusIcon({ status }: { status: string }) {
   if (status === 'paid') return <Check className="h-4 w-4 text-green-500" />;
@@ -57,7 +58,7 @@ function AssessmentBillingView({
   milestones: BillingMilestone[];
 }) {
   const { t } = useTranslation('billing');
-  const navigate = useNavigate();
+  const [showProceedDialog, setShowProceedDialog] = useState(false);
 
   const m1 = milestones.find((m) => m.phase === 'assessment' && m.sortOrder === 1);
   const isM1Paid = m1?.status === 'paid';
@@ -152,7 +153,7 @@ function AssessmentBillingView({
           <div className="flex gap-3 flex-wrap">
             <Button
               className="bg-violet-500 hover:bg-violet-600 text-white"
-              onClick={() => navigate(`/billing/agreements/${agreement.id}/review`)}
+              onClick={() => setShowProceedDialog(true)}
               data-testid="proceed-to-migration-btn"
             >
               {t('projectBilling.proceedToMigration', 'Proceed to Migration')}
@@ -164,6 +165,14 @@ function AssessmentBillingView({
             )}
           </div>
         </div>
+      )}
+
+      {/* Proceed to Migration Dialog */}
+      {showProceedDialog && (
+        <ProceedToMigrationDialog
+          agreementId={agreement.id}
+          onClose={() => setShowProceedDialog(false)}
+        />
       )}
     </div>
   );

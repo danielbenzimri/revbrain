@@ -182,5 +182,23 @@
     "underReview": "Under Review",
     "pendingReviewMessage": "Your migration value of {{amount}} is under admin review. We'll email you when terms are ready to accept.",
     "emptyState": "Billing details will appear here once a fee agreement is set up."
+  },
+  "proceedMigration": {
+    "title": "Proceed to Migration",
+    "declaredValue": "Declared Project Value (USD)",
+    "smallDealHint": "Terms will be computed immediately.",
+    "largeDealHint": "Values over $500,000 require admin review.",
+    "sowUpload": "Upload SOW (optional)",
+    "dropzoneText": "Click to upload PDF, DOCX, or image",
+    "maxSize": "Max 25MB",
+    "invalidFileType": "Only PDF, DOCX, and image files are allowed.",
+    "fileTooLarge": "File must be under 25MB.",
+    "submitFailed": "Failed to submit. Please try again.",
+    "cancel": "Cancel",
+    "reviewTerms": "Review Terms",
+    "submitForReview": "Submit for Review",
+    "underReviewTitle": "Under Admin Review",
+    "underReviewMessage": "Your declared project value of {{amount}} is being reviewed by our team. We'll email you when migration terms are ready to accept.",
+    "understood": "Understood"
   }
 }
