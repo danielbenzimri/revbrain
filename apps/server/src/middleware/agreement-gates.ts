@@ -2,10 +2,13 @@
  * Agreement Gates Middleware (SI Billing)
  *
  * Phase-based entitlement middleware for SI partners.
- * Gates access to extraction, normalization, segmentation, disposition
- * based on agreement status and milestone payment state.
  *
- * Task: P4.5
+ * NEW FLOW (conversion-optimized):
+ * - Extraction, normalization, analysis: FREE — no gate
+ * - Report generation / PDF export: requires M1 paid
+ * - Migration tools (segmentation, disposition): requires active_migration
+ *
+ * Task: P4.5 (modified for conversion flow)
  * Refs: SI-BILLING-SPEC.md §4 (entitlement gates)
  */
 import { createMiddleware } from 'hono/factory';
@@ -13,12 +16,11 @@ import type { AppEnv } from '../types/index.ts';
 import { AppError, ErrorCodes } from '@revbrain/contract';
 
 /**
- * Requires an active agreement with M1 paid for the project.
- * Used on assessment-phase routes: extraction, normalization, analysis.
- *
- * Expects `projectId` in route params or query.
+ * Requires M1 paid to access premium assessment deliverables.
+ * Used on: report generation endpoint only.
+ * NOT used on extraction/normalization/analysis — those are free.
  */
-export const requireAssessmentAccess = () => {
+export const requireAssessmentPaid = () => {
   return createMiddleware<AppEnv>(async (c, next) => {
     const user = c.get('user');
     if (!user) {
@@ -43,33 +45,36 @@ export const requireAssessmentAccess = () => {
       throw new AppError(ErrorCodes.BAD_REQUEST, 'Project ID required', 400);
     }
 
-    // Find the active agreement for this project
     const agreement = await c.var.repos.feeAgreements.findActiveByProjectId(projectId);
     if (!agreement) {
       throw new AppError(
-        ErrorCodes.AGREEMENT_REQUIRED,
-        'A fee agreement is required to access this project. Please accept the assessment terms first.',
-        403
+        ErrorCodes.PAYMENT_REQUIRED,
+        'Unlock the full assessment report by accepting your fee agreement.',
+        402
       );
     }
 
-    // Draft agreements don't grant access
     if (agreement.status === 'draft') {
       throw new AppError(
-        ErrorCodes.AGREEMENT_REQUIRED,
-        'Please accept the assessment agreement to unlock project tools.',
-        403
+        ErrorCodes.PAYMENT_REQUIRED,
+        'Accept and pay the assessment fee to unlock the full report.',
+        402
       );
     }
 
-    // Check M1 payment
+    // Check M1 payment — active_migration and complete statuses imply M1 was paid
+    if (agreement.status === 'active_migration' || agreement.status === 'complete') {
+      await next();
+      return;
+    }
+
     const milestones = await c.var.repos.feeMilestones.findByAgreementId(agreement.id);
     const m1 = milestones.find((m) => m.phase === 'assessment' && m.sortOrder === 1);
 
     if (!m1 || m1.status !== 'paid') {
       throw new AppError(
         ErrorCodes.PAYMENT_REQUIRED,
-        'Assessment fee payment is required to access extraction tools. Please complete your payment.',
+        'Complete your assessment fee payment to download the full report.',
         402
       );
     }
@@ -77,6 +82,9 @@ export const requireAssessmentAccess = () => {
     await next();
   });
 };
+
+// Keep old name as alias for backward compatibility with any existing references
+export const requireAssessmentAccess = requireAssessmentPaid;
 
 /**
  * Requires active_migration status for the project.

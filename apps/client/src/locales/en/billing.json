@@ -241,6 +241,15 @@
     "confirm": "Close Assessment",
     "failed": "Failed to close. Please try again."
   },
+  "paywall": {
+    "title": "Unlock Full Assessment",
+    "description": "Get the complete analysis, detailed risk matrix, and downloadable report for {{amount}}.",
+    "descriptionNoPrice": "Accept your assessment agreement to unlock the full report and detailed analysis.",
+    "acceptTerms": "Review & Accept Terms",
+    "payNow": "Pay Now",
+    "contactAdmin": "Contact your account manager to set up a fee agreement.",
+    "exportLocked": "Unlock full assessment to download report"
+  },
   "overdue": {
     "singleInvoice": "1 overdue invoice",
     "multipleInvoices": "{{count}} overdue invoices",

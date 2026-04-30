@@ -7,7 +7,7 @@
 import { useMemo, useCallback, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ClipboardCheck, ChevronDown, Loader2 } from 'lucide-react';
+import { ClipboardCheck, ChevronDown, Loader2, Lock } from 'lucide-react';
 import { getMockAssessmentData, DOMAIN_TAB_ORDER } from '../../mocks/assessment-mock-data';
 import type { DomainId, AssessmentData } from '../../mocks/assessment-mock-data';
 import OverviewTab from '../../components/assessment/OverviewTab';
@@ -24,6 +24,8 @@ import {
   useGenerateReport,
 } from '../../hooks/use-assessment-run';
 import { transformFindingsToAssessmentData } from '../../utils/transform-api-findings';
+import { useAssessmentEntitlement } from '@/features/billing/hooks/use-assessment-entitlement';
+import { AssessmentPaywall } from '@/features/billing/components/AssessmentPaywall';
 
 // ---------------------------------------------------------------------------
 // Tab configuration
@@ -41,10 +43,11 @@ interface TabBarProps {
   activeTab: TabId;
   onTabChange: (tab: TabId) => void;
   assessment: AssessmentData;
+  isLocked?: boolean;
   t: (key: string, opts?: Record<string, unknown>) => string;
 }
 
-function TabBar({ activeTab, onTabChange, assessment, t }: TabBarProps) {
+function TabBar({ activeTab, onTabChange, assessment, isLocked, t }: TabBarProps) {
   // Domains with blocked items get a red dot
   const domainsWithBlockers = useMemo(() => {
     const set = new Set<string>();
@@ -83,7 +86,8 @@ function TabBar({ activeTab, onTabChange, assessment, t }: TabBarProps) {
             `}
           >
             {t(`assessment.tabs.${tabId}`)}
-            {hasBlocker && (
+            {isLocked && tabId !== 'overview' && <Lock className="h-3 w-3 text-slate-400 ms-1" />}
+            {hasBlocker && !isLocked && (
               <span
                 className="w-2 h-2 rounded-full bg-red-500 shrink-0"
                 aria-label="has blockers"
@@ -103,28 +107,53 @@ function TabBar({ activeTab, onTabChange, assessment, t }: TabBarProps) {
 interface TabContentProps {
   tabId: TabId;
   assessment: AssessmentData;
+  entitlement?: ReturnType<typeof useAssessmentEntitlement>;
   onTabChange: (tab: TabId) => void;
   onItemClick?: (itemId: string) => void;
   t: (key: string, opts?: Record<string, unknown>) => string;
 }
 
-function TabContent({ tabId, assessment, onTabChange, onItemClick, t }: TabContentProps) {
+function TabContent({
+  tabId,
+  assessment,
+  entitlement,
+  onTabChange,
+  onItemClick,
+  t,
+}: TabContentProps) {
+  const content =
+    tabId === 'overview' ? (
+      <OverviewTab
+        assessment={assessment}
+        onDomainClick={(domainId) => onTabChange(domainId)}
+        t={t}
+      />
+    ) : (
+      <DomainTabWrapper
+        domainId={tabId as DomainId}
+        assessment={assessment}
+        onItemClick={onItemClick}
+        t={t}
+      />
+    );
+
+  // Domain tabs are behind paywall; overview is always free
+  if (tabId !== 'overview' && entitlement && !entitlement.isUnlocked && !entitlement.isLoading) {
+    return (
+      <div
+        id={`tabpanel-${tabId}`}
+        role="tabpanel"
+        aria-labelledby={`tab-${tabId}`}
+        className="py-6"
+      >
+        <AssessmentPaywall entitlement={entitlement}>{content}</AssessmentPaywall>
+      </div>
+    );
+  }
+
   return (
     <div id={`tabpanel-${tabId}`} role="tabpanel" aria-labelledby={`tab-${tabId}`} className="py-6">
-      {tabId === 'overview' ? (
-        <OverviewTab
-          assessment={assessment}
-          onDomainClick={(domainId) => onTabChange(domainId)}
-          t={t}
-        />
-      ) : (
-        <DomainTabWrapper
-          domainId={tabId as DomainId}
-          assessment={assessment}
-          onItemClick={onItemClick}
-          t={t}
-        />
-      )}
+      {content}
     </div>
   );
 }
@@ -196,6 +225,9 @@ export default function AssessmentPage() {
     [assessment]
   );
 
+  const entitlement = useAssessmentEntitlement(id);
+  const isAssessmentLocked = !entitlement.isUnlocked && !entitlement.isLoading;
+
   if (!id) return null;
 
   // Full assessment workspace
@@ -237,17 +269,31 @@ export default function AssessmentPage() {
             </button>
             <button
               onClick={() => {
+                if (isAssessmentLocked) return;
                 if (completedRunId) generateReport.mutate(completedRunId);
               }}
-              disabled={!completedRunId || generateReport.isPending}
+              disabled={!completedRunId || generateReport.isPending || isAssessmentLocked}
               className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               data-testid="export-report-btn"
+              title={
+                isAssessmentLocked
+                  ? t('billing:paywall.exportLocked', {
+                      defaultValue: 'Unlock full assessment to download report',
+                    })
+                  : undefined
+              }
             >
-              {generateReport.isPending ? <Loader2 size={14} className="animate-spin" /> : null}
+              {isAssessmentLocked ? (
+                <Lock size={14} className="text-slate-400" />
+              ) : generateReport.isPending ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : null}
               {generateReport.isSuccess
                 ? t('assessment.header.reportDownloaded', { defaultValue: 'Downloaded' })
                 : t('assessment.header.export')}
-              {!generateReport.isPending && !generateReport.isSuccess && <ChevronDown size={14} />}
+              {!generateReport.isPending && !generateReport.isSuccess && !isAssessmentLocked && (
+                <ChevronDown size={14} />
+              )}
             </button>
             {generateReport.isError && (
               <span className="text-xs text-red-500">
@@ -260,12 +306,19 @@ export default function AssessmentPage() {
         </div>
 
         {/* Tab Bar */}
-        <TabBar activeTab={activeTab} onTabChange={handleTabChange} assessment={assessment} t={t} />
+        <TabBar
+          activeTab={activeTab}
+          onTabChange={handleTabChange}
+          assessment={assessment}
+          isLocked={isAssessmentLocked}
+          t={t}
+        />
 
         {/* Tab Content */}
         <TabContent
           tabId={activeTab}
           assessment={assessment}
+          entitlement={entitlement}
           onTabChange={handleTabChange}
           onItemClick={handleItemClick}
           t={t}
