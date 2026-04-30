@@ -187,7 +187,25 @@ export default function AssessmentPage() {
     // Try API data first (from completed extraction run)
     if (findingsResult?.data && findingsResult.data.length > 10 && apiStatus) {
       const apiData = transformFindingsToAssessmentData(findingsResult.data, apiStatus);
-      if (apiData) return apiData;
+      if (apiData) {
+        // In mock/demo mode: enrich API data with mock domain items when domains are sparse
+        // This ensures domain tabs have rich demo content for presentations
+        if (isMockMode) {
+          const mockData = getMockAssessmentData(id);
+          if (mockData) {
+            for (const domain of apiData.domains) {
+              if (domain.items.length === 0) {
+                const mockDomain = mockData.domains.find((d) => d.id === domain.id);
+                if (mockDomain && mockDomain.items.length > 0) {
+                  domain.items = mockDomain.items;
+                  domain.stats = mockDomain.stats;
+                }
+              }
+            }
+          }
+        }
+        return apiData;
+      }
     }
     // In mock mode only: fall back to hardcoded mock data for dev/demo
     if (isMockMode) {
